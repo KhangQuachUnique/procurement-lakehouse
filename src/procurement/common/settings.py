@@ -28,5 +28,7 @@ class Settings:
         "procurement-lakehouse",
     )
 
+    MUASAMCONG_TOKEN = os.getenv("MUASAMCONG_TOKEN")
+
 
 settings = Settings()
