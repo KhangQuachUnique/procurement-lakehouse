@@ -1,0 +1,23 @@
+name: procurement-lakehouse
+
+services:
+  object-storage:
+    image: ${OBJECT_STORAGE_IMAGE}
+
+    command:
+      - mini
+      - -dir=/data
+
+    environment:
+      AWS_ACCESS_KEY_ID: ${OBJECT_STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${OBJECT_STORAGE_SECRET_KEY}
+      S3_BUCKET: ${OBJECT_STORAGE_BUCKET}
+
+    ports:
+      - "${OBJECT_STORAGE_API_PORT}:8333"
+
+    volumes:
+      - object-storage-data:/data
+
+volumes:
+  object-storage-data:

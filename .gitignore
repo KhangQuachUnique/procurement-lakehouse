@@ -1,0 +1,67 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.local
+.env.*.local
+
+# Keep template
+!.env.example
+
+# dlt secrets
+.dlt/secrets.toml
+
+# =========================
+# Testing / Lint / Type check
+# =========================
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Logs / Runtime
+# =========================
+*.log
+logs/
+tmp/
+temp/
+
+# =========================
+# Local Data
+# =========================
+data/
+
+# =========================
+# Docker / Local Secrets
+# =========================
+infra/docker/secrets/*
+!infra/docker/secrets/.gitkeep
