@@ -4,15 +4,14 @@ from typing import Any, Protocol
 
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.models import ResourceSpec
-from procurement.ingestion.muasamcong.extractors.khlcnt import iter_khlcnt_records
+from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
+from procurement.ingestion.sources.muasamcong.khlcnt.retry import retry_khlcnt_error
 
 KHLCNT_IDENTITY = ResourceIdentity(source="muasamcong", resource="khlcnt")
 KHLCNT_INDEX = "es-contractor-selection"
 KHLCNT_TYPE_FILTER = "es-plan-project-p"
 
-SEARCH_PATH = (
-    "/o/egp-portal-contractor-selection-v2/services/smart/search"
-)
+SEARCH_PATH = "/o/egp-portal-contractor-selection-v2/services/smart/search"
 PLAN_DETAIL_PATH = (
     "/o/egp-portal-contractor-selection-v2/services/expose/lcnt/"
     "bid-po-bidp-plan-project-view/get-by-id"
@@ -28,18 +27,11 @@ class JsonPostClient(Protocol):
 
 
 class KhlcntApi:
-    """KHLCNT endpoints layered on the shared HTTP transport."""
-
     def __init__(self, client: JsonPostClient) -> None:
         self._client = client
 
     def search(
-        self,
-        *,
-        page_number: int,
-        page_size: int,
-        window_from: str,
-        window_to: str,
+        self, *, page_number: int, page_size: int, window_from: str, window_to: str
     ) -> dict[str, Any]:
         return self._client.post(
             SEARCH_PATH,
@@ -112,9 +104,6 @@ def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
         dataset_name="muasamcong",
         fetch_page=api.search,
         build_query_definition=_build_query_definition,
-        iter_records=partial(
-            iter_khlcnt_records,
-            api,
-            identity=KHLCNT_IDENTITY,
-        ),
+        iter_records=partial(iter_khlcnt_records, api, identity=KHLCNT_IDENTITY),
+        retry_error=partial(retry_khlcnt_error, api),
     )

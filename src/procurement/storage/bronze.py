@@ -1,13 +1,14 @@
+from collections.abc import Iterator
 from datetime import date
+from typing import Any
 
+import dlt
 from dlt.destinations import filesystem
 
 from procurement.common.settings import settings
 
 
 def create_bronze_destination(*, source_partition_date: date):
-    """Create a Bronze destination partitioned by source/business month."""
-
     source_year = f"{source_partition_date.year:04d}"
     source_month = f"{source_partition_date.month:02d}"
     source_day = f"{source_partition_date.day:02d}"
@@ -21,12 +22,23 @@ def create_bronze_destination(*, source_partition_date: date):
         },
         layout=(
             "{table_name}/source_year={source_year}/source_month={source_month}/"
-            "source_day={source_day}/"
-            "{load_id}.{file_id}.{ext}"
+            "source_day={source_day}/{load_id}.{file_id}.{ext}"
         ),
         extra_placeholders={
             "source_year": source_year,
             "source_month": source_month,
             "source_day": source_day,
         },
+    )
+
+
+def create_bronze_resource(records: Iterator[dict[str, Any]], *, name: str):
+    """Bronze is append-only/at-least-once; Silver owns canonical deduplication."""
+    return dlt.resource(
+        records,
+        name=name,
+        table_name=lambda record: record["_resource"],
+        write_disposition="append",
+        file_format="parquet",
+        max_table_nesting=0,
     )

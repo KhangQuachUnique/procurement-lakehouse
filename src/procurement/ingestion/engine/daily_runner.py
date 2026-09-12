@@ -14,26 +14,29 @@ from procurement.common.errors import (
     ErrorStage,
     classify_exception,
 )
-from procurement.ingestion.engine.dlt_resource import create_bronze_resource
+from procurement.ingestion.engine.fingerprint import (
+    calculate_page_fingerprint,
+    calculate_query_fingerprint,
+    ensure_compatible,
+    ensure_page_compatible,
+)
 from procurement.ingestion.engine.models import DailyResult, ResourceSpec
 from procurement.ingestion.engine.pagination import SearchResultLimitError, iter_search_pages
 from procurement.ingestion.engine.stats import PageStats
+from procurement.storage.bronze import create_bronze_destination, create_bronze_resource
 from procurement.storage.checkpoints import (
     CONTROL_SCHEMA_VERSION,
-    acquire_daily_lock,
-    calculate_query_fingerprint,
-    ensure_compatible,
-    read_daily_success,
     read_page_checkpoint,
-    refresh_daily_lock,
-    release_daily_lock,
-    write_daily_success,
     write_page_checkpoint,
+)
+from procurement.storage.errors import ErrorRecord, build_error_record, save_error_records
+from procurement.storage.locks import acquire_daily_lock, refresh_daily_lock, release_daily_lock
+from procurement.storage.manifests import (
+    read_daily_success,
+    write_daily_success,
     write_run_manifest,
 )
-from procurement.storage.dlt_destination import create_bronze_destination
-from procurement.storage.error_records import ErrorRecord, build_error_record, save_error_records
-from procurement.storage.raw_search import save_raw_search_page
+from procurement.storage.raw import save_raw_search_page
 
 logger = logging.getLogger(__name__)
 
@@ -56,26 +59,16 @@ def _save_page_errors(
     for record in records:
         by_stage[ErrorStage(record["stage"])].append(record)
     for stage, stage_records in by_stage.items():
-        uri = save_error_records(
-            fs=fs,
-            identity=spec.identity,
-            source_date=source_date,
-            run_id=run_id,
-            stage=stage,
-            page_number=page_number,
-            records=stage_records,
-        )
-        uris.append(uri)
-        logger.info(
-            "error_records_saved run_id=%s source_date=%s page=%s "
-            "resource=%s stage=%s errors=%s uri=%s",
-            run_id,
-            source_date,
-            page_number,
-            spec.identity.resource,
-            stage.value,
-            len(stage_records),
-            uri,
+        uris.append(
+            save_error_records(
+                fs=fs,
+                identity=spec.identity,
+                source_date=source_date,
+                run_id=run_id,
+                stage=stage,
+                page_number=page_number,
+                records=stage_records,
+            )
         )
     return uris
 
@@ -128,6 +121,7 @@ def _manifest(
         "resource": spec.identity.resource,
         "source_date": source_date.isoformat(),
         "status": status,
+        "crawl_complete": status in {"completed", "completed_with_errors"},
         "started_at": started_at,
         "completed_at": _now() if finished else None,
         "window_from": window_from,
@@ -146,6 +140,14 @@ def _manifest(
     return manifest
 
 
+def _create_pipeline(spec: ResourceSpec, source_date: date):
+    return dlt.pipeline(
+        pipeline_name=spec.pipeline_name,
+        destination=create_bronze_destination(source_partition_date=source_date),
+        dataset_name=spec.dataset_name,
+    )
+
+
 def run_daily_resource(
     *,
     fs: s3fs.S3FileSystem,
@@ -155,8 +157,12 @@ def run_daily_resource(
     page_size: int,
     force: bool,
 ) -> DailyResult:
-    """Run one date partition using resource-specific search and extraction hooks."""
+    """Run one closed source-date partition.
 
+    ``_SUCCESS`` means the daily crawl lifecycle completed. Record-level detail
+    failures remain immutable error events and are recovered by the retry engine.
+    Bronze is append-only/at-least-once, therefore ``force`` may append duplicates.
+    """
     window_from = f"{source_date.isoformat()}T00:00:00.000Z"
     window_to = f"{source_date.isoformat()}T23:59:59.999Z"
     definition = spec.query_definition(
@@ -166,25 +172,23 @@ def run_daily_resource(
         page_size=page_size,
     )
     fingerprint = calculate_query_fingerprint(definition)
+
     success = read_daily_success(fs, spec.identity, source_date)
     if success is not None and not force:
         ensure_compatible(success, fingerprint)
         logger.info(
-            "daily_batch_skipped_already_completed run_id=%s source_date=%s "
-            "resource=%s previous_run_id=%s",
+            "daily_batch_skipped_already_completed run_id=%s source_date=%s resource=%s",
             run_id,
             source_date,
             spec.identity.resource,
-            success.get("run_id"),
         )
         return {"status": "skipped", "pages": 0, "search_items": 0, "errors": 0}
-    if success is not None:
+    if success is not None and force:
         logger.warning(
-            "forcing_completed_date run_id=%s source_date=%s resource=%s previous_run_id=%s",
+            "forcing_completed_date_at_least_once run_id=%s source_date=%s resource=%s",
             run_id,
             source_date,
             spec.identity.resource,
-            success.get("run_id"),
         )
 
     acquire_daily_lock(fs, spec.identity, source_date, run_id)
@@ -195,48 +199,45 @@ def run_daily_resource(
     daily_stats = PageStats()
     expected_items: int | None = None
     expected_pages: int | None = None
-    running = _manifest(
-        spec=spec,
-        run_id=run_id,
-        source_date=source_date,
-        status="running",
-        window_from=window_from,
-        window_to=window_to,
-        page_size=page_size,
-        fingerprint=fingerprint,
-        started_at=started_at,
-        completed_pages=0,
-        stats=daily_stats,
-        errors=0,
-        expected_items=None,
-        expected_pages=None,
-    )
-    write_run_manifest(fs, spec.identity, source_date, run_id, running)
-    logger.info(
-        "daily_batch_started run_id=%s source_date=%s resource=%s",
-        run_id,
+
+    write_run_manifest(
+        fs,
+        spec.identity,
         source_date,
-        spec.identity.resource,
+        run_id,
+        _manifest(
+            spec=spec,
+            run_id=run_id,
+            source_date=source_date,
+            status="running",
+            window_from=window_from,
+            window_to=window_to,
+            page_size=page_size,
+            fingerprint=fingerprint,
+            started_at=started_at,
+            completed_pages=0,
+            stats=daily_stats,
+            errors=0,
+            expected_items=None,
+            expected_pages=None,
+        ),
     )
 
     try:
-        pipeline = dlt.pipeline(
-            pipeline_name=spec.pipeline_name,
-            destination=create_bronze_destination(source_partition_date=source_date),
-            dataset_name=spec.dataset_name,
-        )
+        pipeline = _create_pipeline(spec, source_date)
         pages = iter_search_pages(
             spec.fetch_page,
             window_from=window_from,
             window_to=window_to,
             page_size=page_size,
         )
+
         while True:
-            page_number = completed_pages
+            expected_page_number = completed_pages
             retry_page: dict[str, object] = {
                 "window_from": window_from,
                 "window_to": window_to,
-                "page_number": page_number,
+                "page_number": expected_page_number,
                 "page_size": page_size,
             }
             try:
@@ -244,11 +245,7 @@ def run_daily_resource(
             except StopIteration:
                 break
             except Exception as exc:
-                stage = (
-                    ErrorStage.SEARCH_LIMIT
-                    if isinstance(exc, SearchResultLimitError)
-                    else ErrorStage.SEARCH_PAGE
-                )
+                stage = ErrorStage.SEARCH_LIMIT if isinstance(exc, SearchResultLimitError) else ErrorStage.SEARCH_PAGE
                 classification = (
                     ErrorClassification(ErrorCode.SEARCH_RESULT_LIMIT_REACHED, False)
                     if stage is ErrorStage.SEARCH_LIMIT
@@ -259,7 +256,7 @@ def run_daily_resource(
                     run_id=run_id,
                     stage=stage,
                     source_date=source_date,
-                    page_number=page_number,
+                    page_number=expected_page_number,
                     exc=exc,
                     classification=classification,
                     retry_input=retry_page,
@@ -269,7 +266,7 @@ def run_daily_resource(
                     spec=spec,
                     source_date=source_date,
                     run_id=run_id,
-                    page_number=page_number,
+                    page_number=expected_page_number,
                     records=[record],
                 )
                 daily_errors += 1
@@ -280,33 +277,16 @@ def run_daily_resource(
             item_count = len(search_items)
             expected_items = int(page["totalElements"])
             expected_pages = max(1, math.ceil(expected_items / page_size))
-            logger.info(
-                "search_page_fetched run_id=%s source_date=%s resource=%s "
-                "page=%s items=%s total_items=%s",
-                run_id,
-                source_date,
-                spec.identity.resource,
-                page_number,
-                item_count,
-                expected_items,
-            )
+            page_fingerprint = calculate_page_fingerprint(search_items)
 
             checkpoint = read_page_checkpoint(fs, spec.identity, source_date, page_number)
             if checkpoint is not None and not force:
                 ensure_compatible(checkpoint, fingerprint)
+                ensure_page_compatible(checkpoint, page_fingerprint)
                 checkpoint_stats = PageStats.from_metadata(checkpoint)
                 daily_stats.merge(checkpoint_stats)
                 daily_errors += checkpoint_stats.total_errors
                 completed_pages += 1
-                logger.info(
-                    "page_skipped_checkpoint run_id=%s source_date=%s resource=%s "
-                    "page=%s checkpoint_run_id=%s",
-                    run_id,
-                    source_date,
-                    spec.identity.resource,
-                    page_number,
-                    checkpoint.get("run_id"),
-                )
                 continue
 
             page_started = _now()
@@ -329,9 +309,7 @@ def run_daily_resource(
                     source_date=source_date,
                     page_number=page_number,
                     exc=exc,
-                    classification=ErrorClassification(
-                        ErrorCode.OBJECT_STORAGE_WRITE_FAILED, True
-                    ),
+                    classification=ErrorClassification(ErrorCode.OBJECT_STORAGE_WRITE_FAILED, True),
                     retry_input=retry_page,
                 )
                 try:
@@ -344,14 +322,7 @@ def run_daily_resource(
                         records=[record],
                     )
                 except Exception:
-                    logger.exception(
-                        "error_record_write_failed run_id=%s source_date=%s "
-                        "resource=%s page=%s",
-                        run_id,
-                        source_date,
-                        spec.identity.resource,
-                        page_number,
-                    )
+                    logger.exception("error_record_write_failed run_id=%s page=%s", run_id, page_number)
                 daily_errors += 1
                 raise
 
@@ -380,9 +351,7 @@ def run_daily_resource(
                             source_date=source_date,
                             page_number=page_number,
                             exc=exc,
-                            classification=ErrorClassification(
-                                ErrorCode.BRONZE_LOAD_FAILED, True
-                            ),
+                            classification=ErrorClassification(ErrorCode.BRONZE_LOAD_FAILED, True),
                             retry_input={**retry_page, "raw_search_uri": raw_uri},
                         )
                     )
@@ -422,6 +391,7 @@ def run_daily_resource(
                 "window_from": window_from,
                 "window_to": window_to,
                 "query_fingerprint": fingerprint,
+                "search_page_fingerprint": page_fingerprint,
                 "total_elements": expected_items,
                 "search_items": stats.search_items,
                 "raw_search_uri": raw_uri,
@@ -432,22 +402,12 @@ def run_daily_resource(
                 "duration_seconds": round(perf_counter() - page_timer, 3),
             }
             checkpoint_metadata.update(stats.to_metadata())
-            write_page_checkpoint(
-                fs, spec.identity, source_date, page_number, checkpoint_metadata
-            )
+            write_page_checkpoint(fs, spec.identity, source_date, page_number, checkpoint_metadata)
+
             completed_pages += 1
             daily_stats.merge(stats)
             daily_errors += stats.total_errors
             refresh_daily_lock(fs, spec.identity, source_date, run_id)
-            logger.info(
-                "page_checkpoint_saved run_id=%s source_date=%s resource=%s "
-                "page=%s status=%s",
-                run_id,
-                source_date,
-                spec.identity.resource,
-                page_number,
-                status,
-            )
 
         status = "completed_with_errors" if daily_errors else "completed"
         completed = _manifest(
@@ -469,17 +429,6 @@ def run_daily_resource(
         completed["duration_seconds"] = round(perf_counter() - started_timer, 3)
         write_run_manifest(fs, spec.identity, source_date, run_id, completed)
         write_daily_success(fs, spec.identity, source_date, completed)
-        logger.info(
-            "daily_batch_%s run_id=%s source_date=%s resource=%s pages=%s "
-            "search_items=%s errors=%s",
-            status,
-            run_id,
-            source_date,
-            spec.identity.resource,
-            completed_pages,
-            daily_stats.search_items,
-            daily_errors,
-        )
         return {
             "status": status,
             "pages": completed_pages,

@@ -19,6 +19,10 @@ dev = [
     "pytest>=8,<9",
     "ruff>=0.12,<1",
 ]
+ops = [
+    "fastapi>=0.116,<1",
+    "uvicorn[standard]>=0.35,<1",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

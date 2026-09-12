@@ -11,13 +11,12 @@ RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 def create_muasamcong_ssl_context() -> ssl.SSLContext:
     context = ssl.create_default_context()
-    # The upstream server requires a lower OpenSSL security level.
     context.set_ciphers("DEFAULT:@SECLEVEL=1")
     return context
 
 
 class MuasamcongClient:
-    """HTTP transport shared by all Mua Sam Cong resources."""
+    """HTTP transport shared by all Mua Sam Cong resource adapters."""
 
     def __init__(self, *, token: str, max_attempts: int = 3) -> None:
         if not token:
@@ -47,15 +46,8 @@ class MuasamcongClient:
     def post(self, path: str, body: Any) -> dict[str, Any]:
         for attempt in range(1, self._max_attempts + 1):
             try:
-                response = self._client.post(
-                    path,
-                    params={"token": self._token},
-                    json=body,
-                )
-                if (
-                    response.status_code in RETRYABLE_STATUS_CODES
-                    and attempt < self._max_attempts
-                ):
+                response = self._client.post(path, params={"token": self._token}, json=body)
+                if response.status_code in RETRYABLE_STATUS_CODES and attempt < self._max_attempts:
                     self._sleep_before_retry(attempt)
                     continue
                 response.raise_for_status()
