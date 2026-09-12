@@ -152,7 +152,11 @@ def run_daily_resource(
         status=DayStatus.RUNNING,
         started_at=_now(),
     )
-    write_day_manifest(fs, spec.identity, day)
+    try:
+        write_day_manifest(fs, spec.identity, day)
+    except Exception:
+        release_daily_lock(fs, spec.identity, source_date, run_id)
+        raise
 
     completed_pages = 0
     daily_stats = PageStats()

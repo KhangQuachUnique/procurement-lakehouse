@@ -194,3 +194,17 @@ def test_new_run_starts_same_source_date_from_page_zero_again(harness: Harness) 
 
     assert calls == [0, 0]
     assert harness.events.count("bronze") == 2
+
+
+def test_initial_day_manifest_failure_releases_lock(
+    harness: Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fail_day_write(*_args: Any, **_kwargs: Any) -> str:
+        raise RuntimeError("control storage unavailable")
+
+    monkeypatch.setattr(daily_runner, "write_day_manifest", fail_day_write)
+
+    with pytest.raises(RuntimeError, match="control storage unavailable"):
+        _run(_spec())
+
+    assert harness.events == ["lock", "release"]
