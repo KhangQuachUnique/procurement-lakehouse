@@ -1,82 +1,76 @@
 from collections.abc import Iterator
-from datetime import date
-from types import SimpleNamespace
+from datetime import UTC, date, datetime
 from typing import Any
 
 import pytest
 
+from procurement.common.errors import ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine import daily_runner
-from procurement.ingestion.engine.fingerprint import (
-    IncompatibleCheckpointError,
-    calculate_page_fingerprint,
-    calculate_query_fingerprint,
-)
-from procurement.ingestion.engine.models import ResourceSpec
+from procurement.ingestion.engine.models import BronzeItem, ResourceSpec
+from procurement.models.bronze import BronzeRecord
+from procurement.models.control import DayStatus, PageStatus
+from procurement.models.errors import ErrorRecord
 
 SOURCE_DATE = date(2026, 9, 10)
-WINDOW_FROM = "2026-09-10T00:00:00.000Z"
-WINDOW_TO = "2026-09-10T23:59:59.999Z"
 IDENTITY = ResourceIdentity("test-source", "test-resource")
 
 
 class FakePipeline:
     def __init__(self, events: list[str]) -> None:
         self.events = events
-        self.records: list[dict[str, Any]] = []
+        self.loads: list[tuple[str, list[BronzeRecord]]] = []
+        self.fail = False
 
-    def run(self, records: Iterator[dict[str, Any]]) -> SimpleNamespace:
+    def run(self, resource: tuple[str, list[BronzeRecord]]) -> None:
         self.events.append("bronze")
-        self.records = list(records)
-        return SimpleNamespace(loads_ids=["load-1"])
+        if self.fail:
+            raise RuntimeError("load failed")
+        self.loads.append(resource)
 
 
 class Harness:
     def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self.events: list[str] = []
-        self.manifests: list[dict[str, Any]] = []
-        self.checkpoints: list[dict[str, Any]] = []
-        self.saved_errors: list[dict[str, Any]] = []
-        self.success: dict[str, Any] | None = None
-        self.page_checkpoint: dict[str, Any] | None = None
+        self.days = []
+        self.pages = []
+        self.errors: list[ErrorRecord] = []
         self.pipeline = FakePipeline(self.events)
 
-        monkeypatch.setattr(daily_runner, "read_daily_success", lambda *_: self.success)
-        monkeypatch.setattr(daily_runner, "read_page_checkpoint", lambda *_: self.page_checkpoint)
-        monkeypatch.setattr(daily_runner, "acquire_daily_lock", lambda *_: self.events.append("lock"))
-        monkeypatch.setattr(daily_runner, "refresh_daily_lock", lambda *_: self.events.append("refresh"))
-        monkeypatch.setattr(daily_runner, "release_daily_lock", lambda *_: self.events.append("release"))
-        monkeypatch.setattr(daily_runner, "write_run_manifest", self._write_manifest)
-        monkeypatch.setattr(daily_runner, "write_daily_success", self._write_success)
-        monkeypatch.setattr(daily_runner, "write_page_checkpoint", self._write_checkpoint)
-        monkeypatch.setattr(daily_runner, "save_raw_search_page", self._save_raw)
+        monkeypatch.setattr(
+            daily_runner, "acquire_daily_lock", lambda *_: self.events.append("lock")
+        )
+        monkeypatch.setattr(
+            daily_runner, "refresh_daily_lock", lambda *_: self.events.append("refresh")
+        )
+        monkeypatch.setattr(
+            daily_runner, "release_daily_lock", lambda *_: self.events.append("release")
+        )
+        monkeypatch.setattr(daily_runner, "write_day_manifest", self._write_day)
+        monkeypatch.setattr(daily_runner, "write_page_manifest", self._write_page)
         monkeypatch.setattr(daily_runner, "save_error_records", self._save_errors)
         monkeypatch.setattr(daily_runner, "create_bronze_destination", lambda **_: object())
-        monkeypatch.setattr(daily_runner, "create_bronze_resource", lambda records, **_: records)
+        monkeypatch.setattr(
+            daily_runner,
+            "create_bronze_resource",
+            lambda records, *, name: (name, list(records)),
+        )
         monkeypatch.setattr(daily_runner.dlt, "pipeline", lambda **_: self.pipeline)
 
-    def _write_manifest(self, *args: Any) -> str:
-        self.manifests.append(dict(args[-1]))
-        return "s3://manifest"
+    def _write_day(self, _fs: Any, _identity: Any, manifest: Any) -> str:
+        self.days.append(manifest)
+        self.events.append(f"day:{manifest.status.value}")
+        return "s3://day"
 
-    def _write_success(self, *args: Any) -> str:
-        self.events.append("success")
-        self.success = dict(args[-1])
-        return "s3://success"
-
-    def _write_checkpoint(self, *args: Any) -> str:
-        self.events.append("checkpoint")
-        self.checkpoints.append(dict(args[-1]))
-        return "s3://checkpoint"
-
-    def _save_raw(self, **_: Any) -> str:
-        self.events.append("raw")
-        return "s3://raw/page.json.gz"
+    def _write_page(self, _fs: Any, _identity: Any, manifest: Any) -> str:
+        self.pages.append(manifest)
+        self.events.append(f"page:{manifest.status.value}")
+        return "s3://page"
 
     def _save_errors(self, **kwargs: Any) -> str:
+        self.errors.extend(kwargs["records"])
         self.events.append("errors")
-        self.saved_errors.extend(kwargs["records"])
-        return "s3://errors/page.jsonl"
+        return "s3://errors"
 
 
 @pytest.fixture
@@ -89,59 +83,114 @@ def _page(content: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     return {"page": {"content": items, "totalElements": len(items), "last": True}}
 
 
-def _spec(*, iter_records: Any | None = None) -> ResourceSpec:
+def _bronze_item(source_id: str = "item-1") -> BronzeItem:
+    return BronzeItem(
+        table="test_notice",
+        record=BronzeRecord(
+            source_id=source_id,
+            run_id="run-1",
+            source_date=SOURCE_DATE,
+            ingested_at=datetime(2026, 9, 10, tzinfo=UTC),
+            content_hash="hash",
+            payload={"id": source_id},
+        ),
+    )
+
+
+def _spec(*, iter_records: Any | None = None, fetch_page: Any | None = None) -> ResourceSpec:
     def fetch(**_: Any) -> dict[str, Any]:
         return _page()
 
-    def records(*, stats: Any, **_: Any) -> Iterator[dict[str, Any]]:
+    def records(*, stats: Any, **_: Any) -> Iterator[BronzeItem]:
         stats.record("notice")
-        yield {"_resource": "test_notice", "_source_id": "item-1"}
+        yield _bronze_item()
 
-    def query_definition(*, source_date: date, window_from: str, window_to: str, page_size: int) -> dict[str, Any]:
-        return {"source": IDENTITY.source, "resource": IDENTITY.resource, "source_date": source_date.isoformat(), "window_from": window_from, "window_to": window_to, "page_size": page_size}
-
-    return ResourceSpec(identity=IDENTITY, pipeline_name="test_pipeline", dataset_name="test_dataset", fetch_page=fetch, build_query_definition=query_definition, iter_records=iter_records or records)
-
-
-def _fingerprint(spec: ResourceSpec) -> str:
-    return calculate_query_fingerprint(spec.query_definition(source_date=SOURCE_DATE, window_from=WINDOW_FROM, window_to=WINDOW_TO, page_size=50))
-
-
-def _run(spec: ResourceSpec, *, force: bool = False):
-    return daily_runner.run_daily_resource(fs=object(), spec=spec, run_id="run-1", source_date=SOURCE_DATE, page_size=50, force=force)  # type: ignore[arg-type]
+    return ResourceSpec(
+        identity=IDENTITY,
+        pipeline_name="test_pipeline",
+        dataset_name="test_dataset",
+        fetch_page=fetch_page or fetch,
+        iter_records=iter_records or records,
+    )
 
 
-def test_success_is_raw_then_bronze_then_checkpoint(harness: Harness) -> None:
+def _run(spec: ResourceSpec, *, run_id: str = "run-1"):
+    return daily_runner.run_daily_resource(
+        fs=object(),  # type: ignore[arg-type]
+        spec=spec,
+        run_id=run_id,
+        source_date=SOURCE_DATE,
+        page_size=50,
+    )
+
+
+def test_success_commits_day_only_after_page_bronze_succeeds(harness: Harness) -> None:
     result = _run(_spec())
-    assert result["status"] == "completed"
-    assert harness.events == ["lock", "raw", "bronze", "checkpoint", "refresh", "success", "release"]
-    assert harness.checkpoints[0]["search_page_fingerprint"] == calculate_page_fingerprint([{"id": "item-1"}])
+
+    assert result == {
+        "status": "success",
+        "pages": 1,
+        "search_items": 1,
+        "bronze_records": 1,
+        "errors": 0,
+    }
+    assert harness.pages[-1].status is PageStatus.SUCCESS
+    assert harness.days[-1].status is DayStatus.SUCCESS
+    assert harness.pipeline.loads[0][0] == "test_notice"
+    assert harness.events.index("bronze") < len(harness.events) - 2
 
 
-def test_checkpoint_resume_rejects_changed_page_order(harness: Harness) -> None:
-    spec = _spec()
-    harness.page_checkpoint = {"query_fingerprint": _fingerprint(spec), "search_page_fingerprint": calculate_page_fingerprint([{"id": "different"}]), "search_items": 1, "record_counts": {}, "error_counts": {}}
-    with pytest.raises(IncompatibleCheckpointError):
-        _run(spec)
+def test_any_detail_error_fails_whole_day_and_skips_bronze_write(harness: Harness) -> None:
+    def records(*, errors: list[ErrorRecord], stats: Any, **_: Any):
+        stats.record("notice")
+        stats.error("notice")
+        errors.append(
+            ErrorRecord(
+                error_id="err-1",
+                run_id="run-1",
+                source=IDENTITY.source,
+                resource=IDENTITY.resource,
+                source_date=SOURCE_DATE,
+                page_number=0,
+                stage=ErrorStage.PLAN_DETAIL,
+                code=ErrorCode.SOURCE_TIMEOUT,
+                source_id="bad",
+                error_type="ReadTimeout",
+                message="Source request timed out",
+                occurred_at=datetime(2026, 9, 10, tzinfo=UTC),
+            )
+        )
+        yield _bronze_item("good")
+
+    result = _run(_spec(iter_records=records))
+
+    assert result["status"] == "failed"
+    assert harness.days[-1].status is DayStatus.FAILED
+    assert harness.pages[-1].status is PageStatus.FAILED
+    assert harness.errors[0].error_id == "err-1"
     assert "bronze" not in harness.events
 
 
-def test_record_error_finishes_crawl_but_keeps_historical_error(harness: Harness) -> None:
-    def records(*, errors: list[dict[str, Any]], stats: Any, **_: Any):
-        stats.error("notice")
-        errors.append({"stage": "plan_detail", "error_id": "err-1"})
-        yield {"_resource": "test_notice", "_source_id": "ok"}
+def test_bronze_load_error_fails_day(harness: Harness) -> None:
+    harness.pipeline.fail = True
 
-    result = _run(_spec(iter_records=records))
-    assert result["status"] == "completed_with_errors"
-    assert harness.success is not None
-    assert harness.success["crawl_complete"] is True
-    assert harness.saved_errors[0]["error_id"] == "err-1"
+    result = _run(_spec())
+
+    assert result["status"] == "failed"
+    assert harness.days[-1].status is DayStatus.FAILED
+    assert harness.errors[-1].stage is ErrorStage.BRONZE_LOAD
 
 
-def test_force_reprocesses_append_only_bronze(harness: Harness) -> None:
-    spec = _spec()
-    harness.success = {"run_id": "old", "query_fingerprint": _fingerprint(spec)}
-    result = _run(spec, force=True)
-    assert result["status"] == "completed"
-    assert "bronze" in harness.events
+def test_new_run_starts_same_source_date_from_page_zero_again(harness: Harness) -> None:
+    calls: list[int] = []
+
+    def fetch(*, page_number: int, **_: Any) -> dict[str, Any]:
+        calls.append(page_number)
+        return _page()
+
+    spec = _spec(fetch_page=fetch)
+    _run(spec, run_id="run-a")
+    _run(spec, run_id="run-b")
+
+    assert calls == [0, 0]
+    assert harness.events.count("bronze") == 2

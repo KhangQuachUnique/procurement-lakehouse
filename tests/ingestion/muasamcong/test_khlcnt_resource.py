@@ -35,9 +35,10 @@ def test_khlcnt_api_owns_resource_endpoints_and_search_payload() -> None:
     assert transport.calls[2] == (BID_PACKAGE_DETAIL_PATH, {"id": "package-1"})
 
 
-def test_khlcnt_spec_exposes_ingestion_and_retry_hooks() -> None:
+def test_khlcnt_spec_exposes_only_source_ingestion_hooks() -> None:
     spec = create_khlcnt_spec(StubTransport())
     assert spec.identity.source == "muasamcong"
     assert spec.identity.resource == "khlcnt"
     assert spec.pipeline_name == "muasamcong_bronze"
-    assert spec.retry_error is not None
+    assert not hasattr(spec, "retry_error")
+    assert not hasattr(spec, "build_query_definition")

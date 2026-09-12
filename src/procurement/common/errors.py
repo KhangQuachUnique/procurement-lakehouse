@@ -9,8 +9,8 @@ class ErrorStage(StrEnum):
     SEARCH_LIMIT = "search_limit"
     PLAN_DETAIL = "plan_detail"
     BID_PACKAGE_DETAIL = "bid_package_detail"
-    RAW_STORAGE = "raw_storage"
     BRONZE_LOAD = "bronze_load"
+    INTERNAL = "internal"
 
 
 class ErrorCode(StrEnum):
@@ -21,13 +21,18 @@ class ErrorCode(StrEnum):
     SOURCE_CLIENT_ERROR = "SOURCE_CLIENT_ERROR"
     SOURCE_INVALID_RESPONSE = "SOURCE_INVALID_RESPONSE"
     SEARCH_RESULT_LIMIT_REACHED = "SEARCH_RESULT_LIMIT_REACHED"
-    OBJECT_STORAGE_WRITE_FAILED = "OBJECT_STORAGE_WRITE_FAILED"
     BRONZE_LOAD_FAILED = "BRONZE_LOAD_FAILED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 
 
 @dataclass(frozen=True)
 class ErrorClassification:
+    """Runtime classification used by ingestion and source-client retry policy.
+
+    ``retryable`` is intentionally not persisted in ErrorRecord anymore. Recovery
+    happens by rerunning the whole source_date in a new run, not by retrying records.
+    """
+
     code: ErrorCode
     retryable: bool
     http_status: int | None = None
@@ -61,7 +66,6 @@ def safe_error_message(exc: Exception, classification: ErrorClassification) -> s
         ErrorCode.SOURCE_CLIENT_ERROR: "Source rejected the request",
         ErrorCode.SOURCE_INVALID_RESPONSE: "Source response has an invalid structure",
         ErrorCode.SEARCH_RESULT_LIMIT_REACHED: "Daily search result limit reached",
-        ErrorCode.OBJECT_STORAGE_WRITE_FAILED: "Object storage write failed",
         ErrorCode.BRONZE_LOAD_FAILED: "Bronze load failed",
         ErrorCode.INTERNAL_ERROR: f"Unexpected {type(exc).__name__}",
     }

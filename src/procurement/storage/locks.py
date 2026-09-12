@@ -16,7 +16,7 @@ class ActiveLockError(RuntimeError):
 def _key(identity: ResourceIdentity, source_date: date) -> str:
     return (
         f"{settings.OBJECT_STORAGE_BUCKET}/_control/{identity.source}/{identity.resource}/"
-        f"source_date={source_date.isoformat()}/lock.json"
+        f"_locks/source_date={source_date.isoformat()}.json"
     )
 
 
@@ -46,7 +46,6 @@ def acquire_daily_lock(
             "resource": identity.resource,
             "source_date": source_date.isoformat(),
             "run_id": run_id,
-            "status": "running",
             "started_at": current_time.isoformat(),
             "expires_at": (current_time + LOCK_TTL).isoformat(),
         },

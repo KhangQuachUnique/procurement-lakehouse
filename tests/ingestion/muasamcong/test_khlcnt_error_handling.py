@@ -3,9 +3,11 @@ from typing import Any
 
 import httpx
 
+from procurement.common.errors import ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.stats import PageStats
-from procurement.ingestion.muasamcong.extractors.khlcnt import iter_khlcnt_records
+from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
+from procurement.models.errors import ErrorRecord
 
 KHLCNT = ResourceIdentity("muasamcong", "khlcnt")
 
@@ -33,39 +35,50 @@ class PackageStubClient(StubClient):
         }
 
 
-def test_plan_failure_is_recorded_and_next_plan_continues() -> None:
-    errors: list[dict[str, Any]] = []
+def test_plan_failure_is_typed_error_and_successful_record_keeps_bronze_contract() -> None:
+    errors: list[ErrorRecord] = []
 
-    records = list(iter_khlcnt_records(
-        StubClient(),
-        identity=KHLCNT,
-        search_items=[{"id": "bad-plan"}, {"id": "good-plan"}],
-        run_id="run-1", source_date=date(2026, 9, 10), search_page=2,
-        errors=errors, stats=PageStats(),
-    ))
+    records = list(
+        iter_khlcnt_records(
+            StubClient(),
+            identity=KHLCNT,
+            search_items=[{"id": "bad-plan"}, {"id": "good-plan", "planVersion": "02"}],
+            run_id="run-1",
+            source_date=date(2026, 9, 10),
+            search_page=2,
+            errors=errors,
+            stats=PageStats(),
+        )
+    )
 
-    assert [record["_source_id"] for record in records] == ["good-plan"]
+    assert [item.record.source_id for item in records] == ["good-plan"]
+    assert records[0].record.source_version == "02"
+    assert records[0].table == "khlcnt_plan_detail"
     assert len(errors) == 1
-    assert errors[0]["stage"] == "plan_detail"
-    assert errors[0]["error_code"] == "SOURCE_TIMEOUT"
-    assert errors[0]["retry_input"] == {"plan_id": "bad-plan"}
+    assert errors[0].stage is ErrorStage.PLAN_DETAIL
+    assert errors[0].code is ErrorCode.SOURCE_TIMEOUT
+    assert errors[0].source_id == "bad-plan"
 
 
-def test_package_failure_is_recorded_and_next_package_continues() -> None:
-    errors: list[dict[str, Any]] = []
+def test_package_version_is_not_inherited_from_parent_plan() -> None:
+    errors: list[ErrorRecord] = []
 
-    records = list(iter_khlcnt_records(
-        PackageStubClient(),
-        identity=KHLCNT,
-        search_items=[{"id": "plan-1"}], run_id="run-1",
-        source_date=date(2026, 9, 10), search_page=2, errors=errors,
-        stats=PageStats(),
-    ))
+    records = list(
+        iter_khlcnt_records(
+            PackageStubClient(),
+            identity=KHLCNT,
+            search_items=[{"id": "plan-1", "planVersion": "07"}],
+            run_id="run-1",
+            source_date=date(2026, 9, 10),
+            search_page=2,
+            errors=errors,
+            stats=PageStats(),
+        )
+    )
 
-    assert [record["_source_id"] for record in records] == ["plan-1", "good-package"]
+    good_package = next(item for item in records if item.record.source_id == "good-package")
+    assert good_package.table == "khlcnt_bid_package_detail"
+    assert good_package.record.source_version is None
     assert len(errors) == 1
-    assert errors[0]["stage"] == "bid_package_detail"
-    assert errors[0]["retry_input"] == {
-        "plan_id": "plan-1",
-        "package_id": "bad-package",
-    }
+    assert errors[0].stage is ErrorStage.BID_PACKAGE_DETAIL
+    assert errors[0].source_id == "bad-package"

@@ -1,7 +1,7 @@
 from datetime import date
 from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 
 from procurement.observability.repositories import ErrorRepository, RunRepository
 from procurement.observability.service import OpsService
@@ -31,14 +31,9 @@ def list_runs(
     )
 
 
-@app.get("/api/ops/runs/{source}/{resource}/{source_date}/{run_id}")
-def get_run(source: str, resource: str, source_date: date, run_id: str):
-    run = get_ops_service().get_run(
-        source=source,
-        resource=resource,
-        source_date=source_date,
-        run_id=run_id,
-    )
+@app.get("/api/ops/runs/{source}/{resource}/{run_id}")
+def get_run(source: str, resource: str, run_id: str):
+    run = get_ops_service().get_run(source=source, resource=resource, run_id=run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
     return run
@@ -50,17 +45,10 @@ def list_errors(
     resource: str = "khlcnt",
     source_date: date | None = None,
     run_id: str | None = None,
-    retryable: bool | None = None,
-    resolution_status: str | None = Query(
-        default=None,
-        description="pending | retrying | recovered | dead_letter | not_retryable",
-    ),
 ):
     return get_ops_service().list_errors(
         source=source,
         resource=resource,
         source_date=source_date,
         run_id=run_id,
-        retryable=retryable,
-        resolution_status=resolution_status,
     )

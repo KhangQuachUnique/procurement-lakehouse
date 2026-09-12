@@ -10,42 +10,40 @@ from procurement.ingestion.sources.muasamcong.khlcnt.resource import create_khlc
 from procurement.storage.object_store import create_s3_filesystem
 
 
-def crawl_khlcnt(
-    start: date, end: date, *, page_size: int = 50, force: bool = False
-) -> str:
+def crawl_khlcnt(start: date, end: date, *, page_size: int = 50) -> str:
     if not settings.MUASAMCONG_TOKEN:
         raise RuntimeError("MUASAMCONG_TOKEN is missing")
+
     filesystem = create_s3_filesystem()
     with MuasamcongClient(token=settings.MUASAMCONG_TOKEN) as client:
         spec = create_khlcnt_spec(client)
         return run_batch_range(
             start,
             end,
-            resource=spec.identity.resource,
+            fs=filesystem,
+            identity=spec.identity,
             run_day=lambda run_id, source_date: run_daily_resource(
                 fs=filesystem,
                 spec=spec,
                 run_id=run_id,
                 source_date=source_date,
                 page_size=page_size,
-                force=force,
             ),
         )
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Crawl closed-day Muasamcong KHLCNT data")
+    parser = argparse.ArgumentParser(description="Crawl Muasamcong KHLCNT by source date")
     parser.add_argument("--start-date", type=date.fromisoformat, required=True)
     parser.add_argument("--end-date", type=date.fromisoformat, required=True)
     parser.add_argument("--page-size", type=int, default=50)
-    parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     configure_logging()
     args = parse_args()
-    crawl_khlcnt(args.start_date, args.end_date, page_size=args.page_size, force=args.force)
+    crawl_khlcnt(args.start_date, args.end_date, page_size=args.page_size)
 
 
 if __name__ == "__main__":

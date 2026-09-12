@@ -1,98 +1,99 @@
-# Ingestion and recovery flow
+# Ingestion job flow
 
-## Daily ingestion
-
-```text
-closed source date D-1
-        |
-        v
-   search pages
-        |
-        +--> save raw search snapshot
-        |
-        v
-  resource extractor
-     /       \
- success    record error
-    |           |
-    v           v
- Bronze      _errors
-    |
-    v
-page checkpoint
-    |
-    v
-manifest + _SUCCESS
-```
-
-A page checkpoint is written only after raw storage and Bronze load succeed. Search page checkpoints also store an ordered page fingerprint so resume fails loudly if the upstream result ordering drifts.
-
-Fatal page/day failures (search, raw storage, Bronze load) fail the daily run. Isolated detail errors are persisted as immutable error events and let the daily crawl complete with `completed_with_errors`.
-
-## Retry flow
+## Range run
 
 ```text
-_errors (immutable)
+start_date..end_date
         |
         v
-filter retryable + unresolved
+create run_id + RunManifest(RUNNING)
         |
         v
-retry run (new retry_run_id)
-      /   \
- success  fail
-   |       |
- Bronze    +--> pending (attempts remaining)
-   |       +--> dead_letter (final/non-retryable)
-   v
-_error_state = recovered
+split into source dates
+        |
+        +--> daily_run(date 1)
+        +--> daily_run(date 2)
+        +--> ...
+        |
+        v
+RunManifest
+  SUCCESS | PARTIAL_FAILED | FAILED
 ```
 
-Retry never changes the original ingestion run or original error event. A recovered Bronze record includes `_recovered_from_error_id` for provenance.
+A failed date does not stop later dates in the same range.
 
-Run status remains historical, while current health is derived:
+## Daily attempt
 
-- `healthy`: original run has no errors.
-- `recovered`: original errors existed but all are recovered.
-- `partial`: unresolved pending/dead-letter/non-retryable errors remain.
-- `failed`: original daily run failed.
+```text
+(run_id, source_date)
+        |
+        v
+DayManifest(RUNNING)
+        |
+        v
+search page
+        |
+        v
+PageManifest(RUNNING)
+        |
+        v
+fetch detail records
+        |
+   +----+----+
+   |         |
+ error      ok
+   |         |
+   v         v
+_errors    Bronze Parquet
+   |         |
+   v         v
+Page FAILED Page SUCCESS
+   |         |
+   v         v
+Day FAILED  next page
+             |
+             v
+       all pages complete
+             |
+             v
+       Day SUCCESS (commit)
+```
 
-## Commands
+Any search/detail/Bronze-load ingestion error fails the whole source-date attempt. The engine stops that date and the range runner proceeds to the next requested date.
+
+## Recovery
+
+There is no record retry and no cross-run page resume.
+
+```text
+run A / source_date D -> FAILED
+            |
+            v
+run the same date again
+            |
+            v
+run B / source_date D -> starts from page 0
+```
+
+Old attempts stay immutable in storage. A failed attempt may contain partial Parquet files, but downstream must never treat file existence as commit state; only a successful `DayManifest` commits that attempt.
+
+## Command
 
 ```powershell
 python -m procurement.jobs.crawl_khlcnt `
   --start-date 2026-09-11 `
   --end-date 2026-09-11 `
   --page-size 50
-
-python -m procurement.jobs.retry_errors `
-  --resource khlcnt `
-  --source-date 2026-09-11 `
-  --max-attempts 3
 ```
 
-`--force` intentionally reprocesses a completed date. Bronze is at-least-once, so force may append duplicate observations; Silver must canonicalize them.
+Running the command again for the same date creates a new `run_id` and recrawls the full day.
 
 ## Ops API
 
-Install the optional API dependencies:
-
-```bash
-pip install -e ".[ops]"
-```
-
-Run:
-
-```bash
-uvicorn procurement.api.main:app --reload
-```
-
-Endpoints:
-
 ```text
 GET /api/ops/runs
-GET /api/ops/runs/{source}/{resource}/{source_date}/{run_id}
+GET /api/ops/runs/{source}/{resource}/{run_id}
 GET /api/ops/errors
 ```
 
-`GET run` returns both the historical ingestion status and derived current health/recovery counters. No historical manifest is rewritten after retry.
+The API exposes persisted run/error facts only. Retry-resolution state no longer exists because recovery is represented by a separate later run.

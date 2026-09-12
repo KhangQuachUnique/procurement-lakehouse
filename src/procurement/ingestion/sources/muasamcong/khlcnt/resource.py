@@ -1,11 +1,9 @@
-from datetime import date
 from functools import partial
 from typing import Any, Protocol
 
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
-from procurement.ingestion.sources.muasamcong.khlcnt.retry import retry_khlcnt_error
 
 KHLCNT_IDENTITY = ResourceIdentity(source="muasamcong", resource="khlcnt")
 KHLCNT_INDEX = "es-contractor-selection"
@@ -81,21 +79,6 @@ def _build_search_payload(
     ]
 
 
-def _build_query_definition(
-    *, source_date: date, window_from: str, window_to: str, page_size: int
-) -> dict[str, Any]:
-    return {
-        "source": KHLCNT_IDENTITY.source,
-        "resource": KHLCNT_IDENTITY.resource,
-        "source_date": source_date.isoformat(),
-        "window_from": window_from,
-        "window_to": window_to,
-        "page_size": page_size,
-        "index": KHLCNT_INDEX,
-        "type_filter": KHLCNT_TYPE_FILTER,
-    }
-
-
 def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
     api = KhlcntApi(client)
     return ResourceSpec(
@@ -103,7 +86,5 @@ def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
         pipeline_name="muasamcong_bronze",
         dataset_name="muasamcong",
         fetch_page=api.search,
-        build_query_definition=_build_query_definition,
         iter_records=partial(iter_khlcnt_records, api, identity=KHLCNT_IDENTITY),
-        retry_error=partial(retry_khlcnt_error, api),
     )

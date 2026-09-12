@@ -1,17 +1,14 @@
-from collections.abc import Iterator
+from collections.abc import Iterable
 from datetime import date
-from typing import Any
 
 import dlt
 from dlt.destinations import filesystem
 
 from procurement.common.settings import settings
+from procurement.models.bronze import BronzeRecord
 
 
-def create_bronze_destination(*, source_partition_date: date):
-    source_year = f"{source_partition_date.year:04d}"
-    source_month = f"{source_partition_date.month:02d}"
-    source_day = f"{source_partition_date.day:02d}"
+def create_bronze_destination(*, source_partition_date: date, run_id: str):
     return filesystem(
         bucket_url=f"s3://{settings.OBJECT_STORAGE_BUCKET}/bronze",
         credentials={
@@ -21,23 +18,24 @@ def create_bronze_destination(*, source_partition_date: date):
             "region_name": "us-east-1",
         },
         layout=(
-            "{table_name}/source_year={source_year}/source_month={source_month}/"
-            "source_day={source_day}/{load_id}.{file_id}.{ext}"
+            "{table_name}/source_date={source_date}/run_id={run_id}/"
+            "{load_id}.{file_id}.{ext}"
         ),
         extra_placeholders={
-            "source_year": source_year,
-            "source_month": source_month,
-            "source_day": source_day,
+            "source_date": source_partition_date.isoformat(),
+            "run_id": run_id,
         },
     )
 
 
-def create_bronze_resource(records: Iterator[dict[str, Any]], *, name: str):
-    """Bronze is append-only/at-least-once; Silver owns canonical deduplication."""
+def create_bronze_resource(records: Iterable[BronzeRecord], *, name: str):
+    """Create one append-only Bronze table resource for a page/chunk."""
+
+    serialized = (record.model_dump(mode="json") for record in records)
     return dlt.resource(
-        records,
+        serialized,
         name=name,
-        table_name=lambda record: record["_resource"],
+        table_name=name,
         write_disposition="append",
         file_format="parquet",
         max_table_nesting=0,

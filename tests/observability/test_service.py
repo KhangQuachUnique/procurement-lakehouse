@@ -1,6 +1,3 @@
-from datetime import date
-
-from procurement.common.resources import ResourceIdentity
 from procurement.observability.service import OpsService
 
 
@@ -17,30 +14,28 @@ class StubRuns:
             "run_id": "run-a",
             "source": "muasamcong",
             "resource": "khlcnt",
-            "source_date": "2026-09-11",
-            "status": "completed_with_errors",
-            "total_errors": 2,
+            "start_date": "2026-09-11",
+            "end_date": "2026-09-13",
+            "status": "partial_failed",
+            "total_dates": 3,
+            "success_dates": 2,
+            "failed_dates": 1,
         }
 
 
 class StubErrors:
-    def list(self, identity: ResourceIdentity, **_kwargs):
-        return [
-            {"error_id": "e1", "resolution_status": "recovered"},
-            {"error_id": "e2", "resolution_status": "pending"},
-        ]
+    def list(self, *_args, **_kwargs):
+        return [{"error_id": "e1", "run_id": "run-a"}]
 
 
-def test_run_health_is_derived_without_mutating_historical_status() -> None:
+def test_ops_service_returns_persisted_run_without_retry_projection() -> None:
     service = OpsService(StubRuns(), StubErrors())  # type: ignore[arg-type]
-    run = service.get_run(
-        source="muasamcong",
-        resource="khlcnt",
-        source_date=date(2026, 9, 11),
-        run_id="run-a",
-    )
+    run = service.get_run(source="muasamcong", resource="khlcnt", run_id="run-a")
+
     assert run is not None
-    assert run["historical_status"] == "completed_with_errors"
-    assert run["current_health"] == "partial"
-    assert run["recovered_errors"] == 1
-    assert run["unresolved_errors"] == 1
+    assert run["status"] == "partial_failed"
+    assert "current_health" not in run
+    assert "recovered_errors" not in run
+
+    errors = service.list_errors(source="muasamcong", resource="khlcnt", run_id="run-a")
+    assert errors == [{"error_id": "e1", "run_id": "run-a"}]

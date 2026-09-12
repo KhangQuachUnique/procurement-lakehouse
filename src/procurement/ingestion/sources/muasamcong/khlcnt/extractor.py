@@ -8,12 +8,17 @@ import httpx
 from procurement.common.errors import ErrorStage, classify_exception
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
+from procurement.ingestion.engine.models import BronzeItem
 from procurement.ingestion.engine.stats import PageStats
-from procurement.storage.errors import ErrorRecord, build_error_record
+from procurement.models.bronze import BronzeRecord
+from procurement.models.errors import ErrorRecord
+from procurement.storage.errors import build_error_record
 
 logger = logging.getLogger(__name__)
 PROGRESS_INTERVAL = 10
 DETAIL_EXCEPTIONS = (httpx.HTTPError, KeyError, TypeError, ValueError)
+PLAN_TABLE = "khlcnt_plan_detail"
+BID_PACKAGE_TABLE = "khlcnt_bid_package_detail"
 
 
 class KhlcntDetailApi(Protocol):
@@ -28,53 +33,42 @@ def build_plan_record(
     payload: dict[str, Any],
     run_id: str,
     source_date: date,
-    search_page: int,
-    recovered_from_error_id: str | None = None,
-) -> dict[str, Any]:
-    record = {
-        "_source": "muasamcong",
-        "_resource": "khlcnt_plan_detail",
-        "_source_id": source_id,
-        "_source_version": source_version,
-        "_run_id": run_id,
-        "_source_date": source_date.isoformat(),
-        "_ingested_at": utc_now().isoformat(),
-        "_search_page": search_page,
-        "_content_hash": calculate_content_hash(payload),
-        "payload": payload,
-    }
-    if recovered_from_error_id:
-        record["_recovered_from_error_id"] = recovered_from_error_id
-    return record
+) -> BronzeItem:
+    return BronzeItem(
+        table=PLAN_TABLE,
+        record=BronzeRecord(
+            source_id=source_id,
+            source_version=source_version,
+            run_id=run_id,
+            source_date=source_date,
+            ingested_at=utc_now(),
+            content_hash=calculate_content_hash(payload),
+            payload=payload,
+        ),
+    )
 
 
 def build_bid_package_record(
     *,
     source_id: str,
-    parent_source_id: str | None,
-    source_version: str | None,
     payload: dict[str, Any],
     run_id: str,
     source_date: date,
-    search_page: int,
-    recovered_from_error_id: str | None = None,
-) -> dict[str, Any]:
-    record = {
-        "_source": "muasamcong",
-        "_resource": "khlcnt_bid_package_detail",
-        "_source_id": source_id,
-        "_parent_source_id": parent_source_id,
-        "_source_version": source_version,
-        "_run_id": run_id,
-        "_source_date": source_date.isoformat(),
-        "_ingested_at": utc_now().isoformat(),
-        "_search_page": search_page,
-        "_content_hash": calculate_content_hash(payload),
-        "payload": payload,
-    }
-    if recovered_from_error_id:
-        record["_recovered_from_error_id"] = recovered_from_error_id
-    return record
+) -> BronzeItem:
+    # MuaSamCong does not expose a version belonging to the bid-package entity
+    # itself here. Do not reuse the parent plan version as package version.
+    return BronzeItem(
+        table=BID_PACKAGE_TABLE,
+        record=BronzeRecord(
+            source_id=source_id,
+            source_version=None,
+            run_id=run_id,
+            source_date=source_date,
+            ingested_at=utc_now(),
+            content_hash=calculate_content_hash(payload),
+            payload=payload,
+        ),
+    )
 
 
 def _record_detail_error(
@@ -87,24 +81,17 @@ def _record_detail_error(
     source_date: date,
     search_page: int,
     source_id: str | None,
-    parent_source_id: str | None,
-    source_version: str | None,
-    retry_input: dict[str, Any],
 ) -> None:
-    classification = classify_exception(exc)
     errors.append(
         build_error_record(
             identity=identity,
             run_id=run_id,
             stage=stage,
             source_date=source_date,
-            search_page=search_page,
+            page_number=search_page,
             exc=exc,
-            classification=classification,
-            retry_input=retry_input,
+            classification=classify_exception(exc),
             source_id=source_id,
-            parent_source_id=parent_source_id,
-            source_version=source_version,
         )
     )
     logger.error(
@@ -127,9 +114,10 @@ def iter_khlcnt_records(
     search_page: int,
     errors: list[ErrorRecord],
     stats: PageStats,
-) -> Iterator[dict[str, Any]]:
+) -> Iterator[BronzeItem]:
     total_plans = len(search_items)
     processed_packages = 0
+
     for plan_index, search_item in enumerate(search_items, start=1):
         plan_id = search_item.get("id")
         source_version = search_item.get("planVersion")
@@ -144,11 +132,9 @@ def iter_khlcnt_records(
                 source_date=source_date,
                 search_page=search_page,
                 source_id=None,
-                parent_source_id=None,
-                source_version=source_version,
-                retry_input={},
             )
             continue
+
         try:
             plan_detail = client.get_plan_detail(plan_id)
         except DETAIL_EXCEPTIONS as exc:
@@ -162,9 +148,6 @@ def iter_khlcnt_records(
                 source_date=source_date,
                 search_page=search_page,
                 source_id=plan_id,
-                parent_source_id=None,
-                source_version=source_version,
-                retry_input={"plan_id": plan_id},
             )
             continue
 
@@ -174,7 +157,6 @@ def iter_khlcnt_records(
             payload=plan_detail,
             run_id=run_id,
             source_date=source_date,
-            search_page=search_page,
         )
         stats.record("plan")
 
@@ -191,11 +173,9 @@ def iter_khlcnt_records(
                     source_date=source_date,
                     search_page=search_page,
                     source_id=None,
-                    parent_source_id=plan_id,
-                    source_version=None,
-                    retry_input={"plan_id": plan_id},
                 )
                 continue
+
             try:
                 package_detail = client.get_bid_package_detail(package_id)
             except DETAIL_EXCEPTIONS as exc:
@@ -209,26 +189,22 @@ def iter_khlcnt_records(
                     source_date=source_date,
                     search_page=search_page,
                     source_id=package_id,
-                    parent_source_id=plan_id,
-                    source_version=None,
-                    retry_input={"plan_id": plan_id, "package_id": package_id},
                 )
                 continue
+
             yield build_bid_package_record(
                 source_id=package_id,
-                parent_source_id=package.get("idPlan") or plan_id,
-                source_version=package_detail.get("planVersion"),
                 payload=package_detail,
                 run_id=run_id,
                 source_date=source_date,
-                search_page=search_page,
             )
             processed_packages += 1
             stats.record("bid_package")
 
         if plan_index % PROGRESS_INTERVAL == 0 or plan_index == total_plans:
             logger.info(
-                "detail_progress run_id=%s source_date=%s page=%s plans=%s/%s packages=%s errors=%s",
+                "detail_progress run_id=%s source_date=%s page=%s "
+                "plans=%s/%s packages=%s errors=%s",
                 run_id,
                 source_date,
                 search_page,

@@ -1,16 +1,34 @@
+import fnmatch
 import io
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
 from procurement.common.resources import ResourceIdentity
+from procurement.models.control import (
+    DayManifest,
+    DayStatus,
+    PageManifest,
+    PageStatus,
+    RunManifest,
+    RunStatus,
+)
+from procurement.storage.control import (
+    read_day_manifest,
+    read_page_manifest,
+    read_run_manifest,
+    write_day_manifest,
+    write_page_manifest,
+    write_run_manifest,
+)
 from procurement.storage.locks import ActiveLockError, acquire_daily_lock, release_daily_lock
-from procurement.storage.manifests import read_daily_success, write_daily_success
 
 
 class MemoryFile(io.BytesIO):
     def __init__(self, fs: "MemoryFilesystem", key: str, initial: bytes = b"") -> None:
-        super().__init__(initial); self.fs = fs; self.key = key
+        super().__init__(initial)
+        self.fs = fs
+        self.key = key
 
     def close(self) -> None:
         if not self.closed:
@@ -32,20 +50,68 @@ class MemoryFilesystem:
     def rm(self, key: str) -> None:
         del self.objects[key]
 
+    def glob(self, pattern: str) -> list[str]:
+        return [key for key in self.objects if fnmatch.fnmatch(key, pattern)]
+
 
 KHLCNT = ResourceIdentity("muasamcong", "khlcnt")
+NOW = datetime(2026, 9, 12, tzinfo=UTC)
 
 
-def test_daily_success_round_trip() -> None:
-    fs = MemoryFilesystem(); source_date = date(2026, 9, 10)
-    metadata = {"status": "completed", "query_fingerprint": "abc"}
-    write_daily_success(fs, KHLCNT, source_date, metadata)  # type: ignore[arg-type]
-    assert read_daily_success(fs, KHLCNT, source_date) == metadata  # type: ignore[arg-type]
+def test_control_hierarchy_round_trip() -> None:
+    fs = MemoryFilesystem()
+    source_date = date(2026, 9, 10)
+    run = RunManifest(
+        run_id="run-a",
+        source="muasamcong",
+        resource="khlcnt",
+        start_date=source_date,
+        end_date=source_date,
+        status=RunStatus.RUNNING,
+        total_dates=1,
+        started_at=NOW,
+    )
+    day = DayManifest(
+        run_id="run-a",
+        source="muasamcong",
+        resource="khlcnt",
+        source_date=source_date,
+        status=DayStatus.RUNNING,
+        started_at=NOW,
+    )
+    page = PageManifest(
+        run_id="run-a",
+        source_date=source_date,
+        page_number=0,
+        page_size=50,
+        status=PageStatus.SUCCESS,
+        started_at=NOW,
+        completed_at=NOW,
+    )
+
+    write_run_manifest(fs, KHLCNT, run)  # type: ignore[arg-type]
+    write_day_manifest(fs, KHLCNT, day)  # type: ignore[arg-type]
+    write_page_manifest(fs, KHLCNT, page)  # type: ignore[arg-type]
+
+    assert read_run_manifest(fs, KHLCNT, "run-a") == run  # type: ignore[arg-type]
+    assert read_day_manifest(fs, KHLCNT, "run-a", source_date) == day  # type: ignore[arg-type]
+    assert read_page_manifest(fs, KHLCNT, "run-a", source_date, 0) == page  # type: ignore[arg-type]
+    keys = "\n".join(fs.objects)
+    assert "run_id=run-a/source_date=2026-09-10/day.json" in keys
+    assert "run_id=run-a/source_date=2026-09-10/pages/page-000000.json" in keys
 
 
 def test_active_lock_blocks_other_run() -> None:
-    fs = MemoryFilesystem(); source_date = date(2026, 9, 10); now = datetime(2026, 9, 11, tzinfo=UTC)
+    fs = MemoryFilesystem()
+    source_date = date(2026, 9, 10)
+    now = datetime(2026, 9, 11, tzinfo=UTC)
     acquire_daily_lock(fs, KHLCNT, source_date, "run-1", now=now)  # type: ignore[arg-type]
     with pytest.raises(ActiveLockError):
-        acquire_daily_lock(fs, KHLCNT, source_date, "run-2", now=now + timedelta(hours=1))  # type: ignore[arg-type]
+        acquire_daily_lock(  # type: ignore[arg-type]
+            fs,
+            KHLCNT,
+            source_date,
+            "run-2",
+            now=now + timedelta(hours=1),
+        )
     release_daily_lock(fs, KHLCNT, source_date, "run-1")  # type: ignore[arg-type]

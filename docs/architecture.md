@@ -1,53 +1,84 @@
 # Procurement Lakehouse architecture
 
-## Mental model
-
-The ingestion code follows one direction:
+## Ingestion mental model
 
 ```text
-Job -> Batch runner -> Daily engine -> Resource adapter/extractor -> Storage
-                               \-> Retry engine -> Storage
-Ops API -> Observability service/repositories -> Storage
+Job -> Range runner -> Daily runner -> ResourceSpec/source adapter -> Bronze
+                         |                         |
+                         +-------------------------+-> Control + Errors
 ```
 
-### Ownership rules
+The current scope ends at Bronze. Silver/Gold consumption and active-snapshot selection are intentionally not part of this ingestion refactor yet.
 
-1. `jobs/` only parses input and wires dependencies.
-2. `ingestion/engine/` owns ingestion lifecycle, not source-specific endpoints.
-3. `ingestion/sources/<source>/<resource>/` owns API/query/extraction/retry behavior for that resource.
-4. Resource code never owns checkpoints, manifests, locks or physical storage layout.
-5. `storage/` owns how/where data and state are persisted; it does not decide when ingestion steps run.
-6. Bronze is append-only and at-least-once. Silver is responsible for canonical deduplication by source identity/version/content hash.
-7. Original run manifests and error events are historical facts and are never rewritten after recovery.
-8. Retry uses a new `retry_run_id`; mutable recovery state lives separately in `_error_state`.
-9. `_SUCCESS` means the daily crawl lifecycle for a closed source date completed; it does not mean every record-level error has already recovered.
-10. The Ops API derives current data health from the historical run + error events + current error resolutions.
+## Ownership rules
 
-## Terminology
+1. `jobs/` parses CLI input and wires dependencies.
+2. `ingestion/batch_runner.py` owns the range run: one `run_id`, date splitting, and aggregate run status.
+3. `ingestion/engine/daily_runner.py` owns the lifecycle of one `(run_id, source_date)` attempt.
+4. `ingestion/sources/<source>/<resource>/` owns source endpoints and source-specific extraction.
+5. `models/` owns persisted data contracts (`RunManifest`, `DayManifest`, `PageManifest`, `ErrorRecord`, `BronzeRecord`).
+6. `storage/` owns physical object-store layout and serialization only.
+7. Bronze is append-only and preserves the source payload inside a typed lineage envelope.
+8. Any ingestion error makes the whole source-date attempt `FAILED`.
+9. Recovery is a new `run_id` that crawls the entire source date again from page 0. Data/pages are never mixed across attempts.
+10. `DayManifest.status == success` is the commit marker for a Bronze day attempt. Existing Parquet files alone do not mean the attempt is valid.
 
-- **Batch run**: one CLI execution over `start_date..end_date`; owns `run_id`.
-- **Daily run**: one `(source, resource, source_date)` execution inside a batch run.
-- **Page**: one source search page inside a daily run.
-- **Record**: one append-only Bronze observation.
-- **Error event**: immutable error captured during original ingestion.
-- **Retry run**: separate execution that attempts to recover unresolved retryable error events.
+## Core hierarchy
 
-## Storage planes
+```text
+run_id
+└── source_date
+    └── page
+```
+
+A range run may contain successful and failed dates independently. For example:
+
+```text
+run A
+├── 2026-09-01 SUCCESS
+├── 2026-09-02 FAILED
+└── 2026-09-03 SUCCESS
+
+Run A => PARTIAL_FAILED
+```
+
+The successful dates remain valid attempts even though the overall range run is partial.
+
+## Storage layout
 
 ```text
 Object storage
-├── _raw_search/       # immutable source search snapshots
-├── bronze/            # append-only Parquet observations
-├── _control/          # page checkpoints, run manifests, locks, _SUCCESS
-├── _errors/           # immutable error events
-├── _error_state/      # mutable current resolution state per error_id
-└── _retry_runs/       # immutable retry execution manifests
+├── bronze/
+│   └── <dataset>/<table>/source_date=YYYY-MM-DD/run_id=<run_id>/*.parquet
+│
+├── _control/
+│   └── <source>/<resource>/
+│       ├── run_id=<run_id>/
+│       │   ├── run.json
+│       │   └── source_date=YYYY-MM-DD/
+│       │       ├── day.json
+│       │       └── pages/page-000000.json
+│       └── _locks/source_date=YYYY-MM-DD.json
+│
+└── _errors/
+    └── <source>/<resource>/run_id=<run_id>/
+        └── source_date=YYYY-MM-DD/page-000000.jsonl
 ```
 
-Engine decides **when** to save/checkpoint/retry. Storage decides **how and where**.
+There is no separate raw-search/raw-detail layer in the current design. Bronze is the retained raw-ish data layer: source business data stays inside `payload`, while system lineage fields are typed and stable.
 
-## Source-date invariant
+## Bronze contract
 
-Mua Sam Cong is crawled only after a day is closed (for example, after midnight on 12/09, crawl publicDate 11/09). The current ingestion design assumes a newly published version receives the new publication date, so versions re-enter a later daily batch naturally.
+Each Bronze row contains:
 
-This invariant must be verified when adding/changing a resource. If a source later changes this behavior, the resource needs an updated incremental strategy rather than silently adding a rolling lookback.
+```text
+source_id
+source_version (nullable; only if the source versions that exact entity)
+run_id
+source_date
+ingested_at
+content_hash
+payload
+```
+
+Source payload schemas stay flexible in Bronze. Business normalization, canonical schemas and deduplication belong to Silver later.
