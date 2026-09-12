@@ -1,5 +1,6 @@
 import argparse
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from procurement.common.logging_config import configure_logging
 from procurement.common.settings import settings
@@ -9,8 +10,20 @@ from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.ingestion.sources.muasamcong.khlcnt.resource import create_khlcnt_spec
 from procurement.storage.object_store import create_s3_filesystem
 
+VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+
+
+def _validate_closed_range(start: date, end: date, *, today: date) -> None:
+    if start > end:
+        raise ValueError("start must be before or equal to end")
+    if end >= today:
+        raise ValueError("Only closed source dates can be crawled")
+
 
 def crawl_khlcnt(start: date, end: date, *, page_size: int = 50) -> str:
+    today_vn = datetime.now(VIETNAM_TZ).date()
+    _validate_closed_range(start, end, today=today_vn)
+
     if not settings.MUASAMCONG_TOKEN:
         raise RuntimeError("MUASAMCONG_TOKEN is missing")
 
@@ -33,7 +46,7 @@ def crawl_khlcnt(start: date, end: date, *, page_size: int = 50) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Crawl Muasamcong KHLCNT by source date")
+    parser = argparse.ArgumentParser(description="Crawl closed-day Muasamcong KHLCNT data")
     parser.add_argument("--start-date", type=date.fromisoformat, required=True)
     parser.add_argument("--end-date", type=date.fromisoformat, required=True)
     parser.add_argument("--page-size", type=int, default=50)
