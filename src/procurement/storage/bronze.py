@@ -39,4 +39,10 @@ def create_bronze_resource(records: Iterable[BronzeRecord], *, name: str):
         write_disposition="append",
         file_format="parquet",
         max_table_nesting=0,
+        columns={
+        "source_version": {
+            "data_type": "text",
+            "nullable": True,
+        },
+    },
     )
