@@ -1,3 +1,4 @@
+import math
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -30,7 +31,13 @@ def iter_search_pages(
                 f"Search returned {total_items} items; "
                 f"the website limit is {MAX_SEARCH_ITEMS}."
             )
+
+        total_pages = max(1, math.ceil(total_items / page_size))
         yield page_number, response
-        if page["last"]:
+
+        # MuaSamCong's `last` flag is not reliable. Derive the terminal page from
+        # totalElements and the requested page size instead so we never ingest an
+        # extra empty page or stop early because of source pagination metadata.
+        if page_number + 1 >= total_pages:
             break
         page_number += 1
