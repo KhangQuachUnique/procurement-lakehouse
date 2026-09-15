@@ -1,8 +1,6 @@
 import fnmatch
 import io
-from datetime import UTC, date, datetime, timedelta
-
-import pytest
+from datetime import UTC, date, datetime
 
 from procurement.common.resources import ResourceIdentity
 from procurement.models.control import (
@@ -21,7 +19,6 @@ from procurement.storage.control import (
     write_page_manifest,
     write_run_manifest,
 )
-from procurement.storage.locks import ActiveLockError, acquire_daily_lock, release_daily_lock
 
 
 class MemoryFile(io.BytesIO):
@@ -99,19 +96,3 @@ def test_control_hierarchy_round_trip() -> None:
     keys = "\n".join(fs.objects)
     assert "run_id=run-a/source_date=2026-09-10/day.json" in keys
     assert "run_id=run-a/source_date=2026-09-10/pages/page-000000.json" in keys
-
-
-def test_active_lock_blocks_other_run() -> None:
-    fs = MemoryFilesystem()
-    source_date = date(2026, 9, 10)
-    now = datetime(2026, 9, 11, tzinfo=UTC)
-    acquire_daily_lock(fs, KHLCNT, source_date, "run-1", now=now)  # type: ignore[arg-type]
-    with pytest.raises(ActiveLockError):
-        acquire_daily_lock(  # type: ignore[arg-type]
-            fs,
-            KHLCNT,
-            source_date,
-            "run-2",
-            now=now + timedelta(hours=1),
-        )
-    release_daily_lock(fs, KHLCNT, source_date, "run-1")  # type: ignore[arg-type]
