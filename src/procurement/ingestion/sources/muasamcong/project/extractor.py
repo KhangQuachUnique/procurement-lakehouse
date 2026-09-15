@@ -5,7 +5,6 @@ from typing import Any, Protocol
 
 import httpx
 
-from procurement.common.errors import ErrorStage, classify_exception
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 PROGRESS_INTERVAL = 10
 DETAIL_EXCEPTIONS = (httpx.HTTPError, KeyError, TypeError, ValueError)
 PROJECT_TABLE = "project_detail"
+PROJECT_DETAIL_STAGE = "project_detail"
 
 
 class ProjectDetailApi(Protocol):
@@ -71,11 +71,10 @@ def _record_detail_error(
         build_error_record(
             identity=identity,
             run_id=run_id,
-            stage=ErrorStage.PROJECT_DETAIL,
+            stage=PROJECT_DETAIL_STAGE,
             source_date=source_date,
             page_number=search_page,
             exc=exc,
-            classification=classify_exception(exc),
             source_id=source_id,
         )
     )
@@ -84,7 +83,7 @@ def _record_detail_error(
         run_id,
         source_date,
         search_page,
-        ErrorStage.PROJECT_DETAIL.value,
+        PROJECT_DETAIL_STAGE,
         source_id,
     )
 

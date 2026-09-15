@@ -2,11 +2,11 @@ import json
 import uuid
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
-from typing import BinaryIO, cast
+from typing import Any, BinaryIO, cast
 
 import s3fs
 
-from procurement.common.errors import ErrorClassification, ErrorStage, safe_error_message
+from procurement.common.errors import extract_http_status, sanitize_error_message
 from procurement.common.resources import ResourceIdentity
 from procurement.common.settings import settings
 from procurement.models.errors import ErrorRecord
@@ -16,11 +16,10 @@ def build_error_record(
     *,
     identity: ResourceIdentity,
     run_id: str,
-    stage: ErrorStage,
+    stage: str,
     source_date: date,
     page_number: int | None,
     exc: Exception,
-    classification: ErrorClassification,
     source_id: str | None = None,
 ) -> ErrorRecord:
     return ErrorRecord(
@@ -31,11 +30,10 @@ def build_error_record(
         source_date=source_date,
         page_number=page_number,
         stage=stage,
-        code=classification.code,
         source_id=source_id,
         error_type=type(exc).__name__,
-        message=safe_error_message(exc, classification),
-        http_status=classification.http_status,
+        message=sanitize_error_message(str(exc)),
+        http_status=extract_http_status(exc),
         occurred_at=datetime.now(UTC),
     )
 
@@ -64,6 +62,17 @@ def save_error_records(
     return f"s3://{key}"
 
 
+def _normalize_error_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Read schema-v1 error files without keeping the removed error taxonomy."""
+
+    normalized = dict(payload)
+    normalized.pop("code", None)
+    normalized.pop("retryable", None)
+    normalized.pop("retry_input", None)
+    normalized["schema_version"] = 2
+    return normalized
+
+
 def list_error_records(
     fs: s3fs.S3FileSystem,
     identity: ResourceIdentity,
@@ -83,5 +92,6 @@ def list_error_records(
             content = cast(BinaryIO, raw_file).read().decode("utf-8")
         for line in content.splitlines():
             if line.strip():
-                records.append(ErrorRecord.model_validate(json.loads(line)))
+                payload = _normalize_error_payload(json.loads(line))
+                records.append(ErrorRecord.model_validate(payload))
     return sorted(records, key=lambda item: item.occurred_at, reverse=True)

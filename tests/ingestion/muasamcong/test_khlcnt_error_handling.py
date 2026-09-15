@@ -3,7 +3,6 @@ from typing import Any
 
 import httpx
 
-from procurement.common.errors import ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.stats import PageStats
 from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
@@ -35,7 +34,7 @@ class PackageStubClient(StubClient):
         }
 
 
-def test_plan_failure_is_typed_error_and_successful_record_keeps_bronze_contract() -> None:
+def test_plan_failure_keeps_raw_error_and_successful_record_keeps_bronze_contract() -> None:
     errors: list[ErrorRecord] = []
 
     records = list(
@@ -55,8 +54,9 @@ def test_plan_failure_is_typed_error_and_successful_record_keeps_bronze_contract
     assert records[0].record.source_version == "02"
     assert records[0].table == "khlcnt_plan_detail"
     assert len(errors) == 1
-    assert errors[0].stage is ErrorStage.PLAN_DETAIL
-    assert errors[0].code is ErrorCode.SOURCE_TIMEOUT
+    assert errors[0].stage == "plan_detail"
+    assert errors[0].error_type == "ReadTimeout"
+    assert errors[0].message == "timeout"
     assert errors[0].source_id == "bad-plan"
 
 
@@ -80,5 +80,7 @@ def test_package_version_is_not_inherited_from_parent_plan() -> None:
     assert good_package.table == "khlcnt_bid_package_detail"
     assert good_package.record.source_version is None
     assert len(errors) == 1
-    assert errors[0].stage is ErrorStage.BID_PACKAGE_DETAIL
+    assert errors[0].stage == "bid_package_detail"
+    assert errors[0].error_type == "ReadTimeout"
+    assert errors[0].message == "timeout"
     assert errors[0].source_id == "bad-package"

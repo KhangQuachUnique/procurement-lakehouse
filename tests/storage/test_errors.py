@@ -4,7 +4,6 @@ from datetime import date
 
 import httpx
 
-from procurement.common.errors import ErrorClassification, ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.storage.errors import build_error_record, save_error_records
 
@@ -30,16 +29,15 @@ class FakeFilesystem:
         return CapturingBuffer(self, key)
 
 
-def test_error_event_is_typed_immutable_fact_without_retry_state() -> None:
+def test_error_event_preserves_stage_type_and_message_without_error_code() -> None:
     identity = ResourceIdentity("muasamcong", "khlcnt")
     record = build_error_record(
         identity=identity,
         run_id="run-1",
-        stage=ErrorStage.PLAN_DETAIL,
+        stage="plan_detail",
         source_date=date(2026, 9, 10),
         page_number=2,
-        exc=httpx.ReadTimeout("timeout"),
-        classification=ErrorClassification(ErrorCode.SOURCE_TIMEOUT, True),
+        exc=httpx.ReadTimeout("timeout while reading plan detail"),
         source_id="p-1",
     )
     fs = FakeFilesystem()
@@ -55,8 +53,11 @@ def test_error_event_is_typed_immutable_fact_without_retry_state() -> None:
     key, raw = next(iter(fs.objects.items()))
     stored = json.loads(raw.decode().strip())
     assert "run_id=run-1/source_date=2026-09-10/page-000002.jsonl" in key
+    assert stored["schema_version"] == 2
     assert stored["error_id"]
+    assert stored["resource"] == "khlcnt"
     assert stored["stage"] == "plan_detail"
-    assert stored["code"] == "SOURCE_TIMEOUT"
+    assert stored["error_type"] == "ReadTimeout"
+    assert stored["message"] == "timeout while reading plan detail"
+    assert "code" not in stored
     assert "retryable" not in stored
-    assert "retry_input" not in stored

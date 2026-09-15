@@ -5,7 +5,6 @@ from typing import Any, Protocol
 
 import httpx
 
-from procurement.common.errors import ErrorStage, classify_exception
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
@@ -19,6 +18,8 @@ PROGRESS_INTERVAL = 10
 DETAIL_EXCEPTIONS = (httpx.HTTPError, KeyError, TypeError, ValueError)
 PLAN_TABLE = "khlcnt_plan_detail"
 BID_PACKAGE_TABLE = "khlcnt_bid_package_detail"
+PLAN_DETAIL_STAGE = "plan_detail"
+BID_PACKAGE_DETAIL_STAGE = "bid_package_detail"
 
 
 class KhlcntDetailApi(Protocol):
@@ -76,7 +77,7 @@ def _record_detail_error(
     identity: ResourceIdentity,
     errors: list[ErrorRecord],
     exc: Exception,
-    stage: ErrorStage,
+    stage: str,
     run_id: str,
     source_date: date,
     search_page: int,
@@ -90,7 +91,6 @@ def _record_detail_error(
             source_date=source_date,
             page_number=search_page,
             exc=exc,
-            classification=classify_exception(exc),
             source_id=source_id,
         )
     )
@@ -99,7 +99,7 @@ def _record_detail_error(
         run_id,
         source_date,
         search_page,
-        stage.value,
+        stage,
         source_id,
     )
 
@@ -127,7 +127,7 @@ def iter_khlcnt_records(
                 identity=identity,
                 errors=errors,
                 exc=KeyError("id"),
-                stage=ErrorStage.PLAN_DETAIL,
+                stage=PLAN_DETAIL_STAGE,
                 run_id=run_id,
                 source_date=source_date,
                 search_page=search_page,
@@ -143,7 +143,7 @@ def iter_khlcnt_records(
                 identity=identity,
                 errors=errors,
                 exc=exc,
-                stage=ErrorStage.PLAN_DETAIL,
+                stage=PLAN_DETAIL_STAGE,
                 run_id=run_id,
                 source_date=source_date,
                 search_page=search_page,
@@ -168,7 +168,7 @@ def iter_khlcnt_records(
                     identity=identity,
                     errors=errors,
                     exc=KeyError("id"),
-                    stage=ErrorStage.BID_PACKAGE_DETAIL,
+                    stage=BID_PACKAGE_DETAIL_STAGE,
                     run_id=run_id,
                     source_date=source_date,
                     search_page=search_page,
@@ -184,7 +184,7 @@ def iter_khlcnt_records(
                     identity=identity,
                     errors=errors,
                     exc=exc,
-                    stage=ErrorStage.BID_PACKAGE_DETAIL,
+                    stage=BID_PACKAGE_DETAIL_STAGE,
                     run_id=run_id,
                     source_date=source_date,
                     search_page=search_page,

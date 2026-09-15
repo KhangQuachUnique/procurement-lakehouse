@@ -3,7 +3,6 @@ from typing import Any
 
 import httpx
 
-from procurement.common.errors import ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.stats import PageStats
 from procurement.ingestion.sources.muasamcong.project.extractor import iter_project_records
@@ -30,7 +29,7 @@ class StubClient:
         }
 
 
-def test_project_failure_is_typed_and_success_preserves_raw_payload() -> None:
+def test_project_failure_keeps_raw_error_and_success_preserves_raw_payload() -> None:
     errors: list[ErrorRecord] = []
     stats = PageStats()
 
@@ -58,8 +57,9 @@ def test_project_failure_is_typed_and_success_preserves_raw_payload() -> None:
     assert stats.error_counts["project"] == 1
 
     assert len(errors) == 1
-    assert errors[0].stage is ErrorStage.PROJECT_DETAIL
-    assert errors[0].code is ErrorCode.SOURCE_TIMEOUT
+    assert errors[0].stage == "project_detail"
+    assert errors[0].error_type == "ReadTimeout"
+    assert errors[0].message == "timeout"
     assert errors[0].source_id == "bad-project"
 
 
@@ -80,7 +80,7 @@ def test_project_version_falls_back_to_top_level_pversion() -> None:
     assert records[0].record.source_version == "07"
 
 
-def test_missing_project_id_is_invalid_source_response() -> None:
+def test_missing_project_id_keeps_original_key_error_message() -> None:
     errors: list[ErrorRecord] = []
 
     records = list(
@@ -98,6 +98,7 @@ def test_missing_project_id_is_invalid_source_response() -> None:
 
     assert records == []
     assert len(errors) == 1
-    assert errors[0].stage is ErrorStage.PROJECT_DETAIL
-    assert errors[0].code is ErrorCode.SOURCE_INVALID_RESPONSE
+    assert errors[0].stage == "project_detail"
+    assert errors[0].error_type == "KeyError"
+    assert errors[0].message == "'id'"
     assert errors[0].source_id is None

@@ -4,7 +4,6 @@ from typing import Any
 
 import pytest
 
-from procurement.common.errors import ErrorCode, ErrorStage
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine import daily_runner
 from procurement.ingestion.engine.models import BronzeItem, ResourceSpec
@@ -152,11 +151,10 @@ def test_any_detail_error_fails_whole_day_and_skips_bronze_write(harness: Harnes
                 resource=IDENTITY.resource,
                 source_date=SOURCE_DATE,
                 page_number=0,
-                stage=ErrorStage.PLAN_DETAIL,
-                code=ErrorCode.SOURCE_TIMEOUT,
+                stage="plan_detail",
                 source_id="bad",
                 error_type="ReadTimeout",
-                message="Source request timed out",
+                message="timeout while reading detail",
                 occurred_at=datetime(2026, 9, 10, tzinfo=UTC),
             )
         )
@@ -178,7 +176,8 @@ def test_bronze_load_error_fails_day(harness: Harness) -> None:
 
     assert result["status"] == "failed"
     assert harness.days[-1].status is DayStatus.FAILED
-    assert harness.errors[-1].stage is ErrorStage.BRONZE_LOAD
+    assert harness.errors[-1].stage == "bronze_load"
+    assert harness.errors[-1].message == "load failed"
 
 
 def test_new_run_starts_same_source_date_from_page_zero_again(harness: Harness) -> None:

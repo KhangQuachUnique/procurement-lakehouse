@@ -6,12 +6,6 @@ from datetime import UTC, date, datetime
 import dlt
 import s3fs
 
-from procurement.common.errors import (
-    ErrorClassification,
-    ErrorCode,
-    ErrorStage,
-    classify_exception,
-)
 from procurement.ingestion.engine.models import DailyResult, ResourceSpec
 from procurement.ingestion.engine.pagination import SearchResultLimitError, iter_search_pages
 from procurement.ingestion.engine.stats import PageStats
@@ -24,6 +18,11 @@ from procurement.storage.errors import build_error_record, save_error_records
 from procurement.storage.locks import acquire_daily_lock, refresh_daily_lock, release_daily_lock
 
 logger = logging.getLogger(__name__)
+
+SEARCH_PAGE_STAGE = "search_page"
+SEARCH_LIMIT_STAGE = "search_limit"
+BRONZE_LOAD_STAGE = "bronze_load"
+INTERNAL_STAGE = "internal"
 
 
 def _now() -> datetime:
@@ -45,11 +44,10 @@ def _fatal_error_record(
     *,
     spec: ResourceSpec,
     run_id: str,
-    stage: ErrorStage,
+    stage: str,
     source_date: date,
     page_number: int | None,
     exc: Exception,
-    classification: ErrorClassification | None = None,
 ) -> ErrorRecord:
     return build_error_record(
         identity=spec.identity,
@@ -58,7 +56,6 @@ def _fatal_error_record(
         source_date=source_date,
         page_number=page_number,
         exc=exc,
-        classification=classification or classify_exception(exc),
     )
 
 
@@ -182,14 +179,9 @@ def run_daily_resource(
                 break
             except Exception as exc:
                 stage = (
-                    ErrorStage.SEARCH_LIMIT
+                    SEARCH_LIMIT_STAGE
                     if isinstance(exc, SearchResultLimitError)
-                    else ErrorStage.SEARCH_PAGE
-                )
-                classification = (
-                    ErrorClassification(ErrorCode.SEARCH_RESULT_LIMIT_REACHED, False)
-                    if stage is ErrorStage.SEARCH_LIMIT
-                    else classify_exception(exc)
+                    else SEARCH_PAGE_STAGE
                 )
                 record = _fatal_error_record(
                     spec=spec,
@@ -198,7 +190,6 @@ def run_daily_resource(
                     source_date=source_date,
                     page_number=page_number,
                     exc=exc,
-                    classification=classification,
                 )
                 page = PageManifest(
                     run_id=run_id,
@@ -243,7 +234,7 @@ def run_daily_resource(
                 record = _fatal_error_record(
                     spec=spec,
                     run_id=run_id,
-                    stage=ErrorStage.INTERNAL,
+                    stage=INTERNAL_STAGE,
                     source_date=source_date,
                     page_number=page_number,
                     exc=exc,
@@ -271,7 +262,7 @@ def run_daily_resource(
                 record = _fatal_error_record(
                     spec=spec,
                     run_id=run_id,
-                    stage=ErrorStage.SEARCH_PAGE,
+                    stage=SEARCH_PAGE_STAGE,
                     source_date=source_date,
                     page_number=page_number,
                     exc=exc,
@@ -308,7 +299,7 @@ def run_daily_resource(
                     _fatal_error_record(
                         spec=spec,
                         run_id=run_id,
-                        stage=ErrorStage.INTERNAL,
+                        stage=INTERNAL_STAGE,
                         source_date=source_date,
                         page_number=page_number,
                         exc=exc,
@@ -351,11 +342,10 @@ def run_daily_resource(
                 record = _fatal_error_record(
                     spec=spec,
                     run_id=run_id,
-                    stage=ErrorStage.BRONZE_LOAD,
+                    stage=BRONZE_LOAD_STAGE,
                     source_date=source_date,
                     page_number=page_number,
                     exc=exc,
-                    classification=ErrorClassification(ErrorCode.BRONZE_LOAD_FAILED, True),
                 )
                 daily_errors += 1
                 daily_bronze_records += persisted_records
@@ -410,7 +400,7 @@ def run_daily_resource(
             record = _fatal_error_record(
                 spec=spec,
                 run_id=run_id,
-                stage=ErrorStage.INTERNAL,
+                stage=INTERNAL_STAGE,
                 source_date=source_date,
                 page_number=page_number,
                 exc=exc,
