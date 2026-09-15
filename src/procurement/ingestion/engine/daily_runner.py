@@ -194,7 +194,9 @@ def run_daily_resource(
                 actual_page_number, response = next(pages)
             except StopIteration:
                 break
-            except Exception as exc:
+            # fetch_page is a resource extension point. Any source exception must be
+            # converted into a persisted failed attempt instead of escaping unrecorded.
+            except Exception as exc:  # noqa: BLE001
                 if isinstance(exc, SearchResultLimitError):
                     stage = SEARCH_LIMIT_STAGE
                 elif isinstance(exc, PaginationInvariantError):
@@ -288,7 +290,9 @@ def run_daily_resource(
                         stats=stats,
                     )
                 )
-            except Exception as exc:
+            # A resource extractor is also an extension point. Unknown extractor bugs
+            # must fail the attempt and keep the original diagnostic information.
+            except Exception as exc:  # noqa: BLE001
                 page_errors.append(
                     _fatal_error_record(
                         spec=spec,
@@ -332,7 +336,9 @@ def run_daily_resource(
                     resource = create_bronze_resource(records, name=table)
                     pipeline.run(resource)
                     persisted_records += len(records)
-            except Exception as exc:
+            # DLT/storage may raise backend-specific exceptions. The engine boundary
+            # intentionally captures all of them so the day cannot be falsely committed.
+            except Exception as exc:  # noqa: BLE001
                 record = _fatal_error_record(
                     spec=spec,
                     run_id=run_id,
