@@ -1,3 +1,4 @@
+from argparse import Namespace
 from datetime import date
 
 import pytest
@@ -90,7 +91,9 @@ def test_crawl_all_uses_two_workers_and_continues_after_crash(monkeypatch) -> No
     monkeypatch.setattr(crawl_all_module, "create_s3_filesystem", lambda: object())
     monkeypatch.setattr(crawl_all_module, "_read_run_status", lambda *_args: "success")
 
-    results = crawl_all(2022, page_size=25)
+    start = date(2022, 3, 1)
+    end = date(2022, 3, 31)
+    results = crawl_all(start, end, page_size=25)
 
     assert _InlineProcessPoolExecutor.worker_counts == [2]
     assert [item[0] for item in calls] == [
@@ -99,8 +102,8 @@ def test_crawl_all_uses_two_workers_and_continues_after_crash(monkeypatch) -> No
         "notify_contractor",
         "contractor_result",
     ]
-    assert all(item[1] == date(2022, 1, 1) for item in calls)
-    assert all(item[2] == date(2022, 12, 31) for item in calls)
+    assert all(item[1] == start for item in calls)
+    assert all(item[2] == end for item in calls)
     assert all(item[3] == 25 for item in calls)
 
     assert [(item.resource, item.status) for item in results] == [
@@ -129,7 +132,7 @@ def test_crawl_all_uses_persisted_run_status(monkeypatch) -> None:
         lambda _fs, _identity, run_id: "partial_failed" if run_id == "run-a" else "unknown",
     )
 
-    results = crawl_all(2022)
+    results = crawl_all(date(2022, 1, 1), date(2022, 1, 31))
 
     assert _InlineProcessPoolExecutor.worker_counts == [1]
     assert results[0].run_id == "run-a"
@@ -151,8 +154,74 @@ def test_year_range_requires_fully_closed_year() -> None:
         crawl_all_module._year_range(2027, today=today)
 
 
+def test_resolve_cli_range_supports_year_and_explicit_range() -> None:
+    today = date(2026, 9, 15)
+
+    year_args = Namespace(
+        year=2022,
+        start_date=None,
+        end_date=None,
+        page_size=50,
+    )
+    assert crawl_all_module._resolve_cli_range(year_args, today=today) == (
+        date(2022, 1, 1),
+        date(2022, 12, 31),
+    )
+
+    range_args = Namespace(
+        year=None,
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 14),
+        page_size=50,
+    )
+    assert crawl_all_module._resolve_cli_range(range_args, today=today) == (
+        date(2026, 9, 1),
+        date(2026, 9, 14),
+    )
+
+
+def test_resolve_cli_range_rejects_invalid_combinations() -> None:
+    today = date(2026, 9, 15)
+
+    with pytest.raises(ValueError, match="cannot be used"):
+        crawl_all_module._resolve_cli_range(
+            Namespace(
+                year=2022,
+                start_date=None,
+                end_date=date(2022, 12, 31),
+                page_size=50,
+            ),
+            today=today,
+        )
+
+    with pytest.raises(ValueError, match="required"):
+        crawl_all_module._resolve_cli_range(
+            Namespace(
+                year=None,
+                start_date=date(2022, 1, 1),
+                end_date=None,
+                page_size=50,
+            ),
+            today=today,
+        )
+
+
+def test_closed_range_rejects_today_and_reversed_range() -> None:
+    today = date(2026, 9, 15)
+
+    with pytest.raises(ValueError, match="closed"):
+        crawl_all_module._validate_closed_range(today, today, today=today)
+
+    with pytest.raises(ValueError, match="before or equal"):
+        crawl_all_module._validate_closed_range(
+            date(2022, 2, 1),
+            date(2022, 1, 1),
+            today=today,
+        )
+
+
 def test_crawl_all_rejects_invalid_page_size(monkeypatch) -> None:
     monkeypatch.setattr(crawl_all_module, "_today_vn", lambda: date(2026, 9, 15))
 
     with pytest.raises(ValueError, match="page_size"):
-        crawl_all(2022, page_size=0)
+        crawl_all(date(2022, 1, 1), date(2022, 12, 31), page_size=0)

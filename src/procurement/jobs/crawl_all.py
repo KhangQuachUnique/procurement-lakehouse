@@ -75,12 +75,37 @@ def _today_vn() -> date:
     return datetime.now(VIETNAM_TZ).date()
 
 
+def _validate_closed_range(start: date, end: date, *, today: date) -> None:
+    if start > end:
+        raise ValueError("start_date must be before or equal to end_date")
+    if end >= today:
+        raise ValueError("Only fully closed source dates can be crawled")
+
+
 def _year_range(year: int, *, today: date) -> tuple[date, date]:
     if year < 1:
         raise ValueError("year must be a positive integer")
     if year >= today.year:
-        raise ValueError("crawl_all only accepts fully closed calendar years")
-    return date(year, 1, 1), date(year, 12, 31)
+        raise ValueError("--year only accepts fully closed calendar years")
+    start = date(year, 1, 1)
+    end = date(year, 12, 31)
+    _validate_closed_range(start, end, today=today)
+    return start, end
+
+
+def _resolve_cli_range(args: argparse.Namespace, *, today: date) -> tuple[date, date]:
+    if args.year is not None:
+        if args.end_date is not None:
+            raise ValueError("--end-date cannot be used with --year")
+        return _year_range(args.year, today=today)
+
+    if args.start_date is None:
+        raise ValueError("Either --year or --start-date must be provided")
+    if args.end_date is None:
+        raise ValueError("--end-date is required with --start-date")
+
+    _validate_closed_range(args.start_date, args.end_date, today=today)
+    return args.start_date, args.end_date
 
 
 def _read_run_status(
@@ -114,18 +139,23 @@ def _execute_resource_job(
         )
 
 
-def crawl_all(year: int, *, page_size: int = 50) -> list[ResourceRunResult]:
-    """Backfill all Muasamcong resources with at most two worker processes.
+def crawl_all(
+    start: date,
+    end: date,
+    *,
+    page_size: int = 50,
+) -> list[ResourceRunResult]:
+    """Backfill all Muasamcong resources for a closed date range with two workers.
 
     This job is orchestration only. It does not retry failed dates and does not decide
-    whether the year is globally complete; coverage is projected by Ops from committed
-    DayManifest records.
+    whether the requested range is globally complete; coverage is projected by Ops from
+    committed DayManifest records.
     """
 
     if page_size <= 0:
         raise ValueError("page_size must be greater than zero")
 
-    start, end = _year_range(year, today=_today_vn())
+    _validate_closed_range(start, end, today=_today_vn())
     jobs = _resource_jobs()
     filesystem = create_s3_filesystem()
     results_by_resource: dict[str, ResourceRunResult] = {}
@@ -170,8 +200,12 @@ def crawl_all(year: int, *, page_size: int = 50) -> list[ResourceRunResult]:
     return [results_by_resource[job.identity.resource] for job in jobs]
 
 
-def _print_summary(year: int, results: list[ResourceRunResult]) -> None:
-    print(f"Backfill {year} finished")
+def _print_summary(
+    start: date,
+    end: date,
+    results: list[ResourceRunResult],
+) -> None:
+    print(f"Backfill {start.isoformat()} -> {end.isoformat()} finished")
     for result in results:
         run_id = result.run_id or "-"
         line = f"{result.resource:<22} {result.status:<15} run_id={run_id}"
@@ -180,22 +214,34 @@ def _print_summary(year: int, results: list[ResourceRunResult]) -> None:
         print(line)
 
 
-def parse_args() -> argparse.Namespace:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Crawl all Muasamcong resources for one closed year with two workers"
+        description=(
+            "Crawl all Muasamcong resources for one closed year or closed date range "
+            "with two workers"
+        )
     )
-    parser.add_argument("--year", type=int, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--year", type=int)
+    mode.add_argument("--start-date", type=date.fromisoformat)
+    parser.add_argument("--end-date", type=date.fromisoformat)
     parser.add_argument("--page-size", type=int, default=50)
-    return parser.parse_args()
+    return parser
 
 
 def main() -> None:
     configure_logging()
-    args = parse_args()
-    results = crawl_all(args.year, page_size=args.page_size)
-    _print_summary(args.year, results)
+    parser = _build_parser()
+    args = parser.parse_args()
+    try:
+        start, end = _resolve_cli_range(args, today=_today_vn())
+    except ValueError as exc:
+        parser.error(str(exc))
 
-    # This is the outcome of this execution only. Overall year coverage remains an Ops concern.
+    results = crawl_all(start, end, page_size=args.page_size)
+    _print_summary(start, end, results)
+
+    # This is the outcome of this execution only. Overall coverage remains an Ops concern.
     if any(result.status != RunStatus.SUCCESS.value for result in results):
         raise SystemExit(1)
 
