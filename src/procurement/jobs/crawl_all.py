@@ -1,4 +1,5 @@
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Protocol
@@ -26,6 +27,7 @@ from procurement.storage.control import read_run_manifest
 from procurement.storage.object_store import create_s3_filesystem
 
 VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+MAX_RESOURCE_WORKERS = 2
 
 
 class CrawlFunction(Protocol):
@@ -45,6 +47,13 @@ class ResourceJob:
 
 
 @dataclass(frozen=True)
+class ResourceExecution:
+    resource: str
+    run_id: str | None
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class ResourceRunResult:
     resource: str
     run_id: str | None
@@ -53,7 +62,7 @@ class ResourceRunResult:
 
 
 def _resource_jobs() -> tuple[ResourceJob, ...]:
-    # Business order keeps logs predictable while resources remain operationally independent.
+    # Business order is preserved in the final summary even though execution is concurrent.
     return (
         ResourceJob(PROJECT_IDENTITY, crawl_project),
         ResourceJob(KHLCNT_IDENTITY, crawl_khlcnt),
@@ -83,8 +92,30 @@ def _read_run_status(
     return "unknown" if manifest is None else manifest.status.value
 
 
+def _execute_resource_job(
+    job: ResourceJob,
+    start: date,
+    end: date,
+    page_size: int,
+) -> ResourceExecution:
+    """Run one resource inside its worker process and return a serializable result."""
+
+    configure_logging()
+    try:
+        run_id = job.crawl(start, end, page_size=page_size)
+        return ResourceExecution(resource=job.identity.resource, run_id=run_id)
+    # Resource jobs are independent. Capture a resource crash so the pool can continue
+    # scheduling the remaining jobs.
+    except Exception as exc:  # noqa: BLE001
+        return ResourceExecution(
+            resource=job.identity.resource,
+            run_id=None,
+            error=sanitize_error_message(str(exc)),
+        )
+
+
 def crawl_all(year: int, *, page_size: int = 50) -> list[ResourceRunResult]:
-    """Sequentially backfill all Muasamcong resources for one closed calendar year.
+    """Backfill all Muasamcong resources with at most two worker processes.
 
     This job is orchestration only. It does not retry failed dates and does not decide
     whether the year is globally complete; coverage is projected by Ops from committed
@@ -95,33 +126,48 @@ def crawl_all(year: int, *, page_size: int = 50) -> list[ResourceRunResult]:
         raise ValueError("page_size must be greater than zero")
 
     start, end = _year_range(year, today=_today_vn())
+    jobs = _resource_jobs()
     filesystem = create_s3_filesystem()
-    results: list[ResourceRunResult] = []
+    results_by_resource: dict[str, ResourceRunResult] = {}
+    worker_count = min(MAX_RESOURCE_WORKERS, len(jobs))
 
-    for job in _resource_jobs():
-        try:
-            run_id = job.crawl(start, end, page_size=page_size)
-            status = _read_run_status(filesystem, job.identity, run_id)
-            results.append(
-                ResourceRunResult(
-                    resource=job.identity.resource,
-                    run_id=run_id,
-                    status=status,
-                )
-            )
-        # Resource jobs are independent. A crash is reported but must not prevent
-        # the remaining resources from being backfilled.
-        except Exception as exc:  # noqa: BLE001
-            results.append(
-                ResourceRunResult(
+    with ProcessPoolExecutor(max_workers=worker_count) as executor:
+        future_to_job = {
+            executor.submit(_execute_resource_job, job, start, end, page_size): job
+            for job in jobs
+        }
+
+        for future in as_completed(future_to_job):
+            job = future_to_job[future]
+            try:
+                execution = future.result()
+            # Covers worker-process failures such as serialization or process crashes.
+            except Exception as exc:  # noqa: BLE001
+                results_by_resource[job.identity.resource] = ResourceRunResult(
                     resource=job.identity.resource,
                     run_id=None,
                     status="crashed",
                     error=sanitize_error_message(str(exc)),
                 )
+                continue
+
+            if execution.run_id is None:
+                results_by_resource[job.identity.resource] = ResourceRunResult(
+                    resource=job.identity.resource,
+                    run_id=None,
+                    status="crashed",
+                    error=execution.error,
+                )
+                continue
+
+            status = _read_run_status(filesystem, job.identity, execution.run_id)
+            results_by_resource[job.identity.resource] = ResourceRunResult(
+                resource=job.identity.resource,
+                run_id=execution.run_id,
+                status=status,
             )
 
-    return results
+    return [results_by_resource[job.identity.resource] for job in jobs]
 
 
 def _print_summary(year: int, results: list[ResourceRunResult]) -> None:
@@ -136,7 +182,7 @@ def _print_summary(year: int, results: list[ResourceRunResult]) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Sequentially crawl all Muasamcong resources for one closed year"
+        description="Crawl all Muasamcong resources for one closed year with two workers"
     )
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--page-size", type=int, default=50)

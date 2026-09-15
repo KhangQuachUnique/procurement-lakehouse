@@ -88,13 +88,14 @@ Chỉ crawl ngày đã đóng (`end-date` phải nhỏ hơn ngày hiện tại t
 
 ### Backfill một năm đầy đủ resource
 
-`crawl_all` chạy tuần tự theo thứ tự:
+`crawl_all` chạy tối đa 2 resource cùng lúc bằng 2 worker process. Bốn resource vẫn độc lập:
 
 ```text
-project
--> khlcnt
--> notify_contractor
--> contractor_result
+worker 1 / worker 2
+  -> project
+  -> khlcnt
+  -> notify_contractor
+  -> contractor_result
 ```
 
 ```powershell
@@ -103,7 +104,7 @@ python -m procurement.jobs.crawl_all `
   --page-size 50
 ```
 
-`--year` chỉ nhận năm lịch đã kết thúc hoàn toàn. Job này chỉ orchestration: không retry, không tự đánh giá coverage toàn năm và không dừng các resource sau nếu một resource crash. Cuối lần chạy nó in `run_id` và status của từng resource. Coverage thực tế xem qua Ops.
+`--year` chỉ nhận năm lịch đã kết thúc hoàn toàn. Job này chỉ orchestration: không retry và không tự đánh giá coverage toàn năm. Nếu một resource crash, các resource còn lại vẫn tiếp tục được schedule. Cuối lần chạy nó in `run_id` và status của từng resource theo business order. Coverage thực tế xem qua Ops.
 
 ### Project
 

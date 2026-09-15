@@ -7,11 +7,57 @@ from procurement.common.resources import ResourceIdentity
 from procurement.jobs.crawl_all import ResourceJob, crawl_all
 
 
+class _ImmediateFuture:
+    def __init__(self, value=None, error: Exception | None = None) -> None:
+        self._value = value
+        self._error = error
+
+    def result(self):
+        if self._error is not None:
+            raise self._error
+        return self._value
+
+
+class _InlineProcessPoolExecutor:
+    worker_counts: list[int] = []
+
+    def __init__(self, *, max_workers: int) -> None:
+        self.worker_counts.append(max_workers)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args) -> None:
+        return None
+
+    def submit(self, fn, *args) -> _ImmediateFuture:
+        try:
+            return _ImmediateFuture(value=fn(*args))
+        except Exception as exc:  # noqa: BLE001
+            return _ImmediateFuture(error=exc)
+
+
+def _install_inline_executor(monkeypatch) -> None:
+    _InlineProcessPoolExecutor.worker_counts.clear()
+    monkeypatch.setattr(
+        crawl_all_module,
+        "ProcessPoolExecutor",
+        _InlineProcessPoolExecutor,
+    )
+    # Reverse completion order to verify the returned summary still follows business order.
+    monkeypatch.setattr(
+        crawl_all_module,
+        "as_completed",
+        lambda futures: reversed(list(futures)),
+    )
+    monkeypatch.setattr(crawl_all_module, "configure_logging", lambda: None)
+
+
 def _identity(resource: str) -> ResourceIdentity:
     return ResourceIdentity(source="muasamcong", resource=resource)
 
 
-def test_crawl_all_runs_resources_sequentially_and_continues_after_crash(monkeypatch) -> None:
+def test_crawl_all_uses_two_workers_and_continues_after_crash(monkeypatch) -> None:
     calls: list[tuple[str, date, date, int]] = []
 
     def successful(resource: str, run_id: str):
@@ -38,6 +84,7 @@ def test_crawl_all_runs_resources_sequentially_and_continues_after_crash(monkeyp
         ),
     )
 
+    _install_inline_executor(monkeypatch)
     monkeypatch.setattr(crawl_all_module, "_resource_jobs", lambda: jobs)
     monkeypatch.setattr(crawl_all_module, "_today_vn", lambda: date(2026, 9, 15))
     monkeypatch.setattr(crawl_all_module, "create_s3_filesystem", lambda: object())
@@ -45,6 +92,7 @@ def test_crawl_all_runs_resources_sequentially_and_continues_after_crash(monkeyp
 
     results = crawl_all(2022, page_size=25)
 
+    assert _InlineProcessPoolExecutor.worker_counts == [2]
     assert [item[0] for item in calls] == [
         "project",
         "khlcnt",
@@ -71,6 +119,7 @@ def test_crawl_all_uses_persisted_run_status(monkeypatch) -> None:
 
     jobs = (ResourceJob(_identity("project"), crawl),)
 
+    _install_inline_executor(monkeypatch)
     monkeypatch.setattr(crawl_all_module, "_resource_jobs", lambda: jobs)
     monkeypatch.setattr(crawl_all_module, "_today_vn", lambda: date(2026, 9, 15))
     monkeypatch.setattr(crawl_all_module, "create_s3_filesystem", lambda: object())
@@ -82,6 +131,7 @@ def test_crawl_all_uses_persisted_run_status(monkeypatch) -> None:
 
     results = crawl_all(2022)
 
+    assert _InlineProcessPoolExecutor.worker_counts == [1]
     assert results[0].run_id == "run-a"
     assert results[0].status == "partial_failed"
 
