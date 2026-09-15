@@ -15,6 +15,9 @@ services:
 
     ports:
       - "${OBJECT_STORAGE_API_PORT}:8333"
+      - "8888:8888"
+      - "9333:9333"
+      - "23646:23646"
 
     volumes:
       - object-storage-data:/data

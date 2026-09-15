@@ -10,7 +10,9 @@ requires-python = ">=3.12,<3.13"
 
 dependencies = [
     "dlt[filesystem,parquet]>=1.30,<2",
+    "duckdb>=1.5.5,<2",
     "httpx>=0.28,<1",
+    "pydantic>=2.11,<3",
     "python-dotenv>=1,<2",
 ]
 
@@ -19,6 +21,10 @@ dev = [
     "pytest>=8,<9",
     "ruff>=0.12,<1",
 ]
+ops = [
+    "fastapi>=0.116,<1",
+    "uvicorn[standard]>=0.35,<1",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -26,6 +32,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "--import-mode=importlib"
 
 [tool.ruff]
 target-version = "py312"
