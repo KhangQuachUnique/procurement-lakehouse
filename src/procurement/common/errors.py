@@ -7,6 +7,7 @@ import httpx
 class ErrorStage(StrEnum):
     SEARCH_PAGE = "search_page"
     SEARCH_LIMIT = "search_limit"
+    PROJECT_DETAIL = "project_detail"
     PLAN_DETAIL = "plan_detail"
     BID_PACKAGE_DETAIL = "bid_package_detail"
     BRONZE_LOAD = "bronze_load"
