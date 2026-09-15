@@ -1,5 +1,6 @@
 import logging
 import math
+import re
 from collections import defaultdict
 from datetime import UTC, date, datetime
 
@@ -7,7 +8,11 @@ import dlt
 import s3fs
 
 from procurement.ingestion.engine.models import DailyResult, ResourceSpec
-from procurement.ingestion.engine.pagination import SearchResultLimitError, iter_search_pages
+from procurement.ingestion.engine.pagination import (
+    PaginationInvariantError,
+    SearchResultLimitError,
+    iter_search_pages,
+)
 from procurement.ingestion.engine.stats import PageStats
 from procurement.models.bronze import BronzeRecord
 from procurement.models.control import DayManifest, DayStatus, PageManifest, PageStatus
@@ -15,12 +20,12 @@ from procurement.models.errors import ErrorRecord
 from procurement.storage.bronze import create_bronze_destination, create_bronze_resource
 from procurement.storage.control import write_day_manifest, write_page_manifest
 from procurement.storage.errors import build_error_record, save_error_records
-from procurement.storage.locks import acquire_daily_lock, refresh_daily_lock, release_daily_lock
 
 logger = logging.getLogger(__name__)
 
 SEARCH_PAGE_STAGE = "search_page"
 SEARCH_LIMIT_STAGE = "search_limit"
+PAGINATION_STAGE = "pagination"
 BRONZE_LOAD_STAGE = "bronze_load"
 INTERNAL_STAGE = "internal"
 
@@ -29,9 +34,24 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+def _pipeline_component(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_]+", "_", value).strip("_")
+
+
+def _attempt_pipeline_name(spec: ResourceSpec, source_date: date, run_id: str) -> str:
+    return "_".join(
+        (
+            _pipeline_component(spec.pipeline_name),
+            _pipeline_component(spec.identity.resource),
+            source_date.strftime("%Y%m%d"),
+            _pipeline_component(run_id),
+        )
+    )
+
+
 def _create_pipeline(spec: ResourceSpec, source_date: date, run_id: str):
     return dlt.pipeline(
-        pipeline_name=spec.pipeline_name,
+        pipeline_name=_attempt_pipeline_name(spec, source_date, run_id),
         destination=create_bronze_destination(
             source_partition_date=source_date,
             run_id=run_id,
@@ -135,12 +155,13 @@ def run_daily_resource(
     ``(run_id, source_date)`` is the commit boundary. Any ingestion error marks the
     whole day FAILED. A later recovery is a new run_id that starts again from page 0;
     pages are never resumed or mixed across attempts.
-    """
 
+    DLT state is isolated per attempt by a unique pipeline name. Concurrent attempts
+    are allowed because Bronze and control paths are already partitioned by run_id.
+    """
     window_from = f"{source_date.isoformat()}T00:00:00.000Z"
     window_to = f"{source_date.isoformat()}T23:59:59.999Z"
 
-    acquire_daily_lock(fs, spec.identity, source_date, run_id)
     day = DayManifest(
         run_id=run_id,
         source=spec.identity.source,
@@ -149,11 +170,7 @@ def run_daily_resource(
         status=DayStatus.RUNNING,
         started_at=_now(),
     )
-    try:
-        write_day_manifest(fs, spec.identity, day)
-    except Exception:
-        release_daily_lock(fs, spec.identity, source_date, run_id)
-        raise
+    write_day_manifest(fs, spec.identity, day)
 
     completed_pages = 0
     daily_stats = PageStats()
@@ -178,11 +195,12 @@ def run_daily_resource(
             except StopIteration:
                 break
             except Exception as exc:
-                stage = (
-                    SEARCH_LIMIT_STAGE
-                    if isinstance(exc, SearchResultLimitError)
-                    else SEARCH_PAGE_STAGE
-                )
+                if isinstance(exc, SearchResultLimitError):
+                    stage = SEARCH_LIMIT_STAGE
+                elif isinstance(exc, PaginationInvariantError):
+                    stage = PAGINATION_STAGE
+                else:
+                    stage = SEARCH_PAGE_STAGE
                 record = _fatal_error_record(
                     spec=spec,
                     run_id=run_id,
@@ -217,6 +235,7 @@ def run_daily_resource(
                     expected_pages=expected_pages,
                 )
 
+            page_number = actual_page_number
             page = PageManifest(
                 run_id=run_id,
                 source_date=source_date,
@@ -226,31 +245,6 @@ def run_daily_resource(
                 started_at=page_started,
             )
             write_page_manifest(fs, spec.identity, page)
-
-            if actual_page_number != page_number:
-                exc = RuntimeError(
-                    f"Expected search page {page_number}, received {actual_page_number}"
-                )
-                record = _fatal_error_record(
-                    spec=spec,
-                    run_id=run_id,
-                    stage=INTERNAL_STAGE,
-                    source_date=source_date,
-                    page_number=page_number,
-                    exc=exc,
-                )
-                _persist_failed_page(fs=fs, spec=spec, page=page, errors=[record])
-                daily_errors += 1
-                return _failed_result(
-                    fs=fs,
-                    spec=spec,
-                    day=day,
-                    completed_pages=completed_pages,
-                    stats=daily_stats,
-                    bronze_records=daily_bronze_records,
-                    errors=daily_errors,
-                    expected_pages=expected_pages,
-                )
 
             try:
                 page_data = response["page"]
@@ -389,7 +383,6 @@ def run_daily_resource(
                 }
             )
             write_day_manifest(fs, spec.identity, day)
-            refresh_daily_lock(fs, spec.identity, source_date, run_id)
 
         if expected_pages is None or completed_pages != expected_pages:
             exc = RuntimeError(
@@ -471,5 +464,3 @@ def run_daily_resource(
         except Exception:
             logger.exception("failed_to_persist_terminal_day_manifest run_id=%s", run_id)
         raise
-    finally:
-        release_daily_lock(fs, spec.identity, source_date, run_id)

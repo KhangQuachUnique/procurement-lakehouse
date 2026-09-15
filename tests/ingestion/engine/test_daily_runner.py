@@ -35,16 +35,8 @@ class Harness:
         self.pages = []
         self.errors: list[ErrorRecord] = []
         self.pipeline = FakePipeline(self.events)
+        self.pipeline_kwargs: list[dict[str, Any]] = []
 
-        monkeypatch.setattr(
-            daily_runner, "acquire_daily_lock", lambda *_: self.events.append("lock")
-        )
-        monkeypatch.setattr(
-            daily_runner, "refresh_daily_lock", lambda *_: self.events.append("refresh")
-        )
-        monkeypatch.setattr(
-            daily_runner, "release_daily_lock", lambda *_: self.events.append("release")
-        )
         monkeypatch.setattr(daily_runner, "write_day_manifest", self._write_day)
         monkeypatch.setattr(daily_runner, "write_page_manifest", self._write_page)
         monkeypatch.setattr(daily_runner, "save_error_records", self._save_errors)
@@ -54,7 +46,11 @@ class Harness:
             "create_bronze_resource",
             lambda records, *, name: (name, list(records)),
         )
-        monkeypatch.setattr(daily_runner.dlt, "pipeline", lambda **_: self.pipeline)
+        monkeypatch.setattr(daily_runner.dlt, "pipeline", self._create_pipeline)
+
+    def _create_pipeline(self, **kwargs: Any) -> FakePipeline:
+        self.pipeline_kwargs.append(kwargs)
+        return self.pipeline
 
     def _write_day(self, _fs: Any, _identity: Any, manifest: Any) -> str:
         self.days.append(manifest)
@@ -79,7 +75,16 @@ def harness(monkeypatch: pytest.MonkeyPatch) -> Harness:
 
 def _page(content: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     items = [{"id": "item-1"}] if content is None else content
-    return {"page": {"content": items, "totalElements": len(items), "last": True}}
+    return {
+        "page": {
+            "content": items,
+            "totalElements": len(items),
+            "totalPages": 1,
+            "number": 0,
+            "size": 50,
+            "last": True,
+        }
+    }
 
 
 def _bronze_item(source_id: str = "item-1") -> BronzeItem:
@@ -139,6 +144,13 @@ def test_success_commits_day_only_after_page_bronze_succeeds(harness: Harness) -
     assert harness.events.index("bronze") < len(harness.events) - 2
 
 
+def test_pipeline_state_is_isolated_by_resource_date_and_run(harness: Harness) -> None:
+    _run(_spec(), run_id="run-a")
+
+    pipeline_name = harness.pipeline_kwargs[0]["pipeline_name"]
+    assert pipeline_name == "test_pipeline_test_resource_20260910_run_a"
+
+
 def test_any_detail_error_fails_whole_day_and_skips_bronze_write(harness: Harness) -> None:
     def records(*, errors: list[ErrorRecord], stats: Any, **_: Any):
         stats.record("notice")
@@ -180,6 +192,25 @@ def test_bronze_load_error_fails_day(harness: Harness) -> None:
     assert harness.errors[-1].message == "load failed"
 
 
+def test_pagination_invariant_error_fails_day_with_pagination_stage(harness: Harness) -> None:
+    def fetch(**_: Any) -> dict[str, Any]:
+        return {
+            "page": {
+                "content": [{"id": "only-one"}],
+                "totalElements": 100,
+                "size": 50,
+                "number": 0,
+                "totalPages": 2,
+            }
+        }
+
+    result = _run(_spec(fetch_page=fetch))
+
+    assert result["status"] == "failed"
+    assert harness.errors[-1].stage == "pagination"
+    assert harness.pages[-1].status is PageStatus.FAILED
+
+
 def test_new_run_starts_same_source_date_from_page_zero_again(harness: Harness) -> None:
     calls: list[int] = []
 
@@ -193,9 +224,14 @@ def test_new_run_starts_same_source_date_from_page_zero_again(harness: Harness) 
 
     assert calls == [0, 0]
     assert harness.events.count("bronze") == 2
+    names = [kwargs["pipeline_name"] for kwargs in harness.pipeline_kwargs]
+    assert names == [
+        "test_pipeline_test_resource_20260910_run_a",
+        "test_pipeline_test_resource_20260910_run_b",
+    ]
 
 
-def test_initial_day_manifest_failure_releases_lock(
+def test_initial_day_manifest_failure_propagates(
     harness: Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def fail_day_write(*_args: Any, **_kwargs: Any) -> str:
@@ -206,4 +242,4 @@ def test_initial_day_manifest_failure_releases_lock(
     with pytest.raises(RuntimeError, match="control storage unavailable"):
         _run(_spec())
 
-    assert harness.events == ["lock", "release"]
+    assert harness.pipeline_kwargs == []

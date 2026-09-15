@@ -8,22 +8,19 @@ Job -> Range runner -> Daily runner -> ResourceSpec/source adapter -> Bronze
                          +-------------------------+-> Control + Errors
 ```
 
-The current scope ends at Bronze. Silver/Gold consumption and active-snapshot selection are intentionally not part of this ingestion refactor yet.
+Scope hiện tại dừng ở Bronze. Silver/Gold sẽ xử lý canonical entity, deduplication, history và analytical model sau.
 
-## Ownership rules
+## Ownership
 
-1. `jobs/` parses CLI input and wires dependencies.
-2. `ingestion/batch_runner.py` owns the range run: one `run_id`, date splitting, and aggregate run status.
-3. `ingestion/engine/daily_runner.py` owns the lifecycle of one `(run_id, source_date)` attempt.
-4. `ingestion/sources/<source>/<resource>/` owns source endpoints and source-specific extraction.
-5. `models/` owns persisted data contracts (`RunManifest`, `DayManifest`, `PageManifest`, `ErrorRecord`, `BronzeRecord`).
-6. `storage/` owns physical object-store layout and serialization only.
-7. Bronze is append-only and preserves the source payload inside a typed lineage envelope.
-8. Any ingestion error makes the whole source-date attempt `FAILED`.
-9. Recovery is a new `run_id` that crawls the entire source date again from page 0. Data/pages are never mixed across attempts.
-10. `DayManifest.status == success` is the commit marker for a Bronze day attempt. Existing Parquet files alone do not mean the attempt is valid.
+1. `jobs/`: CLI và dependency wiring.
+2. `ingestion/batch_runner.py`: một range run, `run_id`, date splitting, aggregate status.
+3. `ingestion/engine/daily_runner.py`: lifecycle của một `(run_id, source_date)` attempt.
+4. `ingestion/sources/<source>/<resource>/`: endpoint, search contract và source-specific detail extraction.
+5. `models/`: persisted contracts.
+6. `storage/`: object-store layout/serialization.
+7. Bronze append-only, giữ source payload trong typed lineage envelope.
 
-## Core hierarchy
+## Commit boundary
 
 ```text
 run_id
@@ -31,49 +28,82 @@ run_id
     └── page
 ```
 
-A range run may contain successful and failed dates independently. For example:
+Mỗi `(run_id, source_date)` là một attempt độc lập.
+
+- Có bất kỳ search/detail/load error -> day `FAILED`.
+- Recovery luôn tạo `run_id` mới và crawl lại từ page 0.
+- Không resume page giữa hai run.
+- `DayManifest.status == success` mới là commit marker.
+- Parquet tồn tại trong một failed attempt không có nghĩa là data đã commit.
+
+## DLT attempt isolation
+
+DLT pipeline state được tách theo từng attempt:
 
 ```text
-run A
-├── 2026-09-01 SUCCESS
-├── 2026-09-02 FAILED
-└── 2026-09-03 SUCCESS
-
-Run A => PARTIAL_FAILED
+<base_pipeline>_<resource>_<YYYYMMDD>_<run_id>
 ```
 
-The successful dates remain valid attempts even though the overall range run is partial.
+Ví dụ:
+
+```text
+muasamcong_bronze_khlcnt_20260901_a83f...
+muasamcong_bronze_khlcnt_20260901_b91c...
+```
+
+Điều này ngăn pending load/state của failed run cũ bị dùng lại trong retry run mới. Dataset và Bronze table name không thay đổi; chỉ DLT working state được isolate.
+
+## Pagination invariants
+
+Crawler không chỉ tin `totalElements`. Mỗi search page phải nhất quán với request:
+
+- `totalElements` không được thay đổi giữa các page.
+- Nếu source trả page number metadata thì phải đúng page được request.
+- Nếu source trả page size metadata thì phải đúng `page_size`.
+- Nếu source trả `totalPages` thì phải khớp với `ceil(totalElements / page_size)`.
+- Số item của mỗi page phải đúng số item mong đợi theo `totalElements` và `page_size`.
+- Search window chạm giới hạn 10.000 items thì attempt fail để tránh silent truncation.
+
+Mismatch được ghi với stage `pagination` và day fail.
+
+## Concurrency
+
+Không dùng custom daily lock.
+
+Hai run có thể crawl cùng `resource + source_date` mà không ghi đè nhau vì:
+
+- Bronze partition có `run_id`.
+- Control/error path có `run_id`.
+- DLT state có `run_id`.
+
+Chạy trùng chỉ làm tăng request và tạo nhiều observations. Silver/downstream sau này phải chọn successful attempt theo policy của nó.
+
+Nếu sau này chạy multi-worker orchestration và cần single-flight thật, concurrency nên được enforce bởi orchestrator hoặc một atomic lock store, không dùng read-then-write JSON lock.
 
 ## Storage layout
 
 ```text
 Object storage
 ├── bronze/
-│   └── <dataset>/<table>/source_date=YYYY-MM-DD/run_id=<run_id>/*.parquet
+│   └── <table>/source_date=YYYY-MM-DD/run_id=<run_id>/*.parquet
 │
 ├── _control/
-│   └── <source>/<resource>/
-│       ├── run_id=<run_id>/
-│       │   ├── run.json
-│       │   └── source_date=YYYY-MM-DD/
-│       │       ├── day.json
-│       │       └── pages/page-000000.json
-│       └── _locks/source_date=YYYY-MM-DD.json
+│   └── <source>/<resource>/run_id=<run_id>/
+│       ├── run.json
+│       └── source_date=YYYY-MM-DD/
+│           ├── day.json
+│           └── pages/page-000000.json
 │
 └── _errors/
     └── <source>/<resource>/run_id=<run_id>/
         └── source_date=YYYY-MM-DD/page-000000.jsonl
 ```
 
-There is no separate raw-search/raw-detail layer in the current design. Bronze is the retained raw-ish data layer: source business data stays inside `payload`, while system lineage fields are typed and stable.
-
 ## Bronze contract
-
-Each Bronze row contains:
 
 ```text
 source_id
-source_version (nullable; only if the source versions that exact entity)
+source_version
 run_id
 source_date
 ingested_at
@@ -81,4 +111,4 @@ content_hash
 payload
 ```
 
-Source payload schemas stay flexible in Bronze. Business normalization, canonical schemas and deduplication belong to Silver later.
+`source_version` nullable và chỉ dùng khi source thực sự version entity đó. Business normalization thuộc Silver.
