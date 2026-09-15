@@ -75,6 +75,24 @@ python -m procurement.jobs.crawl_all `
 
 Chỉ crawl ngày đã đóng. Hướng dẫn chi tiết, semantics retry/commit và cách chạy từng resource nằm tại [docs/ingestion.md](docs/ingestion.md).
 
+## Xem dữ liệu Bronze
+
+Không cần tự cấu hình DuckDB/S3. Khi SeaweedFS đang chạy và `.env` đã đúng, chạy:
+
+```powershell
+python -m procurement.tools.bronze_explorer
+```
+
+Browser sẽ mở DuckDB UI tại `http://localhost:4213`. Các table Bronze được expose tự động dưới schema `bronze_raw`, ví dụ:
+
+```sql
+SELECT *
+FROM bronze_raw.notify_contractor_standard_detail
+LIMIT 100;
+```
+
+`bronze_raw` là dữ liệu vật lý để inspect; failed attempt có thể để lại partial Parquet. Trạng thái committed vẫn dựa trên `DayManifest SUCCESS` và xem qua Ops. Chi tiết tại [docs/bronze-explorer.md](docs/bronze-explorer.md).
+
 ## Kiểm tra project
 
 ```powershell
@@ -86,4 +104,5 @@ ruff check .
 
 - [Kiến trúc](docs/architecture.md)
 - [Ingestion](docs/ingestion.md)
+- [Bronze Explorer](docs/bronze-explorer.md)
 - [Ops](docs/ops.md)
