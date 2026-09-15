@@ -1,5 +1,6 @@
 from argparse import Namespace
 from datetime import date
+from typing import ClassVar
 
 import pytest
 
@@ -20,7 +21,7 @@ class _ImmediateFuture:
 
 
 class _InlineProcessPoolExecutor:
-    worker_counts: list[int] = []
+    worker_counts: ClassVar[list[int]] = []
 
     def __init__(self, *, max_workers: int) -> None:
         self.worker_counts.append(max_workers)
