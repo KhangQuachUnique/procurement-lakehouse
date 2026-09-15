@@ -86,6 +86,25 @@ contractor_result_detail
 
 Chỉ crawl ngày đã đóng (`end-date` phải nhỏ hơn ngày hiện tại theo timezone Việt Nam).
 
+### Backfill một năm đầy đủ resource
+
+`crawl_all` chạy tuần tự theo thứ tự:
+
+```text
+project
+-> khlcnt
+-> notify_contractor
+-> contractor_result
+```
+
+```powershell
+python -m procurement.jobs.crawl_all `
+  --year 2022 `
+  --page-size 50
+```
+
+`--year` chỉ nhận năm lịch đã kết thúc hoàn toàn. Job này chỉ orchestration: không retry, không tự đánh giá coverage toàn năm và không dừng các resource sau nếu một resource crash. Cuối lần chạy nó in `run_id` và status của từng resource. Coverage thực tế xem qua Ops.
+
 ### Project
 
 ```powershell
