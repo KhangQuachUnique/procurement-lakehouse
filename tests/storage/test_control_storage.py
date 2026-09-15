@@ -12,6 +12,8 @@ from procurement.models.control import (
     RunStatus,
 )
 from procurement.storage.control import (
+    list_day_manifests,
+    list_page_manifests,
     read_day_manifest,
     read_page_manifest,
     read_run_manifest,
@@ -93,6 +95,14 @@ def test_control_hierarchy_round_trip() -> None:
     assert read_run_manifest(fs, KHLCNT, "run-a") == run  # type: ignore[arg-type]
     assert read_day_manifest(fs, KHLCNT, "run-a", source_date) == day  # type: ignore[arg-type]
     assert read_page_manifest(fs, KHLCNT, "run-a", source_date, 0) == page  # type: ignore[arg-type]
+    assert list_day_manifests(fs, KHLCNT) == [day]  # type: ignore[arg-type]
+    assert list_day_manifests(  # type: ignore[arg-type]
+        fs, KHLCNT, run_id="run-a", source_date=source_date
+    ) == [day]
+    assert list_page_manifests(  # type: ignore[arg-type]
+        fs, KHLCNT, run_id="run-a", source_date=source_date
+    ) == [page]
+
     keys = "\n".join(fs.objects)
     assert "run_id=run-a/source_date=2026-09-10/day.json" in keys
     assert "run_id=run-a/source_date=2026-09-10/pages/page-000000.json" in keys

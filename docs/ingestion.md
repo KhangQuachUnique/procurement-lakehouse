@@ -161,21 +161,6 @@ Các lỗi này dùng stage:
 pagination
 ```
 
-## Ops API
+## Ops
 
-```powershell
-uvicorn procurement.api.main:app --reload
-```
-
-```text
-GET /api/ops/runs
-GET /api/ops/runs/{source}/{resource}/{run_id}
-GET /api/ops/errors
-```
-
-Ví dụ:
-
-```text
-/api/ops/runs?source=muasamcong&resource=project
-/api/ops/errors?source=muasamcong&resource=contractor_result
-```
+Cách quan sát health, source-date timeline, attempts, pages và errors nằm tại [docs/ops.md](ops.md).

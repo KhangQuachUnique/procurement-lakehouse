@@ -9,10 +9,7 @@ from procurement.storage.io import read_json, write_json
 
 
 def _resource_prefix(identity: ResourceIdentity) -> str:
-    return (
-        f"{settings.OBJECT_STORAGE_BUCKET}/_control/"
-        f"{identity.source}/{identity.resource}"
-    )
+    return f"{settings.OBJECT_STORAGE_BUCKET}/_control/{identity.source}/{identity.resource}"
 
 
 def _run_prefix(identity: ResourceIdentity, run_id: str) -> str:
@@ -88,6 +85,24 @@ def read_day_manifest(
     return None if data is None else DayManifest.model_validate(data)
 
 
+def list_day_manifests(
+    fs: s3fs.S3FileSystem,
+    identity: ResourceIdentity,
+    *,
+    run_id: str | None = None,
+    source_date: date | None = None,
+) -> list[DayManifest]:
+    run_part = f"run_id={run_id}" if run_id else "run_id=*"
+    date_part = f"source_date={source_date.isoformat()}" if source_date else "source_date=*"
+    pattern = f"{_resource_prefix(identity)}/{run_part}/{date_part}/day.json"
+    manifests: list[DayManifest] = []
+    for key in fs.glob(pattern):
+        data = read_json(fs, key)
+        if data is not None:
+            manifests.append(DayManifest.model_validate(data))
+    return sorted(manifests, key=lambda item: item.started_at, reverse=True)
+
+
 def write_page_manifest(
     fs: s3fs.S3FileSystem,
     identity: ResourceIdentity,
@@ -118,3 +133,19 @@ def read_page_manifest(
         ),
     )
     return None if data is None else PageManifest.model_validate(data)
+
+
+def list_page_manifests(
+    fs: s3fs.S3FileSystem,
+    identity: ResourceIdentity,
+    *,
+    run_id: str,
+    source_date: date,
+) -> list[PageManifest]:
+    pattern = f"{_day_prefix(identity, run_id, source_date)}/pages/page-*.json"
+    manifests: list[PageManifest] = []
+    for key in fs.glob(pattern):
+        data = read_json(fs, key)
+        if data is not None:
+            manifests.append(PageManifest.model_validate(data))
+    return sorted(manifests, key=lambda item: item.page_number)

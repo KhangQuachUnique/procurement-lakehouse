@@ -62,4 +62,5 @@ ruff check .
 ## Tài liệu
 
 - [Kiến trúc](docs/architecture.md)
-- [Ingestion: resource, cách chạy và recovery](docs/ingestion.md)
+- [Ingestion](docs/ingestion.md)
+- [Ops](docs/ops.md)
