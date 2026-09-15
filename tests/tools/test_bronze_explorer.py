@@ -2,13 +2,14 @@ from procurement.tools import bronze_explorer
 
 
 class _FakeFilesystem:
-    def __init__(self, entries):
-        self.entries = entries
+    def __init__(self, entries_by_path):
+        self.entries_by_path = entries_by_path
 
     def ls(self, path: str, detail: bool = True):
-        assert path == "bucket/bronze"
         assert detail is True
-        return self.entries
+        if path not in self.entries_by_path:
+            raise FileNotFoundError(path)
+        return self.entries_by_path[path]
 
 
 class _FakeConnection:
@@ -40,40 +41,97 @@ def test_parse_endpoint_rejects_paths() -> None:
         raise AssertionError("expected ValueError")
 
 
-def test_discover_bronze_tables_only_returns_directories() -> None:
+def test_discover_bronze_tables_under_dlt_dataset() -> None:
     fs = _FakeFilesystem(
-        [
-            {"name": "bucket/bronze/project_detail", "type": "directory"},
-            {
-                "name": "bucket/bronze/notify_contractor_standard_detail",
-                "type": "directory",
-            },
-            {"name": "bucket/bronze/_temporary.txt", "type": "file"},
-        ]
+        {
+            "bucket/bronze": [
+                {"name": "bucket/bronze/muasamcong", "type": "directory"},
+            ],
+            "bucket/bronze/muasamcong": [
+                {
+                    "name": "bucket/bronze/muasamcong/project_detail",
+                    "type": "directory",
+                },
+                {
+                    "name": (
+                        "bucket/bronze/muasamcong/"
+                        "notify_contractor_standard_detail"
+                    ),
+                    "type": "directory",
+                },
+                {
+                    "name": "bucket/bronze/muasamcong/_dlt_loads",
+                    "type": "directory",
+                },
+            ],
+        }
     )
 
     assert bronze_explorer._discover_bronze_tables(fs, "bucket") == [
-        "notify_contractor_standard_detail",
-        "project_detail",
+        bronze_explorer.BronzeTable(
+            dataset="muasamcong",
+            table="notify_contractor_standard_detail",
+        ),
+        bronze_explorer.BronzeTable(dataset="muasamcong", table="project_detail"),
     ]
 
 
-def test_create_bronze_views_uses_hive_partitioning_and_union_by_name() -> None:
+def test_discover_bronze_tables_supports_direct_partitioned_layout() -> None:
+    fs = _FakeFilesystem(
+        {
+            "bucket/bronze": [
+                {"name": "bucket/bronze/project_detail", "type": "directory"},
+            ],
+            "bucket/bronze/project_detail": [
+                {
+                    "name": "bucket/bronze/project_detail/source_date=2025-01-01",
+                    "type": "directory",
+                },
+            ],
+        }
+    )
+
+    assert bronze_explorer._discover_bronze_tables(fs, "bucket") == [
+        bronze_explorer.BronzeTable(dataset=None, table="project_detail")
+    ]
+
+
+def test_create_bronze_views_uses_dataset_table_path() -> None:
     con = _FakeConnection()
 
     created = bronze_explorer._create_bronze_views(
         con,
         bucket="procurement-lakehouse",
-        tables=["notify_contractor_standard_detail"],
+        tables=[
+            bronze_explorer.BronzeTable(
+                dataset="muasamcong",
+                table="notify_contractor_standard_detail",
+            )
+        ],
     )
 
     assert created == ["notify_contractor_standard_detail"]
     sql = "\n".join(con.statements)
     assert '"bronze_raw"."notify_contractor_standard_detail"' in sql
     assert (
-        "s3://procurement-lakehouse/bronze/"
+        "s3://procurement-lakehouse/bronze/muasamcong/"
         "notify_contractor_standard_detail/**/*.parquet"
     ) in sql
     assert "hive_partitioning = true" in sql
     assert "union_by_name = true" in sql
     assert "filename = true" in sql
+
+
+def test_create_bronze_views_disambiguates_duplicate_table_names() -> None:
+    con = _FakeConnection()
+
+    created = bronze_explorer._create_bronze_views(
+        con,
+        bucket="procurement-lakehouse",
+        tables=[
+            bronze_explorer.BronzeTable(dataset="source_a", table="detail"),
+            bronze_explorer.BronzeTable(dataset="source_b", table="detail"),
+        ],
+    )
+
+    assert created == ["source_a__detail", "source_b__detail"]

@@ -24,8 +24,8 @@ Script sẽ tự:
 1. Đọc cấu hình object storage từ `.env`.
 2. Kết nối SeaweedFS S3 API.
 3. Tạo DuckDB S3 secret tạm thời trong memory.
-4. Tự discover các table bên dưới `bronze/`.
-5. Tạo view trong schema `bronze_raw`.
+4. Discover đúng layout DLT `bronze/<dataset>/<table>/...` (hiện tại dataset là `muasamcong`).
+5. Bỏ qua các table metadata `_dlt_*` và tạo view dữ liệu trong schema `bronze_raw`.
 6. Mở DuckDB UI tại `http://localhost:4213`.
 
 Không cần cài DuckDB CLI riêng. Package `duckdb` được cài cùng project.
@@ -36,9 +36,25 @@ Có thể đổi port:
 python -m procurement.tools.bronze_explorer --port 4214
 ```
 
-Dừng explorer bằng `Ctrl+C` tại terminal đang chạy.
+Dừng explorer bằng `Ctrl+C` tại terminal đang chạy. Nếu vừa crawl thêm một table mới trong lúc explorer đang mở, restart explorer để discover lại các table.
+
+Khi startup, terminal sẽ in danh sách view, ví dụ:
+
+```text
+Views:
+  - bronze_raw.project_detail
+  - bronze_raw.notify_contractor_standard_detail
+```
 
 ## Query mẫu
+
+Xem Project:
+
+```sql
+SELECT *
+FROM bronze_raw.project_detail
+LIMIT 100;
+```
 
 Xem TBMT:
 
@@ -68,6 +84,8 @@ WHERE source_id = '...';
 ```
 
 Mỗi view có thêm cột `filename` để biết record đang đến từ Parquet object nào.
+
+Nếu sau này có nhiều dataset DLT cùng chứa một table trùng tên, explorer sẽ disambiguate view theo dạng `<dataset>__<table>`.
 
 ## Raw khác committed
 

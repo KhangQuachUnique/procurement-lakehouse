@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import time
+from collections import Counter
 from collections.abc import Iterable
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 import duckdb
@@ -14,6 +16,19 @@ from procurement.storage.object_store import create_s3_filesystem
 BRONZE_SCHEMA = "bronze_raw"
 SECRET_NAME = "bronze_store"
 DEFAULT_UI_PORT = 4213
+
+
+@dataclass(frozen=True, order=True)
+class BronzeTable:
+    dataset: str | None
+    table: str
+
+    def parquet_glob(self, bucket: str) -> str:
+        parts = [f"s3://{bucket}", "bronze"]
+        if self.dataset is not None:
+            parts.append(self.dataset)
+        parts.extend((self.table, "**", "*.parquet"))
+        return "/".join(parts)
 
 
 def _sql_literal(value: str) -> str:
@@ -38,17 +53,13 @@ def _parse_endpoint(endpoint: str) -> tuple[str, bool]:
     return parsed.netloc, parsed.scheme == "https"
 
 
-def _discover_bronze_tables(
-    fs: s3fs.S3FileSystem,
-    bucket: str,
-) -> list[str]:
-    prefix = f"{bucket}/bronze"
+def _list_directories(fs: s3fs.S3FileSystem, prefix: str) -> list[str]:
     try:
         entries = fs.ls(prefix, detail=True)
     except FileNotFoundError:
         return []
 
-    tables: set[str] = set()
+    directories: set[str] = set()
     for entry in entries:
         if isinstance(entry, str):
             name = entry
@@ -60,11 +71,43 @@ def _discover_bronze_tables(
         if entry_type not in {None, "directory", "dir"}:
             continue
 
-        table = name.rstrip("/").rsplit("/", maxsplit=1)[-1]
-        if table:
-            tables.add(table)
+        directory = name.rstrip("/").rsplit("/", maxsplit=1)[-1]
+        if directory:
+            directories.add(directory)
 
-    return sorted(tables)
+    return sorted(directories)
+
+
+def _discover_bronze_tables(
+    fs: s3fs.S3FileSystem,
+    bucket: str,
+) -> list[BronzeTable]:
+    """Discover DLT Bronze tables without treating the dataset as a table.
+
+    Current DLT filesystem layout is bronze/<dataset>/<table>/... . The fallback
+    also understands the older/direct bronze/<table>/... layout.
+    """
+
+    bronze_prefix = f"{bucket}/bronze"
+    root_directories = _list_directories(fs, bronze_prefix)
+    discovered: set[BronzeTable] = set()
+
+    for root_name in root_directories:
+        child_directories = _list_directories(fs, f"{bronze_prefix}/{root_name}")
+        data_children = [name for name in child_directories if not name.startswith("_dlt_")]
+
+        is_direct_table = not data_children or any(
+            name.startswith(("source_date=", "run_id=")) for name in data_children
+        )
+        if is_direct_table:
+            if not root_name.startswith("_dlt_"):
+                discovered.add(BronzeTable(dataset=None, table=root_name))
+            continue
+
+        for table in data_children:
+            discovered.add(BronzeTable(dataset=root_name, table=table))
+
+    return sorted(discovered)
 
 
 def _configure_s3_secret(con: duckdb.DuckDBPyConnection) -> None:
@@ -100,29 +143,36 @@ def _create_bronze_views(
     con: duckdb.DuckDBPyConnection,
     *,
     bucket: str,
-    tables: Iterable[str],
+    tables: Iterable[BronzeTable],
 ) -> list[str]:
     con.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(BRONZE_SCHEMA)}")
+    table_list = list(tables)
+    name_counts = Counter(item.table for item in table_list)
     created: list[str] = []
 
-    for table in tables:
-        parquet_glob = f"s3://{bucket}/bronze/{table}/**/*.parquet"
+    for item in table_list:
+        if name_counts[item.table] == 1:
+            view_name = item.table
+        else:
+            dataset = item.dataset or "root"
+            view_name = f"{dataset}__{item.table}"
+
         qualified_name = (
-            f"{_quote_identifier(BRONZE_SCHEMA)}.{_quote_identifier(table)}"
+            f"{_quote_identifier(BRONZE_SCHEMA)}.{_quote_identifier(view_name)}"
         )
         con.execute(
             f"""
             CREATE OR REPLACE VIEW {qualified_name} AS
             SELECT *
             FROM read_parquet(
-                {_sql_literal(parquet_glob)},
+                {_sql_literal(item.parquet_glob(bucket))},
                 hive_partitioning = true,
                 union_by_name = true,
                 filename = true
             )
             """
         )
-        created.append(table)
+        created.append(view_name)
 
     return created
 
