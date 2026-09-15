@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "procurement-lakehouse"
 version = "0.1.0"
 description = "Data Lakehouse for public procurement analytics"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12,<3.15"
 
 dependencies = [
     "dlt[filesystem,parquet]>=1.30,<2",
