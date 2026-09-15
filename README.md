@@ -4,7 +4,7 @@ Data Lakehouse phục vụ thu thập và phân tích dữ liệu đấu thầu 
 
 ## Yêu cầu
 
-- Python 3.12
+- Python 3.12 - 3.14
 - Docker + Docker Compose
 - MuaSamCong token
 
@@ -29,7 +29,7 @@ Copy-Item .env.example .env
 git clone <repository-url>
 cd procurement-lakehouse
 
-python3.12 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev,ops]"
 
