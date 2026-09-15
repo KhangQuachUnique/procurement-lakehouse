@@ -52,6 +52,29 @@ SeaweedFS S3 API mặc định:
 http://localhost:8333
 ```
 
+## Backfill ingestion
+
+Chạy đủ 4 resource với tối đa 2 worker process.
+
+Nguyên năm:
+
+```powershell
+python -m procurement.jobs.crawl_all `
+  --year 2022 `
+  --page-size 50
+```
+
+Theo khoảng ngày:
+
+```powershell
+python -m procurement.jobs.crawl_all `
+  --start-date 2025-03-01 `
+  --end-date 2025-03-31 `
+  --page-size 50
+```
+
+Chỉ crawl ngày đã đóng. Hướng dẫn chi tiết, semantics retry/commit và cách chạy từng resource nằm tại [docs/ingestion.md](docs/ingestion.md).
+
 ## Kiểm tra project
 
 ```powershell
