@@ -156,9 +156,10 @@ class OpsService:
             else max(0, (self._today_vn() - latest_success_date).days)
         )
 
-        if latest_success_date is None:
-            health = ResourceHealth.FAILED
-        elif self._effective_attempt(by_date[latest_source_date]) is None:
+        if (
+            latest_success_date is None
+            or self._effective_attempt(by_date[latest_source_date]) is None
+        ):
             health = ResourceHealth.FAILED
         elif unresolved_failed_dates > 0 or (freshness_days is not None and freshness_days > 1):
             health = ResourceHealth.DEGRADED
