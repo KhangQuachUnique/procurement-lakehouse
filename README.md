@@ -11,7 +11,7 @@ MuaSamCong API
       |
       v
 Resource Adapter
-(project / khlcnt / ...)
+(project / khlcnt / notify_contractor / contractor_result)
       |
       v
 Shared Ingestion Engine
@@ -68,13 +68,48 @@ Bronze table:
 project_detail
 ```
 
-Project detail được giữ nguyên payload, bao gồm các liên kết như `linkedPublishPlan` để Silver layer sau này có thể xây dựng quan hệ:
+Project detail được giữ nguyên payload, bao gồm các liên kết như `linkedPublishPlan` để Silver layer sau này có thể xây dựng quan hệ.
+
+### Notify Contractor
+
+Thu thập nhóm thông báo thuộc `es-notify-contractor` theo `publicDate`. Detail được route theo workflow hiện tại của portal:
+
+```text
+notify-contractor-* -> lcnt_tbmt_ttc_ldt
+reoffer-price-*     -> online-reoffer/detail
+```
+
+Bronze tables:
+
+```text
+notify_contractor_standard_detail
+notify_contractor_reoffer_detail
+```
+
+### Contractor Result
+
+Thu thập **Kết quả lựa chọn nhà thầu (KQLCNT)** theo `publicDateKqlcnt` và `stepCode=notify-contractor-step-4-kqlcnt`.
+
+```text
+Search KQLCNT
+   -> inputResultId
+      -> contractor-input-result/get
+```
+
+Bronze table:
+
+```text
+contractor_result_detail
+```
+
+Bronze giữ nguyên response gồm kết quả, lot, contractor trúng và thông tin gói/KHLCNT nhúng. Silver layer sau này mới chuẩn hóa và liên kết:
 
 ```text
 Project
    -> KHLCNT
       -> Bid Package
-         -> TBMT / KQLCNT
+         -> Notify Contractor
+            -> Contractor Result
 ```
 
 > Hiện tại scope chính của repo là Bronze. Chuẩn hóa business schema, deduplication, entity relationship và analytical model sẽ được xử lý ở Silver/Gold sau.
@@ -171,10 +206,20 @@ python -m procurement.jobs.crawl_project \
 
 ### Crawl KHLCNT
 
-PowerShell:
-
 ```powershell
 python -m procurement.jobs.crawl_khlcnt --start-date 2026-09-01 --end-date 2026-09-01 --page-size 50
+```
+
+### Crawl Notify Contractor
+
+```powershell
+python -m procurement.jobs.crawl_notify_contractor --start-date 2026-09-01 --end-date 2026-09-01 --page-size 50
+```
+
+### Crawl Contractor Result
+
+```powershell
+python -m procurement.jobs.crawl_contractor_result --start-date 2026-09-01 --end-date 2026-09-01 --page-size 50
 ```
 
 ## Ops API
@@ -208,7 +253,9 @@ src/procurement/
 │   ├── engine/
 │   └── sources/
 │       └── muasamcong/
+│           ├── contractor_result/
 │           ├── khlcnt/
+│           ├── notify_contractor/
 │           └── project/
 ├── jobs/
 ├── models/
