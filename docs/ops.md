@@ -40,13 +40,45 @@ failed    latest source date chưa có SUCCESS
 no_data   chưa có attempt nào
 ```
 
-## API
-
-Chạy:
+## Chạy Ops
 
 ```powershell
 uvicorn procurement.api.main:app --reload
 ```
+
+Mở:
+
+```text
+http://127.0.0.1:8000/
+```
+
+`/` redirect sang `/ops`.
+
+Ops UI là server-rendered HTML dùng trực tiếp `OpsService`, không có frontend app hoặc read model riêng. JSON API `/api/ops/*` vẫn giữ nguyên để dùng cho tool khác hoặc debug qua `/docs`.
+
+### UI navigation
+
+```text
+/ops
+  -> /ops/resources/{resource}
+      -> /ops/resources/{resource}/dates/{source_date}
+          -> /ops/attempts/{run_id}/{source_date}
+          -> /ops/runs/{run_id}
+  -> /ops/errors
+```
+
+Các màn hình:
+
+- `/ops`: health overview của tất cả resource.
+- `/ops/resources/{resource}`: timeline theo ngày, có filter date range.
+- `/ops/resources/{resource}/dates/{source_date}`: tất cả attempt của ngày và effective run.
+- `/ops/runs/{run_id}`: range run và các day attempt.
+- `/ops/attempts/{run_id}/{source_date}`: page manifests và errors của attempt.
+- `/ops/errors`: error explorer với filter resource/date/run/stage/error type.
+
+Mỗi màn hình có link `JSON` quay về endpoint `/api/ops/*` tương ứng.
+
+## API
 
 ### Overview
 
