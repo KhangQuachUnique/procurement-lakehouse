@@ -79,136 +79,88 @@ Project
 
 > Hiện tại scope chính của repo là Bronze. Chuẩn hóa business schema, deduplication, entity relationship và analytical model sẽ được xử lý ở Silver/Gold sau.
 
----
+## Error handling
 
-# Chạy project local
+Error record chỉ giữ context cần để xác định lỗi xảy ra ở đâu (`source`, `resource`, `stage`, `run_id`, `source_date`, `page_number`, `source_id`) và diagnostic gốc (`error_type`, `message`, `http_status`). Project không dùng error-code taxonomy; exception message được giữ gần nguyên bản và chỉ redact credential phổ biến như token/authorization trước khi persist.
 
-## 1. Yêu cầu
+## Yêu cầu
 
-- Python **3.12**
+- Python 3.12
 - Docker + Docker Compose
-- Git
-- Token hợp lệ của `muasamcong.mpi.gov.vn`
+- MuaSamCong token
 
-Clone repo và chuyển sang branch ingestion:
-
-```bash
-git clone https://github.com/KhangQuachUnique/procurement-lakehouse.git
-cd procurement-lakehouse
-git switch feature/ingestion
-```
-
-## 2. Tạo virtual environment
+## Cài đặt
 
 ### Windows PowerShell
 
 ```powershell
+git clone <repository-url>
+cd procurement-lakehouse
+
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-### macOS / Linux
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-```
-
-## 3. Cài dependencies
-
-Cài ingestion + test:
-
-```bash
-pip install -e ".[dev]"
-```
-
-Nếu muốn chạy luôn Ops API:
-
-```bash
 pip install -e ".[dev,ops]"
-```
 
-## 4. Cấu hình environment
-
-Tạo `.env` từ file mẫu.
-
-### Windows
-
-```powershell
 Copy-Item .env.example .env
 ```
 
-### macOS / Linux
+### Linux / macOS
 
 ```bash
+git clone <repository-url>
+cd procurement-lakehouse
+
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev,ops]"
+
 cp .env.example .env
 ```
 
-Sau đó sửa `.env`:
+Sau đó cập nhật `MUASAMCONG_TOKEN` trong `.env`.
 
-```env
-APP_ENV=dev
-LOG_LEVEL=INFO
+## Chạy object storage
 
-MUASAMCONG_BASE_URL=https://muasamcong.mpi.gov.vn
-MUASAMCONG_TIMEOUT_SECONDS=30
-MUASAMCONG_TOKEN=<YOUR_VALID_TOKEN>
-
-OBJECT_STORAGE_IMAGE=chrislusf/seaweedfs:4.46
-OBJECT_STORAGE_ENDPOINT=http://localhost:8333
-OBJECT_STORAGE_ACCESS_KEY=procurement_admin
-OBJECT_STORAGE_SECRET_KEY=change_this_to_a_long_random_password
-OBJECT_STORAGE_BUCKET=procurement-lakehouse
-OBJECT_STORAGE_API_PORT=8333
+```powershell
+cd infra/docker
+docker compose --env-file ../../.env up -d
+cd ../..
 ```
 
-Không commit token thật hoặc secret lên Git.
-
-## 5. Khởi động object storage
-
-Từ thư mục root của project:
-
-```bash
-docker compose --env-file .env -f infra/docker/compose.yaml up -d
-```
-
-Kiểm tra container:
-
-```bash
-docker compose --env-file .env -f infra/docker/compose.yaml ps
-```
-
-Dừng infra:
-
-```bash
-docker compose --env-file .env -f infra/docker/compose.yaml down
-```
-
-SeaweedFS cung cấp S3-compatible endpoint mặc định tại:
+SeaweedFS S3 API mặc định chạy tại:
 
 ```text
 http://localhost:8333
 ```
 
-## 6. Chạy test
+## Chạy test
 
-```bash
+```powershell
 pytest
 ```
 
-Có thể chạy lint:
+## Crawl dữ liệu
 
-```bash
-ruff check .
-```
-
-## 7. Crawl dữ liệu
-
-Ingestion chỉ cho phép crawl **closed source date**, tức là ngày đã kết thúc. Không crawl ngày hiện tại hoặc ngày tương lai.
+Chỉ crawl các ngày đã đóng (`end-date` phải nhỏ hơn ngày hiện tại theo timezone Việt Nam).
 
 ### Crawl Project
 
-Ví dụ crawl ngày `2026-09-01`:
+PowerShell:
+
+```powershell
+python -m procurement.jobs.crawl_project --start-date 2026-09-01 --end-date 2026-09-01 --page-size 50
+```
+
+Hoặc xuống dòng trong PowerShell bằng backtick:
+
+```powershell
+python -m procurement.jobs.crawl_project `
+  --start-date 2026-09-01 `
+  --end-date 2026-09-01 `
+  --page-size 50
+```
+
+Bash:
 
 ```bash
 python -m procurement.jobs.crawl_project \
@@ -217,41 +169,21 @@ python -m procurement.jobs.crawl_project \
   --page-size 50
 ```
 
-Crawl một khoảng ngày:
-
-```bash
-python -m procurement.jobs.crawl_project \
-  --start-date 2026-09-01 \
-  --end-date 2026-09-05 \
-  --page-size 50
-```
-
 ### Crawl KHLCNT
 
-```bash
-python -m procurement.jobs.crawl_khlcnt \
-  --start-date 2026-09-01 \
-  --end-date 2026-09-05 \
-  --page-size 50
+PowerShell:
+
+```powershell
+python -m procurement.jobs.crawl_khlcnt --start-date 2026-09-01 --end-date 2026-09-01 --page-size 50
 ```
 
-> Với PowerShell, có thể viết command trên một dòng hoặc dùng backtick `` ` `` thay cho `\` để xuống dòng.
+## Ops API
 
-## 8. Chạy Ops API (optional)
-
-Nếu đã cài dependencies `ops`:
-
-```bash
+```powershell
 uvicorn procurement.api.main:app --reload
 ```
 
-Mở Swagger UI:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Một số endpoint hiện có:
+Các endpoint chính:
 
 ```text
 GET /api/ops/runs
@@ -259,99 +191,29 @@ GET /api/ops/runs/{source}/{resource}/{run_id}
 GET /api/ops/errors
 ```
 
-Ví dụ xem run của resource Project:
+Ví dụ:
 
 ```text
-GET /api/ops/runs?source=muasamcong&resource=project
+/api/ops/runs?source=muasamcong&resource=project
+/api/ops/errors?source=muasamcong&resource=khlcnt
 ```
 
----
-
-# Bronze storage
-
-Dữ liệu business được giữ trong `payload`; metadata ingestion được lưu bằng schema ổn định:
-
-```text
-source_id
-source_version
-run_id
-source_date
-ingested_at
-content_hash
-payload
-```
-
-Layout tổng quát:
-
-```text
-Object Storage
-├── bronze/
-│   └── <dataset>/<table>/
-│       └── source_date=YYYY-MM-DD/
-│           └── run_id=<run_id>/
-│               └── *.parquet
-│
-├── _control/
-│   └── <source>/<resource>/...
-│
-└── _errors/
-    └── <source>/<resource>/...
-```
-
-Bronze là append-only. `DayManifest.status == SUCCESS` mới được xem là commit marker cho một attempt hợp lệ; chỉ có file Parquet tồn tại chưa đủ để kết luận ingestion thành công.
-
-## Cấu trúc source chính
+## Cấu trúc chính
 
 ```text
 src/procurement/
-├── common/          # settings, logging, error types
+├── api/
+├── common/
 ├── ingestion/
-│   ├── engine/      # shared ingestion engine
+│   ├── engine/
 │   └── sources/
 │       └── muasamcong/
-│           ├── client.py
 │           ├── khlcnt/
 │           └── project/
-├── jobs/            # CLI crawl jobs
-├── models/          # persisted contracts
-├── observability/   # run/error query services
-├── storage/         # object storage + manifests + errors
-└── api/             # Ops API
+├── jobs/
+├── models/
+├── observability/
+└── storage/
 ```
 
-## Trạng thái hiện tại
-
-- [x] Bronze ingestion engine
-- [x] Pagination theo ngày
-- [x] Run / Day / Page manifests
-- [x] Error tracking
-- [x] KHLCNT ingestion
-- [x] Project ingestion
-- [x] S3-compatible object storage
-- [x] Ops API cơ bản
-- [ ] TBMT ingestion
-- [ ] KQLCNT ingestion
-- [ ] Silver normalization
-- [ ] Entity relationship / history tracking
-- [ ] Gold analytical models
-
----
-
-## Mục tiêu tiếp theo
-
-Mở rộng nguồn dữ liệu và xây dựng pipeline hoàn chỉnh:
-
-```text
-Raw Public Procurement Data
-          |
-          v
-       Bronze
-          |
-          v
-       Silver
-(clean + normalize + entity/history)
-          |
-          v
-        Gold
-(analytics / warehouse / serving)
-```
+Chi tiết kiến trúc xem thêm tại `docs/architecture.md`.
