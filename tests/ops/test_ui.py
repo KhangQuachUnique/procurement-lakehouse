@@ -74,6 +74,8 @@ class FakeOpsService:
         **_: object,
     ) -> list[DateSummary]:
         assert resource == "notify_contractor"
+        assert start_date == date(2026, 1, 1)
+        assert end_date == date(2026, 12, 31)
         items: list[DateSummary] = []
         cursor = end_date
         while cursor >= start_date:
@@ -190,16 +192,19 @@ def test_runs_is_primary_ops_view(client: TestClient) -> None:
     assert "/ops/calendar" in response.text
 
 
-def test_calendar_distinguishes_success_from_no_attempt(client: TestClient) -> None:
-    response = client.get(
-        "/ops/calendar?resource=notify_contractor&year=2026&month=9"
-    )
+def test_calendar_renders_full_year_heatmap_with_hover_details(client: TestClient) -> None:
+    response = client.get("/ops/calendar?resource=notify_contractor&year=2026")
 
     assert response.status_code == 200
-    assert 'class="day success"' in response.text
-    assert 'class="day no_attempt"' in response.text
+    assert 'class="heat-day success"' in response.text
+    assert 'class="heat-day no_attempt"' in response.text
+    assert "data-tip=" in response.text
     assert "0 records" in response.text
-    assert "No attempt" in response.text
+    assert "NO ATTEMPT" in response.text
+    assert "year=2025" in response.text
+    assert "year=2027" in response.text
+    assert "Jan" in response.text
+    assert "Dec" in response.text
 
 
 def test_calendar_date_drills_into_attempt(client: TestClient) -> None:
