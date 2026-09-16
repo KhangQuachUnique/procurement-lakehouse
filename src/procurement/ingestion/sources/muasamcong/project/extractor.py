@@ -6,6 +6,8 @@ from typing import Any, Protocol
 import httpx
 
 from procurement.common.resources import ResourceIdentity
+from procurement.common.settings import settings
+from procurement.ingestion.engine.concurrency import ordered_parallel_map
 from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
 from procurement.ingestion.engine.stats import PageStats
@@ -101,24 +103,38 @@ def iter_project_records(
 ) -> Iterator[BronzeItem]:
     total_projects = len(search_items)
 
-    for project_index, search_item in enumerate(search_items, start=1):
+    def fetch_one(
+        search_item: dict[str, Any],
+    ) -> tuple[BronzeItem | None, Exception | None, str | None]:
         project_id = search_item.get("id")
         if not project_id:
-            stats.error("project")
-            _record_detail_error(
-                identity=identity,
-                errors=errors,
-                exc=KeyError("id"),
-                run_id=run_id,
-                source_date=source_date,
-                search_page=search_page,
-                source_id=None,
-            )
-            continue
+            return None, KeyError("id"), None
 
         try:
             project_detail = client.get_project_detail(project_id)
         except DETAIL_EXCEPTIONS as exc:
+            return None, exc, str(project_id)
+
+        return (
+            build_project_record(
+                source_id=str(project_id),
+                source_version=extract_project_version(project_detail),
+                payload=project_detail,
+                run_id=run_id,
+                source_date=source_date,
+            ),
+            None,
+            str(project_id),
+        )
+
+    results = ordered_parallel_map(
+        fetch_one,
+        search_items,
+        max_workers=settings.MUASAMCONG_DETAIL_WORKERS,
+    )
+
+    for project_index, (record, exc, source_id) in enumerate(results, start=1):
+        if exc is not None:
             stats.error("project")
             _record_detail_error(
                 identity=identity,
@@ -127,18 +143,11 @@ def iter_project_records(
                 run_id=run_id,
                 source_date=source_date,
                 search_page=search_page,
-                source_id=project_id,
+                source_id=source_id,
             )
-            continue
-
-        yield build_project_record(
-            source_id=project_id,
-            source_version=extract_project_version(project_detail),
-            payload=project_detail,
-            run_id=run_id,
-            source_date=source_date,
-        )
-        stats.record("project")
+        elif record is not None:
+            stats.record("project")
+            yield record
 
         if project_index % PROGRESS_INTERVAL == 0 or project_index == total_projects:
             logger.info(
