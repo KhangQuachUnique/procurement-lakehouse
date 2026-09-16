@@ -20,7 +20,8 @@ class ResourceHealth(StrEnum):
 class DateIngestionStatus(StrEnum):
     SUCCESS = "success"
     FAILED = "failed"
-    MISSING = "missing"
+    RUNNING = "running"
+    NO_ATTEMPT = "no_attempt"
 
 
 class RunSummary(_OpsModel):
