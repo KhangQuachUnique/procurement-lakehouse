@@ -16,6 +16,12 @@ class Settings:
     MUASAMCONG_TIMEOUT_SECONDS = int(
         os.getenv("MUASAMCONG_TIMEOUT_SECONDS", "30")
     )
+    MUASAMCONG_DETAIL_WORKERS = int(
+        os.getenv("MUASAMCONG_DETAIL_WORKERS", "4")
+    )
+    MUASAMCONG_MIN_REQUEST_INTERVAL_SECONDS = float(
+        os.getenv("MUASAMCONG_MIN_REQUEST_INTERVAL_SECONDS", "0.2")
+    )
 
     OBJECT_STORAGE_ENDPOINT = os.getenv(
         "OBJECT_STORAGE_ENDPOINT",
