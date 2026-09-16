@@ -1,15 +1,14 @@
 # Ops
 
-Ops là lớp đọc trạng thái vận hành của ingestion. `_control` và `_errors` trong object storage vẫn là source of truth; Ops không sửa manifest hay error cũ.
+Ops là lớp read-only để quan sát ingestion. `_control` và `_errors` trong object storage vẫn là source of truth; Ops không sửa manifest hay error cũ.
 
 ## Mental model
 
 ```text
-Resource
-  -> Source date
-      -> Attempt (run_id + source_date)
-          -> Pages
-          -> Errors
+Run
+  -> Source date / Attempt
+      -> Errors
+      -> Pages
 ```
 
 Một ngày có thể có nhiều attempt:
@@ -21,24 +20,27 @@ Một ngày có thể có nhiều attempt:
 └── run C SUCCESS  <- effective attempt
 ```
 
-Nếu có ít nhất một attempt `SUCCESS`, attempt thành công mới nhất là `effective_run_id`. Attempt fail cũ vẫn được giữ nguyên để audit.
+Nếu có ít nhất một attempt `SUCCESS`, attempt thành công mới nhất là `effective_run_id`. Attempt fail cũ vẫn được giữ để audit.
 
-## Health
+## Trạng thái ngày
 
-Mỗi resource có một health projection:
+Calendar dùng bốn trạng thái:
 
 ```text
-healthy   latest source date có SUCCESS, không còn failed date chưa recover
-          và latest successful source date không cũ quá 1 ngày
-
-degraded latest source date có SUCCESS nhưng còn failed date chưa recover
-          hoặc dữ liệu đang stale
-
-failed    latest source date chưa có SUCCESS
-          hoặc resource chưa từng SUCCESS
-
-no_data   chưa có attempt nào
+success     có ít nhất một attempt SUCCESS
+failed      có attempt nhưng chưa từng SUCCESS và attempt mới nhất FAILED
+running     có attempt nhưng chưa từng SUCCESS và attempt mới nhất RUNNING
+no_attempt  không có attempt nào
 ```
+
+Hai rule quan trọng:
+
+```text
+no_attempt != failed
+SUCCESS với bronze_records = 0 vẫn là success
+```
+
+Không có dữ liệu từ upstream không tự động có nghĩa ingestion lỗi. Chỉ lỗi thực sự trong attempt mới được biểu diễn là `failed` và ghi vào `_errors`.
 
 ## Chạy Ops
 
@@ -54,62 +56,101 @@ http://127.0.0.1:8000/
 
 `/` redirect sang `/ops`.
 
-Ops UI là server-rendered HTML dùng trực tiếp `OpsService`, không có frontend app hoặc read model riêng. JSON API `/api/ops/*` vẫn giữ nguyên để dùng cho tool khác hoặc debug qua `/docs`.
+## UI
 
-### UI navigation
+### Runs
 
 ```text
-/ops
-  -> /ops/resources/{resource}
-      -> /ops/resources/{resource}/dates/{source_date}
-          -> /ops/attempts/{run_id}/{source_date}
-          -> /ops/runs/{run_id}
-  -> /ops/errors
+GET /ops
 ```
 
-Các màn hình:
+Đây là màn hình mặc định. Có filter theo resource, run status, date range và limit.
 
-- `/ops`: health overview của tất cả resource.
-- `/ops/resources/{resource}`: timeline theo ngày, có filter date range.
-- `/ops/resources/{resource}/dates/{source_date}`: tất cả attempt của ngày và effective run.
-- `/ops/runs/{run_id}`: range run và các day attempt.
-- `/ops/attempts/{run_id}/{source_date}`: page manifests và errors của attempt.
-- `/ops/errors`: error explorer với filter resource/date/run/stage/error type.
+```text
+Runs
+  -> Run detail
+      -> Date attempt detail
+          -> Errors
+          -> Pages
+```
 
-Mỗi màn hình có link `JSON` quay về endpoint `/api/ops/*` tương ứng.
+Run detail hiển thị status, date range, success/failed dates, tổng bronze records, tổng error count, duration và danh sách day attempts.
+
+### Calendar
+
+```text
+GET /ops/calendar
+```
+
+Calendar hiển thị một resource theo tháng:
+
+```text
+success     xanh
+failed      đỏ
+running     vàng
+no_attempt  trung tính
+```
+
+Click một ngày để xem tất cả attempt của ngày đó và `effective_run_id`.
+
+Các URL cũ:
+
+```text
+/ops/resources/{resource}
+/ops/resources/{resource}/dates/{source_date}
+```
+
+được redirect sang Calendar để không làm gãy bookmark cũ.
+
+### Attempt detail
+
+```text
+GET /ops/attempts/{run_id}/{source_date}
+```
+
+Errors được đặt trước Pages vì đây là màn hình debug vận hành.
+
+### Errors
+
+```text
+GET /ops/errors
+```
+
+Chỉ hiển thị error records thực sự. `no_attempt` không xuất hiện trong error list.
 
 ## API
 
-### Overview
+### Recent runs
 
 ```text
-GET /api/ops/overview
+GET /api/ops/runs
 ```
 
-Trả health của toàn bộ resource.
-
-### Resources
+Filters:
 
 ```text
-GET /api/ops/resources
+resource
+status
+start_date
+end_date
+limit
 ```
 
-Resource hiện hỗ trợ:
+### Run detail
 
 ```text
-project
-khlcnt
-notify_contractor
-contractor_result
+GET /api/ops/runs/{run_id}
 ```
 
-### Timeline theo ngày
+Trả run summary và day attempts của run.
+
+### Calendar data
 
 ```text
 GET /api/ops/resources/{resource}/dates
 ```
 
-Mặc định trả 30 ngày đã đóng gần nhất. Có thể truyền:
+Query:
 
 ```text
 start_date=YYYY-MM-DD
@@ -118,44 +159,16 @@ end_date=YYYY-MM-DD
 
 Window tối đa 366 ngày.
 
-Mỗi ngày có trạng thái:
-
-```text
-success
-failed
-missing
-```
-
-`missing` nghĩa là trong window được hỏi không có attempt nào cho ngày đó.
-
-### Chi tiết một ngày
+### Date detail
 
 ```text
 GET /api/ops/resources/{resource}/dates/{source_date}
 ```
 
-Trả toàn bộ attempt của ngày và `effective_run_id` nếu đã có attempt thành công.
-
-### Range run
-
-```text
-GET /api/ops/runs/{run_id}
-```
-
-Trả `RunManifest` dưới API read model cùng danh sách day attempts của run đó. Client không cần biết resource trước; service tự resolve run trong các resource hiện hỗ trợ.
-
 ### Attempt detail
 
 ```text
 GET /api/ops/attempts/{run_id}/{source_date}
-```
-
-Trả:
-
-```text
-attempt summary
-pages[]
-errors[]
 ```
 
 ### Errors
@@ -175,11 +188,31 @@ error_type
 limit
 ```
 
-`limit` mặc định 200, tối đa 1000.
+## Performance
+
+Calendar không còn glob toàn bộ:
+
+```text
+run_id=*/source_date=*/day.json
+```
+
+cho mỗi request. Flow hiện tại là:
+
+```text
+1. đọc run manifests giao với date window
+2. chỉ đọc day manifests bên trong các run đó
+3. project trạng thái ngày trong memory
+```
+
+Cách này giảm đáng kể số object phải đọc khi lịch sử attempts tăng.
+
+`run detail` vốn đã đọc theo `run_id`, nên không scan attempts của run khác.
+
+Nếu số lượng run manifests sau này đủ lớn để `run_id=*/run.json` trở thành bottleneck, bước tiếp theo là thêm một rebuildable Ops projection/index theo tháng hoặc một operational read store. Không cần đưa logic đó vào ingestion business data ngay từ bây giờ.
 
 ## Read-only rule
 
-Ops hiện không có API:
+Ops không có API để sửa lịch sử:
 
 ```text
 mark error resolved
@@ -187,7 +220,7 @@ force success
 patch manifest status
 ```
 
-Recovery luôn được biểu diễn bằng một attempt mới:
+Recovery luôn là attempt mới:
 
 ```text
 run A FAILED
@@ -195,25 +228,4 @@ run A FAILED
 run B SUCCESS
 ```
 
-Ops chỉ project `run B` thành effective attempt; `run A` không bị sửa.
-
-## Storage strategy hiện tại
-
-Hiện Ops đọc trực tiếp JSON/JSONL từ SeaweedFS qua repository layer:
-
-```text
-Object Storage
-├── _control
-└── _errors
-       |
-       v
-ControlRepository / ErrorRepository
-       |
-       v
-OpsService
-       |
-       v
-FastAPI
-```
-
-Đây phù hợp với quy mô hiện tại. Nếu operational metadata tăng đủ lớn để glob object storage trở thành bottleneck, có thể thêm PostgreSQL làm read store/index cho runs, attempts, pages và errors; procurement business data vẫn ở Lakehouse.
+Ops chỉ project `run B` thành effective attempt; `run A` vẫn được giữ nguyên để audit.
