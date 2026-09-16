@@ -6,6 +6,8 @@ from typing import Any, Protocol
 import httpx
 
 from procurement.common.resources import ResourceIdentity
+from procurement.common.settings import settings
+from procurement.ingestion.engine.concurrency import ordered_parallel_map
 from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
 from procurement.ingestion.engine.stats import PageStats
@@ -120,22 +122,13 @@ def iter_contractor_result_records(
     total_results = len(search_items)
     processed_results = 0
 
-    for result_index, search_item in enumerate(search_items, start=1):
+    def fetch_one(
+        search_item: dict[str, Any],
+    ) -> tuple[BronzeItem | None, Exception | None, str | None]:
         input_result_id = _as_string(search_item.get("inputResultId"))
         source_hint = _as_string(search_item.get("notifyNo")) or input_result_id
-
         if input_result_id is None:
-            stats.error("contractor_result")
-            _record_detail_error(
-                identity=identity,
-                errors=errors,
-                exc=KeyError("inputResultId"),
-                run_id=run_id,
-                source_date=source_date,
-                search_page=search_page,
-                source_id=source_hint,
-            )
-            continue
+            return None, KeyError("inputResultId"), source_hint
 
         try:
             detail = client.get_result_detail(input_result_id)
@@ -144,6 +137,28 @@ def iter_contractor_result_records(
                 search_item,
             )
         except DETAIL_EXCEPTIONS as exc:
+            return None, exc, source_hint
+
+        return (
+            build_contractor_result_record(
+                source_id=source_id,
+                source_version=source_version,
+                payload=detail,
+                run_id=run_id,
+                source_date=source_date,
+            ),
+            None,
+            source_hint,
+        )
+
+    results = ordered_parallel_map(
+        fetch_one,
+        search_items,
+        max_workers=settings.MUASAMCONG_DETAIL_WORKERS,
+    )
+
+    for result_index, (record, exc, source_hint) in enumerate(results, start=1):
+        if exc is not None:
             stats.error("contractor_result")
             _record_detail_error(
                 identity=identity,
@@ -154,17 +169,10 @@ def iter_contractor_result_records(
                 search_page=search_page,
                 source_id=source_hint,
             )
-            continue
-
-        yield build_contractor_result_record(
-            source_id=source_id,
-            source_version=source_version,
-            payload=detail,
-            run_id=run_id,
-            source_date=source_date,
-        )
-        processed_results += 1
-        stats.record("contractor_result")
+        elif record is not None:
+            processed_results += 1
+            stats.record("contractor_result")
+            yield record
 
         if result_index % PROGRESS_INTERVAL == 0 or result_index == total_results:
             logger.info(
