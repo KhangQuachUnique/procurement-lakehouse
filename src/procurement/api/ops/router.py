@@ -12,6 +12,7 @@ from procurement.ops.models import (
     OpsOverview,
     ResourceSummary,
     RunDetail,
+    RunSummary,
 )
 from procurement.ops.service import DEFAULT_SOURCE, OpsService
 
@@ -67,6 +68,29 @@ def get_date(
 ) -> DateDetail:
     try:
         return service.get_date(resource, source_date, source=source)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@router.get("/runs", response_model=list[RunSummary])
+def list_runs(
+    service: Service,
+    source: str = DEFAULT_SOURCE,
+    resource: str | None = None,
+    status: str | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+) -> list[RunSummary]:
+    try:
+        return service.list_runs(
+            source=source,
+            resource=resource,
+            status=status,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+        )
     except ValueError as exc:
         raise _bad_request(exc) from exc
 
