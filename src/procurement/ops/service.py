@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from procurement.common.resources import ResourceIdentity
-from procurement.models.control import DayManifest, DayStatus, PageManifest, RunManifest
+from procurement.models.control import DayManifest, DayStatus, PageManifest, RunManifest, RunStatus
 from procurement.models.errors import ErrorRecord
 from procurement.ops.models import (
     AttemptDetail,
@@ -94,6 +94,17 @@ class OpsService:
             return None
         return max(attempts, key=lambda item: item.started_at)
 
+    @classmethod
+    def _date_status(cls, attempts: list[DayManifest]) -> DateIngestionStatus:
+        if cls._effective_attempt(attempts) is not None:
+            return DateIngestionStatus.SUCCESS
+        latest = cls._latest_attempt(attempts)
+        if latest is None:
+            return DateIngestionStatus.NO_ATTEMPT
+        if latest.status is DayStatus.RUNNING:
+            return DateIngestionStatus.RUNNING
+        return DateIngestionStatus.FAILED
+
     @staticmethod
     def _today_vn() -> date:
         return datetime.now(VIETNAM_TZ).date()
@@ -111,6 +122,51 @@ class OpsService:
         if (end - start).days + 1 > MAX_DATE_WINDOW_DAYS:
             raise ValueError(f"Date window cannot exceed {MAX_DATE_WINDOW_DAYS} days")
         return start, end
+
+    def list_runs(
+        self,
+        *,
+        source: str = DEFAULT_SOURCE,
+        resource: str | None = None,
+        status: RunStatus | str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        limit: int = 100,
+    ) -> list[RunSummary]:
+        if limit < 1 or limit > 1000:
+            raise ValueError("limit must be between 1 and 1000")
+        if start_date is not None and end_date is not None and start_date > end_date:
+            raise ValueError("start_date must be before or equal to end_date")
+
+        if status is not None and not isinstance(status, RunStatus):
+            try:
+                status = RunStatus(status)
+            except ValueError as exc:
+                raise ValueError(f"Unsupported run status: {status}") from exc
+
+        if resource is not None:
+            resources = (resource,)
+        else:
+            if source != DEFAULT_SOURCE:
+                raise ValueError(f"Unsupported ops source: {source}")
+            resources = SUPPORTED_RESOURCES
+
+        manifests: list[RunManifest] = []
+        for item in resources:
+            identity = self.identity(item, source=source)
+            manifests.extend(
+                self._control.list_runs(
+                    identity,
+                    start_date=start_date,
+                    end_date=end_date,
+                    limit=limit,
+                )
+            )
+
+        if status is not None:
+            manifests = [item for item in manifests if item.status is status]
+        manifests.sort(key=lambda item: item.started_at, reverse=True)
+        return [self._run_summary(item) for item in manifests[:limit]]
 
     def overview(self, *, source: str = DEFAULT_SOURCE) -> OpsOverview:
         return OpsOverview(
@@ -148,7 +204,11 @@ class OpsService:
         ]
         latest_success_date = max(successful_dates) if successful_dates else None
         unresolved_failed_dates = sum(
-            1 for items in by_date.values() if self._effective_attempt(items) is None
+            1
+            for items in by_date.values()
+            if self._effective_attempt(items) is None
+            and self._latest_attempt(items) is not None
+            and self._latest_attempt(items).status is DayStatus.FAILED
         )
         freshness_days = (
             None
@@ -156,10 +216,8 @@ class OpsService:
             else max(0, (self._today_vn() - latest_success_date).days)
         )
 
-        if (
-            latest_success_date is None
-            or self._effective_attempt(by_date[latest_source_date]) is None
-        ):
+        latest_status = self._date_status(by_date[latest_source_date])
+        if latest_success_date is None or latest_status is DateIngestionStatus.FAILED:
             health = ResourceHealth.FAILED
         elif unresolved_failed_dates > 0 or (freshness_days is not None and freshness_days > 1):
             health = ResourceHealth.DEGRADED
@@ -177,6 +235,34 @@ class OpsService:
             total_attempts=len(attempts),
         )
 
+    def _attempts_for_window(
+        self,
+        identity: ResourceIdentity,
+        *,
+        start_date: date,
+        end_date: date,
+    ) -> list[DayManifest]:
+        # First narrow by run manifests. This avoids a resource-wide
+        # run_id=*/source_date=*/day.json glob for every calendar request.
+        runs = self._control.list_runs(
+            identity,
+            start_date=start_date,
+            end_date=end_date,
+            limit=10_000,
+        )
+        attempts: list[DayManifest] = []
+        for run in runs:
+            attempts.extend(
+                self._control.list_attempts(
+                    identity,
+                    run_id=run.run_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    limit=10_000,
+                )
+            )
+        return attempts
+
     def list_dates(
         self,
         resource: str,
@@ -187,12 +273,8 @@ class OpsService:
     ) -> list[DateSummary]:
         identity = self.identity(resource, source=source)
         start, end = self._resolve_window(start_date, end_date)
-        attempts = self._control.list_attempts(
-            identity,
-            start_date=start,
-            end_date=end,
-            limit=20_000,
-        )
+        attempts = self._attempts_for_window(identity, start_date=start, end_date=end)
+
         by_date: dict[date, list[DayManifest]] = defaultdict(list)
         for attempt in attempts:
             by_date[attempt.source_date].append(attempt)
@@ -203,15 +285,8 @@ class OpsService:
             date_attempts = by_date.get(cursor, [])
             effective = self._effective_attempt(date_attempts)
             latest = self._latest_attempt(date_attempts)
-            if effective is not None:
-                status = DateIngestionStatus.SUCCESS
-                projected = effective
-            elif latest is not None:
-                status = DateIngestionStatus.FAILED
-                projected = latest
-            else:
-                status = DateIngestionStatus.MISSING
-                projected = None
+            status = self._date_status(date_attempts)
+            projected = effective or latest
 
             items.append(
                 DateSummary(
@@ -239,24 +314,17 @@ class OpsService:
         source: str = DEFAULT_SOURCE,
     ) -> DateDetail:
         identity = self.identity(resource, source=source)
-        attempts = self._control.list_attempts(
+        attempts = self._attempts_for_window(
             identity,
-            source_date=source_date,
-            limit=1000,
+            start_date=source_date,
+            end_date=source_date,
         )
         effective = self._effective_attempt(attempts)
-        latest = self._latest_attempt(attempts)
-        if effective is not None:
-            status = DateIngestionStatus.SUCCESS
-        elif latest is not None:
-            status = DateIngestionStatus.FAILED
-        else:
-            status = DateIngestionStatus.MISSING
         return DateDetail(
             source=source,
             resource=resource,
             source_date=source_date,
-            status=status,
+            status=self._date_status(attempts),
             effective_run_id=None if effective is None else effective.run_id,
             attempts=[self._attempt_summary(item) for item in attempts],
         )
@@ -340,6 +408,8 @@ class OpsService:
                 return []
             resources = (found[0].resource,)
         else:
+            if source != DEFAULT_SOURCE:
+                raise ValueError(f"Unsupported ops source: {source}")
             resources = SUPPORTED_RESOURCES
 
         records: list[ErrorRecord] = []
