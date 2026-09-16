@@ -82,16 +82,29 @@ Run detail hiển thị status, date range, success/failed dates, tổng bronze 
 GET /ops/calendar
 ```
 
-Calendar hiển thị một resource theo tháng:
+Calendar hiển thị toàn bộ một năm dưới dạng heatmap nhỏ theo tuần × thứ, tương tự contribution graph:
 
 ```text
 success     xanh
 failed      đỏ
 running     vàng
 no_attempt  trung tính
+future      trung tính và mờ hơn
+```
+
+Mỗi ngày chỉ là một ô nhỏ. Hover một ô sẽ hiện nhanh:
+
+```text
+source_date
+status
+records hoặc errors
+attempt count
+run id
 ```
 
 Click một ngày để xem tất cả attempt của ngày đó và `effective_run_id`.
+
+Calendar có filter resource và chuyển năm trước/sau. Future dates không được tính vào số `not run` ở phần summary.
 
 Các URL cũ:
 
@@ -157,7 +170,7 @@ start_date=YYYY-MM-DD
 end_date=YYYY-MM-DD
 ```
 
-Window tối đa 366 ngày.
+Window tối đa 366 ngày, đủ cho một năm leap year.
 
 ### Date detail
 
@@ -204,7 +217,7 @@ cho mỗi request. Flow hiện tại là:
 3. project trạng thái ngày trong memory
 ```
 
-Cách này giảm đáng kể số object phải đọc khi lịch sử attempts tăng.
+Calendar năm gọi đúng một date window từ `01-01` tới `31-12`. UI render 365/366 ô nhỏ và chỉ dùng một tooltip DOM dùng chung cho hover, thay vì render một card chi tiết cho từng ngày.
 
 `run detail` vốn đã đọc theo `run_id`, nên không scan attempts của run khác.
 
