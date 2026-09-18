@@ -1,0 +1,22 @@
+[Unit]
+Description=Procurement daily ingestion and committed-data verification
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=procurement
+Group=procurement
+WorkingDirectory=/opt/procurement-lakehouse
+EnvironmentFile=/opt/procurement-lakehouse/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=DLT_PIPELINES_DIR=/var/lib/procurement/pipelines
+Environment=DLT_DATA_DIR=/var/lib/procurement/dlt
+Environment=INGESTION_LOCK_DIR=/var/lib/procurement/locks
+Environment=RUNTIME__DLTHUB_TELEMETRY=false
+StateDirectory=procurement
+ExecStart=/opt/procurement-lakehouse/.venv/bin/python -m procurement.jobs.ingest daily --lookback-days 3 --refresh
+TimeoutStartSec=6h
+TimeoutStopSec=60s
+UMask=0077
+NoNewPrivileges=true

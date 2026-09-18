@@ -1,0 +1,10 @@
+[Unit]
+Description=Run procurement ingestion at 08:00 Vietnam time
+
+[Timer]
+OnCalendar=*-*-* 01:00:00 UTC
+Persistent=true
+Unit=procurement-ingestion.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.12', '3.13', '3.14']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.15'
+          enable-cache: true
+      - run: uv python install ${{ matrix.python }}
+      - run: uv sync --locked --python ${{ matrix.python }} --extra dev --extra ops
+      - run: uv run --locked ruff check .
+      - run: uv run --locked pytest
+      - run: uv build
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TEST_S3_ENDPOINT: http://127.0.0.1:18333
+      RUNTIME__DLTHUB_TELEMETRY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.15'
+      - run: uv sync --locked --python 3.12 --extra dev --extra ops
+      - name: Start isolated object storage
+        run: >-
+          docker run -d --name ingestion-ci
+          -p 127.0.0.1:18333:8333
+          -e AWS_ACCESS_KEY_ID=integration
+          -e AWS_SECRET_ACCESS_KEY=integration-test-only
+          chrislusf/seaweedfs:4.46 mini -dir=/data
+      - name: Wait for S3 readiness
+        shell: bash
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --silent --output /dev/null http://127.0.0.1:18333/; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs ingestion-ci
+          exit 1
+      - run: uv run --locked pytest -m integration -o faulthandler_timeout=60
+      - run: docker build -f infra/docker/Dockerfile -t procurement-ci .
+      - run: docker run --rm procurement-ci python -m procurement.jobs.ingest --help
+      - name: Storage logs
+        if: failure()
+        run: docker logs ingestion-ci
+      - name: Stop isolated storage
+        if: always()
+        run: docker rm -f ingestion-ci

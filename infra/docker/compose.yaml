@@ -3,6 +3,12 @@ name: procurement-lakehouse
 services:
   object-storage:
     image: ${OBJECT_STORAGE_IMAGE}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
     command:
       - mini
@@ -14,13 +20,72 @@ services:
       S3_BUCKET: ${OBJECT_STORAGE_BUCKET}
 
     ports:
-      - "${OBJECT_STORAGE_API_PORT}:8333"
-      - "8888:8888"
-      - "9333:9333"
-      - "23646:23646"
+      - "${OBJECT_STORAGE_BIND_ADDRESS:-127.0.0.1}:${OBJECT_STORAGE_API_PORT}:8333"
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:9333:9333"
+      - "127.0.0.1:23646:23646"
 
     volumes:
       - object-storage-data:/data
 
+  ops:
+    profiles: [ops]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    environment:
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - object-storage
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ingestion:
+    profiles: [ingestion]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    environment:
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY}
+      MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mpi.gov.vn}
+      MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN}
+      MUASAMCONG_TIMEOUT_SECONDS: ${MUASAMCONG_TIMEOUT_SECONDS:-30}
+      MUASAMCONG_MAX_ATTEMPTS: ${MUASAMCONG_MAX_ATTEMPTS:-3}
+      MUASAMCONG_MAX_RETRY_DELAY_SECONDS: ${MUASAMCONG_MAX_RETRY_DELAY_SECONDS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      - object-storage
+    init: true
+    restart: "no"
+    stop_grace_period: 60s
+    volumes:
+      - ingestion-state:/var/lib/procurement
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   object-storage-data:
+  ingestion-state:
