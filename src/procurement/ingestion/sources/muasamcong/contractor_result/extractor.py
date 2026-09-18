@@ -5,13 +5,12 @@ from typing import Any, Protocol
 
 import httpx
 
+from procurement.common.errors import build_error_record
 from procurement.common.resources import ResourceIdentity
-from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
+from procurement.ingestion.engine.records import build_bronze_item
 from procurement.ingestion.engine.stats import PageStats
-from procurement.models.bronze import BronzeRecord
 from procurement.models.errors import ErrorRecord
-from procurement.storage.errors import build_error_record
 
 logger = logging.getLogger(__name__)
 
@@ -60,17 +59,13 @@ def build_contractor_result_record(
     run_id: str,
     source_date: date,
 ) -> BronzeItem:
-    return BronzeItem(
+    return build_bronze_item(
         table=CONTRACTOR_RESULT_TABLE,
-        record=BronzeRecord(
-            source_id=source_id,
-            source_version=source_version,
-            run_id=run_id,
-            source_date=source_date,
-            ingested_at=utc_now(),
-            content_hash=calculate_content_hash(payload),
-            payload=payload,
-        ),
+        source_id=source_id,
+        source_version=source_version,
+        run_id=run_id,
+        source_date=source_date,
+        payload=payload,
     )
 
 
@@ -96,8 +91,7 @@ def _record_detail_error(
         )
     )
     logger.error(
-        "contractor_result_detail_failed run_id=%s source_date=%s page=%s "
-        "stage=%s source_id=%s",
+        "contractor_result_detail_failed run_id=%s source_date=%s page=%s stage=%s source_id=%s",
         run_id,
         source_date,
         search_page,

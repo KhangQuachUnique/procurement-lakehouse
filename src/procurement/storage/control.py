@@ -4,8 +4,34 @@ import s3fs
 
 from procurement.common.resources import ResourceIdentity
 from procurement.common.settings import settings
-from procurement.models.control import DayManifest, PageManifest, RunManifest
+from procurement.models.control import DayManifest, DayStatus, PageManifest, RunManifest
 from procurement.storage.io import read_json, write_json
+
+
+class DayCommitUncertainError(RuntimeError):
+    """The caller must not rewrite the attempt after an unacknowledged commit."""
+
+
+def commit_day_manifest(
+    fs: s3fs.S3FileSystem, identity: ResourceIdentity, manifest: DayManifest
+) -> str:
+    if manifest.status is not DayStatus.SUCCESS:
+        raise ValueError("Only a successful day can be committed")
+    try:
+        return write_day_manifest(fs, identity, manifest)
+    except Exception as write_error:
+        try:
+            persisted = read_day_manifest(fs, identity, manifest.run_id, manifest.source_date)
+        except Exception as read_error:
+            raise DayCommitUncertainError(
+                f"Cannot verify day commit for {manifest.run_id}/{manifest.source_date}"
+            ) from read_error
+        if persisted == manifest:
+            return f"s3://{_day_prefix(identity, manifest.run_id, manifest.source_date)}/day.json"
+        # Even an absent object can reflect a request still completing remotely.
+        raise DayCommitUncertainError(
+            f"Day commit was not acknowledged for {manifest.run_id}/{manifest.source_date}"
+        ) from write_error
 
 
 def _resource_prefix(identity: ResourceIdentity) -> str:
@@ -127,10 +153,7 @@ def read_page_manifest(
 ) -> PageManifest | None:
     data = read_json(
         fs,
-        (
-            f"{_day_prefix(identity, run_id, source_date)}/pages/"
-            f"page-{page_number:06d}.json"
-        ),
+        (f"{_day_prefix(identity, run_id, source_date)}/pages/page-{page_number:06d}.json"),
     )
     return None if data is None else PageManifest.model_validate(data)
 

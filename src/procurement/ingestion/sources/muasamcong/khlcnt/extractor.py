@@ -5,13 +5,12 @@ from typing import Any, Protocol
 
 import httpx
 
+from procurement.common.errors import build_error_record
 from procurement.common.resources import ResourceIdentity
-from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
+from procurement.ingestion.engine.records import build_bronze_item
 from procurement.ingestion.engine.stats import PageStats
-from procurement.models.bronze import BronzeRecord
 from procurement.models.errors import ErrorRecord
-from procurement.storage.errors import build_error_record
 
 logger = logging.getLogger(__name__)
 PROGRESS_INTERVAL = 10
@@ -35,17 +34,13 @@ def build_plan_record(
     run_id: str,
     source_date: date,
 ) -> BronzeItem:
-    return BronzeItem(
+    return build_bronze_item(
         table=PLAN_TABLE,
-        record=BronzeRecord(
-            source_id=source_id,
-            source_version=source_version,
-            run_id=run_id,
-            source_date=source_date,
-            ingested_at=utc_now(),
-            content_hash=calculate_content_hash(payload),
-            payload=payload,
-        ),
+        source_id=source_id,
+        source_version=source_version,
+        run_id=run_id,
+        source_date=source_date,
+        payload=payload,
     )
 
 
@@ -58,17 +53,13 @@ def build_bid_package_record(
 ) -> BronzeItem:
     # MuaSamCong does not expose a version belonging to the bid-package entity
     # itself here. Do not reuse the parent plan version as package version.
-    return BronzeItem(
+    return build_bronze_item(
         table=BID_PACKAGE_TABLE,
-        record=BronzeRecord(
-            source_id=source_id,
-            source_version=None,
-            run_id=run_id,
-            source_date=source_date,
-            ingested_at=utc_now(),
-            content_hash=calculate_content_hash(payload),
-            payload=payload,
-        ),
+        source_id=source_id,
+        source_version=None,
+        run_id=run_id,
+        source_date=source_date,
+        payload=payload,
     )
 
 

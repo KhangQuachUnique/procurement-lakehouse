@@ -1,11 +1,16 @@
 from functools import partial
-from typing import Any, Protocol
+from typing import Any
 
-from procurement.common.resources import ResourceIdentity
+from procurement.common.catalog import get_resource
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
+from procurement.ingestion.sources.muasamcong.search import (
+    JsonPostClient,
+    build_search_payload,
+    search_document_key,
+)
 
-KHLCNT_IDENTITY = ResourceIdentity(source="muasamcong", resource="khlcnt")
+KHLCNT_IDENTITY = get_resource("khlcnt").identity
 KHLCNT_INDEX = "es-contractor-selection"
 KHLCNT_TYPE_FILTER = "es-plan-project-p"
 
@@ -18,10 +23,6 @@ BID_PACKAGE_DETAIL_PATH = (
     "/o/egp-portal-contractor-selection-v2/services/lcnt/"
     "bid-po-bidp-plan-project-view/get-bidp-plan-detail-by-id"
 )
-
-
-class JsonPostClient(Protocol):
-    def post(self, path: str, body: Any) -> dict[str, Any]: ...
 
 
 class KhlcntApi:
@@ -51,32 +52,20 @@ class KhlcntApi:
 def _build_search_payload(
     *, page_number: int, page_size: int, window_from: str, window_to: str
 ) -> list[dict[str, Any]]:
-    return [
-        {
-            "pageSize": page_size,
-            "pageNumber": str(page_number),
-            "query": [
-                {
-                    "index": KHLCNT_INDEX,
-                    "matchType": "all-1",
-                    "matchFields": ["notifyNo", "bidName"],
-                    "filters": [
-                        {
-                            "fieldName": "publicDate",
-                            "searchType": "range",
-                            "from": window_from,
-                            "to": window_to,
-                        },
-                        {
-                            "fieldName": "type",
-                            "searchType": "in",
-                            "fieldValues": [KHLCNT_TYPE_FILTER],
-                        },
-                    ],
-                }
-            ],
-        }
-    ]
+    return build_search_payload(
+        page_number=page_number,
+        page_size=page_size,
+        index=KHLCNT_INDEX,
+        filters=[
+            {
+                "fieldName": "publicDate",
+                "searchType": "range",
+                "from": window_from,
+                "to": window_to,
+            },
+            {"fieldName": "type", "searchType": "in", "fieldValues": [KHLCNT_TYPE_FILTER]},
+        ],
+    )
 
 
 def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
@@ -86,5 +75,6 @@ def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
         pipeline_name="muasamcong_bronze",
         dataset_name="muasamcong",
         fetch_page=api.search,
+        search_key=search_document_key,
         iter_records=partial(iter_khlcnt_records, api, identity=KHLCNT_IDENTITY),
     )

@@ -1,41 +1,14 @@
 import json
-import uuid
 from collections.abc import Iterable
-from datetime import UTC, date, datetime
+from datetime import date
 from typing import Any, BinaryIO, cast
 
 import s3fs
 
-from procurement.common.errors import extract_http_status, sanitize_error_message
+from procurement.common.errors import build_error_record  # noqa: F401 -- compatibility export
 from procurement.common.resources import ResourceIdentity
 from procurement.common.settings import settings
 from procurement.models.errors import ErrorRecord
-
-
-def build_error_record(
-    *,
-    identity: ResourceIdentity,
-    run_id: str,
-    stage: str,
-    source_date: date,
-    page_number: int | None,
-    exc: Exception,
-    source_id: str | None = None,
-) -> ErrorRecord:
-    return ErrorRecord(
-        error_id=uuid.uuid4().hex,
-        run_id=run_id,
-        source=identity.source,
-        resource=identity.resource,
-        source_date=source_date,
-        page_number=page_number,
-        stage=stage,
-        source_id=source_id,
-        error_type=type(exc).__name__,
-        message=sanitize_error_message(str(exc)),
-        http_status=extract_http_status(exc),
-        occurred_at=datetime.now(UTC),
-    )
 
 
 def save_error_records(
@@ -53,8 +26,7 @@ def save_error_records(
         f"page-{page_number:06d}.jsonl"
     )
     content = "".join(
-        json.dumps(record.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"))
-        + "\n"
+        json.dumps(record.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":")) + "\n"
         for record in records
     ).encode("utf-8")
     with fs.open(key, "wb") as raw_file:

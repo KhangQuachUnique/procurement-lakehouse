@@ -1,16 +1,18 @@
 from functools import partial
-from typing import Any, Protocol
+from typing import Any
 
-from procurement.common.resources import ResourceIdentity
+from procurement.common.catalog import get_resource
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.sources.muasamcong.contractor_result.extractor import (
     iter_contractor_result_records,
 )
-
-CONTRACTOR_RESULT_IDENTITY = ResourceIdentity(
-    source="muasamcong",
-    resource="contractor_result",
+from procurement.ingestion.sources.muasamcong.search import (
+    JsonPostClient,
+    build_search_payload,
+    search_document_key,
 )
+
+CONTRACTOR_RESULT_IDENTITY = get_resource("contractor_result").identity
 
 SEARCH_INDEX = "es-contractor-selection"
 TYPE_FILTER = "es-notify-contractor"
@@ -18,13 +20,8 @@ STEP_CODE_FILTER = "notify-contractor-step-4-kqlcnt"
 
 SEARCH_PATH = "/o/egp-portal-contractor-selection-v2/services/smart/search"
 CONTRACTOR_RESULT_DETAIL_PATH = (
-    "/o/egp-portal-contractor-selection-v2/services/expose/"
-    "contractor-input-result/get"
+    "/o/egp-portal-contractor-selection-v2/services/expose/contractor-input-result/get"
 )
-
-
-class JsonPostClient(Protocol):
-    def post(self, path: str, body: Any) -> dict[str, Any]: ...
 
 
 class ContractorResultApi:
@@ -60,37 +57,21 @@ def _build_search_payload(
     window_from: str,
     window_to: str,
 ) -> list[dict[str, Any]]:
-    return [
-        {
-            "pageSize": page_size,
-            "pageNumber": str(page_number),
-            "query": [
-                {
-                    "index": SEARCH_INDEX,
-                    "matchType": "all-1",
-                    "matchFields": ["notifyNo", "bidName"],
-                    "filters": [
-                        {
-                            "fieldName": "publicDateKqlcnt",
-                            "searchType": "range",
-                            "from": window_from,
-                            "to": window_to,
-                        },
-                        {
-                            "fieldName": "type",
-                            "searchType": "in",
-                            "fieldValues": [TYPE_FILTER],
-                        },
-                        {
-                            "fieldName": "stepCode",
-                            "searchType": "in",
-                            "fieldValues": [STEP_CODE_FILTER],
-                        },
-                    ],
-                }
-            ],
-        }
-    ]
+    return build_search_payload(
+        page_number=page_number,
+        page_size=page_size,
+        index=SEARCH_INDEX,
+        filters=[
+            {
+                "fieldName": "publicDateKqlcnt",
+                "searchType": "range",
+                "from": window_from,
+                "to": window_to,
+            },
+            {"fieldName": "type", "searchType": "in", "fieldValues": [TYPE_FILTER]},
+            {"fieldName": "stepCode", "searchType": "in", "fieldValues": [STEP_CODE_FILTER]},
+        ],
+    )
 
 
 def create_contractor_result_spec(client: JsonPostClient) -> ResourceSpec:
@@ -100,6 +81,7 @@ def create_contractor_result_spec(client: JsonPostClient) -> ResourceSpec:
         pipeline_name="muasamcong_bronze",
         dataset_name="muasamcong",
         fetch_page=api.search,
+        search_key=search_document_key,
         iter_records=partial(
             iter_contractor_result_records,
             api,

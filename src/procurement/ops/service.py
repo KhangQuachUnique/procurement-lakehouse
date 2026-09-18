@@ -2,6 +2,8 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from procurement.common.attempts import effective_attempt
+from procurement.common.catalog import DEFAULT_SOURCE, SUPPORTED_RESOURCES
 from procurement.common.resources import ResourceIdentity
 from procurement.models.control import DayManifest, DayStatus, PageManifest, RunManifest, RunStatus
 from procurement.models.errors import ErrorRecord
@@ -22,13 +24,6 @@ from procurement.ops.models import (
 from procurement.ops.repositories import ControlRepository, ErrorRepository
 
 VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
-DEFAULT_SOURCE = "muasamcong"
-SUPPORTED_RESOURCES = (
-    "project",
-    "khlcnt",
-    "notify_contractor",
-    "contractor_result",
-)
 MAX_DATE_WINDOW_DAYS = 366
 
 
@@ -83,10 +78,7 @@ class OpsService:
 
     @staticmethod
     def _effective_attempt(attempts: list[DayManifest]) -> DayManifest | None:
-        successful = [item for item in attempts if item.status is DayStatus.SUCCESS]
-        if not successful:
-            return None
-        return max(successful, key=lambda item: item.started_at)
+        return effective_attempt(attempts)
 
     @staticmethod
     def _latest_attempt(attempts: list[DayManifest]) -> DayManifest | None:
@@ -159,7 +151,7 @@ class OpsService:
                     identity,
                     start_date=start_date,
                     end_date=end_date,
-                    limit=limit,
+                    limit=None,
                 )
             )
 
@@ -175,7 +167,9 @@ class OpsService:
         )
 
     def list_resources(self, *, source: str = DEFAULT_SOURCE) -> list[ResourceSummary]:
-        return [self.get_resource_summary(resource, source=source) for resource in SUPPORTED_RESOURCES]
+        return [
+            self.get_resource_summary(resource, source=source) for resource in SUPPORTED_RESOURCES
+        ]
 
     def get_resource_summary(
         self,
@@ -184,7 +178,7 @@ class OpsService:
         source: str = DEFAULT_SOURCE,
     ) -> ResourceSummary:
         identity = self.identity(resource, source=source)
-        attempts = self._control.list_attempts(identity, limit=10_000)
+        attempts = self._control.list_attempts(identity, limit=None)
         if not attempts:
             return ResourceSummary(
                 source=source,
@@ -248,7 +242,7 @@ class OpsService:
             identity,
             start_date=start_date,
             end_date=end_date,
-            limit=10_000,
+            limit=None,
         )
         attempts: list[DayManifest] = []
         for run in runs:
@@ -258,7 +252,7 @@ class OpsService:
                     run_id=run.run_id,
                     start_date=start_date,
                     end_date=end_date,
-                    limit=10_000,
+                    limit=None,
                 )
             )
         return attempts
@@ -347,7 +341,7 @@ class OpsService:
         if found is None:
             return None
         identity, manifest = found
-        attempts = self._control.list_attempts(identity, run_id=run_id, limit=10_000)
+        attempts = self._control.list_attempts(identity, run_id=run_id, limit=None)
         return RunDetail(
             run=self._run_summary(manifest),
             attempts=[self._attempt_summary(item) for item in attempts],

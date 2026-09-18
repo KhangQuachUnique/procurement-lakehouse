@@ -23,7 +23,7 @@ class ControlRepository:
         *,
         start_date: date | None = None,
         end_date: date | None = None,
-        limit: int = 100,
+        limit: int | None = 100,
     ) -> list[RunManifest]:
         return list_run_manifests(
             self._fs,
@@ -43,7 +43,7 @@ class ControlRepository:
         source_date: date | None = None,
         start_date: date | None = None,
         end_date: date | None = None,
-        limit: int = 1000,
+        limit: int | None = 1000,
     ) -> list[DayManifest]:
         attempts = list_day_manifests(
             self._fs,

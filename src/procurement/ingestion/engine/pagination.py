@@ -1,5 +1,5 @@
 import math
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Hashable, Iterator
 from typing import Any
 
 MAX_SEARCH_ITEMS = 10_000
@@ -33,12 +33,14 @@ def iter_search_pages(
     window_from: str,
     window_to: str,
     page_size: int = 50,
+    search_key: Callable[[dict[str, Any]], Hashable | None] | None = None,
 ) -> Iterator[tuple[int, dict[str, Any]]]:
     if page_size <= 0:
         raise ValueError("page_size must be greater than zero")
 
     page_number = 0
     expected_total_items: int | None = None
+    seen: set[Hashable] = set()
 
     while True:
         response = fetch_page(
@@ -59,8 +61,7 @@ def iter_search_pages(
             )
         if total_items >= MAX_SEARCH_ITEMS:
             raise SearchResultLimitError(
-                f"Search returned {total_items} items; "
-                f"the website limit is {MAX_SEARCH_ITEMS}."
+                f"Search returned {total_items} items; the website limit is {MAX_SEARCH_ITEMS}."
             )
 
         if expected_total_items is None:
@@ -86,7 +87,10 @@ def iter_search_pages(
 
         total_pages = max(1, math.ceil(total_items / page_size))
         returned_total_pages = _optional_int(page, "totalPages")
-        if returned_total_pages is not None and returned_total_pages != total_pages:
+        # Live MuaSamCong returns totalPages=0 for an empty first page.
+        # Keep accepting the legacy one-page empty envelope as well.
+        valid_total_pages = {0, 1} if total_items == 0 else {total_pages}
+        if returned_total_pages is not None and returned_total_pages not in valid_total_pages:
             raise PaginationInvariantError(
                 "Search totalPages mismatch: "
                 f"expected={total_pages}, returned={returned_total_pages}"
@@ -101,6 +105,18 @@ def iter_search_pages(
                 f"received={len(content)}, totalElements={total_items}, "
                 f"pageSize={page_size}"
             )
+
+        if search_key is not None:
+            for item in content:
+                key = search_key(item)
+                # Missing identity remains an extractor error with source context.
+                if key is None:
+                    continue
+                if key in seen:
+                    raise PaginationInvariantError(
+                        f"Repeated search identity on page {page_number}: {key!r}"
+                    )
+                seen.add(key)
 
         yield page_number, response
 

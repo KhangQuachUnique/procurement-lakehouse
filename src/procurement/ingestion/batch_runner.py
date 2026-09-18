@@ -1,15 +1,18 @@
 import logging
 import uuid
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
 import s3fs
 
+from procurement.common.dates import api_day_window
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.models import DailyResult
 from procurement.models.control import RunManifest, RunStatus
 from procurement.storage.control import write_run_manifest
+from procurement.storage.execution import ExecutionHeartbeat
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +37,7 @@ def split_by_day(start: date, end: date) -> list[DateWindow]:
 
 
 def to_api_window(window: DateWindow) -> tuple[str, str]:
-    source_date = window.partition_date.isoformat()
-    return (
-        f"{source_date}T00:00:00.000Z",
-        f"{source_date}T23:59:59.999Z",
-    )
+    return api_day_window(window.partition_date)
 
 
 def _now() -> datetime:
@@ -60,6 +59,7 @@ def run_batch_range(
     fs: s3fs.S3FileSystem,
     identity: ResourceIdentity,
     run_day: Callable[[str, date], DailyResult],
+    heartbeat: bool = False,
 ) -> str:
     """Run a date range under one run_id while isolating each source_date attempt."""
 
@@ -84,48 +84,50 @@ def run_batch_range(
         end,
     )
 
-    success_dates = 0
-    failed_dates = 0
-    for window in windows:
-        source_date = window.partition_date
-        try:
-            result = run_day(run_id, source_date)
-            if result["status"] == "success":
-                success_dates += 1
-            else:
+    monitor = ExecutionHeartbeat(fs, identity, run_id) if heartbeat else nullcontext()
+    with monitor:
+        success_dates = 0
+        failed_dates = 0
+        for window in windows:
+            source_date = window.partition_date
+            try:
+                result = run_day(run_id, source_date)
+                if result["status"] == "success":
+                    success_dates += 1
+                else:
+                    failed_dates += 1
+            except Exception:
                 failed_dates += 1
-        except Exception:
-            failed_dates += 1
-            logger.exception(
-                "daily_run_failed run_id=%s source_date=%s resource=%s",
-                run_id,
-                source_date,
-                identity.resource,
-            )
+                logger.exception(
+                    "daily_run_failed run_id=%s source_date=%s resource=%s",
+                    run_id,
+                    source_date,
+                    identity.resource,
+                )
 
-        manifest = manifest.model_copy(
+            manifest = manifest.model_copy(
+                update={
+                    "success_dates": success_dates,
+                    "failed_dates": failed_dates,
+                }
+            )
+            write_run_manifest(fs, identity, manifest)
+
+        completed = manifest.model_copy(
             update={
+                "status": _final_status(success_dates, failed_dates),
                 "success_dates": success_dates,
                 "failed_dates": failed_dates,
+                "completed_at": _now(),
             }
         )
-        write_run_manifest(fs, identity, manifest)
-
-    completed = manifest.model_copy(
-        update={
-            "status": _final_status(success_dates, failed_dates),
-            "success_dates": success_dates,
-            "failed_dates": failed_dates,
-            "completed_at": _now(),
-        }
-    )
-    write_run_manifest(fs, identity, completed)
-    logger.info(
-        "batch_completed run_id=%s resource=%s status=%s success_dates=%s failed_dates=%s",
-        run_id,
-        identity.resource,
-        completed.status.value,
-        success_dates,
-        failed_dates,
-    )
+        write_run_manifest(fs, identity, completed)
+        logger.info(
+            "batch_completed run_id=%s resource=%s status=%s success_dates=%s failed_dates=%s",
+            run_id,
+            identity.resource,
+            completed.status.value,
+            success_dates,
+            failed_dates,
+        )
     return run_id

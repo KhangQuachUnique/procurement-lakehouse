@@ -5,18 +5,17 @@ from typing import Any, Protocol
 
 import httpx
 
+from procurement.common.errors import build_error_record
 from procurement.common.resources import ResourceIdentity
-from procurement.ingestion.engine.metadata import calculate_content_hash, utc_now
 from procurement.ingestion.engine.models import BronzeItem
+from procurement.ingestion.engine.records import build_bronze_item
 from procurement.ingestion.engine.stats import PageStats
 from procurement.ingestion.sources.muasamcong.notify_contractor.router import (
     DetailKind,
     UnsupportedNotifyWorkflowError,
     resolve_detail_kind,
 )
-from procurement.models.bronze import BronzeRecord
 from procurement.models.errors import ErrorRecord
-from procurement.storage.errors import build_error_record
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +63,8 @@ def _standard_identity(
     if source_id is None:
         raise KeyError("notifyNo")
 
-    source_version = (
-        _as_string(notification.get("notifyVersion"))
-        or _as_string(search_item.get("notifyVersion"))
+    source_version = _as_string(notification.get("notifyVersion")) or _as_string(
+        search_item.get("notifyVersion")
     )
     return source_id, source_version
 
@@ -101,17 +99,13 @@ def _build_record(
     run_id: str,
     source_date: date,
 ) -> BronzeItem:
-    return BronzeItem(
+    return build_bronze_item(
         table=table,
-        record=BronzeRecord(
-            source_id=source_id,
-            source_version=source_version,
-            run_id=run_id,
-            source_date=source_date,
-            ingested_at=utc_now(),
-            content_hash=calculate_content_hash(payload),
-            payload=payload,
-        ),
+        source_id=source_id,
+        source_version=source_version,
+        run_id=run_id,
+        source_date=source_date,
+        payload=payload,
     )
 
 

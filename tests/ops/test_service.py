@@ -24,7 +24,9 @@ def _day(
     errors: int = 0,
     bronze_records: int | None = None,
 ) -> DayManifest:
-    bronze = (20 if status is DayStatus.SUCCESS else 0) if bronze_records is None else bronze_records
+    bronze = (
+        (20 if status is DayStatus.SUCCESS else 0) if bronze_records is None else bronze_records
+    )
     return DayManifest(
         run_id=run_id,
         source="muasamcong",
@@ -229,3 +231,10 @@ def test_run_listing_can_filter_resource_and_status() -> None:
 
     assert {item.run_id for item in runs} == {"run-a", "run-c"}
     assert all(item.status is RunStatus.FAILED for item in runs)
+
+
+def test_run_status_filter_applies_before_limit() -> None:
+    # The first stored run is success. A failed run exists outside the first item.
+    runs = _service().list_runs(resource="khlcnt", status="failed", limit=1)
+    assert len(runs) == 1
+    assert runs[0].status is RunStatus.FAILED

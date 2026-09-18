@@ -19,6 +19,21 @@ class StubClient:
         return self.pages[page_number]
 
 
+@pytest.mark.parametrize('total_pages', [0, 1])
+def test_empty_day_is_observed_once_even_when_source_has_zero_pages(total_pages):
+    client = StubClient([{'page': {'content': [], 'totalElements': 0,
+        'totalPages': total_pages, 'currentPage': 0, 'pageSize': 50, 'empty': True}}])
+    pages = list(iter_search_pages(client.search, window_from='from', window_to='to'))
+    assert [number for number, _ in pages] == [0]
+    assert client.calls == [0]
+
+
+def test_zero_pages_cannot_hide_nonempty_results():
+    client = StubClient([{'page': {'content': [{'id': 'x'}], 'totalElements': 1, 'totalPages': 0}}])
+    with pytest.raises(PaginationInvariantError, match='totalPages mismatch'):
+        list(iter_search_pages(client.search, window_from='from', window_to='to'))
+
+
 def _page(
     *,
     items: int,
@@ -83,9 +98,7 @@ def test_validates_server_page_metadata_when_present() -> None:
 
 
 def test_rejects_server_page_size_clamp() -> None:
-    client = StubClient(
-        [_page(items=50, total=200, number=0, size=50, total_pages=4)]
-    )
+    client = StubClient([_page(items=50, total=200, number=0, size=50, total_pages=4)])
 
     with pytest.raises(PaginationInvariantError, match="page size mismatch"):
         list(
@@ -154,5 +167,24 @@ def test_rejects_daily_result_at_website_limit() -> None:
                 client.search,
                 window_from="from",
                 window_to="to",
+            )
+        )
+
+
+def test_duplicate_document_across_pages_fails_instead_of_hiding_a_gap() -> None:
+    client = StubClient(
+        [
+            _page(items=1, total=2, number=0),
+            _page(items=1, total=2, number=1),
+        ]
+    )
+    with pytest.raises(PaginationInvariantError, match="Repeated search identity"):
+        list(
+            iter_search_pages(
+                client.search,
+                window_from="from",
+                window_to="to",
+                page_size=1,
+                search_key=lambda item: item["id"],
             )
         )

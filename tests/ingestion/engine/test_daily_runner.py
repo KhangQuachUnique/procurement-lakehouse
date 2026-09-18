@@ -10,6 +10,7 @@ from procurement.ingestion.engine.models import BronzeItem, ResourceSpec
 from procurement.models.bronze import BronzeRecord
 from procurement.models.control import DayStatus, PageStatus
 from procurement.models.errors import ErrorRecord
+from procurement.storage import bronze
 
 SOURCE_DATE = date(2026, 9, 10)
 IDENTITY = ResourceIdentity("test-source", "test-resource")
@@ -21,11 +22,15 @@ class FakePipeline:
         self.loads: list[tuple[str, list[BronzeRecord]]] = []
         self.fail = False
 
-    def run(self, resource: tuple[str, list[BronzeRecord]]) -> None:
+    def raise_on_failed_jobs(self) -> None:
+        pass
+
+    def run(self, resource: tuple[str, list[BronzeRecord]]):
         self.events.append("bronze")
         if self.fail:
             raise RuntimeError("load failed")
         self.loads.append(resource)
+        return self
 
 
 class Harness:
@@ -38,11 +43,12 @@ class Harness:
         self.pipeline_kwargs: list[dict[str, Any]] = []
 
         monkeypatch.setattr(daily_runner, "write_day_manifest", self._write_day)
+        monkeypatch.setattr(daily_runner, "commit_day_manifest", self._write_day)
         monkeypatch.setattr(daily_runner, "write_page_manifest", self._write_page)
         monkeypatch.setattr(daily_runner, "save_error_records", self._save_errors)
         monkeypatch.setattr(daily_runner, "create_bronze_destination", lambda **_: object())
         monkeypatch.setattr(
-            daily_runner,
+            bronze,
             "create_bronze_resource",
             lambda records, *, name: (name, list(records)),
         )
@@ -105,9 +111,10 @@ def _spec(*, iter_records: Any | None = None, fetch_page: Any | None = None) -> 
     def fetch(**_: Any) -> dict[str, Any]:
         return _page()
 
-    def records(*, stats: Any, **_: Any) -> Iterator[BronzeItem]:
+    def records(*, stats: Any, run_id: str, **_: Any) -> Iterator[BronzeItem]:
         stats.record("notice")
-        yield _bronze_item()
+        item = _bronze_item()
+        yield BronzeItem(item.table, item.record.model_copy(update={"run_id": run_id}))
 
     return ResourceSpec(
         identity=IDENTITY,
@@ -243,3 +250,59 @@ def test_initial_day_manifest_failure_propagates(
         _run(_spec())
 
     assert harness.pipeline_kwargs == []
+
+
+def test_empty_day_commits_without_creating_pipeline(harness: Harness) -> None:
+    result = _run(_spec(fetch_page=lambda **_: _page([]), iter_records=lambda **_: iter(())))
+    assert result["status"] == "success"
+    assert result["bronze_records"] == 0
+    assert result["pages"] == 1
+    assert harness.pipeline_kwargs == []
+
+
+def test_failed_load_receipt_prevents_commit(harness: Harness) -> None:
+    def fail_receipt():
+        raise RuntimeError("destination job failed")
+
+    harness.pipeline.raise_on_failed_jobs = fail_receipt
+    result = _run(_spec())
+    assert result["status"] == "failed"
+    assert result["bronze_records"] == 0
+    assert harness.errors[-1].stage == "bronze_load"
+
+
+def test_commit_uncertainty_never_writes_failed_day(harness: Harness, monkeypatch) -> None:
+    from procurement.storage.control import DayCommitUncertainError
+
+    def uncertain(*_):
+        raise DayCommitUncertainError("commit ACK lost")
+
+    monkeypatch.setattr(daily_runner, "commit_day_manifest", uncertain)
+    with pytest.raises(DayCommitUncertainError):
+        _run(_spec())
+    assert all(day.status is not DayStatus.FAILED for day in harness.days)
+
+
+def test_other_attempt_lineage_is_rejected_before_load(harness: Harness) -> None:
+    def records(**_):
+        yield _bronze_item()
+
+    result = _run(_spec(iter_records=records), run_id="another-run")
+    assert result["status"] == "failed"
+    assert harness.pipeline.loads == []
+    assert "another attempt" in harness.errors[-1].message
+
+
+def test_later_page_failure_preserves_earlier_load_but_fails_day(harness: Harness) -> None:
+    def fetch(*, page_number, **_):
+        if page_number == 1:
+            raise RuntimeError("search unavailable")
+        return {"page": {"content": [{"id": str(i)} for i in range(50)], "totalElements": 51}}
+
+    result = _run(_spec(fetch_page=fetch))
+    assert result["status"] == "failed"
+    assert result["pages"] == 1
+    assert result["bronze_records"] == 1
+    assert len(harness.pipeline.loads) == 1
+    assert harness.pages[-1].page_number == 1
+    assert harness.days[-1].status is DayStatus.FAILED
