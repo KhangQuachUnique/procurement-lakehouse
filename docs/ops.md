@@ -1,244 +1,81 @@
-# Ops
+# Ops: theo dõi ingestion
 
-Ops là lớp read-only để quan sát ingestion. `_control` và `_errors` trong object storage vẫn là source of truth; Ops không sửa manifest hay error cũ.
+[Mục lục](../README.md) · [Jobs và recovery](ingestion.md) · [Cấu hình](setup.md)
 
-## Mental model
+Ops đọc manifest/error trong object storage để hiển thị coverage và hỗ trợ tìm lỗi. Ops không khởi chạy crawl hay sửa trạng thái manifest.
 
-```text
-Run
-  -> Source date / Attempt
-      -> Errors
-      -> Pages
-```
+## Khởi động
 
-Một ngày có thể có nhiều attempt:
-
-```text
-2026-09-12
-├── run A FAILED
-├── run B FAILED
-└── run C SUCCESS  <- effective attempt
-```
-
-Nếu có ít nhất một attempt `SUCCESS`, attempt thành công mới nhất là `effective_run_id`. Attempt fail cũ vẫn được giữ để audit.
-
-## Trạng thái ngày
-
-Calendar dùng bốn trạng thái:
-
-```text
-success     có ít nhất một attempt SUCCESS
-failed      có attempt nhưng chưa từng SUCCESS và attempt mới nhất FAILED
-running     có attempt nhưng chưa từng SUCCESS và attempt mới nhất RUNNING
-no_attempt  không có attempt nào
-```
-
-Hai rule quan trọng:
-
-```text
-no_attempt != failed
-SUCCESS với bronze_records = 0 vẫn là success
-```
-
-Không có dữ liệu từ upstream không tự động có nghĩa ingestion lỗi. Chỉ lỗi thực sự trong attempt mới được biểu diễn là `failed` và ghi vào `_errors`.
-
-## Chạy Ops
+Cài extra ops và cấu hình storage trong `.env`, rồi chạy:
 
 ```powershell
-uvicorn procurement.api.main:app --reload
+uv run --locked uvicorn procurement.api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Mở:
+`--host` chọn địa chỉ lắng nghe, `--port` chọn cổng. Khi phát triển có thể thêm `--reload` để tự tải lại khi code đổi. Cách chạy container nằm ở [Compose](setup.md#docker-compose). UI/API không có lớp đăng nhập tích hợp; cấu hình mặc định chỉ mở localhost.
 
-```text
-http://127.0.0.1:8000/
+| Địa chỉ | Dùng để làm gì? |
+| --- | --- |
+| `http://127.0.0.1:8000/ops` | Xem/filter các run |
+| `/ops/calendar?resource=khlcnt&year=2022` | Lịch coverage theo loại/năm |
+| `/ops/calendar/khlcnt/2022-10-26` | Xem các attempt của một ngày |
+| `/ops/runs/<run_id>` | Xem run và các day attempt |
+| `/ops/attempts/<run_id>/<YYYY-MM-DD>` | Xem lỗi và pages của attempt |
+| `/ops/errors` | Tra error records |
+| `/docs` | Swagger: xem schema và gọi thử API |
+| `/health/live` | Process trả lời được |
+| `/health/ready` | Bucket tồn tại và credential truy cập được; 503 khi không sẵn sàng |
+
+Health ready không thay thế việc verify Parquet hay kiểm quyền ghi của ingestion.
+
+## Cách đọc trạng thái
+
+| Trạng thái ngày | Ý nghĩa |
+| --- | --- |
+| `success` | Có ít nhất một Day SUCCESS; effective là SUCCESS có started_at mới nhất |
+| `failed` | Chưa có SUCCESS, latest day attempt FAILED |
+| `running` | Chưa có SUCCESS, latest day attempt RUNNING |
+| `no_attempt` | Chưa có day attempt |
+
+Run có các trạng thái `running`, `success`, `failed`, `partial_failed`. Run mới fail không làm mất ngày đã SUCCESS ở attempt trước. Ngày SUCCESS 0 record là kết quả rỗng hợp lệ, không phải thiếu crawl.
+
+Calendar chiếu trạng thái day manifests; planner ingestion còn xét các range run RUNNING chưa kết thúc. Vì vậy một ngày trên Calendar là failed/no_attempt vẫn có thể bị planner chặn bởi run cũ. Dùng `ingest ... --dry-run` để xem `active_runs` và cách xử lý ở [recovery](ingestion.md#đọc-kết-quả-và-xử-lý-lỗi).
+
+Luồng tìm lỗi: **Calendar → ngày → attempt → error/page**; hoặc **Runs → run → attempt** khi đã biết run_id. `no_attempt` không có error record. Coverage theo manifest chưa chứng minh nội dung file nguyên vẹn; dùng mode verify để kiểm thêm.
+
+## Bộ lọc UI
+
+Mọi trang nhận `source`, mặc định và hiện chỉ hỗ trợ `muasamcong`.
+
+| Trang | Tham số |
+| --- | --- |
+| `/ops` | `resource`, `status`, `start_date`, `end_date`, `limit` mặc định 100, từ 1–500 |
+| `/ops/calendar` | `resource` mặc định notify_contractor; `year` mặc định năm hiện tại, từ 2000–2100 |
+| `/ops/errors` | `resource`, `source_date`, `run_id`, `stage`, `error_type`, `limit` mặc định 200, từ 1–1000 |
+
+`resource` nhận project/khlcnt/notify_contractor/contractor_result. `status` của Runs nhận các trạng thái run ở trên; khoảng ngày lọc run giao với khoảng source_date, không phải ngày process bắt đầu. `stage`/`error_type` lấy giá trị từ error thực tế, ví dụ pagination/PaginationInvariantError. Ngày dùng `YYYY-MM-DD`.
+
+## API chỉ đọc
+
+Tất cả endpoint dưới đây là GET và nhận `source=muasamcong` mặc định.
+
+| Endpoint | Query bổ sung |
+| --- | --- |
+| `/api/ops/overview` | Không |
+| `/api/ops/resources` | Không |
+| `/api/ops/resources/{resource}/dates` | `start_date`, `end_date` |
+| `/api/ops/resources/{resource}/dates/{source_date}` | Không |
+| `/api/ops/runs` | `resource`, `status`, `start_date`, `end_date`, `limit` mặc định 100 |
+| `/api/ops/runs/{run_id}` | Không |
+| `/api/ops/attempts/{run_id}/{source_date}` | Không |
+| `/api/ops/errors` | `resource`, `source_date`, `run_id`, `stage`, `error_type`, `limit` mặc định 200 |
+
+API limit từ 1–1000, giới hạn số dòng trả về sau lọc; không phải phân trang bằng offset. Date list mặc định 30 ngày đến hôm qua, tối đa 366 ngày mỗi request. Runs sắp theo started_at mới nhất; errors theo occurred_at mới nhất. Giá trị filter không hợp lệ có thể trả 400/422; không tìm thấy run/attempt trả 404.
+
+```powershell
+Invoke-RestMethod 'http://127.0.0.1:8000/api/ops/resources/khlcnt/dates?start_date=2022-01-01&end_date=2022-12-31'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/ops/runs?resource=khlcnt&status=failed&limit=20'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/ops/errors?resource=khlcnt&source_date=2022-10-26&limit=50'
 ```
 
-`/` redirect sang `/ops`.
-
-## UI
-
-### Runs
-
-```text
-GET /ops
-```
-
-Đây là màn hình mặc định. Có filter theo resource, run status, date range và limit.
-
-```text
-Runs
-  -> Run detail
-      -> Date attempt detail
-          -> Errors
-          -> Pages
-```
-
-Run detail hiển thị status, date range, success/failed dates, tổng bronze records, tổng error count, duration và danh sách day attempts.
-
-### Calendar
-
-```text
-GET /ops/calendar
-```
-
-Calendar hiển thị toàn bộ một năm dưới dạng heatmap nhỏ theo tuần × thứ, tương tự contribution graph:
-
-```text
-success     xanh
-failed      đỏ
-running     vàng
-no_attempt  trung tính
-future      trung tính và mờ hơn
-```
-
-Mỗi ngày chỉ là một ô nhỏ. Hover một ô sẽ hiện nhanh:
-
-```text
-source_date
-status
-records hoặc errors
-attempt count
-run id
-```
-
-Click một ngày để xem tất cả attempt của ngày đó và `effective_run_id`.
-
-Calendar có filter resource và chuyển năm trước/sau. Future dates không được tính vào số `not run` ở phần summary.
-
-Các URL cũ:
-
-```text
-/ops/resources/{resource}
-/ops/resources/{resource}/dates/{source_date}
-```
-
-được redirect sang Calendar để không làm gãy bookmark cũ.
-
-### Attempt detail
-
-```text
-GET /ops/attempts/{run_id}/{source_date}
-```
-
-Errors được đặt trước Pages vì đây là màn hình debug vận hành.
-
-### Errors
-
-```text
-GET /ops/errors
-```
-
-Chỉ hiển thị error records thực sự. `no_attempt` không xuất hiện trong error list.
-
-## API
-
-### Recent runs
-
-```text
-GET /api/ops/runs
-```
-
-Filters:
-
-```text
-resource
-status
-start_date
-end_date
-limit
-```
-
-### Run detail
-
-```text
-GET /api/ops/runs/{run_id}
-```
-
-Trả run summary và day attempts của run.
-
-### Calendar data
-
-```text
-GET /api/ops/resources/{resource}/dates
-```
-
-Query:
-
-```text
-start_date=YYYY-MM-DD
-end_date=YYYY-MM-DD
-```
-
-Window tối đa 366 ngày, đủ cho một năm leap year.
-
-### Date detail
-
-```text
-GET /api/ops/resources/{resource}/dates/{source_date}
-```
-
-### Attempt detail
-
-```text
-GET /api/ops/attempts/{run_id}/{source_date}
-```
-
-### Errors
-
-```text
-GET /api/ops/errors
-```
-
-Filters:
-
-```text
-resource
-source_date
-run_id
-stage
-error_type
-limit
-```
-
-## Performance
-
-Calendar không còn glob toàn bộ:
-
-```text
-run_id=*/source_date=*/day.json
-```
-
-cho mỗi request. Flow hiện tại là:
-
-```text
-1. đọc run manifests giao với date window
-2. chỉ đọc day manifests bên trong các run đó
-3. project trạng thái ngày trong memory
-```
-
-Calendar năm gọi đúng một date window từ `01-01` tới `31-12`. UI render 365/366 ô nhỏ và chỉ dùng một tooltip DOM dùng chung cho hover, thay vì render một card chi tiết cho từng ngày.
-
-`run detail` vốn đã đọc theo `run_id`, nên không scan attempts của run khác.
-
-Nếu số lượng run manifests sau này đủ lớn để `run_id=*/run.json` trở thành bottleneck, bước tiếp theo là thêm một rebuildable Ops projection/index theo tháng hoặc một operational read store. Không cần đưa logic đó vào ingestion business data ngay từ bây giờ.
-
-## Read-only rule
-
-Ops không có API để sửa lịch sử:
-
-```text
-mark error resolved
-force success
-patch manifest status
-```
-
-Recovery luôn là attempt mới:
-
-```text
-run A FAILED
-    -> recrawl
-run B SUCCESS
-```
-
-Ops chỉ project `run B` thành effective attempt; `run A` vẫn được giữ nguyên để audit.
+Nếu Ops không thấy dữ liệu, kiểm endpoint/bucket/credential có trùng môi trường crawler không, sau đó kiểm filter ngày/source/resource. Khi lịch sử lớn, thu hẹp khoảng ngày; limit nhỏ của Runs/Errors không bảo đảm storage chỉ phải đọc ít object.

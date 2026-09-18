@@ -1,108 +1,39 @@
 # Procurement Lakehouse
 
-Data Lakehouse phục vụ thu thập và phân tích dữ liệu đấu thầu công từ Hệ thống mạng đấu thầu quốc gia (Mua Sắm Công).
+Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý kết quả theo manifest và theo dõi qua Ops.
 
-## Yêu cầu
+| Cần làm gì? | Hướng dẫn |
+| --- | --- |
+| Cài môi trường, cấu hình `.env`, chạy Docker | [Cài đặt và cấu hình](docs/setup.md) |
+| Crawl, backfill, repair, verify, đặt lịch | [Jobs ingestion](docs/ingestion.md) |
+| Xem coverage, run, attempt và lỗi qua UI/API | [Ops](docs/ops.md) |
+| Query Bronze bằng DuckDB, đọc dữ liệu đã commit | [Bronze Explorer và đọc dữ liệu](docs/bronze-explorer.md) |
+| Chạy tests, lint, build và thêm resource | [Công cụ phát triển](docs/development.md) |
 
-- Python 3.12 - 3.14
-- Docker + Docker Compose
-- MuaSamCong token
+## Bắt đầu
 
-## Cài đặt
-
-### Windows PowerShell
-
-```powershell
-git clone <repository-url>
-cd procurement-lakehouse
-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev,ops]"
-
-Copy-Item .env.example .env
-```
-
-### Linux / macOS
-
-```bash
-git clone <repository-url>
-cd procurement-lakehouse
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev,ops]"
-
-cp .env.example .env
-```
-
-Cập nhật `MUASAMCONG_TOKEN` và các biến object storage trong `.env` nếu cần.
-
-## Chạy object storage
+Cần Python 3.12–3.14, uv và Docker Compose. Chạy tại thư mục gốc repository:
 
 ```powershell
-cd infra/docker
-docker compose --env-file ../../.env up -d
-cd ../..
+uv sync --locked --extra dev --extra ops
+# Chỉ tạo .env khi chưa có; sau đó chỉnh cấu hình trong file
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
+docker compose --env-file .env -f infra/docker/compose.yaml up -d object-storage
+uv run --locked python -m procurement.jobs.ingest daily --dry-run
+uv run --locked python -m procurement.jobs.ingest daily
+uv run --locked uvicorn procurement.api.main:app --host 127.0.0.1 --port 8000
 ```
 
-SeaweedFS S3 API mặc định:
+Mở Ops tại `http://127.0.0.1:8000/ops`. Lệnh `daily` mặc định xử lý ngày hôm qua theo lịch Việt Nam; nên chạy lúc 08:00 hoặc muộn hơn. Xem [tham số ingestion](docs/ingestion.md#tham-số) trước khi mở rộng khoảng ngày.
 
-```text
-http://localhost:8333
-```
+Một ngày chỉ được coi là committed khi **DayManifest SUCCESS**. File Parquet của attempt FAILED có thể vẫn tồn tại; dùng Ops hoặc committed reader để chọn dữ liệu sử dụng.
 
-## Backfill ingestion
-
-Chạy đủ 4 resource với tối đa 2 worker process.
-
-Nguyên năm:
+## Backfill cả năm
 
 ```powershell
-python -m procurement.jobs.crawl_all `
-  --year 2022 `
-  --page-size 50
+uv run --locked python -m procurement.jobs.ingest backfill --year 2025 --continue-on-error
+uv run --locked python -m procurement.jobs.ingest repair --year 2025 --continue-on-error
+uv run --locked python -m procurement.jobs.ingest status --year 2025
 ```
 
-Theo khoảng ngày:
-
-```powershell
-python -m procurement.jobs.crawl_all `
-  --start-date 2025-03-01 `
-  --end-date 2025-03-31 `
-  --page-size 50
-```
-
-Chỉ crawl ngày đã đóng. Hướng dẫn chi tiết, semantics retry/commit và cách chạy từng resource nằm tại [docs/ingestion.md](docs/ingestion.md).
-
-## Xem dữ liệu Bronze
-
-Không cần tự cấu hình DuckDB/S3. Khi SeaweedFS đang chạy và `.env` đã đúng, chạy:
-
-```powershell
-python -m procurement.tools.bronze_explorer
-```
-
-Browser sẽ mở DuckDB UI tại `http://localhost:4213`. Các table Bronze được expose tự động dưới schema `bronze_raw`, ví dụ:
-
-```sql
-SELECT *
-FROM bronze_raw.notify_contractor_standard_detail
-LIMIT 100;
-```
-
-`bronze_raw` là dữ liệu vật lý để inspect; failed attempt có thể để lại partial Parquet. Trạng thái committed vẫn dựa trên `DayManifest SUCCESS` và xem qua Ops. Chi tiết tại [docs/bronze-explorer.md](docs/bronze-explorer.md).
-
-## Kiểm tra project
-
-```powershell
-pytest
-ruff check .
-```
-
-## Tài liệu
-
-- [Kiến trúc](docs/architecture.md)
-- [Ingestion](docs/ingestion.md)
-- [Bronze Explorer](docs/bronze-explorer.md)
-- [Ops](docs/ops.md)
+`--continue-on-error` cho phép đi tiếp sau ngày lỗi nguồn; cuối lượt vẫn báo lỗi để repair. Lỗi xác thực/storage hoặc trạng thái chưa xác nhận sẽ dừng flow. Mọi lệnh dùng cùng planner, bỏ qua ngày đã SUCCESS nếu không bật `--refresh`.

@@ -1,104 +1,75 @@
-# Bronze Explorer
+# Bronze Explorer và đọc dữ liệu
 
-Dùng DuckDB UI để xem trực tiếp dữ liệu Bronze đang nằm trong SeaweedFS mà không cần cấu hình S3 thủ công mỗi lần.
+[Mục lục](../README.md) · [Cấu hình](setup.md) · [Trạng thái dữ liệu](ingestion.md#manifest-và-dữ-liệu-đã-commit)
 
-## Cách chạy
+## Mở DuckDB UI
 
-Đảm bảo SeaweedFS đang chạy và `.env` đã có các biến object storage giống khi chạy ingestion:
-
-```text
-OBJECT_STORAGE_ENDPOINT
-OBJECT_STORAGE_ACCESS_KEY
-OBJECT_STORAGE_SECRET_KEY
-OBJECT_STORAGE_BUCKET
-```
-
-Sau đó chạy:
+Explorer dùng cấu hình S3 trong `.env` để tạo các view trên Parquet. Cần có dữ liệu Bronze và quyền đọc bucket. DuckDB đi kèm dependency project; lần đầu chạy có thể cần mạng để tải extension httpfs/ui.
 
 ```powershell
 python -m procurement.tools.bronze_explorer
-```
-
-Script sẽ tự:
-
-1. Đọc cấu hình object storage từ `.env`.
-2. Kết nối SeaweedFS S3 API.
-3. Tạo DuckDB S3 secret tạm thời trong memory.
-4. Discover đúng layout DLT `bronze/<dataset>/<table>/...` (hiện tại dataset là `muasamcong`).
-5. Bỏ qua các table metadata `_dlt_*` và tạo view dữ liệu trong schema `bronze_raw`.
-6. Mở DuckDB UI tại `http://localhost:4213`.
-
-Không cần cài DuckDB CLI riêng. Package `duckdb` được cài cùng project.
-
-Có thể đổi port:
-
-```powershell
 python -m procurement.tools.bronze_explorer --port 4214
 ```
 
-Dừng explorer bằng `Ctrl+C` tại terminal đang chạy. Nếu vừa crawl thêm một table mới trong lúc explorer đang mở, restart explorer để discover lại các table.
+| Tham số | Mặc định | Ý nghĩa |
+| --- | --- | --- |
+| `--port` | `4213` | Cổng UI, từ 1 đến 65535 |
+| `-h`, `--help` | — | Hiển thị trợ giúp |
 
-Khi startup, terminal sẽ in danh sách view, ví dụ:
+Mở `http://localhost:4213` với cổng mặc định. Terminal in các view trong schema `bronze_raw`; Ctrl+C dừng server. Restart Explorer khi có table mới để discover lại. Credential DuckDB được giữ trong process, không tạo persistent secret.
 
-```text
-Views:
-  - bronze_raw.project_detail
-  - bronze_raw.notify_contractor_standard_detail
-```
-
-## Query mẫu
-
-Xem Project:
+## Query dữ liệu vật lý
 
 ```sql
-SELECT *
+SELECT source_id, source_date, run_id, payload, filename
 FROM bronze_raw.project_detail
-LIMIT 100;
-```
+LIMIT 20;
 
-Xem TBMT:
-
-```sql
-SELECT *
+SELECT source_date, run_id, count(*) AS records
 FROM bronze_raw.notify_contractor_standard_detail
-LIMIT 100;
+WHERE source_date BETWEEN DATE '2022-10-01' AND DATE '2022-10-31'
+GROUP BY source_date, run_id
+ORDER BY source_date, run_id;
 ```
 
-Đếm số record theo ngày:
+`filename` chỉ ra file gốc. Envelope Bronze có `source_id`, `source_version` (có thể null), `run_id`, `source_date`, `ingested_at`, `content_hash`, `payload`. Các table hiện có được liệt kê ở [jobs ingestion](ingestion.md#chọn-lệnh). Khi nhiều dataset có table trùng tên, view dùng `<dataset>__<table>`.
 
-```sql
-SELECT
-    source_date,
-    count(*) AS records
-FROM bronze_raw.notify_contractor_standard_detail
-GROUP BY source_date
-ORDER BY source_date;
+`bronze_raw` bao gồm các attempt vật lý, kể cả partial data của FAILED và nhiều lần crawl cùng ngày. Counts ở đây không phải committed counts. Để inspect một attempt cụ thể, lọc thêm `run_id` từ Ops; để đọc cho downstream, dùng committed reader dưới đây.
+
+## Đọc đúng dữ liệu đã commit bằng Python
+
+```python
+from datetime import date
+
+from procurement.common.catalog import get_resource
+from procurement.storage.committed import (
+    iter_committed_records,
+    select_committed_days,
+    verify_committed,
+)
+from procurement.storage.object_store import create_s3_filesystem
+
+fs = create_s3_filesystem()
+selection = select_committed_days(
+    fs, get_resource("khlcnt"), date(2022, 10, 1), date(2022, 10, 31)
+)
+print(verify_committed(fs, selection))
+
+for table, record in iter_committed_records(fs, selection, verify_hash=True):
+    # Ghi vào staging của downstream; chỉ publish khi đọc hết và không có lỗi.
+    pass
 ```
 
-Tìm một entity theo `source_id`:
+`select_committed_days` chọn cố định effective SUCCESS cho mỗi ngày và các bảng thuộc resource; thiếu ngày committed sẽ báo lỗi. `verify_committed` đọc hết dữ liệu, kiểm count/lineage/hash và trả số days/files/records. `iter_committed_records` mặc định `verify_hash=False`; đặt True để kiểm hash khi đọc.
 
-```sql
-SELECT *
-FROM bronze_raw.notify_contractor_standard_detail
-WHERE source_id = '...';
-```
+Iterator kiểm count khi đọc hết ngày; dừng sớm không xác nhận được tính đầy đủ. SUCCESS 0 record không cần file. Không dùng SQL DISTINCT để thay thế chính sách chọn attempt. Nếu chỉ cần đối soát mà không viết Python, dùng `python -m procurement.jobs.ingest verify` với [tham số ngày](ingestion.md#tham-số).
 
-Mỗi view có thêm cột `filename` để biết record đang đến từ Parquet object nào.
+## Lỗi thường gặp
 
-Nếu sau này có nhiều dataset DLT cùng chứa một table trùng tên, explorer sẽ disambiguate view theo dạng `<dataset>__<table>`.
-
-## Raw khác committed
-
-`bronze_raw` cố ý scan các Parquet object đang tồn tại vật lý. Một attempt `FAILED` có thể đã ghi partial Bronze trước khi fail, nên raw view có thể thấy các record đó.
-
-Semantics chính thức của pipeline vẫn là:
-
-```text
-DayManifest SUCCESS = committed
-```
-
-Khi cần kiểm tra ngày nào thực sự committed, failed hoặc missing thì dùng Ops. Bronze Explorer chỉ dùng để inspect payload, schema và dữ liệu vật lý đã crawl.
-
-## Security
-
-DuckDB secret được tạo theo kiểu temporary mặc định nên chỉ tồn tại trong process explorer hiện tại. Script không ghi access key/secret key vào source code hay persistent DuckDB secret store.
+| Lỗi | Kiểm tra |
+| --- | --- |
+| Không tìm thấy Bronze tables | Bucket/layout và việc đã có attempt ghi Parquet; ngày rỗng không sinh table |
+| Không kết nối S3 | Endpoint, port, access key/secret và quyền bucket |
+| Cổng UI bận | Dùng `--port` khác |
+| Không tải được extension | Kết nối tới kho extension DuckDB hoặc cache extension của môi trường |
+| Raw có nhiều record hơn manifest | Kiểm run_id; có thể đang đọc nhiều attempt hoặc partial files |
