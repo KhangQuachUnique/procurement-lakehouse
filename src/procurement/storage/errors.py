@@ -19,11 +19,13 @@ def save_error_records(
     run_id: str,
     page_number: int,
     records: Iterable[ErrorRecord],
+    interrupted: bool = False,
 ) -> str:
+    suffix = "-interrupted" if interrupted else ""
     key = (
         f"{settings.OBJECT_STORAGE_BUCKET}/_errors/{identity.source}/{identity.resource}/"
         f"run_id={run_id}/source_date={source_date.isoformat()}/"
-        f"page-{page_number:06d}.jsonl"
+        f"page-{page_number:06d}{suffix}.jsonl"
     )
     content = "".join(
         json.dumps(record.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":")) + "\n"

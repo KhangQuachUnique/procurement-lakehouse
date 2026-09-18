@@ -11,8 +11,8 @@ RUN uv sync --locked --extra ops --no-editable
 FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
 RUN groupadd --gid 10001 procurement \
     && useradd --uid 10001 --gid procurement --create-home procurement \
-    && mkdir -p /var/lib/procurement \
-    && chown procurement:procurement /var/lib/procurement
+    && mkdir -p /var/lib/procurement/ops \
+    && chown -R procurement:procurement /var/lib/procurement
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH" \

@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 
+from procurement.common.cancellation import IngestionInterrupted
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine import daily_runner
 from procurement.ingestion.engine.models import BronzeItem, ResourceSpec
@@ -148,6 +149,55 @@ def test_success_commits_day_only_after_page_bronze_succeeds(harness: Harness) -
     assert harness.pages[-1].status is PageStatus.SUCCESS
     assert harness.days[-1].status is DayStatus.SUCCESS
     assert harness.pipeline.loads[0][0] == "test_notice"
+
+
+@pytest.mark.parametrize("exception", [KeyboardInterrupt, SystemExit, IngestionInterrupted])
+@pytest.mark.parametrize("stage", ["search", "detail", "load"])
+def test_interruption_finalizes_day_page_and_error(harness, monkeypatch, exception, stage):
+    def stop(*_, **__):
+        raise exception("stopped")
+
+    if stage == "load":
+        monkeypatch.setattr(harness.pipeline, "run", stop)
+    spec = _spec(fetch_page=stop if stage == "search" else None,
+                 iter_records=stop if stage == "detail" else None)
+    with pytest.raises(exception):
+        _run(spec)
+    assert harness.days[-1].status is DayStatus.FAILED
+    assert harness.days[-1].completed_at is not None
+    assert harness.errors[-1].stage == "interrupted"
+    assert harness.pages[-1].status is PageStatus.FAILED
+
+
+def test_cancel_before_commit_keeps_completed_page_but_fails_uncommitted_day(harness):
+    calls = 0
+
+    def check():
+        nonlocal calls
+        calls += 1
+        if calls == 3:
+            raise IngestionInterrupted("stopped before commit")
+
+    with pytest.raises(IngestionInterrupted):
+        daily_runner.run_daily_resource(
+            fs=object(), spec=_spec(), run_id="run-1", source_date=SOURCE_DATE, page_size=50,
+            check_cancelled=check,
+        )
+    assert harness.pages[-1].status is PageStatus.SUCCESS
+    assert harness.days[-1].status is DayStatus.FAILED
+    assert harness.days[-1].bronze_records == 1
+
+
+def test_interrupt_after_commit_ack_is_lost_never_downgrades_success(harness, monkeypatch):
+    def committed_then_interrupted(fs, identity, manifest):
+        harness._write_day(fs, identity, manifest)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(daily_runner, "commit_day_manifest", committed_then_interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        _run(_spec())
+    assert harness.days[-1].status is DayStatus.SUCCESS
+    assert not harness.errors
     assert harness.events.index("bronze") < len(harness.events) - 2
 
 

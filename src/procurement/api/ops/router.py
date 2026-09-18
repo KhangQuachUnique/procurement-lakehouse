@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from procurement.api.ops.dependencies import get_ops_service
+from procurement.api.ops.dependencies import get_ops_runtime, get_ops_service
 from procurement.ops.models import (
     AttemptDetail,
     DateDetail,
@@ -15,9 +15,15 @@ from procurement.ops.models import (
     RunSummary,
 )
 from procurement.ops.service import DEFAULT_SOURCE, OpsService
+from procurement.ops.sync import IndexSynchronizer
 
 router = APIRouter(prefix="/api/ops", tags=["ops"])
 Service = Annotated[OpsService, Depends(get_ops_service)]
+
+
+@router.get("/sync")
+def sync_status(runtime: Annotated[IndexSynchronizer, Depends(get_ops_runtime)]):
+    return runtime.index.get_status()
 
 
 def _bad_request(exc: ValueError) -> HTTPException:
@@ -81,6 +87,7 @@ def list_runs(
     start_date: date | None = None,
     end_date: date | None = None,
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+    offset: Annotated[int, Query(ge=0, le=100000)] = 0,
 ) -> list[RunSummary]:
     try:
         return service.list_runs(
@@ -90,6 +97,7 @@ def list_runs(
             start_date=start_date,
             end_date=end_date,
             limit=limit,
+            offset=offset,
         )
     except ValueError as exc:
         raise _bad_request(exc) from exc

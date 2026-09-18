@@ -9,6 +9,7 @@ from procurement.common.settings import settings
 from procurement.ingestion.batch_runner import run_batch_range
 from procurement.ingestion.engine.daily_runner import run_daily_resource
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
+from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
 from procurement.storage.object_store import create_s3_filesystem
 
 
@@ -18,6 +19,8 @@ def run_resource_day(
     *,
     page_size: int = 50,
     source: str = DEFAULT_SOURCE,
+    request_budget: RequestBudget | None = None,
+    khlcnt_package_workers: int | None = None,
 ) -> str:
     validate_closed_range(source_date, source_date, today=today_vn())
     validate_page_size(page_size)
@@ -28,12 +31,19 @@ def run_resource_day(
     module_name, factory_name = definition.spec_factory.split(":")
     factory = getattr(import_module(module_name), factory_name)
     fs = create_s3_filesystem()
+    budget = request_budget if request_budget is not None else RequestBudget(
+        settings.MUASAMCONG_MAX_INFLIGHT
+    )
     with MuasamcongClient(
         token=settings.MUASAMCONG_TOKEN,
         max_attempts=settings.MUASAMCONG_MAX_ATTEMPTS,
         max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
+        request_budget=budget,
     ) as client:
-        spec = factory(client)
+        spec = (
+            factory(client, package_workers=khlcnt_package_workers)
+            if resource == "khlcnt" else factory(client)
+        )
         if spec.identity != definition.identity:
             raise ValueError("Resource factory identity does not match the catalog")
         return run_batch_range(
@@ -48,5 +58,6 @@ def run_resource_day(
                 run_id=run_id,
                 source_date=source_date,
                 page_size=page_size,
+                check_cancelled=budget.check_cancelled,
             ),
         )

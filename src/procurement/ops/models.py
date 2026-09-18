@@ -22,9 +22,20 @@ class DateIngestionStatus(StrEnum):
     FAILED = "failed"
     RUNNING = "running"
     NO_ATTEMPT = "no_attempt"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+    INTERRUPTED = "interrupted"
+
+
+class ExecutionState(StrEnum):
+    RUNNING = "running"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+    INTERRUPTED = "interrupted"
 
 
 class RunSummary(_OpsModel):
+    execution_state: ExecutionState | None = None
     run_id: str
     source: str
     resource: str
@@ -40,6 +51,7 @@ class RunSummary(_OpsModel):
 
 
 class AttemptSummary(_OpsModel):
+    execution_state: ExecutionState | None = None
     run_id: str
     source: str
     resource: str

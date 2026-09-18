@@ -14,7 +14,7 @@ CLI ingestion duy nhất: `python -m procurement.jobs.ingest <mode> [tham số]`
 | `status` | Xem coverage theo manifest | Không |
 | `verify` | Kiểm coverage và đọc Parquet đã commit để kiểm count, lineage, hash | Không |
 
-Mặc định bỏ qua ngày đã có SUCCESS. `--refresh` yêu cầu crawl cả ngày đã SUCCESS. Ngày mới vẫn có thể được crawl trong một lệnh refresh. Mỗi resource/ngày được crawl tạo run mới; chạy tuần tự theo resource rồi ngày. Mặc định dừng khi execution lỗi. Dùng `--continue-on-error` cho backfill dài để ghi nhận ngày lỗi rồi tiếp tục các ngày/resource còn lại.
+Mặc định bỏ qua ngày đã có SUCCESS. `--refresh` yêu cầu crawl cả ngày đã SUCCESS. Ngày mới vẫn có thể được crawl trong một lệnh refresh. Mỗi resource/ngày được crawl tạo run mới. Mặc định tối đa 2 resource chạy đồng thời; ngày và trang trong mỗi resource vẫn tuần tự. Scheduler luân phiên resource sau mỗi ngày để resource khác không phải chờ hết khoảng backfill của resource đầu. Khi gặp lỗi buộc dừng, không cấp thêm ngày mới và chờ các ngày đã bắt đầu hoàn tất ghi trạng thái. Dùng `--continue-on-error` cho backfill dài để ghi nhận ngày lỗi nguồn rồi tiếp tục các ngày/resource còn lại.
 
 | `--resource` | Dữ liệu / bảng Bronze |
 | --- | --- |
@@ -34,6 +34,9 @@ Mặc định bỏ qua ngày đã có SUCCESS. `--refresh` yêu cầu crawl cả
 | `--end-date` | Không có | Ngày cuối, tính cả ngày này; đi cùng --start-date |
 | `--lookback-days` | `1` | Số ngày trước hôm nay cho daily, phải > 0; mode khác không dùng |
 | `--page-size` | `50` | Số item search mỗi trang, phải > 0; không phải số record Bronze. Nếu API trả page size khác, attempt sẽ fail |
+| `--resource-workers` | `2` | Tối đa resource chạy đồng thời (1–4); mặc định lấy từ `INGESTION_RESOURCE_WORKERS` |
+| `--khlcnt-package-workers` | `3` | Tối đa request lấy gói thầu trong một plan KHLCNT (1–32); mặc định lấy từ `KHLCNT_PACKAGE_WORKERS` |
+| `--source-max-inflight` | `3` | Trần request HTTP đang chạy của toàn flow (1–32); mặc định lấy từ `MUASAMCONG_MAX_INFLIGHT` |
 | `--max-days` | `31`; với `--year` cho phép trọn năm | Trần số ngày mỗi invocation, phải > 0; có thể đặt thấp hơn để giới hạn --year; không tự chia job |
 | `--continue-on-error` | Tắt | Tiếp tục sau ngày FAILED có error nguồn được ghi đầy đủ; cuối lượt vẫn trả code 1. Chỉ dùng với daily/backfill/repair |
 | `--dry-run` | Tắt | Chỉ đọc manifest/heartbeat và in kế hoạch; không crawl, không verify Parquet |
@@ -44,6 +47,24 @@ Mặc định bỏ qua ngày đã có SUCCESS. `--refresh` yêu cầu crawl cả
 | `-h`, `--help` | — | Xem trợ giúp, không chạy job |
 
 Khoảng ngày phải có `start <= end`, mọi ngày đều trước hôm nay theo `Asia/Ho_Chi_Minh`. `--year` không nhận năm hiện tại hoặc tương lai. Daily không nhận `--year`/`--start-date`/`--end-date`. API window hiện là `00:00:00.000Z` đến `23:59:59.999Z` của source_date; nên chạy daily lúc 08:00 Việt Nam hoặc muộn hơn.
+
+## Song song có giới hạn
+
+KHLCNT lấy từng plan, rồi lấy tối đa 3 gói thầu đồng thời trong plan đó. Khi một request xong, gói tiếp theo được đưa vào ngay; không chờ cả nhóm. Plan có 0–1 gói không tạo pool. Chỉ phần gọi API gói thầu chạy trong pool; luồng điều phối của resource tổng hợp records/errors/stats, ghi Bronze và manifest. Xong các gói mới sang plan tiếp. Các resource khác vẫn lấy từng detail tuần tự, nhưng có thể chạy đồng thời với resource khác.
+
+Trần HTTP dùng chung cho search, plan, package, detail và từng lần retry của mọi resource trong **một flow**. Vì vậy cấu hình mặc định 2 resource và 3 package workers vẫn chỉ có tối đa 3 request đang chạy, không cộng thành 4 hay nhân thành 6. Thời gian backoff không giữ vị trí HTTP. Đây là giới hạn đồng thời, không phải giới hạn request/giây hay hạn mức phân tán giữa nhiều host.
+
+401/403 mở circuit dùng chung: các client trong flow không gửi thêm request sau khi thấy lỗi; request đã gửi có thể vẫn hoàn tất. Lỗi storage hoặc kết quả không xác nhận được sẽ dừng cấp ngày mới kể cả với `--continue-on-error`; các ngày đã chạy được chờ hoàn tất. SIGINT/SIGTERM hủy các request chưa gửi và chờ worker ghi trạng thái trước khi nhả khóa host. Attempt chưa commit chuyển FAILED, ghi error stage `interrupted`, completed_at và kết thúc run từ kết quả day manifests đã ghi. Page đang dở chuyển FAILED; page đã hoàn tất giữ nguyên. Lỗi interruption không thuộc nhóm lỗi nguồn để tiếp tục. Day SUCCESS, chính sách lỗi trang và cách repair không đổi.
+
+Cleanup là best-effort khi storage lỗi. Kill cưỡng bức/mất điện hoặc ngắt trong lúc commit chưa xác nhận có thể để lại RUNNING; không ghi FAILED đè lên SUCCESS đã commit hoặc đang chưa xác định ACK. Ops dùng heartbeat để hiển thị stale/unknown/interrupted, không tự sửa manifest. Với run cũ mắc RUNNING, xác nhận worker đã dừng rồi dùng `repair --retry-stale`; lần repair tạo attempt mới và giữ lịch sử.
+
+```powershell
+# Các mức mặc định, cũng có thể chỉnh riêng bằng CLI
+python -m procurement.jobs.ingest daily --resource-workers 2 --khlcnt-package-workers 3 --source-max-inflight 3
+
+# Chạy tuần tự để đối chiếu hoặc giảm tải
+python -m procurement.jobs.ingest daily --resource-workers 1 --khlcnt-package-workers 1 --source-max-inflight 1
+```
 
 ## Ví dụ sử dụng
 

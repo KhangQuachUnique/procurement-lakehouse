@@ -37,6 +37,14 @@ Tạo `.env` từ [.env.example](../.env.example) nếu chưa có: PowerShell d�
 | `MUASAMCONG_TIMEOUT_SECONDS` | `30` | Timeout HTTP, phải > 0; không phải deadline cả run |
 | `MUASAMCONG_MAX_ATTEMPTS` | `3` | Tổng số lần thử mỗi request, từ 1 đến 10 |
 | `MUASAMCONG_MAX_RETRY_DELAY_SECONDS` | `30` | Trần chờ mỗi lần retry, từ 0 đến 300 giây; Retry-After lớn hơn trần thì không retry sớm |
+| `MUASAMCONG_MAX_INFLIGHT` | `3` | Tổng request HTTP đồng thời trong một flow, từ 1 đến 32; dùng chung cho mọi resource và cả retry |
+| `KHLCNT_PACKAGE_WORKERS` | `3` | Số gói thầu lấy đồng thời trong một plan KHLCNT, từ 1 đến 32; không vượt trần HTTP chung |
+| `INGESTION_RESOURCE_WORKERS` | `2` | Số resource chạy đồng thời, từ 1 đến 4; mỗi resource vẫn chạy lần lượt các ngày |
+| `OPS_INDEX_PATH` | `data/ops/index.sqlite3` | SQLite index riêng cho một endpoint/bucket; đặt trên ổ đĩa local, không đặt trên S3/NFS |
+| `OPS_SYNC_INTERVAL_SECONDS` | `5` | Thời gian nghỉ giữa các lượt đồng bộ; không phải cam kết độ trễ tối đa |
+| `OPS_RECONCILE_INTERVAL_SECONDS` | `300` | Chu kỳ đọc lại toàn bộ nội dung để đối soát, ngoài cập nhật theo metadata |
+| `OPS_SYNC_WORKERS` | `8` | Số lượt đọc object đồng thời của worker đồng bộ, từ 1 đến 32 |
+| `OPS_STALE_AFTER_SECONDS` | `600` | Heartbeat quá ngưỡng này được Ops hiển thị stale; không tự kết luận worker đã chết |
 | `OBJECT_STORAGE_ENDPOINT` | `http://localhost:8333` | S3 endpoint |
 | `OBJECT_STORAGE_BUCKET` | `procurement-lakehouse` | Bucket chứa Bronze/control/errors |
 | `OBJECT_STORAGE_ACCESS_KEY` | Chưa đặt | Access key có quyền phù hợp với bucket |
@@ -82,4 +90,4 @@ docker compose --env-file .env -f infra/docker/compose.yaml down
 | `--quiet` | Kiểm cấu hình mà không in cấu hình đã resolve |
 | `--tail 100` | Chỉ lấy 100 dòng log cuối |
 
-Storage dùng volume `object-storage-data`; ingestion dùng `ingestion-state` cho state và khóa. Không dùng `down -v` khi cần giữ dữ liệu. Volume là persistence, vẫn cần backup riêng. Compose khởi động storage trước nhưng không bảo đảm bucket đã sẵn sàng; kiểm `/health/ready` của Ops.
+Storage dùng volume `object-storage-data`; ingestion dùng `ingestion-state` cho state và khóa; Ops dùng `ops-state` cho SQLite index. Compose cố định index tại `/var/lib/procurement/ops/index.sqlite3`. Không dùng `down -v` khi cần giữ dữ liệu. Volume là persistence, vẫn cần backup riêng. Compose khởi động storage trước nhưng không bảo đảm bucket đã sẵn sàng; kiểm `/health/ready` và `/api/ops/sync` của Ops.

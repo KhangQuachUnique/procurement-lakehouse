@@ -1,17 +1,18 @@
 import logging
 import uuid
 from collections.abc import Callable
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
 import s3fs
 
+from procurement.common.cancellation import INTERRUPTIONS
 from procurement.common.dates import api_day_window
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.models import DailyResult
-from procurement.models.control import RunManifest, RunStatus
-from procurement.storage.control import write_run_manifest
+from procurement.models.control import DayStatus, RunManifest, RunStatus
+from procurement.storage.control import list_day_manifests, write_run_manifest
 from procurement.storage.execution import ExecutionHeartbeat
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,29 @@ def _final_status(success_dates: int, failed_dates: int) -> RunStatus:
     return RunStatus.PARTIAL_FAILED
 
 
+@contextmanager
+def _finalize_on_interrupt(fs, identity, manifest):
+    try:
+        yield
+    except INTERRUPTIONS:
+        try:
+            # Re-read persisted days: interruption may arrive after SUCCESS was committed.
+            days = list_day_manifests(fs, identity, run_id=manifest.run_id)
+            succeeded = sum(day.status is DayStatus.SUCCESS for day in days)
+            failed = sum(day.status is DayStatus.FAILED for day in days)
+            status = (
+                RunStatus.SUCCESS if succeeded == manifest.total_dates
+                else RunStatus.PARTIAL_FAILED if succeeded else RunStatus.FAILED
+            )
+            write_run_manifest(fs, identity, manifest.model_copy(update={
+                "status": status, "success_dates": succeeded, "failed_dates": failed,
+                "completed_at": _now(),
+            }))
+        except Exception:
+            logger.exception("failed_to_finalize_interrupted_run run_id=%s", manifest.run_id)
+        raise
+
+
 def run_batch_range(
     start: date,
     end: date,
@@ -85,7 +109,7 @@ def run_batch_range(
     )
 
     monitor = ExecutionHeartbeat(fs, identity, run_id) if heartbeat else nullcontext()
-    with monitor:
+    with monitor, _finalize_on_interrupt(fs, identity, manifest):
         success_dates = 0
         failed_dates = 0
         for window in windows:
@@ -96,6 +120,8 @@ def run_batch_range(
                     success_dates += 1
                 else:
                     failed_dates += 1
+            except INTERRUPTIONS:
+                raise
             except Exception:
                 failed_dates += 1
                 logger.exception(

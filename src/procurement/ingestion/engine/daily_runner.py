@@ -3,11 +3,13 @@
 import logging
 import math
 import re
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 
 import dlt
 import s3fs
 
+from procurement.common.cancellation import INTERRUPTIONS
 from procurement.common.dates import api_day_window, validate_page_size
 from procurement.common.errors import build_error_record
 from procurement.common.settings import settings
@@ -87,6 +89,7 @@ def run_daily_resource(
     run_id: str,
     source_date: date,
     page_size: int,
+    check_cancelled: Callable[[], None] = lambda: None,
 ) -> DailyResult:
     """One isolated day attempt. Recovery always uses a new run_id from page zero."""
     validate_page_size(page_size)
@@ -109,8 +112,11 @@ def run_daily_resource(
         page_size=page_size,
         search_key=spec.search_key,
     )
+    page = None
+    page_open = False
     try:
         while True:
+            check_cancelled()
             page = PageManifest(
                 run_id=run_id,
                 source_date=source_date,
@@ -120,9 +126,13 @@ def run_daily_resource(
                 started_at=_now(),
             )
             try:
+                page_open = True
                 page_number, response = next(pages)
             except StopIteration:
+                page_open = False
                 break
+            except INTERRUPTIONS:
+                raise
             except Exception as exc:  # noqa: BLE001 -- source extension boundary
                 outcome = PageOutcome(
                     stats=PageStats(),
@@ -190,6 +200,7 @@ def run_daily_resource(
                     }
                 ),
             )
+            page_open = False
             if outcome.errors:
                 day = day.model_copy(update={"status": DayStatus.FAILED, "completed_at": _now()})
                 write_day_manifest(fs, spec.identity, day)
@@ -198,11 +209,42 @@ def run_daily_resource(
             day = day.model_copy(update={"completed_pages": day.completed_pages + 1})
             write_day_manifest(fs, spec.identity, day)
 
+        check_cancelled()
         if day.expected_pages is None or day.completed_pages != day.expected_pages:
             raise RuntimeError(
                 f"Daily page count incomplete: completed={day.completed_pages}, "
                 f"expected={day.expected_pages}"
             )
+    except INTERRUPTIONS as exc:
+        # This handler ends before commit starts: never downgrade an uncertain SUCCESS.
+        error = build_error_record(
+            identity=spec.identity, run_id=run_id, stage="interrupted",
+            source_date=source_date, page_number=page.page_number if page_open else None,
+            exc=exc,
+        )
+        try:
+            save_error_records(
+                fs=fs, identity=spec.identity, source_date=source_date, run_id=run_id,
+                page_number=page.page_number if page_open else day.completed_pages,
+                records=[error], interrupted=True,
+            )
+        except Exception:
+            logger.exception("failed_to_persist_interruption_error run_id=%s", run_id)
+        if page_open:
+            try:
+                write_page_manifest(fs, spec.identity, page.model_copy(update={
+                    "status": PageStatus.FAILED, "error_count": 1, "completed_at": _now(),
+                }))
+            except Exception:
+                logger.exception("failed_to_persist_interrupted_page run_id=%s", run_id)
+        try:
+            write_day_manifest(fs, spec.identity, day.model_copy(update={
+                "status": DayStatus.FAILED, "error_count": day.error_count + 1,
+                "completed_at": _now(),
+            }))
+        except Exception:
+            logger.exception("failed_to_persist_interrupted_day run_id=%s", run_id)
+        raise
     except Exception:
         logger.exception(
             "daily_run_crashed run_id=%s source_date=%s resource=%s",

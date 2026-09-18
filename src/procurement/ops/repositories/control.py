@@ -3,7 +3,7 @@ from datetime import date
 import s3fs
 
 from procurement.common.resources import ResourceIdentity
-from procurement.models.control import DayManifest, PageManifest, RunManifest
+from procurement.models.control import DayManifest, PageManifest, RunManifest, RunStatus
 from procurement.storage.control import (
     list_day_manifests,
     list_page_manifests,
@@ -11,6 +11,7 @@ from procurement.storage.control import (
     read_day_manifest,
     read_run_manifest,
 )
+from procurement.storage.execution import read_execution
 
 
 class ControlRepository:
@@ -24,13 +25,21 @@ class ControlRepository:
         start_date: date | None = None,
         end_date: date | None = None,
         limit: int | None = 100,
+        status: RunStatus | None = None,
     ) -> list[RunManifest]:
-        return list_run_manifests(
+        manifests = list_run_manifests(
             self._fs,
             identity,
             start_date=start_date,
             end_date=end_date,
-        )[:limit]
+        )
+        if status is not None:
+            manifests = [item for item in manifests if item.status is status]
+        manifests.sort(key=lambda item: (item.started_at, item.run_id), reverse=True)
+        return manifests[:limit]
+
+    def get_execution(self, identity, run_id):
+        return read_execution(self._fs, identity, run_id)
 
     def get_run(self, identity: ResourceIdentity, run_id: str) -> RunManifest | None:
         return read_run_manifest(self._fs, identity, run_id)

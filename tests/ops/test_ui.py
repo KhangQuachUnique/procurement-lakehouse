@@ -1,10 +1,11 @@
 from datetime import UTC, date, datetime
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
 
 from procurement.api.main import app
-from procurement.api.ops.dependencies import get_ops_service
+from procurement.api.ops.dependencies import get_ops_runtime, get_ops_service
 from procurement.models.control import DayStatus, PageStatus, RunStatus
 from procurement.ops.models import (
     AttemptDetail,
@@ -171,6 +172,7 @@ class FakeOpsService:
 @pytest.fixture
 def client() -> TestClient:
     app.dependency_overrides[get_ops_service] = lambda: FakeOpsService()
+    app.dependency_overrides[get_ops_runtime] = lambda: Mock()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

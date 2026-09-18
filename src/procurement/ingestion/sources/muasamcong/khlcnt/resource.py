@@ -2,6 +2,7 @@ from functools import partial
 from typing import Any
 
 from procurement.common.catalog import get_resource
+from procurement.common.settings import settings
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.sources.muasamcong.khlcnt.extractor import iter_khlcnt_records
 from procurement.ingestion.sources.muasamcong.search import (
@@ -68,7 +69,9 @@ def _build_search_payload(
     )
 
 
-def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
+def create_khlcnt_spec(
+    client: JsonPostClient, *, package_workers: int | None = None
+) -> ResourceSpec:
     api = KhlcntApi(client)
     return ResourceSpec(
         identity=KHLCNT_IDENTITY,
@@ -76,5 +79,10 @@ def create_khlcnt_spec(client: JsonPostClient) -> ResourceSpec:
         dataset_name="muasamcong",
         fetch_page=api.search,
         search_key=search_document_key,
-        iter_records=partial(iter_khlcnt_records, api, identity=KHLCNT_IDENTITY),
+        iter_records=partial(
+            iter_khlcnt_records, api, identity=KHLCNT_IDENTITY,
+            package_workers=(
+                settings.KHLCNT_PACKAGE_WORKERS if package_workers is None else package_workers
+            ),
+        ),
     )

@@ -1,4 +1,5 @@
 import json
+from threading import Barrier, Lock
 
 import httpx
 import pytest
@@ -19,6 +20,7 @@ from procurement.ingestion.sources.muasamcong.notify_contractor.resource import 
 )
 from procurement.ingestion.sources.muasamcong.project.resource import PROJECT_DETAIL_PATH
 from procurement.jobs import ingest, runner
+from procurement.storage.errors import list_error_records
 from procurement.storage.execution import read_execution
 
 pytestmark = pytest.mark.integration
@@ -58,7 +60,8 @@ def test_continue_across_days_and_resources_then_repair_only_failed_day(
         ),
     )
     options = ingest._parser().parse_args(
-        ["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-02"]
+        ["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-02",
+         "--resource-workers", "1"]
     )
     options.continue_on_error = continue_mode
     report, code = ingest.execute_flow(options, fs=fs)
@@ -197,7 +200,10 @@ def test_full_flow_repair_idempotence_and_failed_refresh(store, monkeypatch):
     )
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 1
-    assert [item["missing_dates"] for item in report["resources"]] == [[], [], [], ["2025-01-01"]]
+    assert [item["missing_dates"] for item in report["resources"]] == [[], [], [], ["2025-01-01"]], "\n".join(
+        error.message for name in ("project", "khlcnt")
+        for error in list_error_records(fs, get_resource(name).identity)
+    )
     assert report["execution_errors"][0]["resource"] == "contractor_result"
 
     source.failed_result = False
@@ -239,3 +245,80 @@ def test_full_flow_repair_idempotence_and_failed_refresh(store, monkeypatch):
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 1
     assert report["execution_errors"]
+
+
+def test_parallel_packages_and_resources_preserve_failed_day_and_repair(store, monkeypatch):
+    fs, _ = store
+    source = Source()
+    source.failed_result = False
+    resource_gate, package_gate = Barrier(2), Barrier(3)
+    lock = Lock()
+    active = peak = searches = 0
+    failing = True
+
+    def handler(request):
+        nonlocal active, peak, searches
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        try:
+            body = json.loads(request.content)
+            if isinstance(body, list):
+                with lock:
+                    searches += 1
+                    number = searches
+                if number <= 2:
+                    resource_gate.wait(timeout=10)  # two real day runners must overlap
+                response = source(request)
+                payload = response.json()
+                filters = body[0]["query"][0]["filters"]
+                if any(item.get("fieldValues") == ["es-plan-project-p"] for item in filters):
+                    day = next(item["from"][:10] for item in filters if "from" in item)
+                    payload["page"]["content"] = [{"id": day, "planVersion": "01"}]
+                return httpx.Response(200, json=payload)
+            if request.url.path == PLAN_DETAIL_PATH:
+                return httpx.Response(200, json={
+                    "id": body["id"],
+                    "bidpPlanDetailToProjectList": [
+                        {"id": f"{body['id']}-pkg-{n}"} for n in range(7)
+                    ],
+                })
+            if request.url.path == BID_PACKAGE_DETAIL_PATH:
+                if body["id"].endswith(("-0", "-1", "-2")):
+                    package_gate.wait(timeout=10)
+                if failing and body["id"] == "2025-01-01-pkg-3":
+                    return httpx.Response(404)
+                return httpx.Response(200, json={"id": body["id"]})
+            return source(request)
+        finally:
+            with lock:
+                active -= 1
+
+    monkeypatch.setattr(settings, "MUASAMCONG_TOKEN", "fixture-token")
+    monkeypatch.setattr(runner, "create_s3_filesystem", lambda: fs)
+    monkeypatch.setattr(
+        runner, "MuasamcongClient",
+        lambda **kwargs: MuasamcongClient(**kwargs, transport=httpx.MockTransport(handler)),
+    )
+    args = ingest._parser().parse_args([
+        "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-02",
+        "--continue-on-error", "--resource-workers", "2", "--khlcnt-package-workers", "3",
+        "--source-max-inflight", "3",
+    ])
+    report, code = ingest.execute_flow(args, fs=fs)
+    assert code == 1
+    assert peak == 3
+    assert report["attempted_days"] == 8
+    assert len(report["execution_errors"]) == 1
+    assert report["execution_errors"][0]["reason"] == "source_failure"
+    assert report["resources"][1]["missing_dates"] == ["2025-01-01"]
+    assert all(not item["missing_dates"] for item in report["resources"] if item["resource"] != "khlcnt")
+
+    failing = False
+    source.searches.clear()
+    args.mode = "repair"
+    report, code = ingest.execute_flow(args, fs=fs)
+    assert code == 0
+    assert report["attempted_days"] == report["planned_days"] == 1
+    assert source.searches == ["khlcnt"]
+    assert sum(item["verified"]["records"] for item in report["resources"]) == 24

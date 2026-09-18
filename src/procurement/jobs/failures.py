@@ -13,6 +13,8 @@ def classify_day_failure(fs, identity: ResourceIdentity, run_id: str, source_dat
     if day is None or day.status is not DayStatus.FAILED:
         return "unconfirmed_failure"
     errors = list_error_records(fs, identity, run_id=run_id, source_date=source_date)
+    if any(error.stage == "interrupted" for error in errors):
+        return "interrupted"
     if any(error.http_status in {401, 403} for error in errors):
         return "authentication_failure"
     if any(error.stage in {"bronze_load", "internal"} for error in errors):

@@ -3,6 +3,8 @@
 import argparse
 import json
 import signal
+from collections import deque
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from procurement.common.errors import sanitize_error_message
 from procurement.common.logging_config import configure_logging
 from procurement.common.settings import settings
 from procurement.ingestion.coverage import read_coverage
+from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
 from procurement.jobs.failures import classify_day_failure
 from procurement.jobs.lock import execution_lock
 from procurement.jobs.runner import run_resource_day
@@ -31,6 +34,18 @@ def _parser():
     parser.add_argument("--end-date", type=date.fromisoformat)
     parser.add_argument("--lookback-days", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=50)
+    parser.add_argument(
+        "--resource-workers", type=int, default=settings.INGESTION_RESOURCE_WORKERS,
+        help="Concurrent resources (1-4); days within a resource remain sequential",
+    )
+    parser.add_argument(
+        "--khlcnt-package-workers", type=int, default=settings.KHLCNT_PACKAGE_WORKERS,
+        help="Concurrent packages within one KHLCNT plan (1-32)",
+    )
+    parser.add_argument(
+        "--source-max-inflight", type=int, default=settings.MUASAMCONG_MAX_INFLIGHT,
+        help="Shared HTTP request limit across all resources in this flow (1-32)",
+    )
     parser.add_argument(
         "--max-days", type=int, help="Date limit (default: 31, or the full year with --year)"
     )
@@ -53,6 +68,13 @@ def _parser():
 
 def resolve_dates(args, *, today: date) -> tuple[date, date]:
     validate_page_size(args.page_size)
+    for flag, value, maximum in (
+        ("resource-workers", args.resource_workers, 4),
+        ("khlcnt-package-workers", args.khlcnt_package_workers, 32),
+        ("source-max-inflight", args.source_max_inflight, 32),
+    ):
+        if not 1 <= value <= maximum:
+            raise ValueError(f"--{flag} must be between 1 and {maximum}")
     if (args.max_days is not None and args.max_days < 1) or args.stale_after_minutes < 1:
         raise ValueError("max-days and stale-after-minutes must be positive")
     if args.continue_on_error and args.mode in {"status", "verify"}:
@@ -96,6 +118,71 @@ def _liveness(fs, identity, run_id: str, threshold: timedelta) -> str:
         return "unknown"
 
 
+def _execute_plan(args, fs, plan, report, run_day):
+    budget = RequestBudget(args.source_max_inflight)
+
+    def attempt(resource, source_date):
+        try:
+            run_id = run_day(
+                resource, source_date, page_size=args.page_size,
+                request_budget=budget, khlcnt_package_workers=args.khlcnt_package_workers,
+            )
+            identity = get_resource(resource).identity
+            manifest = read_run_manifest(fs, identity, run_id)
+            if manifest is not None and manifest.status is RunStatus.SUCCESS:
+                return None
+            reason = "unconfirmed_failure"
+            if manifest is not None and manifest.status is RunStatus.FAILED:
+                reason = classify_day_failure(fs, identity, run_id, source_date)
+            return {
+                "resource": resource, "date": str(source_date), "run_id": run_id,
+                "error": "run_not_successful", "reason": reason,
+            }
+        except Exception as exc:  # noqa: BLE001 -- preserve diagnostics for every started day
+            return {
+                "resource": resource, "date": str(source_date),
+                "error": sanitize_error_message(str(exc)), "reason": "execution_exception",
+            }
+
+    dates = {}
+    for resource, source_date in plan:
+        dates.setdefault(resource, deque()).append(source_date)
+    ready = deque(dates)
+    pending = {}
+    stopping = False
+    with ThreadPoolExecutor(
+        max_workers=args.resource_workers, thread_name_prefix="ingestion-resource"
+    ) as pool:
+        try:
+            while ready or pending:
+                while ready and not stopping and len(pending) < args.resource_workers:
+                    resource = ready.popleft()
+                    source_date = dates[resource].popleft()
+                    pending[pool.submit(attempt, resource, source_date)] = resource
+                    report["attempted_days"] += 1
+                if not pending:
+                    break
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                # Inspect every completed result before admitting any more work.
+                for future in done:
+                    resource = pending.pop(future)
+                    error = future.result()
+                    if error is not None:
+                        report["execution_errors"].append(error)
+                        if not (
+                            args.continue_on_error and error["reason"] == "source_failure"
+                        ):
+                            stopping = True
+                    if dates[resource]:
+                        # Another resource gets its turn before this one's next day.
+                        ready.append(resource)
+        except BaseException:
+            # Drain started attempts before releasing the host lock, but stop new HTTP calls.
+            budget.cancel()
+            raise
+    report["stopped_early"] = report["attempted_days"] < len(plan)
+
+
 def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]:
     start, end = resolve_dates(args, today=today_vn())
     fs = fs if fs is not None else create_s3_filesystem()
@@ -109,6 +196,11 @@ def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]
         "stopped_early": False,
         "attempted_days": 0,
         "continue_on_error": args.continue_on_error,
+        "concurrency": {
+            "resource_workers": args.resource_workers,
+            "khlcnt_package_workers": args.khlcnt_package_workers,
+            "source_max_inflight": args.source_max_inflight,
+        },
     }
     threshold = timedelta(minutes=args.stale_after_minutes)
     # Read every selected resource before making any write. Bad credentials/storage fail preflight.
@@ -151,41 +243,8 @@ def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]
     if args.mode != "verify":
         if plan and not settings.MUASAMCONG_TOKEN:
             raise RuntimeError("Configure MUASAMCONG_TOKEN before executing ingestion")
-        for resource, source_date in plan:
-            report["attempted_days"] += 1
-            try:
-                run_id = run_day(resource, source_date, page_size=args.page_size)
-                manifest = read_run_manifest(fs, get_resource(resource).identity, run_id)
-                if manifest is not None and manifest.status is RunStatus.SUCCESS:
-                    continue
-                reason = "unconfirmed_failure"
-                if manifest is not None and manifest.status is RunStatus.FAILED:
-                    reason = classify_day_failure(
-                        fs, get_resource(resource).identity, run_id, source_date
-                    )
-                report["execution_errors"].append(
-                    {
-                        "resource": resource,
-                        "date": str(source_date),
-                        "run_id": run_id,
-                        "error": "run_not_successful",
-                        "reason": reason,
-                    }
-                )
-                if args.continue_on_error and reason == "source_failure":
-                    continue
-            except Exception as exc:  # noqa: BLE001 -- report failure without losing other coverage
-                report["execution_errors"].append(
-                    {
-                        "resource": resource,
-                        "date": str(source_date),
-                        "error": sanitize_error_message(str(exc)),
-                        "reason": "execution_exception",
-                    }
-                )
-            # Storage, auth and ambiguous outcomes must stop even in continue mode.
-            report["stopped_early"] = report["attempted_days"] < len(plan)
-            break
+        if plan:
+            _execute_plan(args, fs, plan, report, run_day)
 
     for item in report["resources"]:
         definition = get_resource(item["resource"])

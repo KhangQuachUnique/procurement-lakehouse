@@ -20,7 +20,7 @@ def sanitize_error_message(message: str) -> str:
     return _AUTH_RE.sub(r"\1[REDACTED]", sanitized)
 
 
-def extract_http_status(exc: Exception) -> int | None:
+def extract_http_status(exc: BaseException) -> int | None:
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code
     return None
@@ -33,7 +33,7 @@ def build_error_record(
     stage: str,
     source_date: date,
     page_number: int | None,
-    exc: Exception,
+    exc: BaseException,
     source_id: str | None = None,
 ) -> ErrorRecord:
     return ErrorRecord(

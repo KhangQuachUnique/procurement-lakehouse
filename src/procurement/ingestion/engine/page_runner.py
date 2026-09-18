@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+from procurement.common.cancellation import INTERRUPTIONS
 from procurement.common.errors import build_error_record
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.engine.stats import PageStats
@@ -48,6 +49,8 @@ def run_page(
         if not outcome.errors:
             stage = "bronze_load"
             outcome.bronze_records = writer.write_page(grouped)
+    except INTERRUPTIONS:
+        raise
     except Exception as exc:  # noqa: BLE001 -- source/writer extension boundary
         if isinstance(exc, BronzeWriteError):
             outcome.bronze_records = exc.persisted_records

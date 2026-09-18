@@ -24,6 +24,15 @@ def store(request, tmp_path, monkeypatch):
         bucket = str(tmp_path / "bucket")
         monkeypatch.setattr(settings, "OBJECT_STORAGE_BUCKET", bucket)
         real_filesystem = bronze.filesystem
+        # DLT's local dataset initialization uses mkdir without exist_ok; initialize once
+        # through its real client before concurrent pipelines, including its init marker.
+        from dlt.common.schema import Schema
+
+        destination = real_filesystem(bucket_url=str(tmp_path / "bucket" / "bronze"))
+        config = destination.spec()
+        config.dataset_name = "muasamcong"
+        with destination.client(Schema("muasamcong"), config) as client:
+            client.initialize_storage()
 
         def local_destination(**kwargs):
             kwargs["bucket_url"] = str(tmp_path / "bucket" / "bronze")

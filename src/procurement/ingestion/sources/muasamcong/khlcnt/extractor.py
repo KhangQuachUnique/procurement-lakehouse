@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Iterator
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import date
 from typing import Any, Protocol
 
@@ -24,6 +25,36 @@ BID_PACKAGE_DETAIL_STAGE = "bid_package_detail"
 class KhlcntDetailApi(Protocol):
     def get_plan_detail(self, plan_id: str) -> dict[str, Any]: ...
     def get_bid_package_detail(self, bid_package_id: str) -> dict[str, Any]: ...
+
+
+def _package_results(client: KhlcntDetailApi, package_ids: list[str], workers: int):
+    """Only package HTTP calls run in workers; the caller owns records, errors and stats."""
+    def fetch(package_id):
+        try:
+            return package_id, client.get_bid_package_detail(package_id), None
+        except DETAIL_EXCEPTIONS as exc:
+            return package_id, None, exc
+
+    if workers == 1 or len(package_ids) <= 1:
+        for package_id in package_ids:
+            yield fetch(package_id)
+        return
+
+    # Bound submissions too: a large plan never creates an unbounded future queue.
+    remaining = iter(package_ids)
+    with ThreadPoolExecutor(
+        max_workers=min(workers, len(package_ids)), thread_name_prefix="khlcnt-package"
+    ) as pool:
+        pending = {pool.submit(fetch, package_id) for package_id in package_ids[:workers]}
+        for _ in range(min(workers, len(package_ids))):
+            next(remaining)
+        while pending:
+            done, pending = wait(pending, return_when=FIRST_COMPLETED)
+            for future in done:
+                yield future.result()
+                package_id = next(remaining, None)
+                if package_id is not None:
+                    pending.add(pool.submit(fetch, package_id))
 
 
 def build_plan_record(
@@ -105,7 +136,10 @@ def iter_khlcnt_records(
     search_page: int,
     errors: list[ErrorRecord],
     stats: PageStats,
+    package_workers: int = 3,
 ) -> Iterator[BronzeItem]:
+    if package_workers < 1:
+        raise ValueError("package_workers must be positive")
     total_plans = len(search_items)
     processed_packages = 0
 
@@ -151,6 +185,7 @@ def iter_khlcnt_records(
         )
         stats.record("plan")
 
+        package_ids = []
         for package in plan_detail.get("bidpPlanDetailToProjectList") or []:
             package_id = package.get("id")
             if not package_id:
@@ -166,10 +201,12 @@ def iter_khlcnt_records(
                     source_id=None,
                 )
                 continue
+            package_ids.append(package_id)
 
-            try:
-                package_detail = client.get_bid_package_detail(package_id)
-            except DETAIL_EXCEPTIONS as exc:
+        for package_id, package_detail, exc in _package_results(
+            client, package_ids, package_workers
+        ):
+            if exc is not None:
                 stats.error("bid_package")
                 _record_detail_error(
                     identity=identity,

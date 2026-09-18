@@ -1,5 +1,8 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
+from unittest.mock import Mock
+
+import pytest
 
 from procurement.models.control import (
     DayManifest,
@@ -85,6 +88,9 @@ class StubControl:
             values = [item for item in values if item.end_date >= kwargs["start_date"]]
         if kwargs.get("end_date") is not None:
             values = [item for item in values if item.start_date <= kwargs["end_date"]]
+        if kwargs.get("status") is not None:
+            values = [item for item in values if item.status == kwargs["status"]]
+        values.sort(key=lambda item: item.started_at, reverse=True)
         return values[: kwargs.get("limit", 100)]
 
     def list_attempts(self, _identity: Any, **kwargs: Any) -> list[DayManifest]:
@@ -183,7 +189,7 @@ def test_success_with_zero_records_is_still_success() -> None:
     assert item.error_count == 0
 
 
-def test_calendar_reads_attempts_only_for_runs_in_window() -> None:
+def test_calendar_queries_dates_directly_without_scanning_runs() -> None:
     control = StubControl()
     service = OpsService(control, StubErrors())  # type: ignore[arg-type]
 
@@ -194,8 +200,9 @@ def test_calendar_reads_attempts_only_for_runs_in_window() -> None:
     )
 
     assert control.attempt_queries
-    assert all(query.get("run_id") is not None for query in control.attempt_queries)
-    assert {query["run_id"] for query in control.attempt_queries} == {"run-a", "run-b", "run-c"}
+    assert control.attempt_queries == [{
+        "start_date": date(2026, 9, 12), "end_date": date(2026, 9, 13), "limit": None,
+    }]
 
 
 def test_resource_health_marks_latest_failed_date_as_failed(monkeypatch) -> None:
@@ -238,3 +245,33 @@ def test_run_status_filter_applies_before_limit() -> None:
     runs = _service().list_runs(resource="khlcnt", status="failed", limit=1)
     assert len(runs) == 1
     assert runs[0].status is RunStatus.FAILED
+
+
+@pytest.mark.parametrize("state,age,expected", [
+    ("running", 0, "running"), ("running", 700, "stale"),
+    ("interrupted", 0, "interrupted"), ("finished", 0, "interrupted"),
+    (None, 0, "unknown"), ("running", -120, "unknown"),
+])
+def test_running_manifest_requires_heartbeat_evidence(state, age, expected):
+    control = StubControl()
+    control.attempts = [_day("live", date(2025, 1, 1), DayStatus.RUNNING)]
+    control.get_execution = Mock(return_value=None if state is None else {
+        "state": state, "heartbeat_at": (datetime.now(UTC) - timedelta(seconds=age)).isoformat(),
+    })
+    ops = OpsService(control, StubErrors())
+    detail = ops.get_date("khlcnt", date(2025, 1, 1))
+    assert detail.status.value == expected
+    assert detail.attempts[0].execution_state.value == expected
+    assert detail.attempts[0].status is DayStatus.RUNNING  # original storage state stays explicit
+
+
+def test_stale_refresh_does_not_hide_previously_committed_day():
+    control = StubControl()
+    control.attempts = [
+        _day("good", date(2025, 1, 1), DayStatus.SUCCESS),
+        _day("stale", date(2025, 1, 1), DayStatus.RUNNING),
+    ]
+    control.get_execution = Mock(return_value=None)
+    detail = OpsService(control, StubErrors()).get_date("khlcnt", date(2025, 1, 1))
+    assert detail.status.value == "success"
+    assert detail.effective_run_id == "good"

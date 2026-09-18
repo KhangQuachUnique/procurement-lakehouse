@@ -33,6 +33,12 @@ def test_year_selects_whole_closed_year_without_redundant_budget_flag(mode, year
         ["status", "--year", "2025", "--continue-on-error"],
         ["verify", "--year", "2025", "--continue-on-error"],
         ["backfill", "--year", "2025", "--page-size", "0"],
+        ["backfill", "--year", "2025", "--resource-workers", "0"],
+        ["backfill", "--year", "2025", "--resource-workers", "5"],
+        ["backfill", "--year", "2025", "--khlcnt-package-workers", "0"],
+        ["backfill", "--year", "2025", "--khlcnt-package-workers", "33"],
+        ["backfill", "--year", "2025", "--source-max-inflight", "0"],
+        ["backfill", "--year", "2025", "--source-max-inflight", "33"],
     ],
 )
 def test_invalid_cli_input_fails_before_touching_storage(monkeypatch, arguments):

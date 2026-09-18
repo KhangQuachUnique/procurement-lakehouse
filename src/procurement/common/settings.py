@@ -15,6 +15,9 @@ class Settings(BaseModel):
     MUASAMCONG_TIMEOUT_SECONDS: float = Field(default=30, gt=0)
     MUASAMCONG_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
     MUASAMCONG_MAX_RETRY_DELAY_SECONDS: float = Field(default=30, ge=0, le=300)
+    MUASAMCONG_MAX_INFLIGHT: int = Field(default=3, ge=1, le=32)
+    KHLCNT_PACKAGE_WORKERS: int = Field(default=3, ge=1, le=32)
+    INGESTION_RESOURCE_WORKERS: int = Field(default=2, ge=1, le=4)
     MUASAMCONG_TOKEN: str | None = Field(default=None, repr=False)
     OBJECT_STORAGE_ENDPOINT: str = "http://localhost:8333"
     OBJECT_STORAGE_ACCESS_KEY: str | None = Field(default=None, repr=False)
@@ -22,6 +25,11 @@ class Settings(BaseModel):
     OBJECT_STORAGE_BUCKET: str = "procurement-lakehouse"
     DLT_PIPELINES_DIR: str | None = None
     INGESTION_LOCK_DIR: str = "data/locks"
+    OPS_INDEX_PATH: str = "data/ops/index.sqlite3"
+    OPS_SYNC_INTERVAL_SECONDS: float = Field(default=5, ge=1, le=3600)
+    OPS_RECONCILE_INTERVAL_SECONDS: float = Field(default=300, ge=5, le=86400)
+    OPS_SYNC_WORKERS: int = Field(default=8, ge=1, le=32)
+    OPS_STALE_AFTER_SECONDS: float = Field(default=600, ge=30)
 
     @field_validator("MUASAMCONG_BASE_URL", "OBJECT_STORAGE_ENDPOINT")
     @classmethod

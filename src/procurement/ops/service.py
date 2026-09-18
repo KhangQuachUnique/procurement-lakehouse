@@ -14,6 +14,7 @@ from procurement.ops.models import (
     DateIngestionStatus,
     DateSummary,
     ErrorSummary,
+    ExecutionState,
     OpsOverview,
     PageSummary,
     ResourceHealth,
@@ -28,9 +29,15 @@ MAX_DATE_WINDOW_DAYS = 366
 
 
 class OpsService:
-    def __init__(self, control: ControlRepository, errors: ErrorRepository) -> None:
+    def __init__(
+        self, control: ControlRepository, errors: ErrorRepository, *,
+        sync_status: dict | None = None, stale_after_seconds: float = 600,
+    ) -> None:
         self._control = control
         self._errors = errors
+        self.sync_status = sync_status
+        self.stale_after_seconds = stale_after_seconds
+        self._executions = {}
 
     @staticmethod
     def identity(resource: str, *, source: str = DEFAULT_SOURCE) -> ResourceIdentity:
@@ -44,18 +51,43 @@ class OpsService:
             return None
         return max(0.0, (completed_at - started_at).total_seconds())
 
-    @classmethod
-    def _run_summary(cls, manifest: RunManifest) -> RunSummary:
+    def _execution_state(self, manifest):
+        if manifest.status.value != "running":
+            return None
+        key = (manifest.source, manifest.resource, manifest.run_id)
+        if key not in self._executions:
+            try:
+                self._executions[key] = self._control.get_execution(
+                    ResourceIdentity(manifest.source, manifest.resource), manifest.run_id,
+                )
+            except Exception:  # noqa: BLE001 -- unavailable heartbeat means unknown, never alive
+                self._executions[key] = None
+        execution = self._executions[key]
+        if not execution:
+            return ExecutionState.UNKNOWN
+        if execution.get("state") in {"finished", "interrupted"}:
+            return ExecutionState.INTERRUPTED
+        try:
+            heartbeat = datetime.fromisoformat(execution["heartbeat_at"])
+            age = (datetime.now(UTC) - heartbeat).total_seconds()
+            if age < -60 or execution.get("state") != "running":
+                return ExecutionState.UNKNOWN
+            return ExecutionState.STALE if age > self.stale_after_seconds else ExecutionState.RUNNING
+        except (KeyError, ValueError, TypeError):
+            return ExecutionState.UNKNOWN
+
+    def _run_summary(self, manifest: RunManifest) -> RunSummary:
         return RunSummary(
             **manifest.model_dump(exclude={"schema_version"}),
-            duration_seconds=cls._duration_seconds(manifest.started_at, manifest.completed_at),
+            duration_seconds=self._duration_seconds(manifest.started_at, manifest.completed_at),
+            execution_state=self._execution_state(manifest),
         )
 
-    @classmethod
-    def _attempt_summary(cls, manifest: DayManifest) -> AttemptSummary:
+    def _attempt_summary(self, manifest: DayManifest) -> AttemptSummary:
         return AttemptSummary(
             **manifest.model_dump(exclude={"schema_version"}),
-            duration_seconds=cls._duration_seconds(manifest.started_at, manifest.completed_at),
+            duration_seconds=self._duration_seconds(manifest.started_at, manifest.completed_at),
+            execution_state=self._execution_state(manifest),
         )
 
     @classmethod
@@ -86,15 +118,14 @@ class OpsService:
             return None
         return max(attempts, key=lambda item: item.started_at)
 
-    @classmethod
-    def _date_status(cls, attempts: list[DayManifest]) -> DateIngestionStatus:
-        if cls._effective_attempt(attempts) is not None:
+    def _date_status(self, attempts: list[DayManifest]) -> DateIngestionStatus:
+        if self._effective_attempt(attempts) is not None:
             return DateIngestionStatus.SUCCESS
-        latest = cls._latest_attempt(attempts)
+        latest = self._latest_attempt(attempts)
         if latest is None:
             return DateIngestionStatus.NO_ATTEMPT
         if latest.status is DayStatus.RUNNING:
-            return DateIngestionStatus.RUNNING
+            return DateIngestionStatus(self._execution_state(latest).value)
         return DateIngestionStatus.FAILED
 
     @staticmethod
@@ -124,9 +155,12 @@ class OpsService:
         start_date: date | None = None,
         end_date: date | None = None,
         limit: int = 100,
+        offset: int = 0,
     ) -> list[RunSummary]:
         if limit < 1 or limit > 1000:
             raise ValueError("limit must be between 1 and 1000")
+        if not 0 <= offset <= 100000:
+            raise ValueError("offset must be between 0 and 100000")
         if start_date is not None and end_date is not None and start_date > end_date:
             raise ValueError("start_date must be before or equal to end_date")
 
@@ -151,14 +185,15 @@ class OpsService:
                     identity,
                     start_date=start_date,
                     end_date=end_date,
-                    limit=None,
+                    limit=limit + offset,
+                    status=status,
                 )
             )
 
         if status is not None:
             manifests = [item for item in manifests if item.status is status]
-        manifests.sort(key=lambda item: item.started_at, reverse=True)
-        return [self._run_summary(item) for item in manifests[:limit]]
+        manifests.sort(key=lambda item: (item.started_at, item.run_id), reverse=True)
+        return [self._run_summary(item) for item in manifests[offset:offset + limit]]
 
     def overview(self, *, source: str = DEFAULT_SOURCE) -> OpsOverview:
         return OpsOverview(
@@ -213,7 +248,13 @@ class OpsService:
         latest_status = self._date_status(by_date[latest_source_date])
         if latest_success_date is None or latest_status is DateIngestionStatus.FAILED:
             health = ResourceHealth.FAILED
-        elif unresolved_failed_dates > 0 or (freshness_days is not None and freshness_days > 1):
+        elif (
+            unresolved_failed_dates > 0 or (freshness_days is not None and freshness_days > 1)
+            or latest_status in {
+                DateIngestionStatus.STALE, DateIngestionStatus.UNKNOWN,
+                DateIngestionStatus.INTERRUPTED,
+            }
+        ):
             health = ResourceHealth.DEGRADED
         else:
             health = ResourceHealth.HEALTHY
@@ -236,26 +277,9 @@ class OpsService:
         start_date: date,
         end_date: date,
     ) -> list[DayManifest]:
-        # First narrow by run manifests. This avoids a resource-wide
-        # run_id=*/source_date=*/day.json glob for every calendar request.
-        runs = self._control.list_runs(
-            identity,
-            start_date=start_date,
-            end_date=end_date,
-            limit=None,
+        return self._control.list_attempts(
+            identity, start_date=start_date, end_date=end_date, limit=None,
         )
-        attempts: list[DayManifest] = []
-        for run in runs:
-            attempts.extend(
-                self._control.list_attempts(
-                    identity,
-                    run_id=run.run_id,
-                    start_date=start_date,
-                    end_date=end_date,
-                    limit=None,
-                )
-            )
-        return attempts
 
     def list_dates(
         self,

@@ -9,6 +9,7 @@ from typing import Any, Self
 import httpx
 
 from procurement.common.settings import settings
+from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
@@ -30,6 +31,7 @@ class MuasamcongClient:
         max_retry_delay: float = 30,
         transport: httpx.BaseTransport | None = None,
         sleep: Callable[[float], None] = time.sleep,
+        request_budget: RequestBudget | None = None,
     ) -> None:
         if not token:
             raise ValueError("Muasamcong token is required")
@@ -39,7 +41,10 @@ class MuasamcongClient:
         self._max_attempts = max_attempts
         self._max_retry_delay = max_retry_delay
         self._sleep = sleep
-        self._auth_response: httpx.Response | None = None
+        self._request_budget = (
+            request_budget if request_budget is not None
+            else RequestBudget(settings.MUASAMCONG_MAX_INFLIGHT)
+        )
         self._client = httpx.Client(
             base_url=settings.MUASAMCONG_BASE_URL,
             timeout=settings.MUASAMCONG_TIMEOUT_SECONDS,
@@ -63,14 +68,13 @@ class MuasamcongClient:
 
     def post(self, path: str, body: Any) -> dict[str, Any]:
         # This transport is for read-only source endpoints implemented as POST.
-        # A rejected credential stays rejected for this client/run; avoid request storms.
-        if self._auth_response is not None:
-            self._auth_response.raise_for_status()
+        # Share the auth circuit across resource clients in this flow.
         for attempt in range(1, self._max_attempts + 1):
             try:
-                response = self._client.post(path, params={"token": self._token}, json=body)
-                if response.status_code in {401, 403}:
-                    self._auth_response = response
+                with self._request_budget.request():
+                    response = self._client.post(path, params={"token": self._token}, json=body)
+                    if response.status_code in {401, 403}:
+                        self._request_budget.reject_auth(response)
                 if response.status_code in RETRYABLE_STATUS_CODES and attempt < self._max_attempts:
                     delay = self._retry_delay(attempt, response.headers.get("Retry-After"))
                     # Do not retry earlier than requested when the server delay exceeds our budget.

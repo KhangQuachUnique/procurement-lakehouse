@@ -1,4 +1,5 @@
 from datetime import date
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -6,7 +7,7 @@ import pytest
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion import batch_runner
 from procurement.ingestion.batch_runner import split_by_day, to_api_window
-from procurement.models.control import RunStatus
+from procurement.models.control import DayStatus, RunStatus
 
 IDENTITY = ResourceIdentity("muasamcong", "khlcnt")
 
@@ -66,3 +67,44 @@ def test_range_continues_after_failed_day_and_finishes_partial(monkeypatch) -> N
     assert manifests[-1].status is RunStatus.PARTIAL_FAILED
     assert manifests[-1].success_dates == 2
     assert manifests[-1].failed_dates == 1
+
+
+def test_interruption_stops_range_and_finalizes_persisted_days(monkeypatch):
+    manifests, calls = [], []
+    monkeypatch.setattr(batch_runner, "write_run_manifest", lambda *args: manifests.append(args[-1]))
+    monkeypatch.setattr(batch_runner, "list_day_manifests", lambda *_, **__: [
+        SimpleNamespace(status=DayStatus.SUCCESS), SimpleNamespace(status=DayStatus.FAILED),
+    ])
+
+    def run_day(_run_id, day):
+        calls.append(day)
+        if day.day == 2:
+            raise KeyboardInterrupt
+        return {"status": "success"}
+
+    with pytest.raises(KeyboardInterrupt):
+        batch_runner.run_batch_range(
+            date(2025, 1, 1), date(2025, 1, 3), fs=object(), identity=IDENTITY, run_day=run_day,
+        )
+    assert len(calls) == 2
+    assert manifests[-1].status is RunStatus.PARTIAL_FAILED
+    assert manifests[-1].success_dates == manifests[-1].failed_dates == 1
+    assert manifests[-1].completed_at is not None
+
+
+def test_interrupt_after_day_commit_recovers_success_from_storage(monkeypatch):
+    manifests = []
+    monkeypatch.setattr(batch_runner, "write_run_manifest", lambda *args: manifests.append(args[-1]))
+    monkeypatch.setattr(batch_runner, "list_day_manifests", lambda *_, **__: [
+        SimpleNamespace(status=DayStatus.SUCCESS),
+    ])
+
+    def run_day(*_):
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        batch_runner.run_batch_range(
+            date(2025, 1, 1), date(2025, 1, 1), fs=object(), identity=IDENTITY, run_day=run_day,
+        )
+    assert manifests[-1].status is RunStatus.SUCCESS
+    assert manifests[-1].failed_dates == 0

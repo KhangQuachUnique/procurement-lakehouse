@@ -5,6 +5,7 @@ from typing import Any, Protocol
 import dlt
 from dlt.destinations import filesystem
 
+from procurement.common.cancellation import INTERRUPTIONS
 from procurement.common.settings import settings
 from procurement.models.bronze import BronzeRecord
 
@@ -40,6 +41,8 @@ class DltBronzeWriter:
                     raise RuntimeError("DLT returned no load receipt for a non-empty resource")
                 info.raise_on_failed_jobs()
                 persisted += len(records)
+        except INTERRUPTIONS:
+            raise
         except Exception as exc:
             raise BronzeWriteError(exc, persisted) from exc
         return persisted

@@ -65,7 +65,7 @@ tbody tr:hover { background: #fbfcfe; }
 .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 760; text-transform: uppercase; letter-spacing: .035em; }
 .badge.success,.badge.healthy { color: #157347; background: #edf8f2; }
 .badge.failed,.badge.partial_failed,.badge.error { color: #b42318; background: #fff0ee; }
-.badge.running,.badge.degraded { color: #8a6100; background: #fff6d8; }
+.badge.stale,.badge.unknown,.badge.interrupted,.badge.running,.badge.degraded { color: #8a6100; background: #fff6d8; }
 .badge.no_attempt,.badge.no_data { color: #657083; background: #f0f2f5; }
 .filters { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; }
 .field { display: grid; gap: 5px; }
@@ -97,6 +97,8 @@ button { border-color: var(--text); background: var(--text); color: #fff; cursor
 .heat-day:hover,.heat-day:focus-visible { z-index: 3; transform: scale(1.35); box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(23,32,51,.16); }
 .heat-day.success { background: var(--success); }
 .heat-day.failed { background: var(--danger); }
+.heat-day.stale,.heat-day.unknown,.heat-day.interrupted { background: #a879b9; }
+.sync-status { padding: 10px 0; color: #64748b; font-size: 13px; }
 .heat-day.running { background: var(--warn); }
 .heat-day.no_attempt { background: var(--neutral); }
 .heat-day.future { opacity: .42; }
@@ -163,6 +165,19 @@ def _badge(value: Any) -> str:
     return f'<span class="badge {escape(raw)}">{escape(raw.replace("_", " "))}</span>'
 
 
+def _sync_banner(service) -> str:
+    state = getattr(service, "sync_status", None)
+    if not state:
+        return ""
+    updated = datetime.fromisoformat(state["last_success_at"])
+    age = max(0, int((datetime.now(updated.tzinfo) - updated).total_seconds()))
+    warning = " · Sync delayed; showing the last snapshot" if state["last_error"] or age > 30 else ""
+    return (
+        f'<div class="sync-status" role="status">Updated {_e(updated)} '
+        f'({age}s ago){warning}</div>'
+    )
+
+
 def _query(path: str, **params: Any) -> str:
     clean = {key: _text(value) for key, value in params.items() if value not in (None, "")}
     return path if not clean else f"{path}?{urlencode(clean)}"
@@ -216,11 +231,11 @@ def _resource_options(selected: str | None, *, include_all: bool = True) -> str:
 
 
 def _run_row(run: RunSummary, source: str) -> str:
-    return f"""<tr><td><a class="link mono" href="{escape(_run_url(run.run_id, source), quote=True)}">{_e(run.run_id)}</a></td><td>{_e(run.resource)}</td><td>{_e(run.start_date)} → {_e(run.end_date)}</td><td>{_badge(run.status)}</td><td>{run.success_dates}/{run.total_dates}</td><td>{run.failed_dates}</td><td>{_e(run.duration_seconds)}s</td><td>{_e(run.started_at)}</td></tr>"""
+    return f"""<tr><td><a class="link mono" href="{escape(_run_url(run.run_id, source), quote=True)}">{_e(run.run_id)}</a></td><td>{_e(run.resource)}</td><td>{_e(run.start_date)} → {_e(run.end_date)}</td><td>{_badge(run.execution_state or run.status)}</td><td>{run.success_dates}/{run.total_dates}</td><td>{run.failed_dates}</td><td>{_e(run.duration_seconds)}s</td><td>{_e(run.started_at)}</td></tr>"""
 
 
 def _attempt_row(attempt: AttemptSummary, source: str) -> str:
-    return f"""<tr><td><a class="link" href="{escape(_attempt_url(attempt.run_id, attempt.source_date, source), quote=True)}">{_e(attempt.source_date)}</a></td><td>{_badge(attempt.status)}</td><td>{attempt.completed_pages}/{_e(attempt.expected_pages)}</td><td>{attempt.search_items}</td><td>{attempt.bronze_records}</td><td>{attempt.error_count}</td><td>{_e(attempt.duration_seconds)}s</td><td>{_e(attempt.started_at)}</td></tr>"""
+    return f"""<tr><td><a class="link" href="{escape(_attempt_url(attempt.run_id, attempt.source_date, source), quote=True)}">{_e(attempt.source_date)}</a></td><td>{_badge(attempt.execution_state or attempt.status)}</td><td>{attempt.completed_pages}/{_e(attempt.expected_pages)}</td><td>{attempt.search_items}</td><td>{attempt.bronze_records}</td><td>{attempt.error_count}</td><td>{_e(attempt.duration_seconds)}s</td><td>{_e(attempt.started_at)}</td></tr>"""
 
 
 def _error_row(error: ErrorSummary, source: str) -> str:
@@ -240,6 +255,11 @@ def _day_tip(item: DateSummary, *, today: date) -> str:
     if state == "running":
         run = item.latest_run_id or "—"
         return f"{item.source_date.isoformat()}\nRUNNING\n{item.bronze_records} records so far · {item.attempt_count} attempt(s)\nRun {run}"
+    if state in {"stale", "unknown", "interrupted"}:
+        return (
+            f"{item.source_date.isoformat()}\n{state.upper()}\n"
+            f"Worker liveness is not confirmed\nRun {item.latest_run_id or '—'}"
+        )
     return f"{item.source_date.isoformat()}\nNO ATTEMPT\nNo ingestion attempt was recorded"
 
 
@@ -285,9 +305,9 @@ def root() -> RedirectResponse:
 
 
 @router.get("/ops", response_class=HTMLResponse)
-def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | None = None, status: str | None = None, start_date: date | None = None, end_date: date | None = None, limit: Annotated[int, Query(ge=1, le=500)] = 100) -> HTMLResponse:
+def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | None = None, status: str | None = None, start_date: date | None = None, end_date: date | None = None, limit: Annotated[int, Query(ge=1, le=500)] = 100, offset: Annotated[int, Query(ge=0, le=100000)] = 0) -> HTMLResponse:
     try:
-        runs = service.list_runs(source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit)
+        runs = service.list_runs(source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit, offset=offset)
     except ValueError as exc:
         return _bad_request(exc, source=source, active="runs")
     rows = "".join(_run_row(run, source) for run in runs)
@@ -296,9 +316,17 @@ def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | No
     for item in RunStatus:
         mark = " selected" if item.value == status else ""
         status_options.append(f'<option value="{item.value}"{mark}>{item.value}</option>')
-    api_href = _query("/api/ops/runs", source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit)
+    api_href = _query("/api/ops/runs", source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit, offset=offset)
     body = f"""<div class="heading"><div><h1>Runs</h1><p>Recent ingestion runs. Start here when debugging operational failures.</p></div><div class="actions"><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel panel-pad"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource)}</select></div><div class="field"><label>Status</label><select name="status">{''.join(status_options)}</select></div><div class="field"><label>From</label><input type="date" name="start_date" value="{'' if start_date is None else start_date.isoformat()}"></div><div class="field"><label>To</label><input type="date" name="end_date" value="{'' if end_date is None else end_date.isoformat()}"></div><div class="field"><label>Limit</label><input type="number" min="1" max="500" name="limit" value="{limit}"></div><button type="submit">Apply</button></form></div><div class="section">{table}</div>"""
-    return _layout("Runs", body, active="runs", source=source)
+    links = []
+    for label, position in (("Previous", max(0, offset - limit)), ("Next", offset + limit)):
+        if (label == "Previous" and offset == 0) or (label == "Next" and len(runs) < limit):
+            continue
+        href = _query("/ops", source=source, resource=resource, status=status,
+                      start_date=start_date, end_date=end_date, limit=limit, offset=position)
+        links.append(f'<a href="{escape(href, quote=True)}">{label}</a>')
+    body += '<nav class="actions" aria-label="Run pages">' + " ".join(links) + "</nav>"
+    return _layout("Runs", _sync_banner(service) + body, active="runs", source=source)
 
 
 @router.get("/ops/calendar", response_class=HTMLResponse)
@@ -317,12 +345,13 @@ def calendar_page(service: Service, source: str = DEFAULT_SOURCE, resource: str 
         "success": sum(1 for item in dates if item.status.value == "success"),
         "failed": sum(1 for item in dates if item.status.value == "failed"),
         "running": sum(1 for item in dates if item.status.value == "running"),
+        "unconfirmed": sum(1 for item in dates if item.status.value in {"stale", "unknown", "interrupted"}),
         "no_attempt": sum(1 for item in dates if item.status.value == "no_attempt" and item.source_date <= today),
     }
     prev_href = _query("/ops/calendar", source=source, resource=resource, year=year - 1)
     next_href = _query("/ops/calendar", source=source, resource=resource, year=year + 1)
-    body = f"""<div class="heading"><div><h1>Calendar</h1><p>Yearly ingestion coverage. Hover a day for details; click it to inspect attempts.</p></div></div><div class="panel panel-pad"><div class="year-toolbar"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><input type="hidden" name="year" value="{year}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource, include_all=False)}</select></div><button type="submit">Apply</button></form><div class="year-nav"><a href="{escape(prev_href, quote=True)}" aria-label="Previous year">←</a><div class="year-label">{year}</div><a href="{escape(next_href, quote=True)}" aria-label="Next year">→</a></div></div></div><div class="section panel heatmap-panel"><div class="heatmap-scroll"><div class="heatmap" style="--weeks:{weeks}">{heatmap}</div></div><div class="heat-legend"><div class="legend-items"><span class="legend-item"><i class="legend-dot success"></i>Success</span><span class="legend-item"><i class="legend-dot failed"></i>Failed</span><span class="legend-item"><i class="legend-dot running"></i>Running</span><span class="legend-item"><i class="legend-dot"></i>No attempt</span></div><div class="year-counts"><span><strong>{counts["success"]}</strong> success</span><span><strong>{counts["failed"]}</strong> failed</span><span><strong>{counts["running"]}</strong> running</span><span><strong>{counts["no_attempt"]}</strong> not run</span></div></div></div><div id="day-tooltip" class="day-tooltip" role="tooltip"></div>"""
-    return _layout("Calendar", body, active="calendar", source=source, extra_script=_TOOLTIP_SCRIPT)
+    body = f"""<div class="heading"><div><h1>Calendar</h1><p>Yearly ingestion coverage. Hover a day for details; click it to inspect attempts.</p></div></div><div class="panel panel-pad"><div class="year-toolbar"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><input type="hidden" name="year" value="{year}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource, include_all=False)}</select></div><button type="submit">Apply</button></form><div class="year-nav"><a href="{escape(prev_href, quote=True)}" aria-label="Previous year">←</a><div class="year-label">{year}</div><a href="{escape(next_href, quote=True)}" aria-label="Next year">→</a></div></div></div><div class="section panel heatmap-panel"><div class="heatmap-scroll"><div class="heatmap" style="--weeks:{weeks}">{heatmap}</div></div><div class="heat-legend"><div class="legend-items"><span class="legend-item"><i class="legend-dot success"></i>Success</span><span class="legend-item"><i class="legend-dot failed"></i>Failed</span><span class="legend-item"><i class="legend-dot running"></i>Running</span><span class="legend-item"><i class="legend-dot"></i>No attempt</span></div><div class="year-counts"><span><strong>{counts["success"]}</strong> success</span><span><strong>{counts["failed"]}</strong> failed</span><span><strong>{counts["running"]}</strong> running</span><span><strong>{counts["unconfirmed"]}</strong> unconfirmed</span><span><strong>{counts["no_attempt"]}</strong> not run</span></div></div></div><div id="day-tooltip" class="day-tooltip" role="tooltip"></div>"""
+    return _layout("Calendar", _sync_banner(service) + body, active="calendar", source=source, extra_script=_TOOLTIP_SCRIPT)
 
 
 @router.get("/ops/calendar/{resource}/{source_date}", response_class=HTMLResponse)
@@ -336,7 +365,7 @@ def calendar_date_page(resource: str, source_date: date, service: Service, sourc
     content = f'<div class="panel table-wrap"><table><thead><tr><th>Date</th><th>Status</th><th>Pages</th><th>Search</th><th>Bronze</th><th>Errors</th><th>Duration</th><th>Started</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="panel empty">No ingestion attempt was recorded for this date.</div>'
     calendar_href = _query("/ops/calendar", source=source, resource=resource, year=source_date.year)
     body = f"""{_breadcrumbs(("Calendar", calendar_href), (resource, calendar_href), (source_date.isoformat(), None))}<div class="heading"><div><h1>{source_date.isoformat()}</h1><p>{escape(resource)}</p></div></div><div class="stats"><span>state <strong>{_badge(detail.status)}</strong></span><span>attempts <strong>{len(attempts)}</strong></span><span>effective run <strong class="mono">{_e(detail.effective_run_id)}</strong></span></div><div class="section">{content}</div>"""
-    return _layout(str(source_date), body, active="calendar", source=source)
+    return _layout(str(source_date), _sync_banner(service) + body, active="calendar", source=source)
 
 
 @router.get("/ops/resources/{resource}")
@@ -364,8 +393,8 @@ def run_page(run_id: str, service: Service, source: str = DEFAULT_SOURCE) -> HTM
     rows = "".join(_attempt_row(item, source) for item in attempts)
     attempts_content = f'<div class="panel table-wrap"><table><thead><tr><th>Date</th><th>Status</th><th>Pages</th><th>Search</th><th>Bronze</th><th>Errors</th><th>Duration</th><th>Started</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="panel empty">This run has no day attempts.</div>'
     api_href = _query(f"/api/ops/runs/{quote(run_id, safe='')}", source=source)
-    body = f"""{_breadcrumbs(("Runs", _query('/ops', source=source)), (run_id, None))}<div class="heading"><div><h1 class="mono">{_e(run_id)}</h1><p>{_e(run.resource)} · {_e(run.start_date)} → {_e(run.end_date)}</p></div><div class="actions"><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel"><dl class="kv"><div><dt>Status</dt><dd>{_badge(run.status)}</dd></div><div><dt>Dates</dt><dd>{run.success_dates} success / {run.failed_dates} failed / {run.total_dates}</dd></div><div><dt>Bronze records</dt><dd>{bronze}</dd></div><div><dt>Errors</dt><dd>{errors}</dd></div><div><dt>Duration</dt><dd>{_e(run.duration_seconds)}s</dd></div><div><dt>Started</dt><dd>{_e(run.started_at)}</dd></div><div><dt>Completed</dt><dd>{_e(run.completed_at)}</dd></div><div><dt>Resource</dt><dd>{_e(run.resource)}</dd></div></dl></div><div class="section"><h2>Date attempts</h2>{attempts_content}</div>"""
-    return _layout(f"Run {run_id}", body, active="runs", source=source)
+    body = f"""{_breadcrumbs(("Runs", _query('/ops', source=source)), (run_id, None))}<div class="heading"><div><h1 class="mono">{_e(run_id)}</h1><p>{_e(run.resource)} · {_e(run.start_date)} → {_e(run.end_date)}</p></div><div class="actions"><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel"><dl class="kv"><div><dt>Status</dt><dd>{_badge(run.execution_state or run.status)}</dd></div><div><dt>Dates</dt><dd>{run.success_dates} success / {run.failed_dates} failed / {run.total_dates}</dd></div><div><dt>Bronze records</dt><dd>{bronze}</dd></div><div><dt>Errors</dt><dd>{errors}</dd></div><div><dt>Duration</dt><dd>{_e(run.duration_seconds)}s</dd></div><div><dt>Started</dt><dd>{_e(run.started_at)}</dd></div><div><dt>Completed</dt><dd>{_e(run.completed_at)}</dd></div><div><dt>Resource</dt><dd>{_e(run.resource)}</dd></div></dl></div><div class="section"><h2>Date attempts</h2>{attempts_content}</div>"""
+    return _layout(f"Run {run_id}", _sync_banner(service) + body, active="runs", source=source)
 
 
 @router.get("/ops/attempts/{run_id}/{source_date}", response_class=HTMLResponse)
@@ -382,8 +411,8 @@ def attempt_page(run_id: str, source_date: date, service: Service, source: str =
     page_rows = "".join(f'<tr><td>{item.page_number}</td><td>{_badge(item.status)}</td><td>{item.page_size}</td><td>{item.search_items}</td><td>{item.bronze_records}</td><td>{item.error_count}</td><td>{_e(item.duration_seconds)}s</td></tr>' for item in detail.pages)
     pages_content = f'<div class="panel table-wrap"><table><thead><tr><th>Page</th><th>Status</th><th>Size</th><th>Search</th><th>Bronze</th><th>Errors</th><th>Duration</th></tr></thead><tbody>{page_rows}</tbody></table></div>' if page_rows else '<div class="panel empty">No page manifests found.</div>'
     api_href = _query(f"/api/ops/attempts/{quote(run_id, safe='')}/{source_date.isoformat()}", source=source)
-    body = f"""{_breadcrumbs(("Runs", _query('/ops', source=source)), (run_id, _run_url(run_id, source)), (source_date.isoformat(), None))}<div class="heading"><div><h1>Attempt · {source_date.isoformat()}</h1><p class="mono">{_e(run_id)}</p></div><div class="actions"><a href="{escape(_run_url(run_id, source), quote=True)}">Run</a><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel"><dl class="kv"><div><dt>Status</dt><dd>{_badge(attempt.status)}</dd></div><div><dt>Pages</dt><dd>{attempt.completed_pages}/{_e(attempt.expected_pages)}</dd></div><div><dt>Search items</dt><dd>{attempt.search_items}</dd></div><div><dt>Bronze records</dt><dd>{attempt.bronze_records}</dd></div><div><dt>Errors</dt><dd>{attempt.error_count}</dd></div><div><dt>Duration</dt><dd>{_e(attempt.duration_seconds)}s</dd></div><div><dt>Started</dt><dd>{_e(attempt.started_at)}</dd></div><div><dt>Completed</dt><dd>{_e(attempt.completed_at)}</dd></div></dl></div><div class="section"><h2>Errors</h2>{errors_content}</div><div class="section"><h2>Pages</h2>{pages_content}</div>"""
-    return _layout(f"Attempt {run_id}", body, active="runs", source=source)
+    body = f"""{_breadcrumbs(("Runs", _query('/ops', source=source)), (run_id, _run_url(run_id, source)), (source_date.isoformat(), None))}<div class="heading"><div><h1>Attempt · {source_date.isoformat()}</h1><p class="mono">{_e(run_id)}</p></div><div class="actions"><a href="{escape(_run_url(run_id, source), quote=True)}">Run</a><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel"><dl class="kv"><div><dt>Status</dt><dd>{_badge(attempt.execution_state or attempt.status)}</dd></div><div><dt>Pages</dt><dd>{attempt.completed_pages}/{_e(attempt.expected_pages)}</dd></div><div><dt>Search items</dt><dd>{attempt.search_items}</dd></div><div><dt>Bronze records</dt><dd>{attempt.bronze_records}</dd></div><div><dt>Errors</dt><dd>{attempt.error_count}</dd></div><div><dt>Duration</dt><dd>{_e(attempt.duration_seconds)}s</dd></div><div><dt>Started</dt><dd>{_e(attempt.started_at)}</dd></div><div><dt>Completed</dt><dd>{_e(attempt.completed_at)}</dd></div></dl></div><div class="section"><h2>Errors</h2>{errors_content}</div><div class="section"><h2>Pages</h2>{pages_content}</div>"""
+    return _layout(f"Attempt {run_id}", _sync_banner(service) + body, active="runs", source=source)
 
 
 @router.get("/ops/errors", response_class=HTMLResponse)
@@ -395,4 +424,4 @@ def errors_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | 
     rows = "".join(_error_row(item, source) for item in errors)
     table = f'<div class="panel table-wrap"><table><thead><tr><th>Occurred</th><th>Resource</th><th>Date</th><th>Stage</th><th>Type</th><th>Page</th><th>HTTP</th><th>Message</th><th>Run</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="panel empty">No errors match these filters.</div>'
     body = f"""<div class="heading"><div><h1>Errors</h1><p>Actual ingestion errors only. A date with no attempt is not listed here.</p></div></div><div class="panel panel-pad"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource)}</select></div><div class="field"><label>Date</label><input type="date" name="source_date" value="{'' if source_date is None else source_date.isoformat()}"></div><div class="field"><label>Run ID</label><input name="run_id" value="{escape(run_id or '', quote=True)}"></div><div class="field"><label>Stage</label><input name="stage" value="{escape(stage or '', quote=True)}"></div><div class="field"><label>Error type</label><input name="error_type" value="{escape(error_type or '', quote=True)}"></div><button type="submit">Filter</button></form></div><div class="section">{table}</div>"""
-    return _layout("Errors", body, active="errors", source=source)
+    return _layout("Errors", _sync_banner(service) + body, active="errors", source=source)
