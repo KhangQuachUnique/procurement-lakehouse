@@ -4,6 +4,8 @@ venv
 tmp
 temp
 data
+exports
+imports
 logs
 __pycache__
 *.pyc

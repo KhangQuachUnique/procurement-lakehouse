@@ -8,6 +8,7 @@ Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý kết qu�
 | Crawl, backfill, repair, verify, đặt lịch | [Jobs ingestion](docs/ingestion.md) |
 | Xem coverage, run, attempt và lỗi qua UI/API | [Ops](docs/ops.md) |
 | Query Bronze bằng DuckDB, đọc dữ liệu đã commit | [Bronze Explorer và đọc dữ liệu](docs/bronze-explorer.md) |
+| Đóng ZIP một năm Bronze và nhập sang máy khác | [Chuyển Bronze giữa các máy](docs/bronze-transfer.md) |
 | Chạy tests, lint, build và thêm resource | [Công cụ phát triển](docs/development.md) |
 
 ## Bắt đầu

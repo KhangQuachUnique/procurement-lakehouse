@@ -59,6 +59,8 @@ temp/
 # Local Data
 # =========================
 data/
+exports/
+imports/
 
 # =========================
 # Docker / Local Secrets
