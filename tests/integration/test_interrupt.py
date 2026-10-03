@@ -44,7 +44,9 @@ def test_interrupt_drains_parallel_workers_and_persists_terminal_manifests(store
     monkeypatch.setattr(runner, "MuasamcongClient", lambda **kwargs: MuasamcongClient(
         **kwargs, transport=httpx.MockTransport(source),
     ))
-    args = ingest._parser().parse_args(["backfill", "--year", "2025", "--resource-workers", "2"])
+    args = ingest._parser().parse_args([
+        "backfill", "--year", "2025", "--resource-workers", "2", "--source-max-inflight", "2",
+    ])
     plan = [(name, date(2025, 1, 1)) for name in ("project", "khlcnt")]
     report = {"attempted_days": 0, "execution_errors": []}
     with pytest.raises(KeyboardInterrupt):

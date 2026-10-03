@@ -32,7 +32,7 @@ def run_resource_day(
     factory = getattr(import_module(module_name), factory_name)
     fs = create_s3_filesystem()
     budget = request_budget if request_budget is not None else RequestBudget(
-        settings.MUASAMCONG_MAX_INFLIGHT
+        settings.MUASAMCONG_MAX_INFLIGHT, min_interval=settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS
     )
     with MuasamcongClient(
         token=settings.MUASAMCONG_TOKEN,

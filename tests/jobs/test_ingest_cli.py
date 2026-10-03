@@ -39,6 +39,9 @@ def test_year_selects_whole_closed_year_without_redundant_budget_flag(mode, year
         ["backfill", "--year", "2025", "--khlcnt-package-workers", "33"],
         ["backfill", "--year", "2025", "--source-max-inflight", "0"],
         ["backfill", "--year", "2025", "--source-max-inflight", "33"],
+        ["backfill", "--year", "2025", "--source-request-interval", "-1"],
+        ["backfill", "--year", "2025", "--source-request-interval", "nan"],
+        ["backfill", "--year", "2025", "--source-request-interval", "inf"],
     ],
 )
 def test_invalid_cli_input_fails_before_touching_storage(monkeypatch, arguments):
@@ -68,3 +71,31 @@ def test_day_runner_validates_before_storage(monkeypatch):
     with pytest.raises(ValueError, match="page_size"):
         runner.run_resource_day("project", date(2025, 1, 1), page_size=0)
     filesystem.assert_not_called()
+
+
+@pytest.mark.parametrize("shared", [False, True])
+def test_day_runner_uses_optional_pacing_and_original_retry_defaults(monkeypatch, shared):
+    from contextlib import contextmanager
+
+    from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
+
+    captured = {}
+    monkeypatch.setattr(runner.settings, "MUASAMCONG_TOKEN", "fixture")
+    monkeypatch.setattr(runner.settings, "MUASAMCONG_MAX_ATTEMPTS", 3)
+    monkeypatch.setattr(runner.settings, "MUASAMCONG_REQUEST_INTERVAL_SECONDS", 1.5)
+    monkeypatch.setattr(runner, "create_s3_filesystem", object)
+    monkeypatch.setattr(runner, "run_batch_range", lambda *_, **__: "run")
+    @contextmanager
+    def client(**kwargs):
+        captured.update(kwargs)
+        yield object()
+    monkeypatch.setattr(runner, "MuasamcongClient", client)
+    budget = RequestBudget(1, min_interval=2) if shared else None
+    assert runner.run_resource_day("project", date(2025, 1, 1), request_budget=budget) == "run"
+    assert captured["max_attempts"] == 3
+    assert "retry_base_delay" not in captured
+    assert "shared_retry_cooldown" not in captured
+    if shared:
+        assert captured["request_budget"] is budget
+    else:
+        assert captured["request_budget"]._interval == 1.5

@@ -130,3 +130,43 @@ def test_cancelled_budget_prevents_new_network_calls():
         token="test", request_budget=budget, transport=httpx.MockTransport(handler),
     ) as client, pytest.raises(RuntimeError, match="cancelled"):
         client.post("/detail", {})
+
+
+def test_request_spacing_and_cooldown_are_shared_across_clients():
+    current = [0.0]
+    starts = []
+    def wait(seconds):
+        current[0] += seconds
+    budget = RequestBudget(3, min_interval=1, clock=lambda: current[0], wait=wait)
+    def handler(_):
+        starts.append(current[0])
+        return httpx.Response(200, json={})
+    with (
+        MuasamcongClient(token="test", request_budget=budget, transport=httpx.MockTransport(handler)) as first,
+        MuasamcongClient(token="test", request_budget=budget, transport=httpx.MockTransport(handler)) as second,
+    ):
+        first.post("/one", {})
+        second.post("/two", {})
+        budget.defer(7)
+        first.post("/three", {})
+        second.post("/four", {})
+    assert starts == [0, 1, 8, 9]
+
+
+def test_slow_repair_profile_backs_off_and_remains_bounded(monkeypatch):
+    monkeypatch.setattr("procurement.ingestion.sources.muasamcong.client.uniform", lambda low, high: low)
+    current = [0.0]
+    starts = []
+    def wait(seconds):
+        current[0] += seconds
+    budget = RequestBudget(1, min_interval=1, clock=lambda: current[0], wait=wait)
+    def handler(request):
+        starts.append(current[0])
+        raise httpx.ConnectError("connection reset", request=request)
+    with (
+        MuasamcongClient(token="test", request_budget=budget, transport=httpx.MockTransport(handler),
+                         sleep=wait, max_attempts=5, retry_base_delay=2, shared_retry_cooldown=True) as client,
+        pytest.raises(httpx.ConnectError),
+    ):
+        client.post("/detail", {})
+    assert starts == [0, 2, 6, 14, 30]

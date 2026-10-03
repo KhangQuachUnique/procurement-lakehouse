@@ -38,6 +38,7 @@ def test_resource_overlap_is_bounded_and_days_of_each_resource_never_overlap(mon
             peak = max(peak, len(active))
             calls.append((resource, source_date))
             budgets.append(kwargs["request_budget"])
+            assert kwargs["request_budget"]._interval == ingest.settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS
             assert kwargs["khlcnt_package_workers"] == 3
         try:
             if resource in RESOURCES[:2] and source_date.day == 1:

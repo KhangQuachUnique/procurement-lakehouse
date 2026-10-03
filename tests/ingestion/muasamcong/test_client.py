@@ -4,7 +4,7 @@ from email.utils import format_datetime
 import httpx
 import pytest
 
-from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
+from procurement.ingestion.sources.muasamcong.client import MuasamcongClient, SourceResponseError
 
 
 def test_retry_after_is_respected_without_real_sleep():
@@ -96,3 +96,33 @@ def test_http_date_retry_after_and_invalid_header():
         delay = client._retry_delay(1, format_datetime(datetime.now(UTC) + timedelta(seconds=10)))
         assert 8 <= delay <= 10
         assert 0 <= client._retry_delay(1, "invalid") <= 1
+
+
+@pytest.mark.parametrize("body", [b"", b"<html>upstream unavailable</html>", b'{"truncated":'])
+def test_invalid_json_success_is_retried_within_request_budget(body):
+    calls, delays = [], []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, content=body) if len(calls) == 1 else httpx.Response(200, json={"id": "ok"})
+    with MuasamcongClient(token="test", transport=httpx.MockTransport(handler), sleep=delays.append) as client:
+        assert client.post("/detail", {"id": "notice"}) == {"id": "ok"}
+    assert len(calls) == 2
+    assert len(delays) == 1
+
+
+def test_invalid_json_exhaustion_has_safe_actionable_diagnostics():
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, content=b"private body", headers={"content-type": "text/html"})
+    with (
+        MuasamcongClient(token="secret-token", transport=httpx.MockTransport(handler), sleep=lambda _: None) as client,
+        pytest.raises(SourceResponseError) as caught,
+    ):
+        client.post("/detail", {"id": "notice"})
+    assert len(calls) == 3
+    assert caught.value.diagnostics["request_id"] == "notice"
+    assert caught.value.diagnostics["content_type"] == "text/html"
+    assert caught.value.diagnostics["response_bytes"] == 12
+    assert "private body" not in str(caught.value)
+    assert "secret-token" not in str(caught.value)

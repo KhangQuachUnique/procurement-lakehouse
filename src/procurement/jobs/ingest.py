@@ -6,6 +6,7 @@ import signal
 from collections import deque
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import UTC, date, datetime, timedelta
+from math import isfinite
 from pathlib import Path
 
 from procurement.common.catalog import SUPPORTED_RESOURCES, get_resource
@@ -47,6 +48,10 @@ def _parser():
         help="Shared HTTP request limit across all resources in this flow (1-32)",
     )
     parser.add_argument(
+        "--source-request-interval", type=float, default=settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS,
+        help="Minimum seconds between HTTP request starts across the entire flow (0-60)",
+    )
+    parser.add_argument(
         "--max-days", type=int, help="Date limit (default: 31, or the full year with --year)"
     )
     parser.add_argument(
@@ -68,6 +73,8 @@ def _parser():
 
 def resolve_dates(args, *, today: date) -> tuple[date, date]:
     validate_page_size(args.page_size)
+    if not isfinite(args.source_request_interval) or not 0 <= args.source_request_interval <= 60:
+        raise ValueError("--source-request-interval must be finite and between 0 and 60")
     for flag, value, maximum in (
         ("resource-workers", args.resource_workers, 4),
         ("khlcnt-package-workers", args.khlcnt_package_workers, 32),
@@ -119,7 +126,7 @@ def _liveness(fs, identity, run_id: str, threshold: timedelta) -> str:
 
 
 def _execute_plan(args, fs, plan, report, run_day):
-    budget = RequestBudget(args.source_max_inflight)
+    budget = RequestBudget(args.source_max_inflight, min_interval=args.source_request_interval)
 
     def attempt(resource, source_date):
         try:
@@ -200,6 +207,7 @@ def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]
             "resource_workers": args.resource_workers,
             "khlcnt_package_workers": args.khlcnt_package_workers,
             "source_max_inflight": args.source_max_inflight,
+            "source_request_interval": args.source_request_interval,
         },
     }
     threshold = timedelta(minutes=args.stale_after_minutes)

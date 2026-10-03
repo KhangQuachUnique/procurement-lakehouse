@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable, Iterable, Mapping
 from datetime import date
 from typing import Any, Protocol
@@ -68,15 +69,23 @@ def create_bronze_destination(*, source_partition_date: date, run_id: str):
 def create_bronze_resource(records: Iterable[BronzeRecord], *, name: str):
     """Create one append-only Bronze table resource for a page/chunk."""
 
-    serialized = (record.model_dump(mode="json") for record in records)
+    def serialized():
+        for record in records:
+            row = record.model_dump(mode="json")
+            # DLT interprets/removes private-use Unicode markers inside JSON objects.
+            # Keep source JSON opaque to normalization; readers already json.loads it.
+            row["payload"] = json.dumps(row["payload"], ensure_ascii=True, separators=(",", ":"))
+            yield row
+
     return dlt.resource(
-        serialized,
+        serialized(),
         name=name,
         table_name=name,
         write_disposition="append",
         file_format="parquet",
         max_table_nesting=0,
         columns={
+            "payload": {"data_type": "text", "nullable": False},
             "source_version": {
                 "data_type": "text",
                 "nullable": True,

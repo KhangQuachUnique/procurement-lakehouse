@@ -13,6 +13,10 @@ from procurement.storage.object_store import create_s3_filesystem
 def store(request, tmp_path, monkeypatch):
     from dlt.common.runtime import run_context
 
+    # Pacing is tested with a deterministic clock; mocked source tests need no wall-clock delays.
+    monkeypatch.setattr(settings, "MUASAMCONG_REQUEST_INTERVAL_SECONDS", 0)
+    monkeypatch.setattr(settings, "MUASAMCONG_MAX_RETRY_DELAY_SECONDS", 0)
+
     # Keep config discovery/global state away from the developer's home directory.
     monkeypatch.setattr(run_context, "global_dir", lambda: str(tmp_path / "dlt-global"))
     monkeypatch.setenv("DLT_DATA_DIR", str(tmp_path / "dlt-data"))

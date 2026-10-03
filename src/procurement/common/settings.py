@@ -16,9 +16,11 @@ class Settings(BaseModel):
     MUASAMCONG_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
     MUASAMCONG_MAX_RETRY_DELAY_SECONDS: float = Field(default=30, ge=0, le=300)
     MUASAMCONG_MAX_INFLIGHT: int = Field(default=3, ge=1, le=32)
+    MUASAMCONG_REQUEST_INTERVAL_SECONDS: float = Field(default=0, ge=0, le=60, allow_inf_nan=False)
     KHLCNT_PACKAGE_WORKERS: int = Field(default=3, ge=1, le=32)
     INGESTION_RESOURCE_WORKERS: int = Field(default=2, ge=1, le=4)
     MUASAMCONG_TOKEN: str | None = Field(default=None, repr=False)
+    NOTIFY_QUALITY_CONFIG: str | None = None
     OBJECT_STORAGE_ENDPOINT: str = "http://localhost:8333"
     OBJECT_STORAGE_ACCESS_KEY: str | None = Field(default=None, repr=False)
     OBJECT_STORAGE_SECRET_KEY: str | None = Field(default=None, repr=False)
