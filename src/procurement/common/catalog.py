@@ -27,7 +27,8 @@ RESOURCE_CATALOG = (
     ),
     ResourceDefinition(
         ResourceIdentity(DEFAULT_SOURCE, "notify_contractor"),
-        ("notify_contractor_standard_detail", "notify_contractor_reoffer_detail"),
+        ("notify_contractor_standard_detail", "notify_contractor_reoffer_detail",
+         "notify_contractor_vk_adb_detail"),
         "procurement.ingestion.sources.muasamcong.notify_contractor.resource:"
         "create_notify_contractor_spec",
     ),

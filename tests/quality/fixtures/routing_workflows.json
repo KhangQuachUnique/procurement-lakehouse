@@ -1,0 +1,912 @@
+[
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "WB",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CGTT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "UKFTA",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "UKFTA",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "WB",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "2_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "CPTPP",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "reoffer-price-step-1",
+      "processApply": "LDT",
+      "bidForm": "CGTTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "reoffer"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CGTTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "reoffer"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "TVCN",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "QCBS",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "ADB",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CHCT",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "EVFTA",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "TCTVCN",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "2_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "TCTVCN",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "TVCN",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "CGTT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCT",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "CPTPP",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "TVCN",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CGTTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "reoffer"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "QCBS",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "EVFTA",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CQS",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CHCT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "TCTVCN",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-3-dsntdkt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CQS",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "CGTT",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "UKFTA",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "2_HTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "KHAC",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "KHAC",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "LDT",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CHCTRG",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCTRG",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "LDT",
+      "bidForm": "CHCTRG",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-4-kqlcnt",
+      "processApply": "KHAC",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTRR",
+      "isInternet": 0,
+      "bidMode": "2_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "CHCTRG",
+      "isInternet": 0,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-1-tbmt",
+      "processApply": "LDT",
+      "bidForm": "DTHC",
+      "isInternet": 1,
+      "bidMode": "1_HTHS"
+    },
+    "contract": "standard"
+  },
+  {
+    "context": {
+      "stepCode": "notify-contractor-step-2-kqmt",
+      "processApply": "KHAC",
+      "bidForm": "CHCTRG",
+      "isInternet": 1,
+      "bidMode": "1_MTHS"
+    },
+    "contract": "vk_adb"
+  }
+]

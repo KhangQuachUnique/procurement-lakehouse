@@ -11,6 +11,7 @@ class PageStats:
     search_items: int = 0
     record_counts: Counter[str] = field(default_factory=Counter)
     error_counts: Counter[str] = field(default_factory=Counter)
+    quality_observations: list[dict[str, Any]] = field(default_factory=list)
 
     def record(self, kind: str) -> None:
         self.record_counts[kind] += 1

@@ -22,6 +22,7 @@ from procurement.ingestion.engine.pagination import (
 )
 from procurement.ingestion.engine.stats import PageStats
 from procurement.models.control import DayManifest, DayStatus, PageManifest, PageStatus
+from procurement.quality.storage import save_quality_page
 from procurement.storage.bronze import DltBronzeWriter, create_bronze_destination
 from procurement.storage.control import (
     commit_day_manifest,
@@ -179,6 +180,11 @@ def run_daily_resource(
                     "error_count": day.error_count + len(outcome.errors),
                 }
             )
+            if spec.quality_config_hash is not None:
+                save_quality_page(
+                    fs, spec.identity, run_id, source_date, page.page_number,
+                    spec.quality_config_hash, outcome.stats.quality_observations,
+                )
             if outcome.errors:
                 save_error_records(
                     fs=fs,

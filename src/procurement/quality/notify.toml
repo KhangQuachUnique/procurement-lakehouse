@@ -1,0 +1,105 @@
+version = "notify-3+family-routing"
+resource = "notify_contractor"
+
+[thresholds]
+empty_ratio = 0.8
+min_fields = 10
+small_fraction = 0.25
+min_cohort = 30
+min_cluster = 10
+
+[contracts.standard]
+roots = ["bidoNotifyContractorM", "bidNoContractorResponse.bidNotification"]
+id_fields = ["id"]
+number_fields = ["notifyNo"]
+version_fields = ["notifyVersion"]
+allow_search_version = true
+fields = ["*"]
+
+[contracts.reoffer]
+roots = [""]
+id_fields = ["id"]
+number_fields = ["notifyNo", "reofferNo"]
+version_fields = ["notifyVersion", "reofferVersion"]
+allow_search_version = true
+fields = ["*"]
+
+[contracts.vk_adb]
+roots = ["bidoNotifyContractorP"]
+id_fields = ["id"]
+number_fields = ["notifyNo"]
+version_fields = ["notifyVersion"]
+allow_search_version = true
+fields = ["*"]
+
+# Inferred family rules agree with 91 previously reviewed/observed workflows.
+# Routing predicts the endpoint; validate_detail still verifies every response.
+[[routes]]
+name = "family-reoffer"
+contract = "reoffer"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-ldt"
+contract = "standard"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "LDT"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-cptpp"
+contract = "standard"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "CPTPP"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-evfta"
+contract = "standard"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "EVFTA"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-ukfta"
+contract = "standard"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "UKFTA"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-khac"
+contract = "vk_adb"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "KHAC"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-wb"
+contract = "vk_adb"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "WB"
+[routes.exclude]
+bidForm = "CGTTRG"
+
+[[routes]]
+name = "family-adb"
+contract = "vk_adb"
+evidence = "inferred:91-workflows;tests/quality/fixtures/routing_workflows.json"
+[routes.match]
+processApply = "ADB"
+[routes.exclude]
+bidForm = "CGTTRG"

@@ -1,0 +1,176 @@
+{
+  "evidence_type": "browser_request_only",
+  "observed_at": "2026-10-02",
+  "source": "User-supplied ketqquacheckapi.txt; IB2200005527 corrected in conversation",
+  "response_verified": false,
+  "samples": [
+    {
+      "context": {
+        "id": "18f165c5-754b-4a15-8912-9022691c1b92",
+        "notifyNo": "IB2200000176",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "processApply": "LDT",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "e9b4dc76-a252-438a-98a8-3fa810c23b03",
+        "notifyNo": "IB2200000325",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "LDT",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "4359d765-3a50-46d7-981b-d924111e5e2b",
+        "notifyNo": "IB2200000936",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "processApply": "LDT",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "30b03225-4da5-4d7c-b21e-503578425f76",
+        "notifyNo": "IB2200002393",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "processApply": "KHAC",
+        "bidForm": "CHCTRG",
+        "isInternet": 0,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "vk_adb",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb"
+    },
+    {
+      "context": {
+        "id": "1ca762ee-f867-40a5-ac82-ea88e495f932",
+        "notifyNo": "IB2200001592",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "KHAC",
+        "bidForm": "CHCTRG",
+        "isInternet": 0,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "vk_adb",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb"
+    },
+    {
+      "context": {
+        "id": "90e96573-2777-4bf2-a89d-578db276f64a",
+        "notifyNo": "IB2200000415",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "processApply": "LDT",
+        "bidForm": "CHCTRG",
+        "isInternet": 0,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "2fc8db3e-c0f4-49ae-bd88-3bb2233228b6",
+        "notifyNo": "IB2200005527",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "processApply": "KHAC",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "vk_adb",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb"
+    },
+    {
+      "context": {
+        "id": "9a4d539e-20d9-4d12-8f06-7d0471f80cc9",
+        "notifyNo": "IB2200017981",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "LDT",
+        "bidForm": "DTRR",
+        "isInternet": 0,
+        "bidMode": "2_HTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "1feb58c7-3b33-489c-b46e-9fb08d4f3ac1",
+        "notifyNo": "IB2200004231",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "KHAC",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "vk_adb",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb"
+    },
+    {
+      "context": {
+        "id": "f8db9e81-156e-499b-b873-0103508403b5",
+        "notifyNo": "IB2200008004",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "LDT",
+        "bidForm": "CHCTRG",
+        "isInternet": 0,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "7334ad74-09ca-4169-9452-3eb6c2bf7257",
+        "notifyNo": "IB2200046608",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-1-tbmt",
+        "processApply": "LDT",
+        "bidForm": "DTHC",
+        "isInternet": 1,
+        "bidMode": "1_HTHS"
+      },
+      "contract": "standard",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
+    },
+    {
+      "context": {
+        "id": "0eda65d2-5396-487c-b739-37037c4970f8",
+        "notifyNo": "IB2200007264",
+        "notifyVersion": "00",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "processApply": "KHAC",
+        "bidForm": "CHCTRG",
+        "isInternet": 1,
+        "bidMode": "1_MTHS"
+      },
+      "contract": "vk_adb",
+      "endpoint": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb"
+    }
+  ]
+}

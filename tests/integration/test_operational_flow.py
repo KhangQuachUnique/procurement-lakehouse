@@ -26,6 +26,18 @@ from procurement.storage.execution import read_execution
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture(autouse=True)
+def reviewed_fixture_routes(monkeypatch):
+    from procurement.quality.contracts import Route, load_config
+
+    config = load_config()
+    config.routes = [Route(name=key, contract=kind, evidence="integration fixture", match={"id": key})
+                     for key, kind in (("n1", "standard"), ("n2", "reoffer"))]
+    monkeypatch.setattr(
+        "procurement.ingestion.sources.muasamcong.notify_contractor.resource.load_config", lambda: config,
+    )
+
+
 @pytest.mark.parametrize(
     "failure_status,continue_mode,attempted", [(404, True, 8), (404, False, 1), (401, True, 1)]
 )
@@ -150,8 +162,10 @@ class Source:
             else:
                 resource = "notify_contractor"
                 content = [
-                    {"id": "n1", "stepCode": "notify-contractor-step-1-tbmt"},
-                    {"id": "n2", "stepCode": "reoffer-price-step-1"},
+                    {"id": "n1", "notifyNo": "N1", "notifyVersion": "00",
+                     "stepCode": "notify-contractor-step-1-tbmt"},
+                    {"id": "n2", "notifyNo": "N2", "notifyVersion": "00",
+                     "stepCode": "reoffer-price-step-1"},
                 ]
             self.searches.append(resource)
             return httpx.Response(
@@ -171,9 +185,9 @@ class Source:
             PLAN_DETAIL_PATH: {"id": "plan", "bidpPlanDetailToProjectList": [{"id": "pkg"}]},
             BID_PACKAGE_DETAIL_PATH: {"id": "pkg"},
             STANDARD_DETAIL_PATH: {
-                "bidoNotifyContractorM": {"notifyNo": "N1", "notifyVersion": "00"}
+                "bidoNotifyContractorM": {"id": "n1", "notifyNo": "N1", "notifyVersion": "00"}
             },
-            REOFFER_DETAIL_PATH: {"notifyNo": "N2", "notifyVersion": "00"},
+            REOFFER_DETAIL_PATH: {"id": "n2", "notifyNo": "N2", "notifyVersion": "00"},
             CONTRACTOR_RESULT_DETAIL_PATH: {
                 "bideContractorInputResultDTO": {"notifyNo": "N1", "resultVersion": "01"}
             },

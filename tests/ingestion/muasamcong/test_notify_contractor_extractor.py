@@ -2,6 +2,7 @@ from datetime import date
 from typing import Any
 
 import httpx
+import pytest
 
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.stats import PageStats
@@ -15,6 +16,20 @@ from procurement.models.errors import ErrorRecord
 
 IDENTITY = ResourceIdentity("muasamcong", "notify_contractor")
 SOURCE_DATE = date(2026, 9, 14)
+
+
+@pytest.fixture(autouse=True)
+def reviewed_test_routes(monkeypatch):
+    from procurement.quality.contracts import Route, load_config
+
+    config = load_config()
+    config.routes = [Route(name=key, contract=kind, evidence="test-fixture", match={"id": key})
+                     for key, kind in (("standard-1", "standard"),
+                                       ("standard-timeout", "standard"), ("reoffer-1", "reoffer"))]
+    monkeypatch.setattr(
+        "procurement.ingestion.sources.muasamcong.notify_contractor.extractor.load_config",
+        lambda: config,
+    )
 
 
 class StubApi:
@@ -137,8 +152,8 @@ def test_unknown_step_is_routing_error_and_does_not_guess_endpoint() -> None:
     assert api.calls == []
     assert len(errors) == 1
     assert errors[0].stage == ROUTING_STAGE
-    assert errors[0].error_type == "UnsupportedNotifyWorkflowError"
-    assert errors[0].message == "Unsupported stepCode: another-workflow-step-1"
+    assert errors[0].error_type == "DetailValidationError"
+    assert errors[0].message == "unresolved_route"
     assert errors[0].source_id == "IB-UNKNOWN"
 
 

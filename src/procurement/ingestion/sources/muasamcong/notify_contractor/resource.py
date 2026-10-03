@@ -11,6 +11,7 @@ from procurement.ingestion.sources.muasamcong.search import (
     build_search_payload,
     search_document_key,
 )
+from procurement.quality.contracts import ENDPOINTS, load_config
 
 NOTIFY_CONTRACTOR_IDENTITY = get_resource("notify_contractor").identity
 
@@ -21,6 +22,7 @@ CASE_KHKQ_EXCLUDED = "1"
 SEARCH_PATH = "/o/egp-portal-contractor-selection-v2/services/smart/search"
 STANDARD_DETAIL_PATH = "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_ldt"
 REOFFER_DETAIL_PATH = "/o/egp-portal-contractor-selection-v2/services/online-reoffer/detail"
+VK_ADB_DETAIL_PATH = ENDPOINTS["vk_adb"]
 
 
 class NotifyContractorApi:
@@ -51,6 +53,9 @@ class NotifyContractorApi:
     def get_reoffer_detail(self, notice_id: str) -> dict[str, Any]:
         return self._client.post(REOFFER_DETAIL_PATH, {"id": notice_id})
 
+    def get_vk_adb_detail(self, notice_id: str) -> dict[str, Any]:
+        return self._client.post(VK_ADB_DETAIL_PATH, {"id": notice_id})
+
 
 def _build_search_payload(
     *,
@@ -78,15 +83,18 @@ def _build_search_payload(
 
 def create_notify_contractor_spec(client: JsonPostClient) -> ResourceSpec:
     api = NotifyContractorApi(client)
+    config = load_config()
     return ResourceSpec(
         identity=NOTIFY_CONTRACTOR_IDENTITY,
         pipeline_name="muasamcong_bronze",
         dataset_name="muasamcong",
         fetch_page=api.search,
         search_key=search_document_key,
+        quality_config_hash=config.fingerprint,
         iter_records=partial(
             iter_notify_contractor_records,
             api,
             identity=NOTIFY_CONTRACTOR_IDENTITY,
+            config=config,
         ),
     )
