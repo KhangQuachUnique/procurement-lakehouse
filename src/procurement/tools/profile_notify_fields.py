@@ -14,6 +14,14 @@ from procurement.quality.contracts import lookup
 from procurement.storage.committed import iter_committed_records, select_committed_days
 from procurement.storage.object_store import create_s3_filesystem
 
+OPENING_ROOTS = {
+    "bid_opening_detail": ("notify.bidNoContractorResponse.bidNotification",
+                           "roundmng.bidoBidroundMngViewDTO",
+                           "bid_open.bidSubmissionByContractorViewResponse", "lot_open_detail",
+                           "bid_open_technical.bidSubmissionByContractorViewResponse",
+                           "bid_open_financial.bidSubmissionByContractorViewResponse",
+                           "lot_open_detail_technical", "lot_open_detail_financial"),
+}
 ROOTS = {
     "notify_contractor_standard_detail": (
         "bidoNotifyContractorM", "bidNoContractorResponse.bidNotification",
@@ -102,14 +110,15 @@ def profile_record(profile, table, record):
     profile.records += 1
     paths, populated, occurrences = observe(profile.paths, walk(payload))
     root_path, root = None, None
-    for candidate in ROOTS[table]:
+    for candidate in (ROOTS | OPENING_ROOTS)[table]:
         value = lookup(payload, candidate)
         if isinstance(value, dict) and value:
             root_path, root = candidate or "$", value
             break
     profile.missing_business_root += root is None
     business_count, business_populated, _ = observe(
-        profile.business_fields, root.items() if root else (),
+        profile.business_fields,
+        walk(payload) if table == "bid_opening_detail" else root.items() if root else (),
     )
     return {
         "table": table, "source_date": str(record["source_date"])[:10],
@@ -122,7 +131,7 @@ def profile_record(profile, table, record):
 
 
 def profile_day(fs, day):
-    profiles = {table: TableProfile() for table in ROOTS}
+    profiles = {table: TableProfile() for table in (ROOTS | OPENING_ROOTS)}
     records = []
     # Exhaust the iterator so count, lineage and payload hashes are all verified.
     for table, record in iter_committed_records(fs, (day,), verify_hash=True):
@@ -174,7 +183,7 @@ def write_field_csv(path, rows):
 
 
 def run_profile(fs, selection, output, year, workers):
-    profiles = {table: TableProfile() for table in ROOTS}
+    profiles = {table: TableProfile() for table in (ROOTS | OPENING_ROOTS)}
     (output / "selection.json").write_text(
         json.dumps([asdict(day) for day in selection], default=str, indent=2), encoding="utf-8",
     )
@@ -232,6 +241,7 @@ def run_profile(fs, selection, output, year, workers):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--resource", choices=("notify_contractor", "bid_opening"), default="notify_contractor")
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--workers", type=int, default=4)
@@ -243,12 +253,12 @@ def main(argv=None):
     if not 1 <= args.workers <= 16:
         parser.error("--workers must be between 1 and 16")
     output = args.output or Path(
-        f"exports/notify-field-profile-{args.year}-{datetime.now(UTC):%Y%m%d-%H%M%S}"
+        f"exports/{args.resource}-field-profile-{args.year}-{datetime.now(UTC):%Y%m%d-%H%M%S}"
     )
     output.mkdir(parents=True, exist_ok=False)
     print(f"Selecting committed days for {args.year} (requires every day SUCCESS)...", flush=True)
     fs = create_s3_filesystem()
-    selection = select_committed_days(fs, get_resource("notify_contractor"), start, end)
+    selection = select_committed_days(fs, get_resource(args.resource), start, end)
     summary = run_profile(fs, selection, output, args.year, args.workers)
     print(f"DONE: {summary['records']:,} records; reports: {output.resolve()}", flush=True)
 

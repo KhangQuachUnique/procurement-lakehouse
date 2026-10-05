@@ -207,6 +207,8 @@ def test_calendar_renders_full_year_heatmap_with_hover_details(client: TestClien
     assert "year=2027" in response.text
     assert "Jan" in response.text
     assert "Dec" in response.text
+    assert 'status.id = "calendar-live-status"' in response.text
+    assert 'fetch(window.location.href, {cache: "no-store"})' in response.text
 
 
 def test_calendar_date_drills_into_attempt(client: TestClient) -> None:

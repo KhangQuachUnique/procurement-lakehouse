@@ -147,6 +147,51 @@ _TOOLTIP_SCRIPT = """
 </script>
 """
 
+_CALENDAR_REFRESH_SCRIPT = """
+<script>
+(() => {
+  const status = document.createElement("p");
+  status.id = "calendar-live-status";
+  status.className = "sync-status";
+  status.setAttribute("role", "status");
+  status.textContent = "Auto-refresh every 5 seconds; storage synchronization may take longer.";
+  document.querySelector(".heatmap-panel").before(status);
+  const refresh = async () => {
+    try {
+      if (document.hidden) return;
+      const response = await fetch(window.location.href, {cache: "no-store"});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const page = new DOMParser().parseFromString(await response.text(), "text/html");
+      const updated = page.querySelector(".heatmap-panel");
+      if (!updated) throw new Error("Calendar unavailable");
+      const cells = new Map([...updated.querySelectorAll(".heat-day")].map(
+        cell => [cell.getAttribute("href"), cell]));
+      document.querySelectorAll(".heat-day").forEach(cell => {
+        const next = cells.get(cell.getAttribute("href"));
+        if (!next) return;
+        // Keep existing nodes and tooltip listeners while updating status and evidence.
+        for (const name of ["class", "data-tip", "title", "aria-label"]) {
+          if (next.hasAttribute(name)) cell.setAttribute(name, next.getAttribute(name));
+          else cell.removeAttribute(name);
+        }
+      });
+      document.querySelector(".year-counts").innerHTML = updated.querySelector(".year-counts").innerHTML;
+      const banner = document.querySelector(".main > .sync-status:not(#calendar-live-status)");
+      const nextBanner = page.querySelector(".main > .sync-status");
+      if (banner && nextBanner) banner.replaceWith(nextBanner);
+      status.textContent = "Calendar updated " + new Date().toLocaleTimeString() +
+        "; auto-refresh every 5 seconds. Storage synchronization may take longer.";
+    } catch (error) {
+      status.textContent = "Calendar refresh failed (" + error.message + "). Retrying in 5 seconds.";
+    } finally {
+      setTimeout(refresh, 5000);
+    }
+  };
+  setTimeout(refresh, 5000);
+})();
+</script>
+"""
+
 
 def _text(value: Any) -> str:
     if value is None:
@@ -206,7 +251,7 @@ def _layout(title: str, body: str, *, active: str, source: str = DEFAULT_SOURCE,
     runs_class = "active" if active == "runs" else ""
     calendar_class = "active" if active == "calendar" else ""
     errors_class = "active" if active == "errors" else ""
-    html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)} · Procurement Ops</title><style>{_STYLE}</style></head><body><header class="topbar"><a class="brand" href="{escape(_query('/ops', source=source), quote=True)}">Procurement <span>Ops</span></a><nav class="nav"><a class="{runs_class}" href="{escape(_query('/ops', source=source), quote=True)}">Runs</a><a class="{calendar_class}" href="{escape(_query('/ops/calendar', source=source), quote=True)}">Calendar</a><a class="{errors_class}" href="{escape(_query('/ops/errors', source=source), quote=True)}">Errors</a><a class="api-docs" href="/docs">API</a></nav></header><main class="main">{body}</main>{extra_script}</body></html>"""
+    html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)} · Procurement Ops</title><style>{_STYLE}</style></head><body><header class="topbar"><a class="brand" href="{escape(_query('/ops', source=source), quote=True)}">Procurement <span>Ops</span></a><nav class="nav"><a class="{runs_class}" href="{escape(_query('/ops', source=source), quote=True)}">Runs</a><a class="{calendar_class}" href="{escape(_query('/ops/calendar', source=source), quote=True)}">Calendar</a><a class="{errors_class}" href="{escape(_query('/ops/errors', source=source), quote=True)}">Errors</a><a href="/ops/benchmark">Benchmark</a><a class="api-docs" href="/docs">API</a></nav></header><main class="main">{body}</main>{extra_script}</body></html>"""
     return HTMLResponse(html)
 
 
@@ -310,6 +355,12 @@ def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | No
         runs = service.list_runs(source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit, offset=offset)
     except ValueError as exc:
         return _bad_request(exc, source=source, active="runs")
+    from procurement.ingestion.bid_opening_watch import read_status
+    try:
+        watch = read_status()
+        watch_summary = " | ".join(f"{_e(key)}: {_e(value)}" for key, value in watch.items())
+    except Exception:  # noqa: BLE001 -- optional local status must not break Ops
+        watch_summary = "Watch status unavailable; inspect the watch database namespace."
     rows = "".join(_run_row(run, source) for run in runs)
     table = f'<div class="panel table-wrap"><table><thead><tr><th>Run ID</th><th>Resource</th><th>Range</th><th>Status</th><th>Success</th><th>Failed</th><th>Duration</th><th>Started</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="panel empty">No runs match these filters.</div>'
     status_options = ['<option value="">All statuses</option>']
@@ -318,6 +369,7 @@ def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | No
         status_options.append(f'<option value="{item.value}"{mark}>{item.value}</option>')
     api_href = _query("/api/ops/runs", source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit, offset=offset)
     body = f"""<div class="heading"><div><h1>Runs</h1><p>Recent ingestion runs. Start here when debugging operational failures.</p></div><div class="actions"><a href="{escape(api_href, quote=True)}">JSON</a></div></div><div class="panel panel-pad"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource)}</select></div><div class="field"><label>Status</label><select name="status">{''.join(status_options)}</select></div><div class="field"><label>From</label><input type="date" name="start_date" value="{'' if start_date is None else start_date.isoformat()}"></div><div class="field"><label>To</label><input type="date" name="end_date" value="{'' if end_date is None else end_date.isoformat()}"></div><div class="field"><label>Limit</label><input type="number" min="1" max="500" name="limit" value="{limit}"></div><button type="submit">Apply</button></form></div><div class="section">{table}</div>"""
+    body += f'<div class="panel panel-pad"><h2>Bid opening watch</h2><p>{watch_summary}</p><a href="/api/ops/bid-opening-watch">JSON</a></div>'
     links = []
     for label, position in (("Previous", max(0, offset - limit)), ("Next", offset + limit)):
         if (label == "Previous" and offset == 0) or (label == "Next" and len(runs) < limit):
@@ -351,7 +403,8 @@ def calendar_page(service: Service, source: str = DEFAULT_SOURCE, resource: str 
     prev_href = _query("/ops/calendar", source=source, resource=resource, year=year - 1)
     next_href = _query("/ops/calendar", source=source, resource=resource, year=year + 1)
     body = f"""<div class="heading"><div><h1>Calendar</h1><p>Yearly ingestion coverage. Hover a day for details; click it to inspect attempts.</p></div></div><div class="panel panel-pad"><div class="year-toolbar"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><input type="hidden" name="year" value="{year}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource, include_all=False)}</select></div><button type="submit">Apply</button></form><div class="year-nav"><a href="{escape(prev_href, quote=True)}" aria-label="Previous year">←</a><div class="year-label">{year}</div><a href="{escape(next_href, quote=True)}" aria-label="Next year">→</a></div></div></div><div class="section panel heatmap-panel"><div class="heatmap-scroll"><div class="heatmap" style="--weeks:{weeks}">{heatmap}</div></div><div class="heat-legend"><div class="legend-items"><span class="legend-item"><i class="legend-dot success"></i>Success</span><span class="legend-item"><i class="legend-dot failed"></i>Failed</span><span class="legend-item"><i class="legend-dot running"></i>Running</span><span class="legend-item"><i class="legend-dot"></i>No attempt</span></div><div class="year-counts"><span><strong>{counts["success"]}</strong> success</span><span><strong>{counts["failed"]}</strong> failed</span><span><strong>{counts["running"]}</strong> running</span><span><strong>{counts["unconfirmed"]}</strong> unconfirmed</span><span><strong>{counts["no_attempt"]}</strong> not run</span></div></div></div><div id="day-tooltip" class="day-tooltip" role="tooltip"></div>"""
-    return _layout("Calendar", _sync_banner(service) + body, active="calendar", source=source, extra_script=_TOOLTIP_SCRIPT)
+    return _layout("Calendar", _sync_banner(service) + body, active="calendar", source=source,
+                   extra_script=_TOOLTIP_SCRIPT + _CALENDAR_REFRESH_SCRIPT)
 
 
 @router.get("/ops/calendar/{resource}/{source_date}", response_class=HTMLResponse)

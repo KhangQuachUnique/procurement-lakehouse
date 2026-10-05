@@ -1,0 +1,58 @@
+<style>
+  .bench-grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+  .bench-form{display:grid;gap:14px}.bench-form .field label{text-transform:none;font-size:12px}
+  .bench-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bench-row input{width:100%}
+  textarea{width:100%;padding:10px;border:1px solid var(--line-strong);border-radius:8px;font:12px/1.5 monospace;resize:vertical}
+  .bench-subtle{font-size:12px;color:var(--muted)}.bench-grid .section{margin-top:18px}
+  .bench-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+  .bench-metric{padding:14px;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .bench-metric span{display:block;font-size:11px;color:var(--muted)}.bench-metric strong{font-size:23px}
+  button.secondary{background:white;color:var(--text);border-color:var(--line-strong)}
+  button.danger{background:#fff0ee;color:#b42318;border-color:#ffd2cc}button:disabled{opacity:.45;cursor:default}
+  #bench-message:empty{display:none}#bench-message{margin-bottom:16px;padding:12px;border-radius:8px;background:#fff6d8}
+  .bench-chart{width:100%;height:130px}.bench-chart text{font:11px system-ui;fill:#6c778b}
+  .bench-scroll{max-height:340px;overflow:auto}.bench-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .bench-status{margin-left:auto}.bench-links{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-top:12px}
+  #bench-plan td{padding:6px}#bench-plan input{width:85px}details summary{cursor:pointer;font-weight:650}
+  @media(max-width:950px){.bench-grid{grid-template-columns:1fr}.bench-metrics{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="heading"><div><h1>API Benchmark</h1><p>Đo tốc độ lấy hồ sơ hoàn chỉnh và tìm cấu hình ổn định.</p></div><span class="badge">Mua Sắm Công · chỉ đọc</span></div>
+<div id="bench-message" role="status" aria-live="polite"></div>
+<div class="bench-grid">
+ <aside class="panel panel-pad">
+  <form id="bench-form" class="bench-form">
+   <h2>Cấu hình lượt chạy</h2>
+   <div class="field"><label for="resource">Resource</label><select id="resource"><option value="bid_opening">Biên bản mở thầu</option></select></div>
+   <div class="field"><label for="mode">Chế độ</label><select id="mode"><option value="manual">Thủ công — điều chỉnh từng giai đoạn</option><option value="auto">Tự động — chạy danh sách cấu hình</option></select></div>
+   <div class="bench-row"><div class="field"><label for="start-date">Từ ngày công bố</label><input id="start-date" type="date" required></div><div class="field"><label for="end-date">Đến ngày</label><input id="end-date" type="date" required></div></div>
+   <div class="bench-row"><div class="field"><label for="sample-size">Số hồ sơ mẫu</label><input id="sample-size" type="number" min="1" max="10000" value="20" required></div><div class="field"><label for="max-requests">Ngân sách request</label><input id="max-requests" type="number" min="0" value="1000" required></div></div>
+   <div class="bench-row"><div class="field"><label for="inflight">Request đồng thời</label><input id="inflight" type="number" min="1" max="32" value="1" required></div><div class="field"><label for="interval">Khoảng cách (giây)</label><input id="interval" type="number" min="0" step="any" value="2" required></div></div>
+   <div class="bench-row"><div class="field"><label for="duration">Đo mỗi giai đoạn (giây)</label><input id="duration" type="number" min="0.001" step="any" value="60" required></div><div class="field"><label for="warmup">Warmup (giây)</label><input id="warmup" type="number" min="0" step="any" value="5" required></div></div>
+   <div id="auto-plan" hidden><p class="bench-subtle">Mỗi dòng: request đồng thời / khoảng cách giây. Thời lượng và warmup lấy từ phía trên.</p><div class="table-wrap"><table id="bench-plan"><thead><tr><th>Đồng thời</th><th>Khoảng cách</th><th></th></tr></thead><tbody></tbody></table></div><button type="button" id="add-stage" class="secondary">+ Thêm giai đoạn</button></div>
+   <details><summary>Mẫu và cấu hình nâng cao</summary>
+    <p class="bench-subtle">Dán mảng JSON chứa id/notifyId, notifyNo và context từ search để tái sử dụng mẫu; để trống để tìm theo ngày. Một tập mẫu được lặp lại trong mỗi giai đoạn.</p>
+    <label for="samples" class="bench-subtle">Hồ sơ mẫu JSON</label><textarea id="samples" rows="4" placeholder='[{"id":"…","notifyNo":"IB…"}]'></textarea>
+    <div class="bench-row"><div class="field"><label for="attempts">Tối đa lần thử/request</label><input id="attempts" type="number" min="1" max="10" value="3" required></div><div class="field"><label for="cooldown">Nghỉ giữa giai đoạn (giây)</label><input id="cooldown" type="number" min="0" step="any" value="10" required></div></div>
+    <div class="bench-row"><div class="field"><label for="max-run">Trần thời gian toàn lượt (giây, 0 = tắt)</label><input id="max-run" type="number" min="0" step="any" value="7200" required></div><div class="field"><label for="error-limit">Dừng khi đủ lỗi / 20 lần gọi (0 = tắt)</label><input id="error-limit" type="number" min="0" max="20" value="5" required></div></div>
+    <label><input id="stop-429" type="checkbox" checked> Dừng lượt chạy khi gặp HTTP 429</label>
+   </details>
+   <button id="start" type="submit">Chạy benchmark</button>
+   <p class="bench-subtle">Khoảng cách 0 = không giãn cách request. Ngân sách request 0 = không giới hạn. 401/403 luôn dừng; ngưỡng lỗi và dừng khi gặp 429 chỉnh ở trên. Retry vẫn theo Retry-After/backoff. Request đang gửi có thể hoàn tất sau khi bấm dừng hoặc đạt ngân sách.</p>
+  </form>
+ </aside>
+ <div>
+  <section class="panel panel-pad">
+   <div class="bench-toolbar"><h2 style="margin:0">Theo dõi lượt chạy</h2><span id="run-status" class="badge bench-status">Chưa chọn</span></div>
+   <p id="run-info" class="bench-subtle">Chọn lượt chạy trong lịch sử hoặc bắt đầu lượt mới.</p>
+   <div class="bench-metrics"><div class="bench-metric"><span>Hồ sơ hợp lệ / phút</span><strong id="metric-records">—</strong></div><div class="bench-metric"><span>Request / giây</span><strong id="metric-rps">—</strong></div><div class="bench-metric"><span>Độ trễ p95 (ms)</span><strong id="metric-p95">—</strong></div><div class="bench-metric"><span>Lỗi / lần retry</span><strong id="metric-errors">—</strong></div></div>
+   <div class="bench-toolbar"><button id="stop" class="danger" disabled>Dừng</button><button id="slower" class="secondary" disabled>Chậm hơn 20%</button><button id="faster" class="secondary" disabled>Nhanh hơn 20%</button><button id="apply-stage" class="secondary" disabled>Áp dụng cấu hình bên trái</button><button id="rerun" class="secondary" disabled>Nạp lại cấu hình &amp; mẫu</button></div>
+   <p class="bench-subtle">Thay đổi tốc độ tạo giai đoạn mới sau khi các hồ sơ đang chạy kết thúc và nghỉ. Đóng tab không dừng benchmark.</p>
+   <svg id="rate-chart" class="bench-chart" viewBox="0 0 700 130" role="img" aria-label="Hồ sơ hợp lệ trên phút theo giai đoạn"></svg>
+   <div id="artifact-links" class="bench-links"></div>
+  </section>
+  <section class="section panel"><div class="panel-pad"><h2>Giai đoạn của lượt đang chọn</h2><p class="bench-subtle">Discovery và warmup được tách riêng. Thời gian đo bao gồm retry và chờ hồ sơ đang chạy kết thúc.</p></div><div class="table-wrap"><table><thead><tr><th>Giai đoạn</th><th>Đồng thời / giãn cách</th><th>Hồ sơ/phút</th><th>RPS</th><th>p95 ms</th><th>Lỗi / retry</th><th>Hợp lệ / tổng</th></tr></thead><tbody id="stage-rows"></tbody></table></div></section>
+  <section class="section panel"><div class="panel-pad"><h2>Endpoint &amp; lỗi của giai đoạn</h2><p id="phase-info" class="bench-subtle"></p></div><div class="table-wrap"><table><thead><tr><th>Endpoint</th><th>Lần gọi</th><th>Lỗi</th><th>p50 / p95 ms</th></tr></thead><tbody id="endpoint-rows"></tbody></table></div><div class="panel-pad"><pre id="error-detail" style="white-space:pre-wrap;margin:0" class="bench-subtle"></pre></div></section>
+ </div>
+</div>
+<section class="section panel"><div class="panel-pad bench-toolbar"><h2 style="margin:0">Lịch sử &amp; so sánh</h2><button id="refresh" class="secondary">Làm mới</button><span class="bench-subtle">Đánh dấu các lượt để so sánh những giai đoạn đo.</span></div><div class="table-wrap bench-scroll"><table><thead><tr><th>So sánh</th><th>Lượt chạy</th><th>Thời gian</th><th>Trạng thái</th><th>Request</th><th>Kết thúc vì</th></tr></thead><tbody id="history-rows"></tbody></table></div></section>
+<section id="comparison-panel" class="section panel" hidden><div class="panel-pad"><h2>So sánh giai đoạn đo</h2><p class="bench-subtle">So sánh có ý nghĩa khi cùng tập mẫu và chính sách retry; dòng chưa đủ thời lượng được đánh dấu.</p></div><div class="table-wrap"><table><thead><tr><th>Lượt / giai đoạn</th><th>Đồng thời / giãn cách</th><th>Hồ sơ/phút</th><th>RPS</th><th>p95 ms</th><th>Lỗi / retry</th><th>Hợp lệ / tổng</th></tr></thead><tbody id="comparison-rows"></tbody></table></div></section>

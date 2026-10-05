@@ -69,7 +69,8 @@ def test_real_load_preserves_partition_payload_and_day_commit(store):
         assert actual_payload == payload
 
 
-def test_partial_upload_is_failed_and_retry_keeps_both_attempts(store):
+def test_partial_upload_is_failed_and_retry_keeps_both_attempts(store, monkeypatch):
+    monkeypatch.setattr(daily_runner.settings, "BRONZE_BATCH_RECORDS", 1)
     fs, bucket = store
     identity = ResourceIdentity("muasamcong", "integration")
     source_date = date(2026, 9, 1)

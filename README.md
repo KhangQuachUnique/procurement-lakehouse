@@ -17,8 +17,8 @@ uv sync --locked --extra dev --extra ops
 # Chỉ tạo .env khi chưa có; sau đó chỉnh cấu hình trong file
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 docker compose --env-file .env -f infra/docker/compose.yaml up -d object-storage
-uv run --locked python -m procurement.jobs.ingest daily --dry-run
-uv run --locked python -m procurement.jobs.ingest daily
+uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor --dry-run
+uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor
 uv run --locked uvicorn procurement.api.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -39,13 +39,18 @@ Quy trình này tự audit, lập plan, repair và kiểm tra lại; chạy lạ
 Backfill hoặc retry các ngày ingestion chưa SUCCESS:
 
 ```powershell
-uv run --locked python -m procurement.jobs.ingest backfill --year 2025 --continue-on-error
-uv run --locked python -m procurement.jobs.ingest repair --year 2025 --continue-on-error
+uv run --locked python -m procurement.jobs.ingest backfill --resource notify_contractor --year 2025 --continue-on-error
+uv run --locked python -m procurement.jobs.ingest repair --resource notify_contractor --year 2025 --continue-on-error
 uv run --locked python -m procurement.jobs.ingest status --year 2025
 uv run --locked python -m procurement.jobs.ingest verify --year 2025
 ```
 
 `--continue-on-error` cho phép đi tiếp sau ngày lỗi nguồn; cuối lượt vẫn báo lỗi để repair. Lỗi xác thực/storage hoặc trạng thái chưa xác nhận sẽ dừng flow. Mọi lệnh dùng cùng planner, bỏ qua ngày đã SUCCESS nếu không bật `--refresh`.
+
+Mỗi lệnh cào chỉ chạy một resource; `daily/backfill/repair` bắt buộc `--resource`
+cụ thể và từ chối `all`. `--year` vẫn dùng được cho từng resource. `status/verify`
+vẫn cho xem tổng hợp. Worker chi tiết của KHLCNT/biên bản mở thầu điều chỉnh riêng;
+không còn `--resource-workers`. Xem hướng dẫn vận hành trước khi cập nhật scheduler cũ.
 
 Báo cáo theo lần chạy nằm trong `exports/`, cache/nghiên cứu trong `tmp/`.
 `docs/` chỉ giữ ba tài liệu dùng lâu dài ở trên; mỗi công cụ có `--help`.

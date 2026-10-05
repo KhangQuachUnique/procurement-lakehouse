@@ -15,7 +15,8 @@ from procurement.ingestion.sources.muasamcong.search import search_document_key
 from procurement.quality.contracts import ENDPOINTS, WORKFLOW_FIELDS, validate_detail
 from procurement.quality.files import now, read_json, safe_error, write_json
 
-CONTEXT_FIELDS = ("id", "notifyNo", "notifyVersion", "publicDate", *WORKFLOW_FIELDS)
+CONTEXT_FIELDS = ("id", "notifyId", "notifyNo", "notifyVersion", "publicDate",
+                  "publicDateKqmt", "bidOpenDate", "bidRealityOpenDate", *WORKFLOW_FIELDS)
 
 
 def snapshot(api, year, directory, *, resume=False, page_size=50):
@@ -160,6 +161,8 @@ def probe(client, groups, config, path, report):
                 sample_key = calculate_content_hash(sample)
                 checks = target["checks"].setdefault(sample_key, {"context": sample, "endpoints": {}})
                 for kind, endpoint in ENDPOINTS.items():
+                    if kind not in config.contracts:
+                        continue
                     previous = checks["endpoints"].get(kind)
                     if previous and ("error" not in previous or previous.get("http_status") in {
                         400, 404, 405, 422, 500,

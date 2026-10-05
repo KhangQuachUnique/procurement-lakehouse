@@ -21,6 +21,13 @@ class Settings(BaseModel):
     INGESTION_RESOURCE_WORKERS: int = Field(default=2, ge=1, le=4)
     MUASAMCONG_TOKEN: str | None = Field(default=None, repr=False)
     NOTIFY_QUALITY_CONFIG: str | None = None
+    BRONZE_BATCH_BYTES: int = Field(default=64 * 1024 * 1024, gt=0)
+    BRONZE_BATCH_RECORDS: int = Field(default=5000, gt=0)
+    BID_OPENING_WATCH_PATH: str = "data/watch/bid_opening.sqlite3"
+    BID_OPENING_WATCH_MAX_DAYS: int = Field(default=31, gt=0)
+    BID_OPENING_DETAIL_WORKERS: int = Field(default=4, ge=1, le=32)
+    BID_OPENING_MAX_INFLIGHT: int = Field(default=4, ge=1, le=32)
+    BID_OPENING_REQUEST_INTERVAL_SECONDS: float = Field(default=0.1, ge=0, le=60, allow_inf_nan=False)
     OBJECT_STORAGE_ENDPOINT: str = "http://localhost:8333"
     OBJECT_STORAGE_ACCESS_KEY: str | None = Field(default=None, repr=False)
     OBJECT_STORAGE_SECRET_KEY: str | None = Field(default=None, repr=False)
@@ -32,6 +39,8 @@ class Settings(BaseModel):
     OPS_RECONCILE_INTERVAL_SECONDS: float = Field(default=300, ge=5, le=86400)
     OPS_SYNC_WORKERS: int = Field(default=8, ge=1, le=32)
     OPS_STALE_AFTER_SECONDS: float = Field(default=600, ge=30)
+    BENCHMARK_STATE_DIR: str = "data/benchmarks"
+    BENCHMARK_EXPORT_DIR: str = "exports/benchmarks"
 
     @field_validator("MUASAMCONG_BASE_URL", "OBJECT_STORAGE_ENDPOINT")
     @classmethod

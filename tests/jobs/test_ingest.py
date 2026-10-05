@@ -27,7 +27,7 @@ def args(*extra):
 
 
 def test_daily_range_uses_vietnam_calendar_and_validates_budget():
-    options = ingest._parser().parse_args(["daily", "--lookback-days", "3"])
+    options = ingest._parser().parse_args(["daily", "--resource", "project", "--lookback-days", "3"])
     assert ingest.resolve_dates(options, today=date(2026, 1, 2)) == (
         date(2025, 12, 30),
         date(2026, 1, 1),

@@ -25,12 +25,14 @@ from procurement.models.control import (
     RunManifest,
     RunStatus,
 )
+from procurement.quality.adapters import QUALITY_RESOURCES, fetch_detail
 from procurement.quality.audit import assess_record, record_key, selection_day
-from procurement.quality.contracts import ENDPOINTS, TABLES, resolve_route, validate_detail
+from procurement.quality.contracts import RESOURCE_ENDPOINTS as ENDPOINTS
+from procurement.quality.contracts import TABLES, resolve_route, validate_detail
 from procurement.quality.coverage import CoverageGuard
 from procurement.quality.files import now, read_json, safe_error, write_json
 from procurement.quality.storage import quality_prefix, save_quality_page
-from procurement.storage.bronze import DltBronzeWriter
+from procurement.storage.bronze import BufferedBronzeWriter, DltBronzeWriter
 from procurement.storage.committed import CommittedDay, iter_committed_records
 from procurement.storage.control import (
     DayCommitUncertainError,
@@ -50,8 +52,8 @@ def create_plan(audit_directory, config, output):
     state = read_json(directory / "selection.json")
     if state["status"] != "complete" or state["config_hash"] != config.fingerprint:
         raise ValueError("Repair requires a complete audit using the same reviewed config")
-    if state["resource"] != "notify_contractor":
-        raise ValueError("Selective repair currently supports notify_contractor only")
+    if state["resource"] not in QUALITY_RESOURCES:
+        raise ValueError("Unsupported selective repair resource")
     plan = {"schema_version": 1, "resource": state["resource"], "year": state["year"],
             "config_hash": config.fingerprint, "storage_namespace": state["storage_namespace"],
             "created_at": now(), "days": [], "blocked": []}
@@ -77,7 +79,10 @@ def create_plan(audit_directory, config, output):
                                      if i["severity"] == "fail"],
             } for row in day["rows"]
         ]})
-    plan["estimated_detail_requests"] = sum(row["refetch"] for d in plan["days"] for row in d["records"])
+    plan["estimated_detail_requests"] = sum(
+        (6 if row["context"].get("bidMode") == "1_HTHS" else 4)
+        if config.resource == "bid_opening" else 1
+        for d in plan["days"] for row in d["records"] if row["refetch"])
     plan["plan_hash"] = calculate_content_hash(plan)
     if Path(output).exists():
         raise ValueError("Repair plan exists; choose another output")
@@ -90,7 +95,7 @@ def validate_plan(plan, config):
     if plan.get("plan_hash") != expected_hash or plan.get("config_hash") != config.fingerprint:
         raise ValueError("Repair plan or config changed")
     namespace = calculate_content_hash([settings.OBJECT_STORAGE_ENDPOINT, settings.OBJECT_STORAGE_BUCKET])
-    if plan.get("storage_namespace") != namespace or plan.get("resource") != "notify_contractor":
+    if plan.get("storage_namespace") != namespace or plan.get("resource") != config.resource or config.resource not in QUALITY_RESOURCES:
         raise ValueError("Repair storage/resource mismatch")
     dates = set()
     for day in plan["days"]:
@@ -136,20 +141,23 @@ def fetch_replacement(client, row, config, cache):
     route = resolve_route(context, config)
     cache_key = calculate_content_hash({"row": row, "config": config.fingerprint})
     path = Path(cache) / f"{cache_key}.json"
+    evidence = {}
     if path.exists():
         saved = read_json(path)
+        evidence = saved.get("collection", {})
         if saved["key"] != cache_key or calculate_content_hash(saved["payload"]) != saved["payload_hash"]:
             raise ValueError("Replacement checkpoint changed")
         payload = saved["payload"]
     else:
         try:
-            payload = client.post(ENDPOINTS[route.contract], {"id": context["id"]})
+            payload = fetch_detail(client, route, context, evidence)
         except (httpx.HTTPError, ValueError, TypeError) as exc:
             exc.diagnostics = {**getattr(exc, "diagnostics", {}),
                                "endpoint": ENDPOINTS[route.contract], "request_id": context["id"],
                                "source_id": row["source_id"], "source_version": row["source_version"]}
             raise
     result = validate_detail(payload, context, config.contracts[route.contract], thresholds=config.thresholds)
+    result["collection"] = evidence
     actual = result["identity"]
     if actual.get("notifyVersion") != row["source_version"]:
         raise ValueError("source_changed: replacement version differs from the baseline")
@@ -158,7 +166,7 @@ def fetch_replacement(client, row, config, cache):
     if not path.exists():
         write_json(path, {"key": cache_key, "payload_hash": calculate_content_hash(payload),
                           "payload": payload, "context": context, "config_hash": config.fingerprint,
-                          "observed_at": now()})
+                          "observed_at": now(), "collection": evidence})
     return payload, result, route
 
 
@@ -295,7 +303,23 @@ def apply_day(fs, client, plan, planned_day, config, work, *, writer_factory=Non
             writer = (writer_factory(run_id, day) if writer_factory else
                       DltBronzeWriter(lambda: _create_pipeline(spec, day, run_id)))
             stage = "write_bronze"
-            count = writer.write_page(tables)
+            if writer_factory:
+                count = writer.write_page(tables)
+            else:
+                buffered = BufferedBronzeWriter(writer)
+                chunk = defaultdict(list)
+                chunk_count = 0
+                for table, records in tables.items():
+                    for record in records:
+                        chunk[table].append(record)
+                        chunk_count += 1
+                        if chunk_count >= 50:
+                            buffered.write_page(dict(chunk))
+                            chunk, chunk_count = defaultdict(list), 0
+                if chunk_count:
+                    buffered.write_page(dict(chunk))
+                buffered.flush()
+                count = buffered.persisted_records
             if count != len(expected):
                 raise ValueError("Repair writer count mismatch")
             stage = "write_quality_sidecar"

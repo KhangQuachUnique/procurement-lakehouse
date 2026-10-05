@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 import s3fs
@@ -73,11 +74,16 @@ def list_run_manifests(
     *,
     start_date: date | None = None,
     end_date: date | None = None,
+    workers: int = 1,
 ) -> list[RunManifest]:
     pattern = f"{_resource_prefix(identity)}/run_id=*/run.json"
     manifests: list[RunManifest] = []
-    for key in fs.glob(pattern):
-        data = read_json(fs, key)
+    keys = fs.glob(pattern)
+    def read(key):
+        return read_json(fs, key)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        data_rows = list(pool.map(read, keys))
+    for data in data_rows:
         if data is None:
             continue
         manifest = RunManifest.model_validate(data)

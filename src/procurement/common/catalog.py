@@ -33,6 +33,11 @@ RESOURCE_CATALOG = (
         "create_notify_contractor_spec",
     ),
     ResourceDefinition(
+        ResourceIdentity(DEFAULT_SOURCE, "bid_opening"),
+        ("bid_opening_detail",),
+        "procurement.ingestion.sources.muasamcong.bid_opening.resource:create_bid_opening_spec",
+    ),
+    ResourceDefinition(
         ResourceIdentity(DEFAULT_SOURCE, "contractor_result"),
         ("contractor_result_detail",),
         "procurement.ingestion.sources.muasamcong.contractor_result.resource:"

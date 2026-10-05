@@ -21,6 +21,12 @@ router = APIRouter(prefix="/api/ops", tags=["ops"])
 Service = Annotated[OpsService, Depends(get_ops_service)]
 
 
+@router.get("/bid-opening-watch")
+def bid_opening_watch():
+    from procurement.ingestion.bid_opening_watch import read_status
+    return read_status()
+
+
 @router.get("/sync")
 def sync_status(runtime: Annotated[IndexSynchronizer, Depends(get_ops_runtime)]):
     return runtime.index.get_status()

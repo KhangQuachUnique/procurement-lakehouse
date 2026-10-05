@@ -20,7 +20,7 @@ from procurement.storage.object_store import create_s3_filesystem
 from procurement.tools.bronze_explorer import BronzeTable, _select_current_files
 
 LABELS = {"project_detail": "project", "khlcnt_plan_detail": "khlcnt",
-          "khlcnt_bid_package_detail": "packagebid", "contractor_result_detail": "result"}
+          "khlcnt_bid_package_detail": "packagebid", "contractor_result_detail": "result", "bid_opening_detail": "opening"}
 
 
 def footer_count(fs, uri, size):

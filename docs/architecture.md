@@ -21,6 +21,7 @@ Catalog dùng chung cho jobs/Ops tại [catalog.py](../src/procurement/common/ca
 | `notify_contractor` | `notify_contractor_reoffer_detail` | Root payload |
 | `notify_contractor` | `notify_contractor_vk_adb_detail` | `bidoNotifyContractorP` |
 | `contractor_result` | `contractor_result_detail` | `bideContractorInputResultDTO.id`; envelope source_id thường là notifyNo, không phải result UUID |
+| `bid_opening` | `bid_opening_detail` | `source_id=notifyNo`, version `notifyVersion`; UUID đối chiếu giữa search/notify/roundmng/lots |
 
 Envelope giữ `source_id`, `source_version`, `source_date`, `run_id`, `ingested_at`,
 `content_hash`, `payload`; không sửa raw để làm đủ trường. `source_id` có nghĩa
@@ -39,6 +40,36 @@ DayManifest SUCCESS là commit marker; effective là SUCCESS có `started_at` m�
 nhất. Run FAILED/PARTIAL_FAILED vẫn có thể chứa ngày SUCCESS. Refresh lỗi không
 thay bản SUCCESS trước; FAILED có thể để lại Parquet. SUCCESS 0 không cần file.
 Recovery tạo attempt mới và giữ lịch sử; không lấy Ops SQLite làm nguồn chân lý.
+
+Biên bản mở thầu một túi (`bidMode=1_MTHS`) giữ nguyên bốn response trong
+`payload.notify`, `roundmng`, `bid_open`, `lot_open_detail`, với `packType=0`.
+Hai túi (`1_HTHS`) dùng chung `notify`/`roundmng`; gọi riêng bid-open và lotOpenDetail
+cho kỹ thuật (`packType=1, viewType=0`) và tài chính (`packType=2, viewType=0`).
+Các response nằm trong `bid_open_technical`, `lot_open_detail_technical`,
+`bid_open_financial`, `lot_open_detail_financial`. Có đủ hai phần thì tổng cộng
+sáu request. API lot luôn được gọi cho phần được thu thập, kể cả không chia lô.
+Array lot rỗng hợp lệ; response lỗi/null không được đổi thành array rỗng.
+
+`roundmng.bidoBidroundMngViewDTO.successBidOpenDateTc` có ngày hợp lệ yêu cầu lấy
+đủ phần tài chính. Giá trị null cho phép chỉ thu thập kỹ thuật, với quality result
+`collection_status=awaiting_financial`; hai nhánh tài chính chưa được tạo.
+Thiếu trường này, ngày sai định dạng hoặc bidMode lạ/mâu thuẫn không được tự đoán.
+Ngày chỉ có phần kỹ thuật vẫn có thể SUCCESS nếu tất cả phần đã công bố đều hợp lệ,
+nhưng watcher chưa coi hồ sơ là captured. Request/context và thời điểm từng phần
+nằm ở quality evidence, không chứa token. Các request không phải snapshot nguyên tử.
+
+Writer gom nhiều trang trong cùng resource/ngày/run, flush tại ngưỡng 64 MiB
+serialized hoặc 5.000 records, và khi hết ngày. Đây là ngưỡng bộ đệm, không phải
+kích thước Parquet nén. Trang lớn ghi riêng. Trang chờ ghi vẫn RUNNING; receipt
+thành công mới xác nhận số record và Page SUCCESS. Lỗi/interrupt bỏ buffer,
+giữ các file đã ghi thuộc attempt lỗi ngoài committed selection.
+
+Search biên bản lọc `publicDate`, bước 2/3/4, `publicDateKqmt not_null` và
+`isInternet=1`. Vì ngày thông báo khác ngày mở thầu, watcher seed từ TBMT committed
+và refresh nguyên ngày nguồn khi phát hiện biên bản mới. SQLite watcher chỉ là
+state lập lịch có thể dựng lại; dữ liệu và commit vẫn thuộc Bronze. Với hồ sơ
+đang chờ tài chính, watcher đọc lại roundmng khi đến hạn để phát hiện công bố
+mới ngay cả khi UUID/notifyNo/version không đổi; chỉ refresh cả ngày khi cần.
 
 [Committed reader](../src/procurement/storage/committed.py) pin ngày/run/file,
 kiểm count và lineage; bật `verify_hash=True` để kiểm payload. Phải đọc hết

@@ -58,6 +58,9 @@ def main(argv=None):
         command.add_argument("--request-interval", type=float, default=settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS,
                              help="Minimum seconds between request starts across all workers (from settings)")
         command.add_argument("--max-attempts", type=int, default=settings.MUASAMCONG_MAX_ATTEMPTS)
+    for command in (run, plan, apply):
+        command.add_argument("--resource", choices=("notify_contractor", "bid_opening"),
+                             default="notify_contractor")
     args = parser.parse_args(argv)
     if args.mode in {"run", "apply"}:
         if not 1 <= args.detail_workers <= 32:
@@ -69,10 +72,11 @@ def main(argv=None):
     if args.mode == "run":
         if not 1 <= args.year < today_vn().year:
             parser.error("--year must be a closed year")
-        directory = args.work_dir or Path(f"exports/notify-quality-job-{args.year}")
+        job_prefix = "notify" if args.resource == "notify_contractor" else args.resource
+        directory = args.work_dir or Path(f"exports/{job_prefix}-quality-job-{args.year}")
         with repair_client(args) as client:
             result = run_workflow(create_s3_filesystem(), client, year=args.year, directory=directory,
-                                  config_path=args.config, detail_workers=args.detail_workers)
+                                  config_path=args.config, detail_workers=args.detail_workers, resource=args.resource)
         print(f"Job: {result['status']}; {result['counts']}")
         return 0 if result["status"] == "complete" else 2
     if args.mode == "report":
@@ -80,7 +84,7 @@ def main(argv=None):
                                 args.work_dir, args.output)
         print(f"Repair: {result['counts']}; fully verified: {result['fully_verified']}")
         return 0 if result["fully_verified"] else 2
-    config = load_config(args.config)
+    config = load_config(args.config, resource=args.resource)
     if args.mode == "plan":
         result = create_plan(args.audit, config, args.output)
         print(f"Days: {len(result['days'])}; detail requests: {result['estimated_detail_requests']}; "

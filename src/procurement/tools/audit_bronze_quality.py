@@ -25,7 +25,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 1 <= args.year < today_vn().year:
         parser.error("--year must be a closed year")
-    config = load_config(args.config)
+    config = load_config(args.config, resource=args.resource)
     if config.resource != args.resource:
         parser.error("A reviewed resource-specific config is required")
     index, days = load_snapshot(args.snapshot) if args.snapshot else (None, {})

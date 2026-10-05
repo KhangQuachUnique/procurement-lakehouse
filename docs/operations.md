@@ -16,7 +16,7 @@ Tạo `.env` từ [.env.example](../.env.example) nếu chưa có. Process envir
 | --- | --- |
 | Nguồn | `MUASAMCONG_TOKEN` phải được API chấp nhận; `MUASAMCONG_BASE_URL`, timeout mặc định 30 giây |
 | HTTP | `MUASAMCONG_MAX_ATTEMPTS=3`, `MUASAMCONG_MAX_RETRY_DELAY_SECONDS=30`, `MUASAMCONG_MAX_INFLIGHT=3`, `MUASAMCONG_REQUEST_INTERVAL_SECONDS=0` |
-| Workers | `INGESTION_RESOURCE_WORKERS=2`, `KHLCNT_PACKAGE_WORKERS=3` |
+| Workers | `KHLCNT_PACKAGE_WORKERS=3`, `BID_OPENING_DETAIL_WORKERS=4`; mỗi invocation chỉ một resource |
 | Storage | `OBJECT_STORAGE_ENDPOINT`, `OBJECT_STORAGE_BUCKET`, `OBJECT_STORAGE_ACCESS_KEY`, `OBJECT_STORAGE_SECRET_KEY`; bucket phải tồn tại |
 | State/khóa | `DLT_PIPELINES_DIR`, `INGESTION_LOCK_DIR` (mặc định `data/locks`); mọi writer cùng host/storage dùng chung thư mục khóa |
 | Ops | `OPS_INDEX_PATH=data/ops/index.sqlite3`; sync 5 giây, reconcile 300 giây, 8 workers, stale sau 600 giây |
@@ -29,7 +29,7 @@ trên đĩa local, riêng cho mỗi endpoint/bucket. Trong Compose, endpoint sto
 ```powershell
 docker compose --env-file .env -f infra/docker/compose.yaml up -d object-storage
 docker compose --env-file .env -f infra/docker/compose.yaml --profile ops up -d --build ops
-docker compose --env-file .env -f infra/docker/compose.yaml --profile ingestion run --rm --build ingestion python -m procurement.jobs.ingest daily
+docker compose --env-file .env -f infra/docker/compose.yaml --profile ingestion run --rm --build ingestion python -m procurement.jobs.ingest daily --resource notify_contractor
 docker compose --env-file .env -f infra/docker/compose.yaml config --quiet
 docker compose --env-file .env -f infra/docker/compose.yaml logs --tail 100 ops
 docker compose --env-file .env -f infra/docker/compose.yaml down
@@ -41,8 +41,10 @@ không bảo đảm bucket đã sẵn sàng. Volume vẫn cần backup riêng.
 ## Ingestion và recovery
 
 CLI chung: `python -m procurement.jobs.ingest <mode> --help`.
-`--resource` nhận `all` (mặc định), `project`, `khlcnt`, `notify_contractor`,
-`contractor_result`; xem [bảng dữ liệu](architecture.md#bronze-hiện-tại).
+`daily/backfill/repair` bắt buộc một `--resource`: `project`, `khlcnt`,
+`notify_contractor`, `contractor_result` hoặc `bid_opening`. Thiếu resource hay
+dùng `all` bị từ chối trước khi truy cập storage, kể cả dry-run. Chỉ `status/verify`
+cho phép `all` (mặc định). Xem [bảng dữ liệu](architecture.md#bronze-hiện-tại).
 
 | Mode | Hành vi |
 | --- | --- |
@@ -52,10 +54,10 @@ CLI chung: `python -m procurement.jobs.ingest <mode> --help`.
 | `verify` | Kiểm coverage, count, lineage và hash payload của dữ liệu đã commit |
 
 ```powershell
-python -m procurement.jobs.ingest daily --lookback-days 3 --dry-run
-python -m procurement.jobs.ingest daily --lookback-days 3 --refresh
-python -m procurement.jobs.ingest backfill --year 2025 --continue-on-error
-python -m procurement.jobs.ingest repair --year 2025 --continue-on-error
+python -m procurement.jobs.ingest daily --resource notify_contractor --lookback-days 3 --dry-run
+python -m procurement.jobs.ingest daily --resource notify_contractor --lookback-days 3 --refresh
+python -m procurement.jobs.ingest backfill --resource notify_contractor --year 2025 --continue-on-error
+python -m procurement.jobs.ingest repair --resource notify_contractor --year 2025 --continue-on-error
 python -m procurement.jobs.ingest status --year 2025
 python -m procurement.jobs.ingest verify --year 2025
 ```
@@ -72,11 +74,20 @@ python -m procurement.jobs.ingest verify --year 2025
 | `--continue-on-error` | Tiếp tục sau lỗi nguồn đã ghi đầy đủ; cuối lượt vẫn báo lỗi |
 | `--retry-stale` | Retry run stale/interrupted/unknown sau khi xác nhận worker cũ đã dừng |
 | `--stale-after-minutes`, `--lock-dir` | Ngưỡng stale mặc định 10 phút; thư mục khóa chung |
-| `--resource-workers`, `--khlcnt-package-workers` | Ghi đè số workers trong `.env` |
+| `--khlcnt-package-workers`, `--bid-opening-detail-workers` | Worker chi tiết của resource tương ứng |
 | `--source-max-inflight`, `--source-request-interval` | Trần HTTP và khoảng cách bắt đầu request trên toàn flow, kể cả retry |
 
+Ingest `bid_opening` và watcher mặc định dùng `BID_OPENING_DETAIL_WORKERS=4`,
+`BID_OPENING_MAX_INFLIGHT=4`, `BID_OPENING_REQUEST_INTERVAL_SECONDS=0.1`.
+Truyền `--bid-opening-detail-workers`, `--source-max-inflight`,
+`--source-request-interval` để ghi đè trên ingest. Resource khác vẫn dùng
+`MUASAMCONG_MAX_INFLIGHT` và `MUASAMCONG_REQUEST_INTERVAL_SECONDS`.
+Backoff khi retry vẫn áp dụng.
+
 Mỗi resource giữ thứ tự ngày/trang; KHLCNT có thể tải các package của một plan
-đồng thời. Trần HTTP chỉ áp dụng trong một flow. Khóa OS chỉ điều phối cùng host,
+đồng thời, bid_opening có thể lấy nhiều biên bản trong cùng trang. `--resource-workers`
+đã bỏ; cấu hình cũ `INGESTION_RESOURCE_WORKERS` không còn tác dụng. Trần HTTP chỉ
+áp dụng trong một flow. Khóa OS chỉ điều phối cùng host,
 không phải distributed lock. 401/403, lỗi storage/internal hoặc commit chưa xác
 nhận dừng flow ngay cả với `--continue-on-error`. Ctrl+C chờ worker ghi trạng thái;
 kill cứng có thể để lại RUNNING.
@@ -122,12 +133,17 @@ Rebuild index bằng `python -m procurement.ops.sync --once --rebuild` sau khi d
 process Ops đang giữ khóa sync. Nếu DB hỏng hoặc đổi bucket, dùng `OPS_INDEX_PATH`
 mới. Restart bình thường giữ index; không cần crawler ghi SQLite.
 
-Đặt lịch `python -m procurement.jobs.ingest daily --lookback-days 3 --refresh` lúc
+Đặt lịch `python -m procurement.jobs.ingest daily --resource notify_contractor --lookback-days 3 --refresh` lúc
 08:00 Việt Nam hoặc muộn hơn: API search window là 00:00–23:59:59.999Z của ngày
 nguồn. Windows Task Scheduler dùng đường dẫn tuyệt đối tới Python, Start in là
 gốc repo, không chạy chồng invocation. Linux dùng [service](../infra/systemd/procurement-ingestion.service)
 và [timer](../infra/systemd/procurement-ingestion.timer), sửa user/đường dẫn trước
 khi cài. Downtime dài hơn lookback cần backfill riêng; timer không tự bù toàn bộ.
+
+Scheduler/service cũ không ghi `--resource` sẽ bị CLI mới từ chối. Bản thay đổi
+này không sửa hay cài lịch đang chạy: trước khi triển khai cần tách lịch riêng
+cho từng resource, đặt lệch giờ và giữ cùng host lock. Mẫu systemd cũ trong repo
+cũng phải được chỉnh rõ resource trước khi sử dụng, không cài nguyên mẫu đó.
 
 ## Đọc và đếm Bronze
 
@@ -301,3 +317,112 @@ ingest `status`/`verify`. Muốn bổ sung ngày thiếu tại đích, chạy in
 snapshot, probe evidence và cache nằm trong `exports/` hoặc `tmp/` (gitignored),
 không nhân bản vào docs. Số liệu vận hành lấy từ report mới nhất và manifest,
 không dùng con số chép trong tài liệu cũ làm trạng thái hiện tại.
+
+
+## Biên bản mở thầu và hồ sơ xuất hiện muộn
+
+`bid_opening` gọi bốn request cho hồ sơ một túi. Hồ sơ hai túi có hai phần kỹ thuật
+và tài chính riêng, tối đa sáu request; xem hợp đồng payload trong kiến trúc.
+Một phần đã công bố bị lỗi hoặc identity mâu thuẫn thì ngày không commit.
+Search dùng ngày đăng thông báo `publicDate`; không dùng
+ngày mở thầu để đặt partition. `daily --resource bid_opening`
+chạy watcher sau khi ingestion/verification thành công.
+
+Watcher đọc TBMT effective SUCCESS, kiểm count/hash/lineage, seed các hồ sơ qua
+mạng và chỉ đọc lại ngày TBMT có run mới (hoặc ngày biên bản đổi run). Hồ sơ thiếu
+context được ghi unresolved, ngày chưa committed được báo coverage gap. Nó không
+bảo đảm độ phủ ngoài tập TBMT đã có; backfill độc lập vẫn cần cho các khoảng thiếu.
+
+```powershell
+python -m procurement.tools.watch_bid_opening seed --start-date 2025-01-01 --end-date 2025-01-07 --dry-run
+python -m procurement.tools.watch_bid_opening seed
+python -m procurement.tools.watch_bid_opening check --max-days 1 --dry-run
+python -m procurement.tools.watch_bid_opening check --max-days 1
+python -m procurement.tools.watch_bid_opening status
+python -m procurement.jobs.ingest backfill --resource bid_opening --start-date 2025-01-01 --end-date 2025-01-07
+```
+
+`seed --dry-run` vẫn đọc và verify Parquet nhưng chỉ tạo state trong bộ nhớ;
+`check --dry-run` seed vào bộ nhớ rồi lập kế hoạch, không gọi nguồn/ghi Bronze. Khoảng ngày
+có thể giới hạn bằng `--start-date/--end-date`. Mặc định state là
+`BID_OPENING_WATCH_PATH=data/watch/bid_opening.sqlite3`; namespace endpoint/bucket
+phải khớp. State dựng lại được bằng seed và tách riêng Ops index.
+Seed dùng khóa state riêng; check còn cần khóa ingestion vì có thể ghi Bronze.
+
+Mỗi lượt check xử lý tối đa `BID_OPENING_WATCH_MAX_DAYS=31` ngày đến hạn, cũ nhất
+trước. Hồ sơ có lịch được hẹn sau lịch mở/đóng một giờ (giờ Việt Nam nếu nguồn
+không có timezone). Chưa có lịch thì kiểm ngay; chưa tìm thấy thì kiểm mỗi ngày
+trong 30 ngày kể từ lần kiểm đầu, sau đó mỗi tuần. Không tự hết hạn hồ sơ chờ.
+Hồ sơ captured được kiểm sửa đổi tiếp bằng refresh/audit/repair chủ động.
+
+Hồ sơ hai túi mới có kỹ thuật giữ pending, dù ngày đã SUCCESS. Khi đến hạn,
+watcher search ngày rồi kiểm tra roundmng của hồ sơ đang chờ; mốc mở tài chính
+xuất hiện sẽ kích hoạt refresh toàn ngày dù identity/version vẫn như cũ.
+Chỉ captured khi đủ hai phần hợp lệ. Không tự kết thúc chờ do tuổi hồ sơ hay
+phỏng đoán hủy thầu. State watcher cũ được buộc seed lại một lần khi nâng quy tắc.
+
+Khi có identity/version mới, watcher dùng kết quả search đã lấy để chạy lại đầy đủ
+ngày; chỉ cập nhật captured sau SUCCESS và kiểm file. Lỗi giữ pending/error,
+lùi lịch retry một ngày và dừng lượt check. Worker/commit chưa rõ phải được đối
+soát như ingestion thông thường. Không tự cài cron/Task Scheduler; chạy CLI daily
+qua lịch vận hành hiện có. Ops hiển thị số pending/captured/unresolved/errors,
+coverage gaps và due days, đồng thời có `/api/ops/bid-opening-watch`.
+
+Writer dùng chung gom trang theo `BRONZE_BATCH_BYTES=67108864` hoặc
+`BRONZE_BATCH_RECORDS=5000`, flush phần dư khi hết ngày. Page RUNNING có thể đang
+chờ flush; completed_pages chỉ đếm receipt đã xác nhận. Giữ nguyên file lịch sử.
+Compose chia sẻ volume watcher giữa ingestion và Ops (Ops chỉ đọc).
+
+Quality/profile dùng cùng CLI với `--resource bid_opening`:
+
+```powershell
+python -m procurement.tools.audit_bronze_quality --resource bid_opening --year 2025 --output exports/opening-audit-2025
+python -m procurement.tools.profile_notify_fields --resource bid_opening --year 2025
+python -m procurement.tools.repair_bronze_quality run --resource bid_opening --year 2025
+```
+
+Audit đọc quality context đã lưu; profile kiểm tất cả JSON paths, gồm cả hai phần.
+Repair lấy lại các phần đã công bố cho record được chọn, rồi dựng nguyên ngày mới cùng
+các record sao chép. Query/count/transfer nhận resource mới qua catalog.
+
+Sau khi cập nhật code, khởi động lại tiến trình ingestion để dùng quy tắc mới.
+Ngày FAILED do hồ sơ hai túi có thể chạy lại bằng backfill giới hạn ngày;
+ngày đã SUCCESS cần `--refresh` nếu muốn lấy lại chủ động. Run/files cũ được giữ.
+
+`bid_opening` lấy song song các biên bản trong cùng trang, mặc định
+`BID_OPENING_DETAIL_WORKERS=4`. Dùng `--bid-opening-detail-workers` (1–32) trên
+ingest hoặc watcher để điều chỉnh. Số HTTP đồng thời vẫn bị chặn bởi ngân sách
+nguồn chung `BID_OPENING_MAX_INFLIGHT` / `--source-max-inflight` trên ingest.
+Ví dụ cào năm 2022 với mặc định 4 worker, tối đa 4 HTTP đồng thời, giãn cách 0,1 giây:
+
+```powershell
+python -m procurement.jobs.ingest backfill --resource bid_opening --year 2022
+```
+
+Các API của từng biên bản vẫn tuần tự; nhiều biên bản chạy đồng thời. Ngày/trang
+và writer vẫn tuần tự. Worker có stats/evidence riêng, ghép theo thứ tự search;
+một record lỗi vẫn chặn ghi cả trang. Interrupt hủy request đang chờ và đợi
+worker đang chạy kết thúc trước khi đóng client. Tăng worker không tăng số file
+Parquet; có thể đặt worker=1 để trở về cách chạy tuần tự.
+
+## API benchmark
+
+Mở `/ops/benchmark` trên Ops. Runner riêng chỉ gọi API đọc, không ghi Bronze.
+UI và CLI `python -m procurement.tools.benchmark --help` dùng chung cấu hình.
+Khoảng cách request nhận mọi số hữu hạn không âm: `0` gửi ngay khi có slot,
+`0.01` giãn 10 ms. Giới hạn đồng thời 1–32; warmup có thể bằng 0. Thời lượng
+giai đoạn phải dương, không còn giới hạn 10–1800 giây hoặc 12 giai đoạn.
+
+Ngân sách request và trần thời gian toàn lượt đặt `0` để tắt giới hạn tương ứng;
+thời lượng mỗi giai đoạn vẫn áp dụng. Cấu hình nâng cao cho phép chỉnh ngưỡng
+lỗi trong 20 lần gọi (0 = tắt) và dừng khi gặp 429. Nếu bỏ dừng 429, client
+vẫn áp dụng retry/backoff và `Retry-After`; 401/403 luôn dừng.
+
+Discovery tìm tối đa 10.000 mẫu trong một cửa sổ search, theo khoảng cách của
+giai đoạn đầu. Mỗi giai đoạn lặp lại cùng tập mẫu; số hồ sơ hoàn thành là số
+lượt lấy, không phải số hồ sơ duy nhất. Kết quả lưu trong
+`exports/benchmarks/<run_id>/`; trạng thái/UI lưu tại `data/benchmarks/index.sqlite3`.
+Đổi thư mục bằng `BENCHMARK_EXPORT_DIR` và `BENCHMARK_STATE_DIR`.
+
+Calendar tự đọc lại trạng thái mỗi 5 giây khi tab đang hiển thị, giữ nguyên bộ
+lọc. Đây là chu kỳ UI; đồng bộ index từ storage có thể lâu hơn tùy số manifest.

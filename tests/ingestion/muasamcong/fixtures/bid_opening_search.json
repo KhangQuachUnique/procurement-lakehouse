@@ -1,0 +1,3640 @@
+{
+  "page": {
+    "content": [
+      {
+        "id": "02e7d931-6c83-4e31-b68e-f4dd73a85052",
+        "notifyId": "02e7d931-6c83-4e31-b68e-f4dd73a85052",
+        "inputResultId": "ef853b57-2a32-4754-980e-0bf2611b07ad",
+        "bidOpenId": "e9b010cc-c4ea-43f4-8157-73d60001f36f",
+        "techReqId": "0b1e9650-9f0f-4a36-a212-194930d5dee5",
+        "bidCloseDate": "2026-08-21T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 11: Tư vấn giám sát thi công xây dựng và lắp đặt thiết bị công trình"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "19",
+            "provName": "Tỉnh Thái Nguyên",
+            "districtCode": "05710",
+            "districtName": "Phường Linh Sơn"
+          }
+        ],
+        "notifyNo": "IB2600420060",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420060-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T23:09:42.76",
+        "publicDateKqmt": "2026-08-03T23:09:42.76",
+        "publicDateKqlcnt": "2026-09-08T18:10:29",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án phường Linh Sơn",
+        "investorCode": "vn4601653836",
+        "bidOpenDate": "2026-08-21T15:00:00",
+        "originalPublicDate": "2026-08-03T23:09:42.76",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600063117",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn4600786544"
+        ],
+        "decisionDate": "2026-09-08T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN  TƯ VẤN XÂY DỰNG VÀ KINH DOANH THƯƠNG MẠI VÂN NAM"
+        ],
+        "bidWinningPrice": [
+          802500000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "5cf48ff8-b4d1-4058-8908-9a1f72c92c45",
+        "createdBy": "vn4601653836",
+        "bidPrice": [
+          1216386906.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN  TƯ VẤN XÂY DỰNG VÀ KINH DOANH THƯƠNG MẠI VÂN NAM"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T16:34:18"
+      },
+      {
+        "id": "5a7f62f8-eaca-4ff3-bfeb-c45835b32612",
+        "notifyId": "5a7f62f8-eaca-4ff3-bfeb-c45835b32612",
+        "inputResultId": "5ad53a32-7402-4ef4-87fd-cbe8c2e33953",
+        "bidOpenId": "22e19a0f-96bc-4039-9fe3-b737e0bd1c81",
+        "bidCloseDate": "2026-08-13T15:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 01 (xây dựng): Xây lắp"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "75",
+            "provName": "Thành phố Đồng Nai",
+            "districtCode": "26413",
+            "districtName": "Xã Long Phước"
+          }
+        ],
+        "notifyNo": "IB2600421640",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421640-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T23:09:08.048",
+        "publicDateKqmt": "2026-08-03T23:09:08.048",
+        "publicDateKqlcnt": "2026-08-20T17:03:29",
+        "status": "IS_PUBLISH",
+        "investorName": "Phòng Kinh tế xã Long Phước",
+        "investorCode": "vn3604033941",
+        "bidOpenDate": "2026-08-13T15:30:00",
+        "originalPublicDate": "2026-08-03T23:09:08.048",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600235471",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3600673228"
+        ],
+        "decisionDate": "2026-08-20T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH XÂY DỰNG CÔNG TRÌNH TÍN ĐẠT"
+        ],
+        "bidWinningPrice": [
+          13596648074.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "dbec848f-49e1-44a6-b5f9-067a0e35c8e8",
+        "createdBy": "vn3604033941",
+        "bidPrice": [
+          13684566818.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG CÔNG TRÌNH TÍN ĐẠT"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-13T16:28:44"
+      },
+      {
+        "id": "43d9bb87-b2c4-4ea5-a24d-89be841deeab",
+        "notifyId": "43d9bb87-b2c4-4ea5-a24d-89be841deeab",
+        "inputResultId": "f598b9a1-9ca4-4270-a7b8-d2f4091449f0",
+        "bidOpenId": "f320d811-f26c-40a9-8291-46eb04efe592",
+        "bidCloseDate": "2026-08-12T07:20:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Xây lắp"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "52",
+            "provName": "Tỉnh Gia Lai",
+            "districtCode": "23563",
+            "districtName": "Phường Diên Hồng"
+          }
+        ],
+        "notifyNo": "IB2600420321",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420321-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T22:50:46.197",
+        "publicDateKqmt": "2026-08-03T22:50:46.197",
+        "publicDateKqlcnt": "2026-08-14T16:17:04",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý phường Diên Hồng",
+        "investorCode": "vn5900557681",
+        "bidOpenDate": "2026-08-12T07:20:00",
+        "originalPublicDate": "2026-08-03T22:50:46.197",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTMS",
+        "planNo": "PL2600238174",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn5900877561"
+        ],
+        "decisionDate": "2026-08-14T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG KIM TƯỜNG AN"
+        ],
+        "bidWinningPrice": [
+          2969000000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "fcfa334c-59e2-4fe1-b970-b53db0c2919b",
+        "createdBy": "vn5900557681",
+        "bidPrice": [
+          2977464000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTGG",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG KIM TƯỜNG AN"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T07:27:08"
+      },
+      {
+        "id": "40d0b30f-6c26-4ea4-ab65-8b095bf88c6b",
+        "notifyId": "40d0b30f-6c26-4ea4-ab65-8b095bf88c6b",
+        "inputResultId": "818a3171-3158-4331-9c10-541d13b42e31",
+        "bidOpenId": "6143faea-c434-44d0-bf1c-b210f5663031",
+        "bidCloseDate": "2026-08-12T08:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 01: Thi công xây dựng công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "24871",
+            "districtName": "Xã Đinh Văn Lâm Hà"
+          }
+        ],
+        "notifyNo": "IB2600418390",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600418390-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T22:12:21.615",
+        "publicDateKqmt": "2026-08-03T22:12:21.615",
+        "publicDateKqlcnt": "2026-08-17T13:47:53",
+        "status": "IS_PUBLISH",
+        "investorName": "TRUNG TÂM DỊCH VỤ TỔNG HỢP XÃ ĐINH VĂN LÂM HÀ",
+        "investorCode": "vn5801560041",
+        "bidOpenDate": "2026-08-12T08:30:00",
+        "originalPublicDate": "2026-08-03T22:12:21.615",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600240082",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn5800439211"
+        ],
+        "decisionDate": "2026-08-17T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI HOÀNG MẠNH"
+        ],
+        "bidWinningPrice": [
+          16978224840.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "d32498d8-9854-4baf-a98f-beda0a4a9c03",
+        "createdBy": "vn5801560041",
+        "bidPrice": [
+          17498129000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI HOÀNG MẠNH"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T08:30:53"
+      },
+      {
+        "id": "720d727e-39cc-44e2-92b8-cdc1b9bea786",
+        "notifyId": "720d727e-39cc-44e2-92b8-cdc1b9bea786",
+        "inputResultId": "79b3b3d0-c8d6-475e-879e-6804f3630533",
+        "bidOpenId": "4453732b-b51c-41b6-86a1-786633ea2566",
+        "bidCloseDate": "2026-08-12T14:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công xây dựng công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "09832",
+            "districtName": "Xã Hoài Đức"
+          }
+        ],
+        "notifyNo": "IB2600420870",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420870-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T21:10:23.86",
+        "publicDateKqmt": "2026-08-03T21:10:23.86",
+        "publicDateKqlcnt": "2026-08-18T15:18:11",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý Dự án đầu tư - hạ tầng xã Hoài Đức",
+        "investorCode": "vn0111119667",
+        "bidOpenDate": "2026-08-12T14:00:00",
+        "originalPublicDate": "2026-08-03T21:10:23.86",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600239280",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0500380631"
+        ],
+        "decisionDate": "2026-08-18T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG ĐỨC THẮNG"
+        ],
+        "bidWinningPrice": [
+          12915586303.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "9f7b731d-4cdb-4e18-b4c8-dec9e29fb32b",
+        "createdBy": "vn0111119667",
+        "bidPrice": [
+          12982428000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG ĐỨC THẮNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T14:14:50"
+      },
+      {
+        "id": "39915326-f455-49b9-bf15-3e30ea686a4e",
+        "notifyId": "39915326-f455-49b9-bf15-3e30ea686a4e",
+        "inputResultId": "4251d780-0df5-491c-a3e3-61c46fde72de",
+        "bidOpenId": "ea7c90c4-a2aa-43ce-a0fc-ea75e96fb5ab",
+        "bidCloseDate": "2026-08-12T14:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công xây dựng công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "09832",
+            "districtName": "Xã Hoài Đức"
+          }
+        ],
+        "notifyNo": "IB2600420546",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420546-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T21:08:53.457",
+        "publicDateKqmt": "2026-08-03T21:08:53.457",
+        "publicDateKqlcnt": "2026-08-18T15:17:37",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý Dự án đầu tư - hạ tầng xã Hoài Đức",
+        "investorCode": "vn0111119667",
+        "bidOpenDate": "2026-08-12T14:00:00",
+        "originalPublicDate": "2026-08-03T21:08:53.457",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600239670",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0500380631"
+        ],
+        "decisionDate": "2026-08-18T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG ĐỨC THẮNG"
+        ],
+        "bidWinningPrice": [
+          13375337596.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "182070fa-7fe9-4aca-9586-9e8c67b088d1",
+        "createdBy": "vn0111119667",
+        "bidPrice": [
+          13439686000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG ĐỨC THẮNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T14:14:27"
+      },
+      {
+        "id": "9cb511d0-00bd-4ef9-8cd3-873c4978162c",
+        "notifyId": "9cb511d0-00bd-4ef9-8cd3-873c4978162c",
+        "bidOpenId": "e00116aa-f716-46d8-97b6-650b87f65fa6",
+        "bidCloseDate": "2026-08-19T10:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Mua sắm sữa dinh dưỡng để phát phụ cấp bằng hiện vật"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "24617",
+            "districtName": "Phường Đông Gia Nghĩa"
+          }
+        ],
+        "notifyNo": "IB2600403748",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600403748-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T21:07:50.518",
+        "publicDateKqmt": "2026-08-03T21:07:50.518",
+        "status": "CANCEL_BID",
+        "investorName": "Bệnh viện Đa khoa  Đăk Nông",
+        "investorCode": "vn6400031532",
+        "bidOpenDate": "2026-08-19T10:00:00",
+        "originalPublicDate": "2026-08-03T21:07:50.518",
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600157198",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DHT",
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 0,
+        "numBidderJoin": 1,
+        "bidId": "fb3219d7-8ab7-4168-8d3f-9951b45b78d0",
+        "createdBy": "vn6400031532",
+        "bidPrice": [
+          298445472.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-19T10:25:44"
+      },
+      {
+        "id": "c034964d-1795-4975-9fd4-c65429b51703",
+        "notifyId": "c034964d-1795-4975-9fd4-c65429b51703",
+        "inputResultId": "7f96fd7e-1b1d-428f-a93f-c9f51b79779e",
+        "bidOpenId": "2f5c14f6-d6fb-4892-bcb0-0c4fda156396",
+        "bidCloseDate": "2026-08-12T14:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 03: Mua lúa giống ST25, BL9, VNR20; phân Urea, phân lân, phân Kali, phân hữu cơ/hữu cơ vi sinh thuộc phần vốn ngân sách theo dự toán được duyệt."
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "96",
+            "provName": "Tỉnh Cà Mau",
+            "districtCode": "32044",
+            "districtName": "Xã Nguyễn Phích"
+          }
+        ],
+        "notifyNo": "IB2600421642",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421642-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T21:05:02.947",
+        "publicDateKqmt": "2026-08-03T21:05:02.947",
+        "publicDateKqlcnt": "2026-08-24T17:26:03",
+        "status": "IS_PUBLISH",
+        "investorName": "TRUNG TÂM CÔNG ÍCH XÃ NGUYỄN PHÍCH",
+        "investorCode": "vnz000049925",
+        "bidOpenDate": "2026-08-12T14:00:00",
+        "originalPublicDate": "2026-08-03T21:05:02.947",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600240037",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3603966416"
+        ],
+        "decisionDate": "2026-08-24T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH TM DV NN HƯNG THỊNH"
+        ],
+        "bidWinningPrice": [
+          2190404000.0
+        ],
+        "numPetition": 1,
+        "numClarifyReq": 0,
+        "numBidderTech": 5,
+        "numBidderJoin": 5,
+        "bidId": "8e7cfca0-c234-458b-83ef-d923e29bb731",
+        "createdBy": "vnz000049925",
+        "bidPrice": [
+          2782730000.0
+        ],
+        "numPetitionHsmt": 1,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "CÔNG TY TNHH TM DV NN HƯNG THỊNH"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T14:08:13"
+      },
+      {
+        "id": "abaf6823-8cf5-4acc-b485-9e23d76691de",
+        "notifyId": "abaf6823-8cf5-4acc-b485-9e23d76691de",
+        "inputResultId": "2af804d9-f40e-4651-8f82-eb18d5ee844f",
+        "bidOpenId": "7bbce910-1595-42b0-8864-b670c6ab2d57",
+        "bidCloseDate": "2026-08-12T10:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Mua sắm túi đựng rác thải, thùng đựng vật sắc nhọn, thùng đựng rác thải"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "24617",
+            "districtName": "Phường Đông Gia Nghĩa"
+          }
+        ],
+        "notifyNo": "IB2600385112",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600385112-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T21:04:32.605",
+        "publicDateKqmt": "2026-08-03T21:04:32.605",
+        "publicDateKqlcnt": "2026-09-07T09:41:05",
+        "status": "IS_PUBLISH",
+        "investorName": "Bệnh viện Đa khoa  Đăk Nông",
+        "investorCode": "vn6400031532",
+        "bidOpenDate": "2026-08-12T10:00:00",
+        "originalPublicDate": "2026-08-03T21:04:32.605",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600157072",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106685434"
+        ],
+        "decisionDate": "2026-09-07T23:59:59",
+        "contractorName": [
+          "Công ty TNHH thương mại, sản xuất Sao Khuê"
+        ],
+        "bidWinningPrice": [
+          272406000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 2,
+        "numBidderJoin": 2,
+        "bidId": "70e7bc71-6a16-4d43-80d1-2ecaeb5dbd76",
+        "createdBy": "vn6400031532",
+        "bidPrice": [
+          288360000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "Công ty TNHH thương mại, sản xuất Sao Khuê"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T10:10:06"
+      },
+      {
+        "id": "c59c4531-0425-469b-a793-eaf51ed6e0ca",
+        "notifyId": "c59c4531-0425-469b-a793-eaf51ed6e0ca",
+        "inputResultId": "98fd6f3e-a677-4535-8ebe-5d8f44d255a4",
+        "bidOpenId": "9e040619-6aea-4246-8e22-8916f82fb86b",
+        "techReqId": "90ece69d-5648-440b-9ede-a8da06896fa2",
+        "bidCloseDate": "2026-08-21T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 11: Tư vấn lập thiết xây dựng triển khai sau dự án được phê duyệt"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00376",
+            "districtName": "Xã Sóc Sơn"
+          }
+        ],
+        "notifyNo": "IB2600421387",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421387-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:57:51.03",
+        "publicDateKqmt": "2026-08-03T20:57:51.03",
+        "publicDateKqlcnt": "2026-08-24T18:19:31",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án đầu tư - hạ tầng xã Sóc Sơn",
+        "investorCode": "vn0111119681",
+        "bidOpenDate": "2026-08-21T09:00:00",
+        "originalPublicDate": "2026-08-03T20:57:51.03",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600237596",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0110123822",
+          "vn0108075353",
+          "vn0104164884"
+        ],
+        "decisionDate": "2026-08-24T23:59:59",
+        "contractorName": [
+          "Liên danh MAS Việt Nam-VIỆT NHẬT-ĐIỆN VIỆT"
+        ],
+        "ventureName": "Liên danh MAS Việt Nam-VIỆT NHẬT-ĐIỆN VIỆT",
+        "bidWinningPrice": [
+          2644686000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "cee6364b-d73d-4753-a8f8-49baed0d7f5b",
+        "createdBy": "vn0111119681",
+        "bidPrice": [
+          2872349530.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN, XÂY DỰNG VÀ DỊCH VỤ ĐIỆN VIỆT ",
+          "CÔNG TY TNHH TƯ VẤN THIẾT KẾ VÀ XÂY DỰNG MAS VIỆT NAM",
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI PHÒNG CHÁY CHỮA CHÁY VIỆT NHẬT"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T10:00:19"
+      },
+      {
+        "id": "7a92da11-dadd-4ebd-a871-5e5553110654",
+        "notifyId": "7a92da11-dadd-4ebd-a871-5e5553110654",
+        "bidOpenId": "9c6c5c8f-d71d-4454-b9b8-8e22afd39dde",
+        "techReqId": "97c83779-2057-4969-9173-a4b66f6dd5d3",
+        "bidCloseDate": "2026-08-15T08:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Xây dựng hồ sơ địa chính và cơ sở dữ liệu quản lý đất đai"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "48",
+            "provName": "Thành phố Đà Nẵng",
+            "districtCode": "20740",
+            "districtName": "Xã Phước Chánh"
+          }
+        ],
+        "notifyNo": "IB2600378311",
+        "notifyVersion": "01",
+        "notifyNoStand": "IB2600378311-01",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:44:47.606",
+        "publicDateKqmt": "2026-08-03T20:44:47.606",
+        "status": "OPEN_DXTC",
+        "investorName": "PHÒNG KINH TẾ XÃ PHƯỚC CHÁNH",
+        "investorCode": "vn4001305033",
+        "bidOpenDate": "2026-08-15T08:00:00",
+        "originalPublicDate": "2026-07-18T09:36:59.921",
+        "bidField": "TV",
+        "planType": "TX",
+        "planNo": "PL2600212628",
+        "stepCode": "notify-contractor-step-3-dsntdkt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DXT",
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "1671d5e8-5afd-45d7-9a44-28da168dc88b",
+        "createdBy": "vn4001305033",
+        "bidPrice": [
+          5993526000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-15T08:37:08"
+      },
+      {
+        "id": "ea573083-f071-4676-a4b5-ea7ec98bd7b7",
+        "notifyId": "ea573083-f071-4676-a4b5-ea7ec98bd7b7",
+        "inputResultId": "7f493376-f034-4a50-af1b-004a908e8112",
+        "bidOpenId": "af271bcf-e13b-4a1a-bdf5-091405fc581d",
+        "bidCloseDate": "2026-08-12T07:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 02 năm 2026"
+        ],
+        "investField": [
+          "PTV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "31",
+            "provName": "Thành phố Hải Phòng",
+            "districtCode": "10846",
+            "districtName": "Xã Hà Tây"
+          },
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600400547",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600400547-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:35:22.564",
+        "publicDateKqmt": "2026-08-03T20:35:22.564",
+        "publicDateKqlcnt": "2026-08-23T19:47:00",
+        "status": "IS_PUBLISH",
+        "investorName": "CĐCS CÔNG TY TNHH MAY MẶC MAKALOT VIỆT NAM",
+        "investorCode": "vnz000032065",
+        "bidOpenDate": "2026-08-12T07:00:00",
+        "originalPublicDate": "2026-08-03T20:35:22.564",
+        "isPass": 1,
+        "bidField": "PTV",
+        "planType": "TX",
+        "planNo": "PL2600226859",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0105375648"
+        ],
+        "decisionDate": "2026-08-23T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN DỊCH VỤ DU LỊCH VÀ SỰ KIỆN VINA"
+        ],
+        "bidWinningPrice": [
+          2419800000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "d45a441c-5b83-45e5-aa85-03c38dcd5550",
+        "createdBy": "vnz000032065",
+        "bidPrice": [
+          2809620000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T10:05:03"
+      },
+      {
+        "id": "dd3b5a8e-11bb-45bb-9fb5-7f441ddafbf1",
+        "notifyId": "dd3b5a8e-11bb-45bb-9fb5-7f441ddafbf1",
+        "inputResultId": "aaede34c-fd8f-4b54-8ab4-5aa006e9f0eb",
+        "bidOpenId": "14b5bbfb-88d4-415e-92fd-2421294a134f",
+        "techReqId": "562abffb-a0cc-4ddf-bd1d-6b160d2e9384",
+        "bidCloseDate": "2026-08-21T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Tư vấn khảo sát xây dựng, cắm mốc GPMB, mốc lộ giới và lập báo cáo nghiên cứu khả thi (bao gồm lập BIM)"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "92",
+            "provName": "Thành phố Cần Thơ",
+            "districtCode": "31582",
+            "districtName": "Xã Thuận Hòa"
+          },
+          {
+            "provCode": "92",
+            "provName": "Thành phố Cần Thơ",
+            "districtCode": "31594",
+            "districtName": "Xã An Ninh"
+          }
+        ],
+        "notifyNo": "IB2600421250",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421250-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:23:38.521",
+        "publicDateKqmt": "2026-08-03T20:23:38.521",
+        "publicDateKqlcnt": "2026-09-21T21:06:58",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án đầu tư xây dựng công trình giao thông và nông nghiệp thành phố Cần Thơ",
+        "investorCode": "vn1800809747",
+        "bidOpenDate": "2026-08-21T09:00:00",
+        "originalPublicDate": "2026-08-03T20:23:38.521",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600193376",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0102288429",
+          "vn0101292422"
+        ],
+        "decisionDate": "2026-09-21T23:59:59",
+        "contractorName": [
+          "Liên danh lập Báo cáo nghiên cứu khả thi Dự án 932D"
+        ],
+        "ventureName": "Liên danh lập Báo cáo nghiên cứu khả thi Dự án 932D",
+        "bidWinningPrice": [
+          3729300675.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "0e981f1e-0a09-4a6e-87e4-16c3da705780",
+        "createdBy": "vn1800809747",
+        "bidPrice": [
+          3800216078.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG VNC",
+          "CÔNG TY TNHH CÔNG NGHỆ CAO HÀI HÒA"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T09:01:16"
+      },
+      {
+        "id": "6587ad0c-1c63-4a99-b97a-9213bcb1e80e",
+        "notifyId": "6587ad0c-1c63-4a99-b97a-9213bcb1e80e",
+        "inputResultId": "c240df7d-998a-476f-807f-5bbc460ba81a",
+        "bidOpenId": "51d70db4-f9c7-4e61-b23f-228ad586f8f5",
+        "bidCloseDate": "2026-08-12T09:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Mua sắm hàng hóa"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "79",
+            "provName": "Thành phố Hồ Chí Minh"
+          }
+        ],
+        "notifyNo": "IB2600419436",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600419436-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:23:01.052",
+        "publicDateKqmt": "2026-08-03T20:23:01.052",
+        "publicDateKqlcnt": "2026-08-17T17:28:29",
+        "status": "IS_PUBLISH",
+        "investorName": "Công đoàn Cơ sở Công ty TNHH APPAREL FAR EASTERN (VN)",
+        "investorCode": "vnz000037964",
+        "bidOpenDate": "2026-08-12T09:00:00",
+        "originalPublicDate": "2026-08-03T20:23:01.052",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600236821",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0314132141"
+        ],
+        "decisionDate": "2026-08-17T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH THƯƠNG MẠI DỊCH VỤ SẢN XUẤT VỊ NGỌT HAPPY"
+        ],
+        "bidWinningPrice": [
+          1863715770.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "4d11af72-82dd-4c25-a631-cfc51c73460b",
+        "createdBy": "vnz000037964",
+        "bidPrice": [
+          1956901559.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "CÔNG TY TNHH THƯƠNG MẠI DỊCH VỤ SẢN XUẤT VỊ NGỌT HAPPY"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T09:11:20"
+      },
+      {
+        "id": "be36f469-a8d9-4504-a804-5d62d4bbc8bf",
+        "notifyId": "be36f469-a8d9-4504-a804-5d62d4bbc8bf",
+        "inputResultId": "a1143e23-668d-4a84-a585-5b554fbe4c19",
+        "bidOpenId": "869b0e7c-2f75-4d9c-8e62-3a19864c8d7e",
+        "bidCloseDate": "2026-08-07T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 07: Thi công xây dựng công trình và lắp đặt thiết bị"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "24907",
+            "districtName": "Xã Phúc Thọ Lâm Hà"
+          }
+        ],
+        "notifyNo": "IB2600403264",
+        "notifyVersion": "01",
+        "notifyNoStand": "IB2600403264-01",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:17:36.626",
+        "publicDateKqmt": "2026-08-03T20:17:36.626",
+        "publicDateKqlcnt": "2026-08-10T15:04:15",
+        "status": "IS_PUBLISH",
+        "investorName": "Phòng Kinh tế xã Phúc Thọ Lâm Hà",
+        "investorCode": "vn5801550195",
+        "bidOpenDate": "2026-08-07T09:00:00",
+        "originalPublicDate": "2026-07-29T20:10:25.018",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600230305",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn5800439211"
+        ],
+        "decisionDate": "2026-08-10T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI HOÀNG MẠNH"
+        ],
+        "bidWinningPrice": [
+          16889997855.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "10822637-e45a-402a-8969-63a3309e8149",
+        "createdBy": "vn5801550195",
+        "bidPrice": [
+          16967189000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTGG",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI HOÀNG MẠNH"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-07T09:03:40"
+      },
+      {
+        "id": "242a348a-5b44-4e9f-a767-24b868e04190",
+        "notifyId": "242a348a-5b44-4e9f-a767-24b868e04190",
+        "inputResultId": "1d75a26a-3be2-4d00-9be1-698176dbd749",
+        "bidOpenId": "5aaae113-8192-4e3b-9c11-3887996419b3",
+        "bidCloseDate": "2026-08-12T08:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 05: Xây lắp toàn bộ công trình (bao gồm chi phí dự phòng cho khối lượng phát sinh) và đảm bảo an toàn giao thông"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "23089",
+            "districtName": "Xã Hàm Thuận Bắc"
+          }
+        ],
+        "notifyNo": "IB2600421205",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421205-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:16:15.89",
+        "publicDateKqmt": "2026-08-03T20:16:15.89",
+        "publicDateKqlcnt": "2026-08-14T15:19:20",
+        "status": "IS_PUBLISH",
+        "investorName": "VĂN PHÒNG HĐND VÀ UBND XÃ HÀM THUẬN BẮC",
+        "investorCode": "vnz000045986",
+        "bidOpenDate": "2026-08-12T08:30:00",
+        "originalPublicDate": "2026-08-03T20:16:15.89",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600239368",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3401082421"
+        ],
+        "decisionDate": "2026-08-14T23:59:59",
+        "contractorName": [
+          "CÔNG TY TRÁCH NHIỆM HỮU HẠN XÂY DỰNG SINH HÒA"
+        ],
+        "bidWinningPrice": [
+          8638496873.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "76fb99a5-45c5-4586-b483-1f69ed14aa8d",
+        "createdBy": "vnz000045986",
+        "bidPrice": [
+          8751809532.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTDB",
+        "winningContractorName": [
+          "CÔNG TY TRÁCH NHIỆM HỮU HẠN XÂY DỰNG SINH HÒA"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T08:49:54"
+      },
+      {
+        "id": "733e05c9-80f7-447a-a51c-95e91d7da504",
+        "notifyId": "733e05c9-80f7-447a-a51c-95e91d7da504",
+        "inputResultId": "75f0d4db-9985-4219-8a73-281fd1eb8ec9",
+        "bidOpenId": "2030ecb0-2e2a-4b0a-b431-032234215ccc",
+        "bidCloseDate": "2026-08-14T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công xây dựng, cung cấp lắp đặt thiết bị"
+        ],
+        "investField": [
+          "HON_HOP"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600393989",
+        "notifyVersion": "01",
+        "notifyNoStand": "IB2600393989-01",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:08:54.869",
+        "publicDateKqmt": "2026-08-03T20:08:54.869",
+        "publicDateKqlcnt": "2026-08-19T19:37:54",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý dự án đầu tư - hạ tầng phường Hoàn Kiếm",
+        "investorCode": "vnz000013647",
+        "bidOpenDate": "2026-08-14T09:00:00",
+        "originalPublicDate": "2026-07-23T19:15:04.436",
+        "isPass": 1,
+        "bidField": "HON_HOP",
+        "planType": "DTPT",
+        "planNo": "PL2600179823",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0104634917",
+          "vn0106674312"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "Liên danh công ty Thiên Phong - MPS Việt Nam"
+        ],
+        "ventureName": "Liên danh công ty Thiên Phong - MPS Việt Nam",
+        "bidWinningPrice": [
+          23212252000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "eae2bbbd-aeb8-4217-8a8e-039af6742fdb",
+        "createdBy": "vnz000013647",
+        "bidPrice": [
+          23448995000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY TNHH ĐẦU TƯ PHÁT TRIỂN MPS VIỆT NAM",
+          "CÔNG TY CỔ PHẦN XÂY DỰNG VÀ THƯƠNG MẠI THIÊN PHONG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-14T11:41:11"
+      },
+      {
+        "id": "d3066f74-8431-4566-b000-ef393b0358c6",
+        "notifyId": "d3066f74-8431-4566-b000-ef393b0358c6",
+        "inputResultId": "83dfe214-ac32-430e-a598-f33f72363f1f",
+        "bidOpenId": "99a0ba76-b7f6-429c-8a50-bb1034e868d8",
+        "bidCloseDate": "2026-08-21T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 14: Thi công xây dựng công trình và lắp đặt thiết bị"
+        ],
+        "investField": [
+          "HON_HOP"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600418905",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600418905-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T20:07:07.51",
+        "publicDateKqmt": "2026-08-03T20:07:07.51",
+        "publicDateKqlcnt": "2026-08-24T16:29:34",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG PHƯỜNG ĐẠI MỖ",
+        "investorCode": "vn0111123688",
+        "bidOpenDate": "2026-08-21T10:00:00",
+        "originalPublicDate": "2026-08-03T20:07:07.51",
+        "isPass": 1,
+        "bidField": "HON_HOP",
+        "planType": "DTPT",
+        "planNo": "PL2600239690",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0101866123",
+          "vn0105474423"
+        ],
+        "decisionDate": "2026-08-24T23:59:59",
+        "contractorName": [
+          "Liên danh nhà thầu thi công cải tạo hè, đường khu nhà ở Trung Văn"
+        ],
+        "ventureName": "Liên danh nhà thầu thi công cải tạo hè, đường khu nhà ở Trung Văn",
+        "bidWinningPrice": [
+          21501888000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "71e79519-dbbf-4cc1-b494-57e2e95453ed",
+        "createdBy": "vn0111123688",
+        "bidPrice": [
+          21720631000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN PHÁT TRIỂN HẠ TẦNG ĐÔ THỊ HÀ NỘI",
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG VÀ THƯƠNG MẠI TOÀN PHÁT HÀ NỘI",
+          "CÔNG TY CỔ PHẦN NỘI THẤT TOÀN PHÁT HÀ NỘI",
+          "CÔNG TY CỔ PHẦN ĐÔ THỊ XÂY DỰNG THÀNH ĐẠT"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T10:15:00"
+      },
+      {
+        "id": "59067931-77f4-471e-a52c-8d51ef693012",
+        "notifyId": "59067931-77f4-471e-a52c-8d51ef693012",
+        "inputResultId": "5342b96c-f182-4510-8044-6e72e4d571f0",
+        "bidOpenId": "2970b837-7d5c-4d68-9789-ab63b2670b1c",
+        "techReqId": "7ac80537-eb48-49a9-b37f-48a9f84f8178",
+        "bidCloseDate": "2026-08-22T10:15:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 04: Tư vấn giám sát thi công gói thầu số 03"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "10231",
+            "districtName": "Xã Thượng Phúc"
+          }
+        ],
+        "notifyNo": "IB2600421648",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421648-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:49:20.139",
+        "publicDateKqmt": "2026-08-03T19:49:20.139",
+        "publicDateKqlcnt": "2026-09-08T19:23:21",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý Dự án Đầu tư - Hạ tầng xã Thượng Phúc",
+        "investorCode": "vn0111128407",
+        "bidOpenDate": "2026-08-22T10:15:00",
+        "originalPublicDate": "2026-08-03T19:49:20.139",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2500325716",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0108093680"
+        ],
+        "decisionDate": "2026-09-08T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ BẢO TỒN CÔNG TRÌNH VĂN HÓA VIỆT AEG"
+        ],
+        "bidWinningPrice": [
+          1715000000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "c81aa30e-caec-4ae3-892b-663d7e46a22f",
+        "createdBy": "vn0111128407",
+        "bidPrice": [
+          1807738000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG VÀ BẢO TỒN CÔNG TRÌNH VĂN HÓA VIỆT AEG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-22T10:23:11"
+      },
+      {
+        "id": "1f406b03-b6ae-4602-b900-003c6a29f510",
+        "notifyId": "1f406b03-b6ae-4602-b900-003c6a29f510",
+        "inputResultId": "9043acc9-c499-4ebb-a54f-9925cdc57c7d",
+        "bidOpenId": "6c1e6afe-3ac4-48b1-8f27-1c1055fc7fbc",
+        "bidCloseDate": "2026-08-22T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 03 Toàn bộ phần xây dựng công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "10183",
+            "districtName": "Xã Thường Tín"
+          }
+        ],
+        "notifyNo": "IB2600421631",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421631-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:48:11.998",
+        "publicDateKqmt": "2026-08-03T19:48:11.998",
+        "publicDateKqlcnt": "2026-08-25T16:03:38",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý Dự án Đầu tư - Hạ tầng xã Thượng Phúc",
+        "investorCode": "vn0111128407",
+        "bidOpenDate": "2026-08-22T10:00:00",
+        "originalPublicDate": "2026-08-03T19:48:11.998",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2500325716",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0500467593",
+          "vn0107544450"
+        ],
+        "decisionDate": "2026-08-25T23:59:59",
+        "contractorName": [
+          "Liên danh Công ty cổ phần xây dựng và tu bổ di tích Hà Tây và Công ty cổ phần đầu tư xây dựng và thương mại Lê Huy "
+        ],
+        "ventureName": "Liên danh Công ty cổ phần xây dựng và tu bổ di tích Hà Tây và Công ty cổ phần đầu tư xây dựng và thương mại Lê Huy ",
+        "bidWinningPrice": [
+          85292783000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "8448fab9-052c-455a-9de7-ed239f5d5323",
+        "createdBy": "vn0111128407",
+        "bidPrice": [
+          85872920000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTVH",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN  XÂY DỰNG VÀ TU BỔ DI TÍCH HÀ TÂY",
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG VÀ THƯƠNG MẠI LÊ HUY"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-22T10:18:47"
+      },
+      {
+        "id": "45e08c69-9aba-4b2c-a91b-5e298f41734f",
+        "notifyId": "45e08c69-9aba-4b2c-a91b-5e298f41734f",
+        "inputResultId": "ba72f0f4-b875-4327-b37c-d2dd3e1d4561",
+        "bidOpenId": "d7696317-fbe9-42de-a6fa-8ea5dce05344",
+        "bidCloseDate": "2026-08-12T19:50:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "68",
+            "provName": "Tỉnh Lâm Đồng",
+            "districtCode": "24616",
+            "districtName": "Xã Quảng Sơn"
+          }
+        ],
+        "notifyNo": "IB2600421272",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421272-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:46:49.391",
+        "publicDateKqmt": "2026-08-03T19:46:49.391",
+        "publicDateKqlcnt": "2026-08-19T14:18:06",
+        "status": "IS_PUBLISH",
+        "investorName": "Phòng Kinh Tế Xã Quảng Sơn",
+        "investorCode": "vnz000048877",
+        "bidOpenDate": "2026-08-12T19:50:00",
+        "originalPublicDate": "2026-08-03T19:46:49.391",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600237024",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn6400301940"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH XÂY DỰNG HOÀNG LÂM ĐẮK NÔNG"
+        ],
+        "bidWinningPrice": [
+          16878509000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "27d415d6-6219-4908-be15-8b6bf19d02f7",
+        "createdBy": "vnz000048877",
+        "bidPrice": [
+          16912659000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG HOÀNG LÂM ĐẮK NÔNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T19:52:14"
+      },
+      {
+        "id": "d032c7ea-d46c-4c3f-b787-8c22a936ac4c",
+        "notifyId": "d032c7ea-d46c-4c3f-b787-8c22a936ac4c",
+        "inputResultId": "232f0350-0bf1-4d2e-9958-9596d076841a",
+        "bidOpenId": "f81e6c28-87f7-45ff-8d04-5c61ccc711f4",
+        "bidCloseDate": "2026-08-12T14:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu 1: Vận chuyển MBA 110kV"
+        ],
+        "investField": [
+          "PTV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600412787",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600412787-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:44:55.792",
+        "publicDateKqmt": "2026-08-03T19:44:55.792",
+        "publicDateKqlcnt": "2026-09-04T18:51:11",
+        "status": "IS_PUBLISH",
+        "investorName": "CÔNG TY LƯỚI ĐIỆN CAO THẾ THÀNH PHỐ HÀ NỘI",
+        "investorCode": "vnz000021410",
+        "bidOpenDate": "2026-08-12T15:00:00",
+        "originalPublicDate": "2026-08-03T19:44:55.792",
+        "isPass": 1,
+        "bidField": "PTV",
+        "planType": "TX",
+        "planNo": "PL2600235289",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106199219"
+        ],
+        "decisionDate": "2026-09-04T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH VẬN TẢI VÀ XÂY DỰNG PHÚC LINH"
+        ],
+        "bidWinningPrice": [
+          86360000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "37be0717-9a45-485d-a8a3-751864c82ddd",
+        "createdBy": "vnz000021410-05",
+        "bidPrice": [
+          90251029.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY TNHH VẬN TẢI VÀ XÂY DỰNG PHÚC LINH"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T15:26:37"
+      },
+      {
+        "id": "2a249c5c-edcc-41c4-9963-acc4c5c42f02",
+        "notifyId": "2a249c5c-edcc-41c4-9963-acc4c5c42f02",
+        "inputResultId": "777d75cd-9e0b-4fdb-a1aa-57971cea223c",
+        "bidOpenId": "5d3cb26d-84f1-4a3d-8e01-75965cfb7c72",
+        "bidCloseDate": "2026-08-12T14:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 13 (xây lắp):  hạng mục phần cọc"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "75",
+            "provName": "Thành phố Đồng Nai",
+            "districtCode": "26491",
+            "districtName": "Xã Đại Phước"
+          }
+        ],
+        "notifyNo": "IB2600420886",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420886-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:41:05.705",
+        "publicDateKqmt": "2026-08-03T19:41:05.705",
+        "publicDateKqlcnt": "2026-08-24T08:24:24",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án đầu tư xây dựng thành phố Đồng Nai",
+        "investorCode": "vnz000010141",
+        "bidOpenDate": "2026-08-12T14:30:00",
+        "originalPublicDate": "2026-08-03T19:41:05.705",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600239210",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3600986703",
+          "vn3601514559",
+          "vn3601037786"
+        ],
+        "decisionDate": "2026-08-24T23:59:59",
+        "contractorName": [
+          "Liên danh thi công cọc"
+        ],
+        "ventureName": "Liên danh thi công cọc",
+        "bidWinningPrice": [
+          17368008900.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "4af83874-0626-4968-8cb3-3ef7c52c1338",
+        "createdBy": "vnz000010141-01",
+        "bidPrice": [
+          17421017232.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTGG",
+        "winningContractorName": [
+          "CÔNG TY TNHH XÂY DỰNG ĐÔNG NHẬT HUY",
+          "CÔNG TY CỔ PHẦN XÂY DỰNG CAO SU ĐỒNG NAI (CHUYỂN ĐỔI TỪ XÍ NGHIỆP XÂY DỰNG VÀ GIAO THÔNG THUỘC CÔNG TY CAO SU ĐỒNG NAI)",
+          "Công ty TNHH tư vấn xây dựng Hùng Huy Vũ"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T14:36:48"
+      },
+      {
+        "id": "f4951a58-3737-4b34-af0c-1bd0e6aaf832",
+        "notifyId": "f4951a58-3737-4b34-af0c-1bd0e6aaf832",
+        "inputResultId": "5148f4e0-3ea1-4947-8259-56200523d844",
+        "bidOpenId": "2495d9b3-c842-40f3-be85-2c2242db01fc",
+        "bidCloseDate": "2026-08-21T08:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói 03 - Cung cấp MBA 110kV, vật tư thiết bị và lắp đặt"
+        ],
+        "investField": [
+          "HON_HOP"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "33",
+            "provName": "Tỉnh Hưng Yên",
+            "districtCode": "12688",
+            "districtName": "Xã Đông Hưng"
+          }
+        ],
+        "notifyNo": "IB2600411521",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600411521-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:34:46.573",
+        "publicDateKqmt": "2026-08-03T19:34:46.573",
+        "publicDateKqlcnt": "2026-09-18T07:43:39",
+        "status": "IS_PUBLISH",
+        "investorName": "CÔNG TY ĐIỆN LỰC HƯNG YÊN - CHI NHÁNH TỔNG CÔNG TY ĐIỆN LỰC MIỀN BẮC",
+        "investorCode": "vnz000020138",
+        "bidOpenDate": "2026-08-21T08:00:00",
+        "originalPublicDate": "2026-08-03T19:34:46.573",
+        "isPass": 1,
+        "bidField": "HON_HOP",
+        "planType": "DTPT",
+        "planNo": "PL2600236287",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106601787"
+        ],
+        "decisionDate": "2026-09-18T23:59:59",
+        "contractorName": [
+          "Công ty TNHH MTV Thiết kế và Chế tạo Thiết bị điện"
+        ],
+        "bidWinningPrice": [
+          24443601888.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 1,
+        "numBidderTech": 4,
+        "numBidderJoin": 4,
+        "bidId": "e4d800db-c384-4de8-9a24-51bbd77c4d33",
+        "createdBy": "vnz000020138",
+        "bidPrice": [
+          24446543814.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "Công ty TNHH MTV Thiết kế và Chế tạo Thiết bị điện",
+          "Công ty TNHH MTV Thiết kế và Chế tạo Thiết bị điện - EEMC"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T08:03:00"
+      },
+      {
+        "id": "1b01cafd-45ab-4c5a-81c2-e66b3ec13b61",
+        "notifyId": "1b01cafd-45ab-4c5a-81c2-e66b3ec13b61",
+        "inputResultId": "bf1b7f09-5a5f-465a-b0da-4e7124aa202c",
+        "bidOpenId": "759cdd3a-2084-4653-af63-e650cd65922b",
+        "bidCloseDate": "2026-09-08T08:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói 03 - Xây lắp"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "33",
+            "provName": "Tỉnh Hưng Yên",
+            "districtCode": "12793",
+            "districtName": "Xã Đông Quan"
+          }
+        ],
+        "notifyNo": "IB2600418042",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600418042-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:31:14.081",
+        "publicDateKqmt": "2026-08-03T19:31:14.081",
+        "publicDateKqlcnt": "2026-09-23T15:01:42",
+        "status": "IS_PUBLISH",
+        "investorName": "CÔNG TY ĐIỆN LỰC HƯNG YÊN - CHI NHÁNH TỔNG CÔNG TY ĐIỆN LỰC MIỀN BẮC",
+        "investorCode": "vnz000020138",
+        "bidOpenDate": "2026-09-08T08:00:00",
+        "originalPublicDate": "2026-08-03T19:31:14.081",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600240023",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0109142034"
+        ],
+        "decisionDate": "2026-09-23T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN VTAD VIỆT NAM"
+        ],
+        "bidWinningPrice": [
+          15912443471.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 1,
+        "numBidderTech": 2,
+        "numBidderJoin": 2,
+        "bidId": "5c8c7cfb-a908-41c5-8dc8-283084520a1c",
+        "createdBy": "vnz000020138",
+        "bidPrice": [
+          15914527157.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTNL",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN VTAD VIỆT NAM"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-09-08T08:01:32"
+      },
+      {
+        "id": "c2d6e50b-f696-4b32-84f0-f57a74da4a2c",
+        "notifyId": "c2d6e50b-f696-4b32-84f0-f57a74da4a2c",
+        "inputResultId": "61cecaf6-1e42-4873-846b-46d0d8389100",
+        "bidOpenId": "7144a195-6284-4aa7-a79b-6457aa34be31",
+        "bidCloseDate": "2026-08-12T08:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói 03 - Xây lắp"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "33",
+            "provName": "Tỉnh Hưng Yên",
+            "districtCode": "12595",
+            "districtName": "Xã Ngự Thiên"
+          }
+        ],
+        "notifyNo": "IB2600418192",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600418192-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:28:15.62",
+        "publicDateKqmt": "2026-08-03T19:28:15.62",
+        "publicDateKqlcnt": "2026-09-18T09:50:49",
+        "status": "IS_PUBLISH",
+        "investorName": "CÔNG TY ĐIỆN LỰC HƯNG YÊN - CHI NHÁNH TỔNG CÔNG TY ĐIỆN LỰC MIỀN BẮC",
+        "investorCode": "vnz000020138",
+        "bidOpenDate": "2026-08-12T08:00:00",
+        "originalPublicDate": "2026-08-03T19:28:15.62",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600240060",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106106535"
+        ],
+        "decisionDate": "2026-09-18T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN VÀ XÂY LẮP AN DƯƠNG"
+        ],
+        "bidWinningPrice": [
+          15577395305.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "091c0946-f667-4a1d-a14d-353d12f47911",
+        "createdBy": "vnz000020138",
+        "bidPrice": [
+          15580487969.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTNL",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN VÀ XÂY LẮP AN DƯƠNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T08:06:15"
+      },
+      {
+        "id": "01992b69-49a1-4d3e-b271-c9cc533ac54a",
+        "notifyId": "01992b69-49a1-4d3e-b271-c9cc533ac54a",
+        "inputResultId": "5eff61a1-ee39-4cf3-a54d-31df9dfaa830",
+        "bidOpenId": "0b48a21d-3c8a-446f-8e20-e5bf8e1520c3",
+        "techReqId": "efeef542-9c13-47bd-b268-8a207a23e351",
+        "bidCloseDate": "2026-08-21T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 01TV"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "66",
+            "provName": "Tỉnh Đắk Lắk"
+          }
+        ],
+        "notifyNo": "IB2600398440",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600398440-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:20:03.074",
+        "publicDateKqmt": "2026-08-03T19:20:03.074",
+        "publicDateKqlcnt": "2026-09-19T10:07:14",
+        "status": "IS_PUBLISH",
+        "investorName": "Sở Công Thương tỉnh  Đắk Lắk",
+        "investorCode": "vn6000721563",
+        "bidOpenDate": "2026-08-21T10:00:00",
+        "originalPublicDate": "2026-08-03T19:20:03.074",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "KHAC",
+        "planNo": "PL2600214647",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn4200385474"
+        ],
+        "decisionDate": "2026-09-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN XÂY DỰNG ĐIỆN 4"
+        ],
+        "bidWinningPrice": [
+          2382763672.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "be9c2db0-0376-439e-8288-61aa035a6d97",
+        "createdBy": "vn6000721563",
+        "bidPrice": [
+          2480306616.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN XÂY DỰNG ĐIỆN 4"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T10:03:14"
+      },
+      {
+        "id": "070ad4ef-06d2-4918-a29e-6faeedb14790",
+        "notifyId": "070ad4ef-06d2-4918-a29e-6faeedb14790",
+        "inputResultId": "319a91af-dc51-4f54-8e03-8e2e3217c452",
+        "bidOpenId": "2d879afe-3554-42c5-9c79-a9f2fb50cb9c",
+        "bidCloseDate": "2026-08-13T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 05: Thi công xây dựng công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "09931",
+            "districtName": "Xã Hưng Đạo"
+          }
+        ],
+        "notifyNo": "IB2600411487",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600411487-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:17:17.435",
+        "publicDateKqmt": "2026-08-03T19:17:17.435",
+        "publicDateKqlcnt": "2026-08-19T14:43:08",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án đầu tư - hạ tầng xã Hưng Đạo",
+        "investorCode": "vn0111126223",
+        "bidOpenDate": "2026-08-13T09:00:00",
+        "originalPublicDate": "2026-08-03T19:17:17.435",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600234736",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0103945243"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH THƯƠNG MẠI ĐẠT GIA"
+        ],
+        "bidWinningPrice": [
+          2154817000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "14f186b9-3019-41a9-8d90-7638657fb6ea",
+        "createdBy": "vn0111126223",
+        "bidPrice": [
+          2170411000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "TTT",
+        "winningContractorName": [
+          "CÔNG TY TNHH THƯƠNG MẠI ĐẠT GIA"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-13T09:37:36"
+      },
+      {
+        "id": "efd45928-8a90-445a-a450-ddc64264d590",
+        "notifyId": "efd45928-8a90-445a-a450-ddc64264d590",
+        "bidOpenId": "ada5e4e3-173f-4b62-b070-3f4f49d22d01",
+        "bidCloseDate": "2026-08-27T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 03: Cung cấp, lắp đặt hệ thống thoát nước khai trường và  hệ thống cung cấp điện trạm phân phối mức -400 mỏ than Mông Dương"
+        ],
+        "investField": [
+          "HON_HOP"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "22",
+            "provName": "Tỉnh Quảng Ninh",
+            "districtCode": "06760",
+            "districtName": "Phường Mông Dương"
+          }
+        ],
+        "notifyNo": "IB2600364808",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600364808-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:09:28.063",
+        "publicDateKqmt": "2026-08-03T19:09:28.063",
+        "status": "OPEN_BID",
+        "investorName": "CÔNG TY CỔ PHẦN THAN MÔNG DƯƠNG - VINACOMIN",
+        "investorCode": "vn5700101203",
+        "bidOpenDate": "2026-08-27T10:00:00",
+        "originalPublicDate": "2026-08-03T19:09:28.063",
+        "bidField": "HON_HOP",
+        "planType": "DTPT",
+        "planNo": "PL2500299138",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DXT",
+        "numPetition": 0,
+        "numClarifyReq": 2,
+        "numBidderTech": 0,
+        "numBidderJoin": 2,
+        "bidId": "28744a82-e8ed-4df7-9e4f-b992a8856c6b",
+        "createdBy": "vn5700101203",
+        "bidPrice": [
+          152222631000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-27T10:08:38"
+      },
+      {
+        "id": "87687c38-b8e2-40cc-852c-bca212e4fb97",
+        "notifyId": "87687c38-b8e2-40cc-852c-bca212e4fb97",
+        "inputResultId": "41daf9e3-da04-4dbd-b73a-06bff5cc6413",
+        "bidOpenId": "018f37e1-5e78-4996-8fc9-3bcea039a675",
+        "bidCloseDate": "2026-08-12T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Sửa chữa sân tập lái xe ô tô loại I và sân tập lái xe ô tô mở rộng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "79",
+            "provName": "Thành phố Hồ Chí Minh",
+            "districtCode": "26773",
+            "districtName": "Phường Thới An"
+          }
+        ],
+        "notifyNo": "IB2600421468",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421468-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T19:04:08.69",
+        "publicDateKqmt": "2026-08-03T19:04:08.69",
+        "publicDateKqlcnt": "2026-08-19T16:54:24",
+        "status": "IS_PUBLISH",
+        "investorName": "Trường Cao đẳng Giao thông vận tải Trung ương III",
+        "investorCode": "vn0306370738",
+        "bidOpenDate": "2026-08-12T10:00:00",
+        "originalPublicDate": "2026-08-03T19:04:08.69",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600232217",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0313629011"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH THIẾT KẾ XÂY DỰNG THƯƠNG MẠI AN PHƯỚC"
+        ],
+        "bidWinningPrice": [
+          7302443622.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 2,
+        "numBidderJoin": 2,
+        "bidId": "ef28ab0e-a94e-4c45-8890-9227f5ddbbed",
+        "createdBy": "vn0306370738",
+        "bidPrice": [
+          7382871376.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY TNHH THIẾT KẾ XÂY DỰNG THƯƠNG MẠI AN PHƯỚC"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T10:01:43"
+      },
+      {
+        "id": "2f1b7183-e9b7-4bb8-a2c9-81b6a1eb25bf",
+        "notifyId": "2f1b7183-e9b7-4bb8-a2c9-81b6a1eb25bf",
+        "inputResultId": "1e6a0dcb-ee76-4643-a698-73e7dc550bab",
+        "bidOpenId": "e2015bd6-4701-4d6a-ab7a-1df49e953e24",
+        "bidCloseDate": "2026-08-07T16:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công Đầu tư xây dựng CSHT cho các trạm BTS tỉnh Hà Tĩnh đợt 1 năm 2026"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "42",
+            "provName": "Tỉnh Hà Tĩnh"
+          }
+        ],
+        "notifyNo": "IB2600412348",
+        "notifyVersion": "02",
+        "notifyNoStand": "IB2600412348-02",
+        "processApply": "KHAC",
+        "procuringEntityCode": "vnz000025796",
+        "procuringEntityName": "MOBIFONE HÀ TĨNH - CHI NHÁNH TỔNG CÔNG TY VIỄN THÔNG MOBIFONE",
+        "publicDate": "2026-08-03T19:01:58.025",
+        "publicDateKqmt": "2026-08-03T19:01:58.025",
+        "publicDateKqlcnt": "2026-08-28T09:27:20",
+        "status": "IS_PUBLISH",
+        "investorName": "MOBIFONE HÀ TĨNH - CHI NHÁNH TỔNG CÔNG TY VIỄN THÔNG MOBIFONE",
+        "investorCode": "vnz000025796",
+        "bidOpenDate": "2026-08-07T16:00:00",
+        "originalPublicDate": "2026-07-30T15:42:35.165",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "KHAC",
+        "planNo": "PL2600215559",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3000359186",
+          "vn2901560850"
+        ],
+        "decisionDate": "2026-08-26T23:59:59",
+        "contractorName": [
+          "Liên danh Duy Anh - DTC"
+        ],
+        "ventureName": "Liên danh Duy Anh - DTC",
+        "bidWinningPrice": [
+          3464899568.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 0,
+        "numBidderJoin": 2,
+        "bidId": "e283ca4e-bc5b-4580-a986-f44dc80c6e2d",
+        "createdBy": "vnz000025796",
+        "bidPrice": [
+          3469064462.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CP KỸ THUẬT CÔNG NGHỆ VÀ THƯƠNG MẠI DTC",
+          "CÔNG TY TNHH DUY ANH"
+        ],
+        "isDomestic": 1,
+        "pname": "Đầu tư xây dựng CSHT cho các trạm BTS tỉnh Hà Tĩnh đợt 1 năm 2026",
+        "bidRealityOpenDate": "2026-08-07T16:01:51"
+      },
+      {
+        "id": "5b44e434-25a7-468c-9913-9a662a774ab3",
+        "notifyId": "5b44e434-25a7-468c-9913-9a662a774ab3",
+        "bidOpenId": "438dccf4-4548-44c6-a1fd-65683909c037",
+        "bidCloseDate": "2026-08-13T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu 05: Cải tạo, sửa chữa nhà hiệu bộ, ký túc xá, giảng đường \nPhân hiệu Học viện Hành chính và Quản trị công tại tỉnh Đắk Lắk"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "66",
+            "provName": "Tỉnh Đắk Lắk",
+            "districtCode": "24121",
+            "districtName": "Phường Tân Lập"
+          }
+        ],
+        "notifyNo": "IB2600415441",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600415441-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:50:26.122",
+        "publicDateKqmt": "2026-08-03T18:50:26.122",
+        "status": "INIT_MT",
+        "investorName": "Phân hiệu Học viện Hành chính và Quản trị công tại tỉnh Đắk Lắk",
+        "investorCode": "vn6000482308",
+        "bidOpenDate": "2026-08-13T15:00:00",
+        "originalPublicDate": "2026-08-03T18:50:26.122",
+        "bidField": "XL",
+        "planType": "TX",
+        "planNo": "PL2600193726",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DHT",
+        "numPetition": 1,
+        "numClarifyReq": 2,
+        "numBidderTech": 0,
+        "numBidderJoin": 2,
+        "bidId": "a443fd45-9de6-45cc-a073-6486f1c732f4",
+        "createdBy": "vn6000482308",
+        "bidPrice": [
+          3833573000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 1,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTGG",
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-13T15:03:48"
+      },
+      {
+        "id": "1982b89b-7aa7-452b-ab11-017448253094",
+        "notifyId": "1982b89b-7aa7-452b-ab11-017448253094",
+        "inputResultId": "de51406a-0ac1-4f9f-bbbd-c7d0d96648d0",
+        "bidOpenId": "8e893282-9111-42e0-a81d-dc586d216f4d",
+        "bidCloseDate": "2026-08-14T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "MS-01: Vật chất đồng bộ vật tư tự duy trì, tiêu hao và phụ tùng thay thế"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600359751",
+        "notifyVersion": "01",
+        "notifyNoStand": "IB2600359751-01",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:39:50.56",
+        "publicDateKqmt": "2026-08-03T18:39:50.56",
+        "publicDateKqlcnt": "2026-08-19T16:15:01",
+        "status": "IS_PUBLISH",
+        "investorName": "CỤC HẬU CẦN - KỸ THUẬT/BINH CHỦNG CÔNG BINH",
+        "investorCode": "vnz000026337",
+        "bidOpenDate": "2026-08-14T10:00:00",
+        "originalPublicDate": "2026-07-15T19:10:29.55",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600207116",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106811456"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN DỊCH VỤ THƯƠNG MẠI THIÊN NGA"
+        ],
+        "bidWinningPrice": [
+          40557711800.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "aa758be0-85a4-498c-84fb-ce5c37249f46",
+        "createdBy": "vnz000026337",
+        "bidPrice": [
+          41095721700.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN DỊCH VỤ THƯƠNG MẠI THIÊN NGA"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-14T10:06:39"
+      },
+      {
+        "id": "d0e80f0c-1315-40e8-ad01-3b3b8c83b699",
+        "notifyId": "d0e80f0c-1315-40e8-ad01-3b3b8c83b699",
+        "bidOpenId": "89d3ebaf-cbfc-44f6-82c7-149cd63160b8",
+        "bidCloseDate": "2026-08-24T10:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Đầu tư nền tảng tích hợp dữ liệu cho Vietcombank (Data Integration Hub - DIH)"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00070",
+            "districtName": "Phường Hoàn Kiếm"
+          }
+        ],
+        "notifyNo": "IB2600421225",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421225-00",
+        "processApply": "KHAC",
+        "procuringEntityCode": "vn0100112437",
+        "procuringEntityName": "NGÂN HÀNG THƯƠNG MẠI CỔ PHẦN NGOẠI THƯƠNG VIỆT NAM",
+        "publicDate": "2026-08-03T18:36:56.156",
+        "publicDateKqmt": "2026-08-03T18:36:56.156",
+        "status": "OPEN_BID",
+        "investorName": "NGÂN HÀNG THƯƠNG MẠI CỔ PHẦN NGOẠI THƯƠNG VIỆT NAM",
+        "investorCode": "vn0100112437",
+        "bidOpenDate": "2026-08-24T10:00:00",
+        "originalPublicDate": "2026-08-03T18:36:56.156",
+        "bidField": "HH",
+        "planType": "DTPT",
+        "planNo": "PL2600208130",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DXT",
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 0,
+        "numBidderJoin": 2,
+        "bidId": "c2a5269b-006c-4981-9ca7-41c65c4e8665",
+        "createdBy": "vn0100112437-06",
+        "bidPrice": [
+          128856299056.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isDomestic": 1,
+        "pname": "Đầu tư nền tảng tích hợp dữ liệu cho Vietcombank (Data Integration Hub - DIH)",
+        "bidRealityOpenDate": "2026-08-24T10:13:23"
+      },
+      {
+        "id": "6dce2482-b4c6-40eb-ab23-b11b1c5f2930",
+        "notifyId": "6dce2482-b4c6-40eb-ab23-b11b1c5f2930",
+        "inputResultId": "5c3af386-5af2-45e7-bee0-e138ce77d360",
+        "bidOpenId": "28017ef5-ef5c-4e16-b823-496d7ae785ce",
+        "bidCloseDate": "2026-08-12T10:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Mua sắm tài sản chuyên dùng năm 2026"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "79",
+            "provName": "Thành phố Hồ Chí Minh",
+            "districtCode": "26878",
+            "districtName": "Phường An Hội Đông"
+          }
+        ],
+        "notifyNo": "IB2600421535",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421535-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:30:31.262",
+        "publicDateKqmt": "2026-08-03T18:30:31.262",
+        "publicDateKqlcnt": "2026-08-27T14:49:29",
+        "status": "IS_PUBLISH",
+        "investorName": "THI HÀNH ÁN DÂN SỰ THÀNH PHỐ HỒ CHÍ MINH",
+        "investorCode": "vn0301464950",
+        "bidOpenDate": "2026-08-12T10:00:00",
+        "originalPublicDate": "2026-08-03T18:30:31.262",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600241609",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0111063478",
+          "vn0108997100"
+        ],
+        "decisionDate": "2026-08-27T23:59:59",
+        "contractorName": [
+          "Liên danh gói thầu mua sắm máy Scan"
+        ],
+        "ventureName": "Liên danh gói thầu mua sắm máy Scan",
+        "bidWinningPrice": [
+          500650000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "4b000ef1-f9ee-43f0-8402-9507d61dda43",
+        "createdBy": "vn0301464950",
+        "bidPrice": [
+          510000000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "Công ty TNHH dịch vụ thương mại tổng hợp Tiên Phong",
+          "CÔNG TY TNHH ĐẦU TƯ PHÁT TRIỂN TKT VIỆT NAM"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T10:09:08"
+      },
+      {
+        "id": "33c3c3dc-e3f5-4db6-b1fc-da03fa75e066",
+        "notifyId": "33c3c3dc-e3f5-4db6-b1fc-da03fa75e066",
+        "inputResultId": "76cc16a1-7d24-4cfe-a094-ec2c524bc07c",
+        "bidOpenId": "bc368256-45c2-480f-9bc1-cd4f7836bedd",
+        "bidCloseDate": "2026-08-12T10:10:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 01: Thi công xây lắp công trình"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "38",
+            "provName": "Tỉnh Thanh Hóa"
+          }
+        ],
+        "notifyNo": "IB2600421482",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421482-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:28:04.556",
+        "publicDateKqmt": "2026-08-03T18:28:04.556",
+        "publicDateKqlcnt": "2026-09-10T18:18:20",
+        "status": "IS_PUBLISH",
+        "investorName": "Sở Xây dựng Thanh Hóa",
+        "investorCode": "vn2800276811",
+        "bidOpenDate": "2026-08-12T10:10:00",
+        "originalPublicDate": "2026-08-03T18:28:04.556",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600113844",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn2800746231"
+        ],
+        "decisionDate": "2026-09-10T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN GIAO THÔNG THẠCH THÀNH"
+        ],
+        "bidWinningPrice": [
+          5787174000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "e67c9502-104e-45b1-a69a-c95ad5591218",
+        "createdBy": "vn2800276811",
+        "bidPrice": [
+          5792652000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTDB",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN GIAO THÔNG THẠCH THÀNH"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T10:25:26"
+      },
+      {
+        "id": "a0e0eaf1-8726-4d01-bb7c-de7167461c1f",
+        "notifyId": "a0e0eaf1-8726-4d01-bb7c-de7167461c1f",
+        "inputResultId": "9bdf6ab4-ac69-41da-a76e-8429173a285c",
+        "bidOpenId": "cb1c8673-18b5-4289-b027-f3abb3592ca8",
+        "bidCloseDate": "2026-08-21T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu 03 Thi công xây dựng và mua sắm,  lắp đặt thiết bị"
+        ],
+        "investField": [
+          "HON_HOP"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "10006",
+            "districtName": "Xã Tây Phương"
+          }
+        ],
+        "notifyNo": "IB2600420350",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420350-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:26:31.24",
+        "publicDateKqmt": "2026-08-03T18:26:31.24",
+        "publicDateKqlcnt": "2026-08-22T17:54:14",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý dự án đầu tư - hạ tầng xã Tây Phương",
+        "investorCode": "vnz000040153",
+        "bidOpenDate": "2026-08-21T15:00:00",
+        "originalPublicDate": "2026-08-03T18:26:31.24",
+        "isPass": 1,
+        "bidField": "HON_HOP",
+        "planType": "DTPT",
+        "planNo": "PL2600228442",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0105308514",
+          "vn0106648859",
+          "vn0105474423",
+          "vn0101946636",
+          "vn0109554567"
+        ],
+        "decisionDate": "2026-08-22T23:59:59",
+        "contractorName": [
+          "Liên danh 3TQ-TL-TP-CCHN-ĐG"
+        ],
+        "ventureName": "Liên danh 3TQ-TL-TP-CCHN-ĐG",
+        "bidWinningPrice": [
+          60619371000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "1535f28a-7e74-491f-b370-56f613c489c1",
+        "createdBy": "vnz000040153",
+        "bidPrice": [
+          60670464582.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ TƯ VẤN VÀ XÂY DỰNG 3TQ",
+          "CÔNG TY CỔ PHẦN XÂY DỰNG VÀ KỸ THUẬT ĐOÀN GIA",
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG VÀ THƯƠNG MẠI TOÀN PHÁT HÀ NỘI",
+          "CÔNG TY CỔ PHẦN VẬT TƯ THIẾT BỊ PHÒNG CHÁY CHỮA CHÁY HÀ NỘI",
+          "CÔNG TY CỔ PHẦN NỘI THẤT TOÀN PHÁT HÀ NỘI",
+          "CÔNG TY CỔ PHẦN XÂY DỰNG HẠ TẦNG THẮNG LỢI"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T15:17:28"
+      },
+      {
+        "id": "e1363bae-dd41-4127-b6b7-4d9d4407bf8d",
+        "notifyId": "e1363bae-dd41-4127-b6b7-4d9d4407bf8d",
+        "inputResultId": "e5abd10c-0fc6-4084-8f6e-b4272c7c39dd",
+        "bidOpenId": "26ef9204-061c-4c77-902b-883eea748d3b",
+        "techReqId": "abe9e5a8-9eea-46a2-a6b2-e89207063d78",
+        "bidCloseDate": "2026-08-21T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu 04  Giám sát thi công  và mua sắm,  lắp đặt thiết bị"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "10006",
+            "districtName": "Xã Tây Phương"
+          }
+        ],
+        "notifyNo": "IB2600420661",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420661-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:24:46.972",
+        "publicDateKqmt": "2026-08-03T18:24:46.972",
+        "publicDateKqlcnt": "2026-08-25T10:40:39",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý dự án đầu tư - hạ tầng xã Tây Phương",
+        "investorCode": "vnz000040153",
+        "bidOpenDate": "2026-08-21T15:00:00",
+        "originalPublicDate": "2026-08-03T18:24:46.972",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600228442",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0103975248",
+          "vn0107520548"
+        ],
+        "decisionDate": "2026-08-25T23:59:59",
+        "contractorName": [
+          "Liên danh Minh Hoàng - Minh Phát"
+        ],
+        "ventureName": "Liên danh Minh Hoàng - Minh Phát",
+        "bidWinningPrice": [
+          1168836000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "6ea78024-299c-43ca-b8d7-315c9c548be1",
+        "createdBy": "vnz000040153",
+        "bidPrice": [
+          1230489000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN THIẾT KẾ ĐẦU TƯ XÂY DỰNG MINH PHÁT",
+          "CÔNG TY TNHH TƯ VẤN KIẾN TRÚC XÂY DỰNG MINH HOÀNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T15:17:45"
+      },
+      {
+        "id": "e02f4a72-fd7e-4797-9419-160edcf19e5c",
+        "notifyId": "e02f4a72-fd7e-4797-9419-160edcf19e5c",
+        "inputResultId": "8000aa91-b378-4678-a365-142a040aae8c",
+        "bidOpenId": "eea0c1ca-b11a-4a36-be3b-92e7a9eb06d4",
+        "bidCloseDate": "2026-08-12T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 03: Toàn bộ chi phí xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "09784",
+            "districtName": "Xã Đan Phượng"
+          }
+        ],
+        "notifyNo": "IB2600421300",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421300-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:18:50.575",
+        "publicDateKqmt": "2026-08-03T18:18:50.575",
+        "publicDateKqlcnt": "2026-08-19T14:58:53",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban quản lý dự án đầu tư - hạ tầng xã Đan Phượng",
+        "investorCode": "vnz000040346",
+        "bidOpenDate": "2026-08-12T15:00:00",
+        "originalPublicDate": "2026-08-03T18:18:50.575",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600231276",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0104040328",
+          "vn0104968652"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "Liên danh Công ty TNHH dịch vụ thương mại và xây dựng Hoàng Giang - Công ty TNHH một thành viên tư vấn và xây dựng ATI"
+        ],
+        "ventureName": "Liên danh Công ty TNHH dịch vụ thương mại và xây dựng Hoàng Giang - Công ty TNHH một thành viên tư vấn và xây dựng ATI",
+        "bidWinningPrice": [
+          7938270000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "94a3b895-bcd4-4468-9db2-dae0a8727cf9",
+        "createdBy": "vnz000040346",
+        "bidPrice": [
+          7962598000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY TNHH  MỘT THÀNH VIÊN TƯ VẤN VÀ XÂY DỰNG ATI",
+          "Công ty TNHH Dịch vụ thương mại và xây dựng Hoàng Giang"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T15:08:10"
+      },
+      {
+        "id": "2f4ee42e-5c01-475a-9f92-f35e14298eca",
+        "notifyId": "2f4ee42e-5c01-475a-9f92-f35e14298eca",
+        "inputResultId": "ec583798-35d9-4178-8137-b885f49a8c0d",
+        "bidOpenId": "a001dc70-82bb-42df-a1bf-f2d5170a0e0f",
+        "bidCloseDate": "2026-08-22T08:30:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 05: Thi công xây dựng, mua sắm lắp đặt thiết bị PCCC"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "10009",
+            "districtName": "Xã Hạ Bằng"
+          }
+        ],
+        "notifyNo": "IB2600420274",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420274-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:16:10.651",
+        "publicDateKqmt": "2026-08-03T18:16:10.651",
+        "publicDateKqlcnt": "2026-08-26T10:31:16",
+        "status": "IS_PUBLISH",
+        "investorName": "UBND xã Hạ Bằng",
+        "investorCode": "vnz000040089",
+        "bidOpenDate": "2026-08-22T08:30:00",
+        "originalPublicDate": "2026-08-03T18:16:10.651",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600073319",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn3000986035",
+          "vn0102647928",
+          "vn0102644814"
+        ],
+        "decisionDate": "2026-08-26T23:59:59",
+        "contractorName": [
+          "Liên danh Công ty Tấn Sang - Công ty Avityco - Công ty An toàn Hà Nội"
+        ],
+        "ventureName": "Liên danh Công ty Tấn Sang - Công ty Avityco - Công ty An toàn Hà Nội",
+        "bidWinningPrice": [
+          58828998000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "a25b1af0-9914-41a1-8471-e77943d785ec",
+        "createdBy": "vnz000040089",
+        "bidPrice": [
+          59127241987.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTGG",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG TỔNG HỢP TẤN SANG",
+          "CÔNG TY CỔ PHẦN KIẾN TRÚC VÀ XÂY DỰNG AVITYCO",
+          "CÔNG TY CỔ PHẦN XÂY DỰNG AN TOÀN HÀ NỘI"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-22T08:39:38"
+      },
+      {
+        "id": "347696ea-65a9-40ec-9204-f8fa79e53843",
+        "notifyId": "347696ea-65a9-40ec-9204-f8fa79e53843",
+        "inputResultId": "873fc8cd-ae93-4395-a861-a8fe7ef26a51",
+        "bidOpenId": "101a75df-a386-4463-9a8c-f47453b0428c",
+        "bidCloseDate": "2026-08-12T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu: Thi công xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600395972",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600395972-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:16:10.247",
+        "publicDateKqmt": "2026-08-03T18:16:10.247",
+        "publicDateKqlcnt": "2026-08-25T09:41:49",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG XÃ VÂN ĐÌNH",
+        "investorCode": "vn0111121553",
+        "bidOpenDate": "2026-08-12T15:00:00",
+        "originalPublicDate": "2026-08-03T18:16:10.247",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600227284",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0105097091"
+        ],
+        "decisionDate": "2026-08-25T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG VTC"
+        ],
+        "bidWinningPrice": [
+          11945200000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 2,
+        "numBidderJoin": 2,
+        "bidId": "7b1b24bf-3771-4462-bb96-7825a7bf661c",
+        "createdBy": "vn0111121553",
+        "bidPrice": [
+          12000864439.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN ĐẦU TƯ XÂY DỰNG VTC"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T15:20:38"
+      },
+      {
+        "id": "0904f3b6-3560-4208-a6b8-fa08b48fabb5",
+        "notifyId": "0904f3b6-3560-4208-a6b8-fa08b48fabb5",
+        "inputResultId": "723e6d1b-0174-46f0-be93-69b1afb25425",
+        "bidOpenId": "0d130a4a-03af-4bcd-88fa-21d67b8186ad",
+        "bidCloseDate": "2026-08-13T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Thi công xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "79",
+            "provName": "Thành phố Hồ Chí Minh",
+            "districtCode": "25978",
+            "districtName": "Phường Thuận An"
+          }
+        ],
+        "notifyNo": "IB2600420128",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420128-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:12:33.518",
+        "publicDateKqmt": "2026-08-03T18:12:33.518",
+        "publicDateKqlcnt": "2026-08-19T15:38:24",
+        "status": "IS_PUBLISH",
+        "investorName": "Ủy ban nhân dân phường Thuận An",
+        "investorCode": "vn0319035078",
+        "bidOpenDate": "2026-08-13T09:00:00",
+        "originalPublicDate": "2026-08-03T18:12:33.518",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600234887",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0304434182"
+        ],
+        "decisionDate": "2026-08-19T23:59:59",
+        "contractorName": [
+          "CÔNG TY TNHH THIẾT KẾ XÂY DỰNG THƯƠNG MẠI PHÚ CƯỜNG"
+        ],
+        "bidWinningPrice": [
+          6085609090.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "71afc586-31ad-4b9e-8ae0-28c41c0d9d47",
+        "createdBy": "vn0319035078",
+        "bidPrice": [
+          6188651044.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTDB",
+        "winningContractorName": [
+          "CÔNG TY TNHH THIẾT KẾ XÂY DỰNG THƯƠNG MẠI PHÚ CƯỜNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-13T09:07:23"
+      },
+      {
+        "id": "d3904900-81de-47b7-b55f-174e62951d05",
+        "notifyId": "d3904900-81de-47b7-b55f-174e62951d05",
+        "inputResultId": "9f011956-614d-4924-90d3-96f4789c8e62",
+        "bidOpenId": "5ab45f77-d6f9-4c96-9def-418c101e1076",
+        "bidCloseDate": "2026-08-12T15:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu: Thi công xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600395698",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600395698-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:11:15.828",
+        "publicDateKqmt": "2026-08-03T18:11:15.828",
+        "publicDateKqlcnt": "2026-08-25T09:32:41",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG XÃ VÂN ĐÌNH",
+        "investorCode": "vn0111121553",
+        "bidOpenDate": "2026-08-12T15:00:00",
+        "originalPublicDate": "2026-08-03T18:11:15.828",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600227083",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106504381"
+        ],
+        "decisionDate": "2026-08-25T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG ĐẠI PHÚ PHÁT"
+        ],
+        "bidWinningPrice": [
+          13988439000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 2,
+        "numBidderJoin": 2,
+        "bidId": "c56a3d53-e2df-49de-b5c3-675b09fa6d32",
+        "createdBy": "vn0111121553",
+        "bidPrice": [
+          14142685241.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "KHAC",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG ĐẠI PHÚ PHÁT"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T15:18:45"
+      },
+      {
+        "id": "71a0b88f-296d-4eb7-a705-440305ffea7e",
+        "notifyId": "71a0b88f-296d-4eb7-a705-440305ffea7e",
+        "inputResultId": "1e37747b-edff-4871-b9c4-f2310a07200f",
+        "bidOpenId": "25782fb6-52d7-4672-94d8-f9d6d293265c",
+        "techReqId": "3c2e0ab6-36c5-41e7-ab02-a98b89218691",
+        "bidCloseDate": "2026-08-21T11:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 08: Tư vấn lập Báo cáo nghiên cứu khả thi, lập mô hình thông tin công trình (BIM)"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00637",
+            "districtName": "Phường Đại Mỗ"
+          }
+        ],
+        "notifyNo": "IB2600421267",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421267-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:10:15.047",
+        "publicDateKqmt": "2026-08-03T18:10:15.047",
+        "publicDateKqlcnt": "2026-08-27T15:54:14",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG PHƯỜNG ĐẠI MỖ",
+        "investorCode": "vn0111123688",
+        "bidOpenDate": "2026-08-21T11:00:00",
+        "originalPublicDate": "2026-08-03T18:10:15.047",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600240709",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0500319147",
+          "vn0100775353"
+        ],
+        "decisionDate": "2026-08-27T23:59:59",
+        "contractorName": [
+          "LIÊN DANH VĂN PHÒNG TƯ VẤN VÀ CHUYỂN GIAO CÔNG NGHỆ XÂY DỰNG- CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC"
+        ],
+        "ventureName": "LIÊN DANH VĂN PHÒNG TƯ VẤN VÀ CHUYỂN GIAO CÔNG NGHỆ XÂY DỰNG- CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC",
+        "bidWinningPrice": [
+          1114800000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "faf61c3a-b6b6-42ab-8cde-6b6eb4660564",
+        "createdBy": "vn0111123688",
+        "bidPrice": [
+          1141054000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "Văn phòng tư vấn và chuyển giao công nghệ xây dựng",
+          "CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T11:19:07"
+      },
+      {
+        "id": "36abbbac-ff3a-47fc-a890-b2ce2ac8b33e",
+        "notifyId": "36abbbac-ff3a-47fc-a890-b2ce2ac8b33e",
+        "inputResultId": "f686cf28-308f-43ed-82e4-b7b8e916b622",
+        "bidOpenId": "2be752f9-aefc-4f56-baef-72b1d024122e",
+        "techReqId": "af83be5a-b5bf-472a-8b28-a83e90383ca5",
+        "bidCloseDate": "2026-08-21T11:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 06: Tư vấn lập Báo cáo nghiên cứu khả thi, lập mô hình thông tin công trình (BIM)"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00637",
+            "districtName": "Phường Đại Mỗ"
+          }
+        ],
+        "notifyNo": "IB2600420971",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600420971-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:08:44.562",
+        "publicDateKqmt": "2026-08-03T18:08:44.562",
+        "publicDateKqlcnt": "2026-08-26T17:42:26",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG PHƯỜNG ĐẠI MỖ",
+        "investorCode": "vn0111123688",
+        "bidOpenDate": "2026-08-21T11:00:00",
+        "originalPublicDate": "2026-08-03T18:08:44.562",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600240655",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0106666872",
+          "vn0103633011",
+          "vn0106571740",
+          "vn0101445446"
+        ],
+        "decisionDate": "2026-08-26T23:59:59",
+        "contractorName": [
+          "LIÊN DANH CÔNG TY CỔ PHẦN TƯ VẤN ĐẦU TƯ XÂY DỰNG LINEZONE VIỆT NAM -  CÔNG TY CỔ PHẦN PHÒNG CHÁY CHỮA CHÁY VIỆT NAM - CÔNG TY CỔ PHẦN TƯ VẤN ĐIỆN LỰC VÀ HẠ TẦNG - CÔNG TY CỔ PHẦN TƯ VẤN XÂY DỰNG VINACONEX"
+        ],
+        "ventureName": "LIÊN DANH CÔNG TY CỔ PHẦN TƯ VẤN ĐẦU TƯ XÂY DỰNG LINEZONE VIỆT NAM -  CÔNG TY CỔ PHẦN PHÒNG CHÁY CHỮA CHÁY VIỆT NAM - CÔNG TY CỔ PHẦN TƯ VẤN ĐIỆN LỰC VÀ HẠ TẦNG - CÔNG TY CỔ PHẦN TƯ VẤN XÂY DỰNG VINACONEX",
+        "bidWinningPrice": [
+          926239000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "711c3562-0010-47b8-b431-93e940feaf43",
+        "createdBy": "vn0111123688",
+        "bidPrice": [
+          975041000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN ĐIỆN LỰC VÀ HẠ TẦNG",
+          "CÔNG TY CỔ PHẦN TƯ VẤN XÂY DỰNG VINACONEX",
+          "CÔNG TY CỔ PHẦN TƯ VẤN ĐẦU TƯ XÂY DỰNG LINEZONE VIỆT NAM",
+          "CÔNG TY CỔ PHẦN PHÒNG CHÁY CHỮA CHÁY VIỆT NAM"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T11:19:25"
+      },
+      {
+        "id": "1f1225e6-f846-460b-84b9-1436ac0a891e",
+        "notifyId": "1f1225e6-f846-460b-84b9-1436ac0a891e",
+        "inputResultId": "61512074-b0fd-4a62-8e04-99ab1bc3389a",
+        "bidOpenId": "43248f4a-11ca-41c9-865b-67470b000575",
+        "techReqId": "4d810901-279f-4e4a-ba6a-f8a2c2eeea6d",
+        "bidCloseDate": "2026-08-21T14:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 8: Giám sát thi công xây dựng công trình"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "08974",
+            "districtName": "Xã Quang Minh"
+          }
+        ],
+        "notifyNo": "IB2600419568",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600419568-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:08:26.958",
+        "publicDateKqmt": "2026-08-03T18:08:26.958",
+        "publicDateKqlcnt": "2026-08-24T17:43:17",
+        "status": "IS_PUBLISH",
+        "investorName": "Ban Quản lý dự án Đầu tư - Hạ tầng xã Quang Minh",
+        "investorCode": "vnz000039960",
+        "bidOpenDate": "2026-08-21T14:00:00",
+        "originalPublicDate": "2026-08-03T18:08:26.958",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600239995",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0107270305"
+        ],
+        "decisionDate": "2026-08-24T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN VÀ XÂY DỰNG ĐỊA LỢI"
+        ],
+        "bidWinningPrice": [
+          1297580000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "98828f31-5e3a-49b7-b5f7-fbe59e0ab9d1",
+        "createdBy": "vnz000039960",
+        "bidPrice": [
+          1321038176.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN TƯ VẤN VÀ XÂY DỰNG ĐỊA LỢI"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T14:12:47"
+      },
+      {
+        "id": "193c8d43-bd2e-41ff-8b9f-8850600892ed",
+        "notifyId": "193c8d43-bd2e-41ff-8b9f-8850600892ed",
+        "inputResultId": "c3ea4806-0894-4298-bc4e-6174e95ba74f",
+        "bidOpenId": "8ddf6f2b-f671-4b7d-b5a7-1c90bacfe898",
+        "bidCloseDate": "2026-08-12T09:00:00",
+        "bidForm": "CHCT",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu 03: Mua cáp cao tần"
+        ],
+        "investField": [
+          "HH"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00091",
+            "districtName": "Phường Phú Thượng"
+          }
+        ],
+        "notifyNo": "IB2600421481",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600421481-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:07:47.192",
+        "publicDateKqmt": "2026-08-03T18:07:47.192",
+        "publicDateKqlcnt": "2026-08-17T14:50:41",
+        "status": "IS_PUBLISH",
+        "investorName": "Cục Tác chiến điện tử/BTTM",
+        "investorCode": "vnz000005114",
+        "bidOpenDate": "2026-08-12T09:00:00",
+        "originalPublicDate": "2026-08-03T18:07:47.192",
+        "isPass": 1,
+        "bidField": "HH",
+        "planType": "TX",
+        "planNo": "PL2600222515",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0108060886"
+        ],
+        "decisionDate": "2026-08-17T23:59:59",
+        "contractorName": [
+          "CÔNG TY CỔ PHẦN CÔNG NGHỆ SPEED-X VIỆT NAM"
+        ],
+        "bidWinningPrice": [
+          1752399000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "b8317d00-5654-4d36-8596-a09c0d62f986",
+        "createdBy": "vnz000005114-04",
+        "bidPrice": [
+          1839750000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isMedicine": 0,
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN CÔNG NGHỆ SPEED-X VIỆT NAM"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T09:27:31"
+      },
+      {
+        "id": "c881ccb1-a9a0-4f32-b7d2-ae8355ee6d27",
+        "notifyId": "c881ccb1-a9a0-4f32-b7d2-ae8355ee6d27",
+        "inputResultId": "1cd565f7-5775-458e-8a8e-499548a5e143",
+        "bidOpenId": "2a3f5f5e-d965-4495-a5f8-ce1f63c88be2",
+        "techReqId": "8cc18dbd-9821-4cd0-8db3-51ffe8bad280",
+        "bidCloseDate": "2026-08-21T11:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_HTHS",
+        "bidName": [
+          "Gói thầu số 08: Tư vấn lập Báo cáo nghiên cứu khả thi, lập mô hình thông tin công trình (BIM)"
+        ],
+        "investField": [
+          "TV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội",
+            "districtCode": "00637",
+            "districtName": "Phường Đại Mỗ"
+          }
+        ],
+        "notifyNo": "IB2600419561",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600419561-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:06:06.091",
+        "publicDateKqmt": "2026-08-03T18:06:06.091",
+        "publicDateKqlcnt": "2026-08-27T15:53:32",
+        "status": "IS_PUBLISH",
+        "investorName": "BAN QUẢN LÝ DỰ ÁN ĐẦU TƯ - HẠ TẦNG PHƯỜNG ĐẠI MỖ",
+        "investorCode": "vn0111123688",
+        "bidOpenDate": "2026-08-21T11:00:00",
+        "originalPublicDate": "2026-08-03T18:06:06.091",
+        "isPass": 1,
+        "bidField": "TV",
+        "planType": "DTPT",
+        "planNo": "PL2600239773",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn0500319147",
+          "vn0100775353"
+        ],
+        "decisionDate": "2026-08-27T23:59:59",
+        "contractorName": [
+          "LIÊN DANH VĂN PHÒNG TƯ VẤN VÀ CHUYỂN GIAO CÔNG NGHỆ XÂY DỰNG- CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC"
+        ],
+        "ventureName": "LIÊN DANH VĂN PHÒNG TƯ VẤN VÀ CHUYỂN GIAO CÔNG NGHỆ XÂY DỰNG- CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC",
+        "bidWinningPrice": [
+          966000000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "fb3da522-9a1f-4786-ac6f-28787603519e",
+        "createdBy": "vn0111123688",
+        "bidPrice": [
+          981448000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "winningContractorName": [
+          "Văn phòng tư vấn và chuyển giao công nghệ xây dựng",
+          "CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ TƯ VẤN CIC"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-21T11:19:40"
+      },
+      {
+        "id": "56b1c630-ed82-48cf-b991-1ecd1bd0dc2e",
+        "notifyId": "56b1c630-ed82-48cf-b991-1ecd1bd0dc2e",
+        "inputResultId": "3f7efa98-a5c4-47af-8a82-5b30e9c352dc",
+        "bidOpenId": "abeb6f54-35a1-4da5-a1cf-b0093449b4f3",
+        "bidCloseDate": "2026-08-12T08:36:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Gói thầu số 5: Toàn bộ phần xây dựng"
+        ],
+        "investField": [
+          "XL"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "24",
+            "provName": "Tỉnh Bắc Ninh",
+            "districtCode": "09202",
+            "districtName": "Xã Tam Giang"
+          }
+        ],
+        "notifyNo": "IB2600413797",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600413797-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:05:46.895",
+        "publicDateKqmt": "2026-08-03T18:05:46.895",
+        "publicDateKqlcnt": "2026-08-25T15:36:42",
+        "status": "IS_PUBLISH",
+        "investorName": "PHÒNG KINH TẾ XÃ TAM GIANG",
+        "investorCode": "vn2301351189",
+        "bidOpenDate": "2026-08-12T08:36:00",
+        "originalPublicDate": "2026-08-03T18:05:46.895",
+        "isPass": 1,
+        "bidField": "XL",
+        "planType": "DTPT",
+        "planNo": "PL2600232140",
+        "stepCode": "notify-contractor-step-4-kqlcnt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "CNTTT",
+        "winningCode": [
+          "vn2300351203",
+          "vn2300371601"
+        ],
+        "decisionDate": "2026-08-25T23:59:59",
+        "contractorName": [
+          "Liên danh Công ty cổ phần xây dựng và thương mại Hoàng Thành -Công ty TNHH xây dựng và thương mại Phú Trường Hưng"
+        ],
+        "ventureName": "Liên danh Công ty cổ phần xây dựng và thương mại Hoàng Thành -Công ty TNHH xây dựng và thương mại Phú Trường Hưng",
+        "bidWinningPrice": [
+          16981712000.0
+        ],
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 1,
+        "numBidderJoin": 1,
+        "bidId": "e8a2a23b-c21b-4ce5-ad20-1d85b7c1748a",
+        "createdBy": "vn2301351189",
+        "bidPrice": [
+          16995839557.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "workType": "CTDB",
+        "winningContractorName": [
+          "CÔNG TY CỔ PHẦN XÂY DỰNG VÀ THƯƠNG MẠI HOÀNG THÀNH",
+          "CÔNG TY TNHH XÂY DỰNG VÀ THƯƠNG MẠI PHÚ TRƯỜNG HƯNG"
+        ],
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T09:43:21"
+      },
+      {
+        "id": "f6459ccd-43d1-45a8-a141-77437f7bf9e4",
+        "notifyId": "f6459ccd-43d1-45a8-a141-77437f7bf9e4",
+        "bidOpenId": "6b09b0f1-6b4c-4d2b-a54c-12be7623edc6",
+        "bidCloseDate": "2026-08-12T09:00:00",
+        "bidForm": "DTRR",
+        "bidMode": "1_MTHS",
+        "bidName": [
+          "Khám sức khỏe định kỳ cho cán bộ, công chức, viên chức, người lao động năm 2026 tại Trung tâm Học viện"
+        ],
+        "investField": [
+          "PTV"
+        ],
+        "isInternet": 1,
+        "locations": [
+          {
+            "provCode": "01",
+            "provName": "Thành phố Hà Nội"
+          }
+        ],
+        "notifyNo": "IB2600395397",
+        "notifyVersion": "00",
+        "notifyNoStand": "IB2600395397-00",
+        "processApply": "LDT",
+        "publicDate": "2026-08-03T18:04:41.571",
+        "publicDateKqmt": "2026-08-03T18:04:41.571",
+        "status": "OPEN_BID",
+        "investorName": "Văn phòng Học viện Chính trị quốc gia Hồ Chí Minh",
+        "investorCode": "vnz000018466",
+        "bidOpenDate": "2026-08-12T09:00:00",
+        "originalPublicDate": "2026-08-03T18:04:41.571",
+        "bidField": "PTV",
+        "planType": "TX",
+        "planNo": "PL2600185634",
+        "stepCode": "notify-contractor-step-2-kqmt",
+        "type": "es-notify-contractor",
+        "statusForNotify": "DXT",
+        "numPetition": 0,
+        "numClarifyReq": 0,
+        "numBidderTech": 0,
+        "numBidderJoin": 3,
+        "bidId": "eb335a08-6196-41cb-b629-8d511462442e",
+        "createdBy": "vnz000018466",
+        "bidPrice": [
+          1168850000.0
+        ],
+        "numPetitionHsmt": 0,
+        "numPetitionLcnt": 0,
+        "numPetitionKqlcnt": 0,
+        "score": "NaN",
+        "isDomestic": 1,
+        "bidRealityOpenDate": "2026-08-12T09:01:53"
+      }
+    ],
+    "totalPages": 10,
+    "pageSize": 50,
+    "currentPage": 0,
+    "totalElements": 465,
+    "sort": null,
+    "first": true,
+    "last": false,
+    "empty": false
+  },
+  "agg": [
+    {
+      "name": "status_cmt_blank",
+      "buckets": [
+        {
+          "aggregations": {
+            "asMap": {},
+            "fragment": true
+          },
+          "keyAsString": "0",
+          "docCount": 0,
+          "key": "0",
+          "fragment": true
+        }
+      ],
+      "type": "filters",
+      "fragment": true
+    },
+    {
+      "name": "status_dxt_blanks",
+      "buckets": [
+        {
+          "aggregations": {
+            "asMap": {},
+            "fragment": true
+          },
+          "keyAsString": "0",
+          "docCount": 0,
+          "key": "0",
+          "fragment": true
+        }
+      ],
+      "type": "filters",
+      "fragment": true
+    },
+    {
+      "aggregationName": "facet_is_closed_date",
+      "aggregationType": "range",
+      "bucketRanges": [
+        {
+          "key": "closed",
+          "docCount": 465
+        },
+        {
+          "key": "open",
+          "docCount": 0
+        }
+      ]
+    },
+    {
+      "aggregationName": "facet_status_notify",
+      "aggregationType": "string_term",
+      "bucketTerms": [
+        {
+          "key": "CNTTT",
+          "docCount": 398
+        },
+        {
+          "key": "DXT",
+          "docCount": 43
+        },
+        {
+          "key": "DHT",
+          "docCount": 23
+        },
+        {
+          "key": "KCNTTT",
+          "docCount": 1
+        }
+      ]
+    }
+  ]
+}

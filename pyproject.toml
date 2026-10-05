@@ -32,6 +32,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "procurement.quality" = ["*.toml"]
+"procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

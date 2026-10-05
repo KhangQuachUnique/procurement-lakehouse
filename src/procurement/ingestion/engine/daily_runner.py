@@ -23,7 +23,12 @@ from procurement.ingestion.engine.pagination import (
 from procurement.ingestion.engine.stats import PageStats
 from procurement.models.control import DayManifest, DayStatus, PageManifest, PageStatus
 from procurement.quality.storage import save_quality_page
-from procurement.storage.bronze import DltBronzeWriter, create_bronze_destination
+from procurement.storage.bronze import (
+    BronzeWriteError,
+    BufferedBronzeWriter,
+    DltBronzeWriter,
+    create_bronze_destination,
+)
 from procurement.storage.control import (
     commit_day_manifest,
     write_day_manifest,
@@ -104,7 +109,27 @@ def run_daily_resource(
     )
     # Fail before calling the source if control storage cannot create the attempt.
     write_day_manifest(fs, spec.identity, day)
-    writer = DltBronzeWriter(lambda: _create_pipeline(spec, source_date, run_id))
+    writer = BufferedBronzeWriter(DltBronzeWriter(lambda: _create_pipeline(spec, source_date, run_id)))
+    pending_pages = {}
+    next_page = 0
+
+    def confirm_pages():
+        nonlocal day
+        for number, count in writer.take_receipts().items():
+            confirmed = pending_pages.pop(number)
+            write_page_manifest(fs, spec.identity, confirmed.model_copy(update={
+                "status": PageStatus.SUCCESS, "bronze_records": count, "completed_at": _now(),
+            }))
+            day = day.model_copy(update={"completed_pages": day.completed_pages + 1})
+        day = day.model_copy(update={"bronze_records": writer.persisted_records})
+
+    def discard_pages():
+        writer.abort()
+        for number, pending in pending_pages.items():
+            write_page_manifest(fs, spec.identity, pending.model_copy(update={
+                "status": PageStatus.FAILED, "bronze_records": writer.confirmed[number],
+                "error_count": 1, "completed_at": _now(),
+            }))
     window_from, window_to = api_day_window(source_date)
     pages = iter_search_pages(
         spec.fetch_page,
@@ -121,7 +146,7 @@ def run_daily_resource(
             page = PageManifest(
                 run_id=run_id,
                 source_date=source_date,
-                page_number=day.completed_pages,
+                page_number=next_page,
                 page_size=page_size,
                 status=PageStatus.RUNNING,
                 started_at=_now(),
@@ -164,6 +189,8 @@ def run_daily_resource(
                     }
                 )
                 write_page_manifest(fs, spec.identity, page)
+                pending_pages[page_number] = page
+                next_page = page_number + 1
                 outcome = run_page(
                     spec=spec,
                     writer=writer,
@@ -194,27 +221,37 @@ def run_daily_resource(
                     page_number=page.page_number,
                     records=outcome.errors,
                 )
-            write_page_manifest(
-                fs,
-                spec.identity,
-                page.model_copy(
-                    update={
-                        "status": PageStatus.FAILED if outcome.errors else PageStatus.SUCCESS,
-                        "bronze_records": outcome.bronze_records,
-                        "error_count": len(outcome.errors),
-                        "completed_at": _now(),
-                    }
-                ),
-            )
+            confirm_pages()
             page_open = False
             if outcome.errors:
+                discard_pages()
+                write_page_manifest(fs, spec.identity, page.model_copy(update={
+                    "status": PageStatus.FAILED,
+                    "bronze_records": writer.confirmed[page.page_number],
+                    "error_count": len(outcome.errors), "completed_at": _now(),
+                }))
                 day = day.model_copy(update={"status": DayStatus.FAILED, "completed_at": _now()})
                 write_day_manifest(fs, spec.identity, day)
                 return _result(day)
-
-            day = day.model_copy(update={"completed_pages": day.completed_pages + 1})
             write_day_manifest(fs, spec.identity, day)
 
+        check_cancelled()
+        try:
+            writer.flush()
+        except BronzeWriteError as exc:
+            discard_pages()
+            error = build_error_record(
+                identity=spec.identity, run_id=run_id, source_date=source_date,
+                page_number=max(0, next_page - 1), stage="bronze_load", exc=exc.cause,
+            )
+            save_error_records(fs=fs, identity=spec.identity, source_date=source_date,
+                               run_id=run_id, page_number=max(0, next_page - 1), records=[error])
+            day = day.model_copy(update={"status": DayStatus.FAILED, "error_count": 1,
+                                        "bronze_records": writer.persisted_records,
+                                        "completed_at": _now()})
+            write_day_manifest(fs, spec.identity, day)
+            return _result(day)
+        confirm_pages()
         check_cancelled()
         if day.expected_pages is None or day.completed_pages != day.expected_pages:
             raise RuntimeError(
@@ -222,6 +259,11 @@ def run_daily_resource(
                 f"expected={day.expected_pages}"
             )
     except INTERRUPTIONS as exc:
+        day = day.model_copy(update={"bronze_records": writer.persisted_records})
+        try:
+            discard_pages()
+        except Exception:
+            logger.exception("failed_to_discard_pending_pages")
         # This handler ends before commit starts: never downgrade an uncertain SUCCESS.
         error = build_error_record(
             identity=spec.identity, run_id=run_id, stage="interrupted",
@@ -252,6 +294,11 @@ def run_daily_resource(
             logger.exception("failed_to_persist_interrupted_day run_id=%s", run_id)
         raise
     except Exception:
+        day = day.model_copy(update={"bronze_records": writer.persisted_records})
+        try:
+            discard_pages()
+        except Exception:
+            logger.exception("failed_to_discard_pending_pages")
         logger.exception(
             "daily_run_crashed run_id=%s source_date=%s resource=%s",
             run_id,

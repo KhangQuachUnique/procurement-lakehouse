@@ -1,6 +1,7 @@
 """Complete manifest-based coverage used by execution planning and data readers."""
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -26,14 +27,19 @@ class CoverageDay:
         return "no_attempt" if self.latest is None else "failed"
 
 
-def read_coverage(fs, identity: ResourceIdentity, start: date, end: date) -> list[CoverageDay]:
+def read_coverage(fs, identity: ResourceIdentity, start: date, end: date, *, runs=None, workers=1) -> list[CoverageDay]:
     if start > end:
         raise ValueError("start must be before or equal to end")
     by_date: dict[date, list[DayManifest]] = defaultdict(list)
     active: dict[date, list[str]] = defaultdict(list)
-    runs = list_run_manifests(fs, identity, start_date=start, end_date=end)
-    for run in runs:
-        attempts = list_day_manifests(fs, identity, run_id=run.run_id)
+    if runs is None:
+        runs = list_run_manifests(fs, identity, start_date=start, end_date=end, workers=workers)
+    runs = [run for run in runs if run.end_date >= start and run.start_date <= end]
+    def read_days(run):
+        return list_day_manifests(fs, identity, run_id=run.run_id)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        attempts_by_run = list(pool.map(read_days, runs))
+    for run, attempts in zip(runs, attempts_by_run, strict=True):
         for day in attempts:
             if start <= day.source_date <= end:
                 by_date[day.source_date].append(day)

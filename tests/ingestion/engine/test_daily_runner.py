@@ -169,7 +169,8 @@ def test_interruption_finalizes_day_page_and_error(harness, monkeypatch, excepti
     assert harness.pages[-1].status is PageStatus.FAILED
 
 
-def test_cancel_before_commit_keeps_completed_page_but_fails_uncommitted_day(harness):
+def test_cancel_before_commit_keeps_completed_page_but_fails_uncommitted_day(harness, monkeypatch):
+    monkeypatch.setattr(daily_runner.settings, "BRONZE_BATCH_RECORDS", 1)
     calls = 0
 
     def check():
@@ -343,7 +344,8 @@ def test_other_attempt_lineage_is_rejected_before_load(harness: Harness) -> None
     assert "another attempt" in harness.errors[-1].message
 
 
-def test_later_page_failure_preserves_earlier_load_but_fails_day(harness: Harness) -> None:
+def test_later_page_failure_preserves_earlier_load_but_fails_day(harness: Harness, monkeypatch) -> None:
+    monkeypatch.setattr(daily_runner.settings, "BRONZE_BATCH_RECORDS", 1)
     def fetch(*, page_number, **_):
         if page_number == 1:
             raise RuntimeError("search unavailable")
@@ -356,3 +358,33 @@ def test_later_page_failure_preserves_earlier_load_but_fails_day(harness: Harnes
     assert len(harness.pipeline.loads) == 1
     assert harness.pages[-1].page_number == 1
     assert harness.days[-1].status is DayStatus.FAILED
+
+
+def test_later_search_failure_discards_unflushed_pages(harness):
+    def fetch(*, page_number, **_):
+        if page_number == 1:
+            assert not harness.pipeline.loads
+            assert all(p.status is PageStatus.RUNNING for p in harness.pages)
+            raise RuntimeError("source unavailable")
+        return {"page": {"content": [{"id": str(i)} for i in range(50)], "totalElements": 51}}
+    result = _run(_spec(fetch_page=fetch))
+    assert result["status"] == "failed"
+    assert result["pages"] == result["bronze_records"] == 0
+    assert not harness.pipeline.loads
+    assert not any(p.status is PageStatus.SUCCESS for p in harness.pages)
+
+
+def test_cancel_discards_pending_buffer_without_committing(harness):
+    calls = 0
+    def check():
+        nonlocal calls
+        calls += 1
+        if calls == 3:
+            raise IngestionInterrupted("cancel before final flush")
+    with pytest.raises(IngestionInterrupted):
+        daily_runner.run_daily_resource(fs=object(), spec=_spec(), run_id="run-1",
+            source_date=SOURCE_DATE, page_size=50, check_cancelled=check)
+    assert not harness.pipeline.loads
+    assert harness.days[-1].status is DayStatus.FAILED
+    assert harness.days[-1].bronze_records == 0
+    assert harness.pages[-1].status is PageStatus.FAILED

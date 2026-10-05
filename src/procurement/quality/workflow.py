@@ -5,7 +5,7 @@ from pathlib import Path
 from procurement.common.file_lock import exclusive_file_lock
 from procurement.common.settings import settings
 from procurement.ingestion.engine.metadata import calculate_content_hash
-from procurement.ingestion.sources.muasamcong.notify_contractor.resource import NotifyContractorApi
+from procurement.quality.adapters import QUALITY_RESOURCES, search_api
 from procurement.quality.audit import run_audit
 from procurement.quality.comparison import compare_audits
 from procurement.quality.contracts import load_config
@@ -14,17 +14,17 @@ from procurement.quality.files import now, read_json, safe_error, write_json
 from procurement.quality.repair import apply_plan, create_plan, validate_plan
 
 
-def initialize_job(directory, year, config_path=None, *, existing=None):
+def initialize_job(directory, year, config_path=None, *, existing=None, resource="notify_contractor"):
     """Existing artifacts can be adopted explicitly without copying or changing them."""
     directory = Path(directory).resolve()
     path = directory / "job.json"
     if path.exists():
         return read_json(path)
-    selected = config_path or settings.NOTIFY_QUALITY_CONFIG
-    config_path = Path(selected).resolve() if selected else Path(__file__).with_name("notify.toml")
+    selected = config_path or (settings.NOTIFY_QUALITY_CONFIG if resource == "notify_contractor" else None)
+    config_path = Path(selected).resolve() if selected else Path(__file__).with_name("bid_opening.toml" if resource == "bid_opening" else "notify.toml")
     config = load_config(config_path)
-    if config.resource != "notify_contractor":
-        raise ValueError("Automatic repair currently supports notify_contractor only")
+    if config.resource not in QUALITY_RESOURCES:
+        raise ValueError("Unsupported automatic repair resource")
     paths = {key: str(directory / value) for key, value in {
         "snapshot": "search", "before": "before", "plan": "repair-plan.json", "repair": "repair",
     }.items()}
@@ -47,13 +47,15 @@ def initialize_job(directory, year, config_path=None, *, existing=None):
     return job
 
 
-def run_workflow(fs, client, *, year, directory, config_path=None, detail_workers=3):
+def run_workflow(fs, client, *, year, directory, config_path=None, detail_workers=3,
+                 resource="notify_contractor"):
     directory = Path(directory).resolve()
     with exclusive_file_lock(directory / "job.lock"):
-        job = initialize_job(directory, year, config_path)
+        job = initialize_job(directory, year, config_path, resource=resource)
         config = load_config(config_path or job["config"])
         namespace = calculate_content_hash([settings.OBJECT_STORAGE_ENDPOINT, settings.OBJECT_STORAGE_BUCKET])
         if (job["year"] != year or job["config_hash"] != config.fingerprint
+                or job["resource"] != config.resource or job["resource"] != resource
                 or job["storage_namespace"] != namespace):
             raise ValueError("Job year/config/storage changed; use a different work directory")
         paths = {key: Path(value) for key, value in job["paths"].items()}
@@ -68,7 +70,7 @@ def run_workflow(fs, client, *, year, directory, config_path=None, detail_worker
             stage("snapshot")
             index_path = paths["snapshot"] / "index.json"
             if not index_path.exists() or read_json(index_path)["status"] != "complete":
-                snapshot(NotifyContractorApi(client), year, paths["snapshot"], resume=index_path.exists())
+                snapshot(search_api(client, job["resource"]), year, paths["snapshot"], resume=index_path.exists())
             index, days = load_snapshot(paths["snapshot"])
             if index["year"] != year:
                 raise ValueError("Snapshot year differs from job")

@@ -18,7 +18,11 @@ ENDPOINTS = {
     "reoffer": "/o/egp-portal-contractor-selection-v2/services/online-reoffer/detail",
     "vk_adb": "/o/egp-portal-contractor-selection-v2/services/lcnt_tbmt_ttc_vk_adb",
 }
+RESOURCE_ENDPOINTS = ENDPOINTS | {
+    "bid_opening": "/o/egp-portal-contractor-selection-v2/services/exposeldtkqmt/bid-notification-p/notify",
+}
 TABLES = {kind: f"notify_contractor_{kind}_detail" for kind in ENDPOINTS}
+TABLES["bid_opening"] = "bid_opening_detail"
 
 
 class StrictModel(BaseModel):
@@ -34,6 +38,7 @@ class Thresholds(StrictModel):
 
 
 class Contract(StrictModel):
+    assembly: bool = False
     roots: list[str] = Field(min_length=1)
     id_fields: list[str] = Field(default_factory=lambda: ["id"], min_length=1)
     number_fields: list[str] = Field(default_factory=lambda: ["notifyNo"], min_length=1)
@@ -64,7 +69,7 @@ class QualityConfig(StrictModel):
         for route in self.routes:
             if route.name in names or route.contract not in self.contracts:
                 raise ValueError("Duplicate route name or missing contract")
-            if route.contract not in ENDPOINTS:
+            if route.contract not in RESOURCE_ENDPOINTS:
                 raise ValueError("Route endpoint is not in the known read-only endpoint registry")
             if (set(route.match) | set(route.exclude)) - {*WORKFLOW_FIELDS, "id", "notifyNo", "notifyVersion"}:
                 raise ValueError("Unsupported routing field")
@@ -73,14 +78,19 @@ class QualityConfig(StrictModel):
 
     @property
     def fingerprint(self):
-        return calculate_content_hash({"engine": ENGINE_VERSION, "config": self.model_dump()})
+        data = self.model_dump()
+        for contract in data["contracts"].values():
+            if not contract["assembly"]:
+                contract.pop("assembly")
+        return calculate_content_hash({"engine": ENGINE_VERSION, "config": data})
 
 
-def load_config(path=None):
+def load_config(path=None, *, resource="notify_contractor"):
     from procurement.common.settings import settings
 
-    selected = path or settings.NOTIFY_QUALITY_CONFIG
-    file = Path(selected) if selected else Path(__file__).with_name("notify.toml")
+    selected = path or (settings.NOTIFY_QUALITY_CONFIG if resource == "notify_contractor" else None)
+    default = "bid_opening.toml" if resource == "bid_opening" else "notify.toml"
+    file = Path(selected) if selected else Path(__file__).with_name(default)
     return QualityConfig.model_validate(tomllib.loads(file.read_text(encoding="utf-8")))
 
 
@@ -133,6 +143,9 @@ def _shape(value, *, nulls=False):
 
 
 def validate_detail(payload, context, contract, *, thresholds=None):
+    if contract.assembly:
+        from procurement.quality.bid_opening import validate_assembly
+        return validate_assembly(payload, context, contract, thresholds=thresholds)
     thresholds = thresholds or Thresholds()
     result = {"issues": [], "metrics": {}, "identity": {}}
     issues = result["issues"]

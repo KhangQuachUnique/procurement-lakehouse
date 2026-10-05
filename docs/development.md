@@ -63,3 +63,13 @@ README là điểm vào; mỗi nội dung có một nơi chính trong vận hàn
 phát triển. Khi hành vi đổi, sửa tại đó và kiểm liên kết/CLI `--help`. Không tạo
 thêm báo cáo theo phiên/năm hoặc snapshot JSON trong `docs/`; kết quả công cụ đặt
 ở `exports/`, thử nghiệm/cache ở `tmp/` (gitignored).
+
+
+Resource tổng hợp `bid_opening` có fixtures một túi, hai túi và search đã loại token tại
+`tests/ingestion/muasamcong/fixtures/`. Kiểm thay đổi writer bằng cả test buffer,
+daily lifecycle và `pytest -m integration -k local`; một trang accepted chưa phải
+persisted. Quality adapters giữ thao tác fetch riêng resource; contract assembly
+không sửa payload. Khi đổi scheduler, kiểm seed transactional, namespace,
+coverage gaps, idempotence, dữ liệu muộn và refresh FAILED/commit chưa rõ.
+Kiểm thêm kỹ thuật hợp lệ khi chưa công bố tài chính, tài chính xuất hiện với
+identity/version không đổi, null khi đã công bố phải fail và repair đủ hai phần.

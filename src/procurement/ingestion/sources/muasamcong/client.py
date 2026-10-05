@@ -53,6 +53,7 @@ class MuasamcongClient:
         request_budget: RequestBudget | None = None,
         retry_base_delay: float | None = None,
         shared_retry_cooldown: bool = False,
+        observer: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         if not token:
             raise ValueError("Muasamcong token is required")
@@ -66,6 +67,7 @@ class MuasamcongClient:
         self._sleep = sleep
         self._retry_base_delay = retry_base_delay
         self._shared_retry_cooldown = shared_retry_cooldown
+        self._observer = observer
         self._request_budget = (
             request_budget if request_budget is not None
             else RequestBudget(settings.MUASAMCONG_MAX_INFLIGHT)
@@ -91,13 +93,29 @@ class MuasamcongClient:
     def close(self) -> None:
         self._client.close()
 
+    def cancel_requests(self) -> None:
+        """Stop queued source calls when a detail worker or its caller is interrupted."""
+        self._request_budget.cancel()
+
     def post(self, path: str, body: Any) -> dict[str, Any]:
+        payload = self._post_json(path, body)
+        if not isinstance(payload, dict):
+            raise TypeError("Source response must be a JSON object")
+        return payload
+
+    def post_array(self, path: str, body: Any) -> list[Any]:
+        payload = self._post_json(path, body)
+        if not isinstance(payload, list):
+            raise TypeError("Source response must be a JSON array")
+        return payload
+
+    def _post_json(self, path: str, body: Any) -> Any:
         # This transport is for read-only source endpoints implemented as POST.
         # Share the auth circuit across resource clients in this flow.
         for attempt in range(1, self._max_attempts + 1):
             try:
                 with self._request_budget.request():
-                    response = self._client.post(path, params={"token": self._token}, json=body)
+                    response = self._send(path, body, attempt)
                     if response.status_code in {401, 403}:
                         self._request_budget.reject_auth(response)
                 if response.status_code in RETRYABLE_STATUS_CODES and attempt < self._max_attempts:
@@ -115,8 +133,6 @@ class MuasamcongClient:
                         self._wait_retry(delay)
                         continue
                     raise SourceResponseError(path, body, response, attempt) from None
-                if not isinstance(payload, dict):
-                    raise TypeError("Source response must be a JSON object")
                 return payload
             except httpx.TransportError as exc:
                 if attempt >= self._max_attempts:
@@ -128,7 +144,35 @@ class MuasamcongClient:
                 self._wait_retry(self._retry_delay(attempt) or 0)
         raise RuntimeError("Unexpected retry state")
 
+    def _send(self, path, body, attempt):
+        if self._observer is None:
+            return self._client.post(path, params={"token": self._token}, json=body)
+        started = time.monotonic()
+        event = {"kind": "attempt", "endpoint": path.split("?", 1)[0],
+                 "attempt": attempt, "http_status": None, "error": None}
+        try:
+            response = self._client.post(path, params={"token": self._token}, json=body)
+            event["http_status"] = response.status_code
+            event["response_bytes"] = len(response.content)
+            if not response.is_success:
+                event["error"] = f"HTTP_{response.status_code}"
+            else:
+                try:
+                    response.json()
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    event["error"] = "InvalidJSON"
+            return response
+        except httpx.TransportError as exc:
+            event["error"] = type(exc).__name__
+            raise
+        finally:
+            event["latency_ms"] = (time.monotonic() - started) * 1000
+            # Observers receive no URL query, headers, request body, or exception text.
+            self._observer(event)
+
     def _wait_retry(self, delay):
+        if self._observer is not None:
+            self._observer({"kind": "retry_wait", "delay_seconds": delay})
         if self._shared_retry_cooldown:
             self._request_budget.defer(delay)
         self._sleep(delay)

@@ -29,27 +29,31 @@ from procurement.storage.object_store import create_s3_filesystem
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("daily", "backfill", "repair", "status", "verify"))
-    parser.add_argument("--resource", choices=("all", *SUPPORTED_RESOURCES), default="all")
+    parser.add_argument("--resource", choices=("all", *SUPPORTED_RESOURCES),
+                        help="Required single resource for daily/backfill/repair; all is read-only")
     parser.add_argument("--year", type=int, help="Process one fully closed calendar year")
     parser.add_argument("--start-date", type=date.fromisoformat)
     parser.add_argument("--end-date", type=date.fromisoformat)
     parser.add_argument("--lookback-days", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=50)
     parser.add_argument(
-        "--resource-workers", type=int, default=settings.INGESTION_RESOURCE_WORKERS,
-        help="Concurrent resources (1-4); days within a resource remain sequential",
-    )
-    parser.add_argument(
         "--khlcnt-package-workers", type=int, default=settings.KHLCNT_PACKAGE_WORKERS,
         help="Concurrent packages within one KHLCNT plan (1-32)",
     )
     parser.add_argument(
-        "--source-max-inflight", type=int, default=settings.MUASAMCONG_MAX_INFLIGHT,
-        help="Shared HTTP request limit across all resources in this flow (1-32)",
+        "--bid-opening-detail-workers", type=int, default=settings.BID_OPENING_DETAIL_WORKERS,
+        help="Concurrent bid openings within one search page (1-32)",
     )
     parser.add_argument(
-        "--source-request-interval", type=float, default=settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS,
-        help="Minimum seconds between HTTP request starts across the entire flow (0-60)",
+        "--source-max-inflight", type=int, default=None,
+        help="Shared HTTP request limit (1-32); default: BID_OPENING_MAX_INFLIGHT for bid_opening, "
+             "MUASAMCONG_MAX_INFLIGHT for other resources",
+    )
+    parser.add_argument(
+        "--source-request-interval", type=float, default=None,
+        help="Minimum seconds between HTTP request starts (0-60); default: "
+             "BID_OPENING_REQUEST_INTERVAL_SECONDS for bid_opening, "
+             "MUASAMCONG_REQUEST_INTERVAL_SECONDS for other resources",
     )
     parser.add_argument(
         "--max-days", type=int, help="Date limit (default: 31, or the full year with --year)"
@@ -71,13 +75,31 @@ def _parser():
     return parser
 
 
+def _request_interval(args):
+    if args.source_request_interval is not None:
+        return args.source_request_interval
+    return (settings.BID_OPENING_REQUEST_INTERVAL_SECONDS if args.resource == "bid_opening"
+            else settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS)
+
+
+def _max_inflight(args):
+    if args.source_max_inflight is not None:
+        return args.source_max_inflight
+    return (settings.BID_OPENING_MAX_INFLIGHT if args.resource == "bid_opening"
+            else settings.MUASAMCONG_MAX_INFLIGHT)
+
+
 def resolve_dates(args, *, today: date) -> tuple[date, date]:
+    if args.mode in {"daily", "backfill", "repair"} and args.resource in {None, "all"}:
+        raise ValueError("Choose one --resource for ingestion; all is only allowed for status/verify")
     validate_page_size(args.page_size)
+    args.source_request_interval = _request_interval(args)
+    args.source_max_inflight = _max_inflight(args)
     if not isfinite(args.source_request_interval) or not 0 <= args.source_request_interval <= 60:
         raise ValueError("--source-request-interval must be finite and between 0 and 60")
     for flag, value, maximum in (
-        ("resource-workers", args.resource_workers, 4),
         ("khlcnt-package-workers", args.khlcnt_package_workers, 32),
+        ("bid-opening-detail-workers", args.bid_opening_detail_workers, 32),
         ("source-max-inflight", args.source_max_inflight, 32),
     ):
         if not 1 <= value <= maximum:
@@ -126,13 +148,16 @@ def _liveness(fs, identity, run_id: str, threshold: timedelta) -> str:
 
 
 def _execute_plan(args, fs, plan, report, run_day):
-    budget = RequestBudget(args.source_max_inflight, min_interval=args.source_request_interval)
+    if any(resource != args.resource for resource, _ in plan) or args.resource in {None, "all"}:
+        raise ValueError("An ingestion plan must contain only the selected resource")
+    budget = RequestBudget(_max_inflight(args), min_interval=_request_interval(args))
 
     def attempt(resource, source_date):
         try:
             run_id = run_day(
                 resource, source_date, page_size=args.page_size,
                 request_budget=budget, khlcnt_package_workers=args.khlcnt_package_workers,
+                bid_opening_detail_workers=args.bid_opening_detail_workers,
             )
             identity = get_resource(resource).identity
             manifest = read_run_manifest(fs, identity, run_id)
@@ -158,11 +183,11 @@ def _execute_plan(args, fs, plan, report, run_day):
     pending = {}
     stopping = False
     with ThreadPoolExecutor(
-        max_workers=args.resource_workers, thread_name_prefix="ingestion-resource"
+        max_workers=1, thread_name_prefix="ingestion-resource"
     ) as pool:
         try:
             while ready or pending:
-                while ready and not stopping and len(pending) < args.resource_workers:
+                while ready and not stopping and not pending:
                     resource = ready.popleft()
                     source_date = dates[resource].popleft()
                     pending[pool.submit(attempt, resource, source_date)] = resource
@@ -193,7 +218,7 @@ def _execute_plan(args, fs, plan, report, run_day):
 def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]:
     start, end = resolve_dates(args, today=today_vn())
     fs = fs if fs is not None else create_s3_filesystem()
-    resources = SUPPORTED_RESOURCES if args.resource == "all" else (args.resource,)
+    resources = SUPPORTED_RESOURCES if args.resource in {None, "all"} else (args.resource,)
     report = {
         "mode": args.mode,
         "start_date": str(start),
@@ -204,8 +229,9 @@ def execute_flow(args, *, fs=None, run_day=run_resource_day) -> tuple[dict, int]
         "attempted_days": 0,
         "continue_on_error": args.continue_on_error,
         "concurrency": {
-            "resource_workers": args.resource_workers,
+            "resource_workers": 1,
             "khlcnt_package_workers": args.khlcnt_package_workers,
+            "bid_opening_detail_workers": args.bid_opening_detail_workers,
             "source_max_inflight": args.source_max_inflight,
             "source_request_interval": args.source_request_interval,
         },
@@ -302,6 +328,12 @@ def main():
         else:
             with execution_lock(args.lock_dir):
                 report, code = execute_flow(args)
+                if code == 0 and args.mode == "daily" and args.resource == "bid_opening":
+                    from procurement.tools.watch_bid_opening import run_watch
+                    report["bid_opening_watch"] = run_watch(create_s3_filesystem(),
+                        detail_workers=args.bid_opening_detail_workers,
+                        request_budget=RequestBudget(args.source_max_inflight,
+                            min_interval=args.source_request_interval))
         print(json.dumps(report, ensure_ascii=False, indent=2))
     except KeyboardInterrupt:
         print(json.dumps({"error": "interrupted; inspect manifests before retry"}))

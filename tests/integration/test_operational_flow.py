@@ -4,7 +4,7 @@ from threading import Barrier, Lock
 import httpx
 import pytest
 
-from procurement.common.catalog import get_resource
+from procurement.common.catalog import SUPPORTED_RESOURCES, get_resource
 from procurement.common.settings import settings
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.ingestion.sources.muasamcong.contractor_result.resource import (
@@ -39,9 +39,9 @@ def reviewed_fixture_routes(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "failure_status,continue_mode,attempted", [(404, True, 8), (404, False, 1), (401, True, 1)]
+    "failure_status,continue_mode,attempted", [(404, True, 2), (404, False, 1), (401, True, 1)]
 )
-def test_continue_across_days_and_resources_then_repair_only_failed_day(
+def test_continue_across_selected_resource_days_then_repair_only_failed_day(
     store, monkeypatch, failure_status, continue_mode, attempted
 ):
     fs, _ = store
@@ -73,20 +73,19 @@ def test_continue_across_days_and_resources_then_repair_only_failed_day(
     )
     options = ingest._parser().parse_args(
         ["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-02",
-         "--resource-workers", "1"]
+         "--resource", "project"]
     )
     options.continue_on_error = continue_mode
     report, code = ingest.execute_flow(options, fs=fs)
     assert code == 1
     assert report["attempted_days"] == attempted
-    assert report["planned_days"] == 8
+    assert report["planned_days"] == 2
     assert report["stopped_early"] is (attempted == 1)
     assert report["execution_errors"][0]["reason"] == (
         "authentication_failure" if failure_status == 401 else "source_failure"
     )
-    if attempted == 8:
+    if attempted == 2:
         assert report["resources"][0]["missing_dates"] == ["2025-01-01"]
-        assert all(item["verified"]["days"] == 2 for item in report["resources"][1:])
         failing = False
         source.searches.clear()
         options.mode = "repair"
@@ -94,10 +93,11 @@ def test_continue_across_days_and_resources_then_repair_only_failed_day(
         assert code == 0
         assert report["planned_days"] == report["attempted_days"] == 1
         assert source.searches == ["project"]
-        assert sum(item["verified"]["records"] for item in report["resources"]) == 12
+        assert sum(item["verified"]["records"] for item in report["resources"]) == 2
 
 
-def test_live_empty_page_contract_commits_without_parquet(store, monkeypatch):
+@pytest.mark.parametrize("resource", SUPPORTED_RESOURCES)
+def test_live_empty_page_contract_commits_without_parquet(store, monkeypatch, resource):
     fs, bucket = store
     calls = []
 
@@ -127,11 +127,11 @@ def test_live_empty_page_contract_commits_without_parquet(store, monkeypatch):
         lambda **kwargs: MuasamcongClient(**kwargs, transport=httpx.MockTransport(empty_source)),
     )
     args = ingest._parser().parse_args(
-        ["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-01"]
+        ["backfill", "--resource", resource, "--start-date", "2025-01-01", "--end-date", "2025-01-01"]
     )
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 0
-    assert len(calls) == 4
+    assert len(calls) == 1
     assert all(
         item["verified"] == {"days": 1, "files": 0, "records": 0} for item in report["resources"]
     )
@@ -154,6 +154,8 @@ class Source:
                 resource, content = "project", [{"id": "p"}]
             elif kind == "es-plan-project-p":
                 resource, content = "khlcnt", [{"id": "plan", "planVersion": "01"}]
+            elif "publicDateKqmt" in filters:
+                resource, content = "bid_opening", []
             elif "publicDateKqlcnt" in filters:
                 resource, content = (
                     "contractor_result",
@@ -210,11 +212,11 @@ def test_full_flow_repair_idempotence_and_failed_refresh(store, monkeypatch):
         ),
     )
     args = ingest._parser().parse_args(
-        ["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-01"]
+        ["backfill", "--resource", "contractor_result", "--start-date", "2025-01-01", "--end-date", "2025-01-01"]
     )
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 1
-    assert [item["missing_dates"] for item in report["resources"]] == [[], [], [], ["2025-01-01"]], "\n".join(
+    assert [item["missing_dates"] for item in report["resources"]] == [["2025-01-01"]], "\n".join(
         error.message for name in ("project", "khlcnt")
         for error in list_error_records(fs, get_resource(name).identity)
     )
@@ -226,7 +228,7 @@ def test_full_flow_repair_idempotence_and_failed_refresh(store, monkeypatch):
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 0
     assert source.searches == ["contractor_result"]
-    assert sum(item["verified"]["records"] for item in report["resources"]) == 6
+    assert sum(item["verified"]["records"] for item in report["resources"]) == 1
     for item in report["resources"]:
         run_id = item["dates"][0]["effective_run_id"]
         assert (
@@ -261,28 +263,23 @@ def test_full_flow_repair_idempotence_and_failed_refresh(store, monkeypatch):
     assert report["execution_errors"]
 
 
-def test_parallel_packages_and_resources_preserve_failed_day_and_repair(store, monkeypatch):
+def test_parallel_packages_of_single_resource_preserve_failed_day_and_repair(store, monkeypatch):
     fs, _ = store
     source = Source()
     source.failed_result = False
-    resource_gate, package_gate = Barrier(2), Barrier(3)
+    package_gate = Barrier(3)
     lock = Lock()
-    active = peak = searches = 0
+    active = peak = 0
     failing = True
 
     def handler(request):
-        nonlocal active, peak, searches
+        nonlocal active, peak
         with lock:
             active += 1
             peak = max(peak, active)
         try:
             body = json.loads(request.content)
             if isinstance(body, list):
-                with lock:
-                    searches += 1
-                    number = searches
-                if number <= 2:
-                    resource_gate.wait(timeout=10)  # two real day runners must overlap
                 response = source(request)
                 payload = response.json()
                 filters = body[0]["query"][0]["filters"]
@@ -316,17 +313,16 @@ def test_parallel_packages_and_resources_preserve_failed_day_and_repair(store, m
     )
     args = ingest._parser().parse_args([
         "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-02",
-        "--continue-on-error", "--resource-workers", "2", "--khlcnt-package-workers", "3",
+        "--continue-on-error", "--resource", "khlcnt", "--khlcnt-package-workers", "3",
         "--source-max-inflight", "3",
     ])
     report, code = ingest.execute_flow(args, fs=fs)
     assert code == 1
     assert peak == 3
-    assert report["attempted_days"] == 8
+    assert report["attempted_days"] == 2
     assert len(report["execution_errors"]) == 1
     assert report["execution_errors"][0]["reason"] == "source_failure"
-    assert report["resources"][1]["missing_dates"] == ["2025-01-01"]
-    assert all(not item["missing_dates"] for item in report["resources"] if item["resource"] != "khlcnt")
+    assert report["resources"][0]["missing_dates"] == ["2025-01-01"]
 
     failing = False
     source.searches.clear()
@@ -335,4 +331,4 @@ def test_parallel_packages_and_resources_preserve_failed_day_and_repair(store, m
     assert code == 0
     assert report["attempted_days"] == report["planned_days"] == 1
     assert source.searches == ["khlcnt"]
-    assert sum(item["verified"]["records"] for item in report["resources"]) == 24
+    assert sum(item["verified"]["records"] for item in report["resources"]) == 16

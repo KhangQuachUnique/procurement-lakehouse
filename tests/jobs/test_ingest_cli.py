@@ -6,10 +6,29 @@ import pytest
 from procurement.jobs import ingest, runner
 
 
+@pytest.mark.parametrize("mode", ["daily", "backfill", "repair"])
+@pytest.mark.parametrize("resource", [[], ["--resource", "all"]])
+def test_ingestion_requires_one_explicit_resource_before_storage(monkeypatch, mode, resource):
+    fs = Mock(side_effect=AssertionError("must not touch storage"))
+    monkeypatch.setattr(ingest, "create_s3_filesystem", fs)
+    dates = [] if mode == "daily" else ["--year", "2025"]
+    monkeypatch.setattr("sys.argv", ["ingest", mode, *dates, *resource])
+    with pytest.raises(SystemExit) as exc:
+        ingest.main()
+    assert exc.value.code == 2
+    fs.assert_not_called()
+
+
+@pytest.mark.parametrize("mode", ["status", "verify"])
+def test_read_only_commands_still_accept_all(mode):
+    args = ingest._parser().parse_args([mode, "--resource", "all", "--year", "2025"])
+    assert ingest.resolve_dates(args, today=date(2026, 10, 4)) == (date(2025, 1, 1), date(2025, 12, 31))
+
+
 @pytest.mark.parametrize("year,days", [(2025, 365), (2024, 366)])
 @pytest.mark.parametrize("mode", ["backfill", "repair", "status", "verify"])
 def test_year_selects_whole_closed_year_without_redundant_budget_flag(mode, year, days):
-    options = ingest._parser().parse_args([mode, "--year", str(year)])
+    options = ingest._parser().parse_args([mode, "--resource", "project", "--year", str(year)])
     start, end = ingest.resolve_dates(options, today=date(2026, 9, 18))
     assert start == date(year, 1, 1)
     assert end == date(year, 12, 31)
@@ -48,7 +67,7 @@ def test_invalid_cli_input_fails_before_touching_storage(monkeypatch, arguments)
     filesystem = Mock(side_effect=AssertionError("must not access storage"))
     monkeypatch.setattr(ingest, "create_s3_filesystem", filesystem)
     monkeypatch.setattr(ingest, "today_vn", lambda: date(2026, 9, 18))
-    monkeypatch.setattr("sys.argv", ["ingest", *arguments])
+    monkeypatch.setattr("sys.argv", ["ingest", *arguments, "--resource", "project"])
     with pytest.raises(SystemExit) as exc:
         ingest.main()
     assert exc.value.code == 2

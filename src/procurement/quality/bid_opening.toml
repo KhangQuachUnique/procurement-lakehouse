@@ -1,0 +1,14 @@
+version = "bid-opening-2-phases"
+resource = "bid_opening"
+
+[contracts.bid_opening]
+roots = ["notify.bidNoContractorResponse.bidNotification", "roundmng.bidoBidroundMngViewDTO"]
+allow_search_version = true
+assembly = true
+
+[[routes]]
+name = "bid-opening-by-mode"
+contract = "bid_opening"
+evidence = "single-envelope sample; IB2200000122 technical/financial live responses"
+[routes.match]
+isInternet = 1
