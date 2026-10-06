@@ -6,16 +6,36 @@ from procurement.common.settings import settings
 from procurement.infrastructure.database import create_application_engine
 from procurement.ingestion.engine.models import ResourceSpec
 from procurement.ingestion.service import IngestionService
+from procurement.ingestion.sources.muasamcong.bid_opening.resource import (
+    create_bid_opening_spec,
+)
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
+from procurement.ingestion.sources.muasamcong.contractor_result.resource import (
+    create_contractor_result_spec,
+)
+from procurement.ingestion.sources.muasamcong.khlcnt.resource import create_khlcnt_spec
+from procurement.ingestion.sources.muasamcong.notify_contractor.resource import (
+    create_notify_contractor_spec,
+)
 from procurement.ingestion.sources.muasamcong.project.resource import create_project_spec
 from procurement.metadata.service import PostgresMetadataService
 
 
 def create_spec_factory(client: MuasamcongClient) -> Callable[[str], ResourceSpec]:
     def factory(resource_name: str) -> ResourceSpec:
-        if resource_name == "project":
-            return create_project_spec(client)
-        raise ValueError(f"Unsupported resource for refactored core: {resource_name}")
+        match resource_name:
+            case "project":
+                return create_project_spec(client)
+            case "bid_opening":
+                return create_bid_opening_spec(client)
+            case "contractor_result":
+                return create_contractor_result_spec(client)
+            case "khlcnt":
+                return create_khlcnt_spec(client)
+            case "notify_contractor":
+                return create_notify_contractor_spec(client)
+            case _:
+                raise ValueError(f"Unsupported resource for refactored core: {resource_name}")
 
     return factory
 

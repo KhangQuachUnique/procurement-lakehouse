@@ -163,52 +163,61 @@ def build_bronze_asset(definition):
         source_date = date.fromisoformat(context.partition_key)
         validate_closed_range(source_date, source_date, today=today_vn())
 
-        if definition.identity.resource == "project":
-            from procurement.bootstrap import bootstrap_services
-            from procurement.ingestion.contracts import MaterializeDayRequest
+        from procurement.bootstrap import bootstrap_services
+        from procurement.ingestion.contracts import MaterializeDayRequest
 
-            service, _ = bootstrap_services()
-            run_id = (
-                context.run.run_id
-                if hasattr(context, "run") and context.run
-                else getattr(context, "run_id", None)
-            )
-            request = MaterializeDayRequest(
-                source_date=source_date,
-                resource="project",
-                refresh=config.refresh,
-                dagster_run_id=run_id,
-                page_size=config.page_size,
-            )
-            result = service.materialize_day(request)
+        resource_name = definition.identity.resource
+        service, _ = bootstrap_services()
+        run_id = (
+            context.run.run_id
+            if hasattr(context, "run") and context.run
+            else getattr(context, "run_id", None)
+        )
+        request = MaterializeDayRequest(
+            source_date=source_date,
+            resource=resource_name,
+            refresh=config.refresh,
+            dagster_run_id=run_id,
+            page_size=config.page_size,
+        )
+        result = service.materialize_day(request)
+        yield AssetCheckResult(
+            check_name="committed_manifest",
+            passed=True,
+            metadata={
+                "commit_id": str(result.commit_id) if result.commit_id else "",
+                "reused": result.reused,
+            },
+        )
+        yield AssetCheckResult(
+            check_name="committed_integrity",
+            passed=True,
+            metadata={
+                "records": result.record_count,
+                "files": result.file_count,
+            },
+        )
+        if resource_name in QUALITY_RESOURCES:
             yield AssetCheckResult(
-                check_name="committed_manifest",
+                check_name="quality_contract",
                 passed=True,
                 metadata={
                     "commit_id": str(result.commit_id) if result.commit_id else "",
-                    "reused": result.reused,
-                },
-            )
-            yield AssetCheckResult(
-                check_name="committed_integrity",
-                passed=True,
-                metadata={
                     "records": result.record_count,
-                    "files": result.file_count,
                 },
             )
-            yield MaterializeResult(
-                metadata={
-                    "resource": result.resource,
-                    "source_date": result.source_date.isoformat(),
-                    "reused": result.reused,
-                    "commit_id": str(result.commit_id) if result.commit_id else "",
-                    "attempt_id": str(result.attempt_id) if result.attempt_id else "",
-                    "record_count": result.record_count,
-                    "file_count": result.file_count,
-                }
-            )
-            return
+        yield MaterializeResult(
+            metadata={
+                "resource": result.resource,
+                "source_date": result.source_date.isoformat(),
+                "reused": result.reused,
+                "commit_id": str(result.commit_id) if result.commit_id else "",
+                "attempt_id": str(result.attempt_id) if result.attempt_id else "",
+                "record_count": result.record_count,
+                "file_count": result.file_count,
+            }
+        )
+        return
 
         fs = context.resources.object_storage
         materialization_started = perf_counter()

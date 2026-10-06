@@ -14,14 +14,19 @@ from procurement.orchestration import bronze
 pytestmark = pytest.mark.integration
 
 
-def test_dagster_bronze_project_asset_delegates_to_service(monkeypatch):
+@pytest.mark.parametrize(
+    "resource",
+    ["project", "bid_opening", "contractor_result", "khlcnt", "notify_contractor"],
+)
+def test_all_dagster_bronze_assets_delegate_to_service(resource, monkeypatch):
     day = date(2025, 1, 1)
-    selected = next(a for a in bronze.bronze_assets if a.key.to_user_string() == "bronze_project")
+    asset_name = f"bronze_{resource}"
+    selected = next(a for a in bronze.bronze_assets if a.key.to_user_string() == asset_name)
 
     mock_service = Mock()
     mock_service.materialize_day.return_value = MaterializeDayResult(
         source="muasamcong",
-        resource="project",
+        resource=resource,
         source_date=day,
         reused=False,
         status="success",
@@ -39,12 +44,12 @@ def test_dagster_bronze_project_asset_delegates_to_service(monkeypatch):
         [selected],
         resources={"object_storage": Mock()},
         partition_key=str(day),
-        run_config={"ops": {"bronze_project": {"config": {"refresh": False}}}},
+        run_config={"ops": {asset_name: {"config": {"refresh": False}}}},
     )
 
     assert result.success
     mock_service.materialize_day.assert_called_once()
     req = mock_service.materialize_day.call_args[0][0]
-    assert req.resource == "project"
+    assert req.resource == resource
     assert req.source_date == day
     assert not req.refresh
