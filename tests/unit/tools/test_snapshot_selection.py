@@ -15,16 +15,17 @@ from procurement.tools.bronze_explorer import BronzeTable, select_snapshot_files
 def test_select_snapshot_files_retrieves_files_and_commits():
     mock_meta = MagicMock()
 
+    cid = uuid4()
     part = PartitionRecord(
         id=uuid4(),
         identity=PartitionIdentity(
             source="muasamcong", resource="project", source_date=date(2024, 1, 1)
         ),
-        current_commit_id=uuid4(),
+        current_commit_id=cid,
         created_at=MagicMock(),
     )
     commit = CommitRecord(
-        id=part.current_commit_id,
+        id=cid,
         partition_id=part.id,
         attempt_id=uuid4(),
         parent_commit_id=None,
@@ -35,7 +36,7 @@ def test_select_snapshot_files_retrieves_files_and_commits():
         committed_at=MagicMock(),
         files=(
             CommitFileDescriptor(
-                commit_id=part.current_commit_id,
+                commit_id=cid,
                 file_number=1,
                 table_name="project_detail",
                 bucket="test-bucket",

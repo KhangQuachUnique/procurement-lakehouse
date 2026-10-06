@@ -219,6 +219,8 @@ def iter_khlcnt_records(
                     source_id=package_id,
                 )
                 continue
+            if package_detail is None:
+                continue
 
             yield build_bid_package_record(
                 source_id=package_id,

@@ -162,7 +162,7 @@ def list_day_manifests(
     pattern = f"{_resource_prefix(identity)}/{run_part}/{date_part}/day.json"
     manifests: list[DayManifest] = []
     for key in fs.glob(pattern):
-        data = read_json(fs, key)
+        data = read_json(fs, str(key))
         if data is not None:
             manifests.append(DayManifest.model_validate(data))
     return sorted(manifests, key=lambda item: item.started_at, reverse=True)
@@ -208,7 +208,7 @@ def list_page_manifests(
     pattern = f"{_day_prefix(identity, run_id, source_date)}/pages/page-*.json"
     manifests: list[PageManifest] = []
     for key in fs.glob(pattern):
-        data = read_json(fs, key)
+        data = read_json(fs, str(key))
         if data is not None:
             manifests.append(PageManifest.model_validate(data))
     return sorted(manifests, key=lambda item: item.page_number)

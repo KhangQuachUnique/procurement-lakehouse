@@ -59,3 +59,8 @@ markers = ["integration: real DLT/filesystem or isolated S3 integration tests"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+]

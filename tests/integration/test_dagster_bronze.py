@@ -147,4 +147,5 @@ def test_dagster_real_commit_retry_and_reuse(database, store, monkeypatch, tmp_p
         assert attempt_rows == ["success", "failed", "success"]
 
     # Auditable evidence: pipeline artifacts created
+    assert settings.DLT_PIPELINES_DIR is not None
     assert list(Path(settings.DLT_PIPELINES_DIR).iterdir())

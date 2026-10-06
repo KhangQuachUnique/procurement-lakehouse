@@ -53,6 +53,10 @@ class Harness:
             "create_bronze_resource",
             lambda records, *, name: (name, list(records)),
         )
+        monkeypatch.setattr(
+            "procurement.bronze.dlt_writer.create_bronze_resource",
+            lambda records, *, name: (name, list(records)),
+        )
         monkeypatch.setattr(daily_runner.dlt, "pipeline", self._create_pipeline)
 
     def _create_pipeline(self, **kwargs: Any) -> FakePipeline:

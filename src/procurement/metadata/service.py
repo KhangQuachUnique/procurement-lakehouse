@@ -98,7 +98,7 @@ class PostgresMetadataService(MetadataService):
                     refresh_in_progress=False,
                 )
 
-            db_now: datetime = conn.execute(select(func.now())).scalar()
+            db_now: datetime = conn.execute(select(func.now())).scalar_one()
 
             # 2. Look up or create partition
             part_stmt = (
@@ -210,7 +210,7 @@ class PostgresMetadataService(MetadataService):
             att = get_attempt_by_id(conn, attempt_id)
             if att is None:
                 raise AttemptNotFoundError(f"Attempt {attempt_id} not found")
-            db_now: datetime = conn.execute(select(func.now())).scalar()
+            db_now: datetime = conn.execute(select(func.now())).scalar_one()
             return pg_renew_lease(
                 conn,
                 att.partition_id,
@@ -241,7 +241,7 @@ class PostgresMetadataService(MetadataService):
         verification: dict[str, Any],
     ) -> CommitRecord:
         with self._engine.begin() as conn:
-            db_now: datetime = conn.execute(select(func.now())).scalar()
+            db_now: datetime = conn.execute(select(func.now())).scalar_one()
             return pg_publish_commit(
                 conn,
                 attempt_id=attempt_id,
@@ -287,7 +287,7 @@ class PostgresMetadataService(MetadataService):
                     )
                 release_lease(conn, partition_id)
 
-            db_now: datetime = conn.execute(select(func.now())).scalar()
+            db_now: datetime = conn.execute(select(func.now())).scalar_one()
             status_val = "canceled" if canceled else "failed"
             conn.execute(
                 attempts.update()

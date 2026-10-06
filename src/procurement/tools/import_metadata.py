@@ -39,6 +39,8 @@ def compute_sha256(fs: s3fs.S3FileSystem, key: str, chunk_size: int = 1024 * 102
     h = hashlib.sha256()
     with fs.open(key, "rb") as f:
         while chunk := f.read(chunk_size):
+            if isinstance(chunk, str):
+                chunk = chunk.encode("utf-8")
             h.update(chunk)
     return h.hexdigest()
 
@@ -48,6 +50,8 @@ def read_parquet_rows(fs: s3fs.S3FileSystem, key: str, size: int) -> int:
     if size < 12:
         return 0
     tail = fs.cat_file(key, start=size - 8, end=size)
+    if isinstance(tail, str):
+        tail = tail.encode("utf-8")
     if len(tail) != 8 or tail[4:] != b"PAR1":
         return 0
     import struct
@@ -56,6 +60,8 @@ def read_parquet_rows(fs: s3fs.S3FileSystem, key: str, size: int) -> int:
     if not (0 < length <= size - 12):
         return 0
     meta_bytes = fs.cat_file(key, start=size - 8 - length, end=size - 8)
+    if isinstance(meta_bytes, str):
+        meta_bytes = meta_bytes.encode("utf-8")
     return pq.read_metadata(pa.BufferReader(b"PAR1" + meta_bytes + tail)).num_rows
 
 
@@ -78,7 +84,7 @@ def discover_parquet_files(
         ]
         keys: list[str] = []
         for p in patterns:
-            keys.extend(fs.glob(p))
+            keys.extend([str(k) for k in fs.glob(p)])
             if keys:
                 break
 

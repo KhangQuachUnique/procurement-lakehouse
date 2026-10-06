@@ -280,7 +280,8 @@ class IngestionService:
                 table_name = parts[2] if len(parts) > 2 else request.resource
 
                 with self.fs.open(full_key, "rb") as f:
-                    content_bytes = f.read()
+                    raw_content = f.read()
+                    content_bytes = raw_content.encode("utf-8") if isinstance(raw_content, str) else bytes(raw_content)
                     sha256 = calculate_file_sha256(content_bytes)
                     f.seek(0)
                     pq_file = pq.ParquetFile(f)

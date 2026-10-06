@@ -1,5 +1,6 @@
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from functools import partial
+from typing import Any
 
 from procurement.common.catalog import get_resource
 from procurement.common.errors import build_error_record
@@ -73,8 +74,12 @@ class BidOpeningApi:
                 evidence["parts"][part]["status"] = "received"
             except Exception as exc:
                 evidence["parts"][part]["status"] = "failed"
-                exc.diagnostics = {**getattr(exc, "diagnostics", {}),
-                                   "endpoint": path, "request_id": body["notifyId"], "part": part}
+                exc.diagnostics = {  # pyright: ignore[reportAttributeAccessIssue]
+                    **getattr(exc, "diagnostics", {}),
+                    "endpoint": path,
+                    "request_id": body["notifyId"],
+                    "part": part,
+                }
                 raise
         receive("notify", "notify", body)
         receive("roundmng", "roundmng", body)
@@ -164,7 +169,7 @@ def iter_records(api, *, identity, config, search_items, run_id, source_date,
         return records, local_errors, local_stats
 
     remaining = iter(enumerate(search_items))
-    results = [None] * len(search_items)
+    results: list[Any] = [None] * len(search_items)
     with ThreadPoolExecutor(max_workers=min(detail_workers, len(search_items)),
                             thread_name_prefix="bid-opening-detail") as pool:
         pending = {}
@@ -193,7 +198,10 @@ def iter_records(api, *, identity, config, search_items, run_id, source_date,
             raise
 
     # Only the caller changes page counters/evidence and passes records to the writer.
-    for records, local_errors, local_stats in results:
+    for res in results:
+        if res is None:
+            continue
+        records, local_errors, local_stats = res
         errors.extend(local_errors)
         stats.merge(local_stats)
         stats.quality_observations.extend(local_stats.quality_observations)
