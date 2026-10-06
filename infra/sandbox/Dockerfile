@@ -5,9 +5,9 @@ WORKDIR /app
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock ./
 ARG UV_EXTRA=ops
-RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --no-install-project --no-editable
+RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --extra metadata --extra dev --no-install-project --no-editable
 COPY src ./src
-RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --no-editable
+RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --extra metadata --extra dev --no-editable
 
 FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
 RUN groupadd --gid 10001 procurement \
@@ -28,3 +28,6 @@ CMD ["python", "-m", "procurement.jobs.ingest", "--help"]
 
 COPY infra/sandbox/mock_source.py infra/sandbox/smoke.py infra/sandbox/wait_storage.py /opt/sandbox/
 COPY infra/sandbox/dagster.yaml /var/lib/procurement/dagster/dagster.yaml
+COPY alembic.ini /app/alembic.ini
+COPY migrations /app/migrations
+COPY tests/integration/metadata /opt/sandbox/metadata_checks

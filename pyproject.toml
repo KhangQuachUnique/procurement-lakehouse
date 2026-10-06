@@ -18,6 +18,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+metadata = [
+    "sqlalchemy>=2,<2.1",
+    "alembic>=1.16,<2",
+    "psycopg2-binary>=2.9,<3",
+]
 dev = [
     "pytest>=8,<9",
     "ruff>=0.12,<1",

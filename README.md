@@ -1,5 +1,9 @@
 # Procurement Lakehouse
 
+> Nhánh refactor: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md)
+> và [hướng dẫn sandbox](infra/sandbox/README.md). PostgreSQL metadata bên dưới là
+> kiến trúc đích; các hướng dẫn vận hành cũ vẫn mô tả code checkpoint hiện tại.
+
 Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit bằng manifest và theo dõi qua Ops. Silver/Gold hiện là thiết kế, chưa triển khai.
 
 | Cần làm gì? | Hướng dẫn |

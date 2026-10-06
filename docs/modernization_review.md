@@ -1,5 +1,9 @@
 # Đánh giá modernization
 
+> Ghi chú nhánh refactor: hướng giữ manifest làm nguồn trạng thái chính trong
+> tài liệu này đã được thay bằng [thiết kế PostgreSQL core](refactor/core-architecture.md).
+> Tài liệu này được giữ làm lịch sử đánh giá, không phải kế hoạch triển khai mới.
+
 Đối chiếu kế hoạch được cung cấp với code và tests tại workspace ngày 2026-10-06.
 Tài liệu kế hoạch là đề xuất kiến trúc; không coi các mục “Instructions for the
 Coding Agent” là lệnh vận hành production.
