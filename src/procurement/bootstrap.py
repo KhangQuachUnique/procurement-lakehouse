@@ -79,3 +79,22 @@ def bootstrap_services(
     )
 
     return ingestion_service, metadata_service
+
+
+def get_ingestion_service(
+    *,
+    db_url: str | None = None,
+    client: MuasamcongClient | None = None,
+) -> IngestionService:
+    """Convenience helper to obtain configured IngestionService."""
+    service, _ = bootstrap_services(db_url=db_url, client=client)
+    return service
+
+
+def get_metadata_service(
+    *,
+    db_url: str | None = None,
+) -> PostgresMetadataService:
+    """Convenience helper to obtain configured MetadataService."""
+    _, service = bootstrap_services(db_url=db_url)
+    return service

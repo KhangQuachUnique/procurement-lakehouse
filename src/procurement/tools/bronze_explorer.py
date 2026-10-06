@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from functools import partial
 from urllib.parse import urlparse
 
@@ -16,6 +16,7 @@ import s3fs
 from procurement.common.attempts import effective_attempt
 from procurement.common.catalog import RESOURCE_CATALOG, SUPPORTED_RESOURCES
 from procurement.common.settings import settings
+from procurement.metadata.models import PartitionIdentity
 from procurement.models.control import DayManifest
 from procurement.storage.control import read_run_manifest
 from procurement.storage.io import read_json
@@ -154,13 +155,67 @@ def _load_extension(con, name):
         con.load_extension(name)
 
 
+def select_snapshot_files(
+    metadata_service: Any,
+    *,
+    tables: list[BronzeTable],
+    start: date | None = None,
+    end: date | None = None,
+    year: int | None = None,
+    committed_days: dict | None = None,
+) -> dict[BronzeTable, list[str]]:
+    """Resolve current committed files using MetadataService snapshots instead of S3 globs."""
+    start_d = start or (date(year, 1, 1) if year else date(2020, 1, 1))
+    end_d = end or (date(year, 12, 31) if year else date(2030, 12, 31))
+
+    table_map = {t.table: t for t in tables}
+    files = {table: [] for table in tables}
+
+    cur = start_d
+    dates = []
+    while cur <= end_d:
+        dates.append(cur)
+        cur += timedelta(days=1)
+
+    for definition in RESOURCE_CATALOG:
+        resource_tables = [t for t in tables if t.table in definition.tables]
+        if not resource_tables:
+            continue
+        identities = [
+            PartitionIdentity(source=definition.identity.source, resource=definition.identity.resource, source_date=d)
+            for d in dates
+        ]
+        snapshots = metadata_service.get_snapshot(identities)
+        if committed_days is not None:
+            committed_days[definition.identity.resource] = {
+                str(snap.partition.identity.source_date): snap.commit for snap in snapshots
+            }
+        for snap in snapshots:
+            for file_desc in snap.files:
+                table_obj = table_map.get(file_desc.table_name)
+                if table_obj:
+                    files[table_obj].append(f"s3://{file_desc.bucket}/{file_desc.object_key}")
+    return files
+
+
 def _select_current_files(fs, *, bucket, tables, year=None, workers=16, issues=None,
-                          start=None, end=None, file_metadata=None, committed_days=None):
+                          start=None, end=None, file_metadata=None, committed_days=None,
+                          metadata_service=None):
     """Freeze one SUCCESS per resource/day before binding any Parquet views.
 
-    List directories only: recursive control globs also traverse every page file.
-    Read independent small manifests concurrently; never choose a run per table.
+    If metadata_service is provided, resolves files via consistent DB snapshots.
+    Otherwise, reads independent small manifests concurrently from object storage.
     """
+    if metadata_service is not None:
+        return select_snapshot_files(
+            metadata_service,
+            tables=tables,
+            start=start,
+            end=end,
+            year=year,
+            committed_days=committed_days,
+        )
+
     files = {table: [] for table in tables}
     issues = [] if issues is None else issues
     start = start or (date(year, 1, 1) if year else date.min)
