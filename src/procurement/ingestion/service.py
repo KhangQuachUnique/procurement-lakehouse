@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID, uuid4
 
 import dlt
 import pyarrow.parquet as pq
@@ -26,6 +27,7 @@ from procurement.ingestion.engine.stats import PageStats
 from procurement.metadata.contracts import MetadataService
 from procurement.metadata.models import (
     CommitFileDescriptor,
+    ErrorDescriptor,
     PageRecordDescriptor,
     PartitionIdentity,
 )
@@ -60,6 +62,16 @@ class IngestionService:
 
         if fs is not None:
             self.fs = fs
+        elif (
+            ":\\" in str(bucket)
+            or ":/" in str(bucket)
+            or str(bucket).startswith("file://")
+            or "\\" in str(bucket)
+            or (str(bucket).startswith("/") and not str(bucket).startswith("/procurement"))
+        ):
+            import fsspec
+
+            self.fs = fsspec.filesystem("file", auto_mkdir=True)
         else:
             s3_client_kwargs: dict[str, Any] = {}
             if endpoint_url:
@@ -180,6 +192,45 @@ class IngestionService:
                 for item in bronze_items:
                     table_batches[item.table].append(item.record)
 
+                if errors:
+                    for err in errors:
+                        raw_id = getattr(err, "error_id", None)
+                        try:
+                            err_uuid = UUID(hex=str(raw_id)) if raw_id else uuid4()
+                        except (ValueError, TypeError):
+                            err_uuid = uuid4()
+                        self.metadata.record_error(
+                            ErrorDescriptor(
+                                id=err_uuid,
+                                attempt_id=attempt.id,
+                                stage=getattr(err, "stage", "extract"),
+                                error_type=getattr(err, "error_type", "Error"),
+                                message=getattr(err, "message", str(err)),
+                                page_number=page_num,
+                                source_record_id=getattr(err, "source_id", None),
+                                http_status=getattr(err, "http_status", None),
+                                details={},
+                                occurred_at=getattr(err, "occurred_at", datetime.now(UTC)),
+                            )
+                        )
+                    self.metadata.record_page(
+                        PageRecordDescriptor(
+                            attempt_id=attempt.id,
+                            page_number=page_num,
+                            page_size=request.page_size,
+                            status="failed",
+                            search_items=len(items),
+                            bronze_records=0,
+                            error_count=len(errors),
+                            started_at=page_start,
+                            completed_at=datetime.now(UTC),
+                        )
+                    )
+                    buffered_writer.abort()
+                    raise RuntimeError(
+                        f"Extraction failed on page {page_num} with {len(errors)} error(s)"
+                    )
+
                 buffered_writer.write_page(table_batches)
                 page_records = sum(len(records) for records in table_batches.values())
                 total_records += page_records
@@ -192,7 +243,7 @@ class IngestionService:
                         status="success",
                         search_items=len(items),
                         bronze_records=page_records,
-                        error_count=len(errors),
+                        error_count=0,
                         started_at=page_start,
                         completed_at=datetime.now(UTC),
                     )
@@ -208,16 +259,22 @@ class IngestionService:
             # Inspect and verify written parquet files on storage
             if hasattr(self.fs, "invalidate_cache"):
                 self.fs.invalidate_cache()
+            clean_bucket = str(self.bucket).removeprefix("file://").replace("\\", "/")
             files_pattern = (
-                f"{self.bucket}/bronze/{spec.dataset_name}/*/"
+                f"{clean_bucket}/bronze/{spec.dataset_name}/*/"
                 f"source_date={request.source_date.isoformat()}/run_id={run_id_str}/*.parquet"
             )
             found_keys = sorted(self.fs.glob(files_pattern))
 
             commit_files: list[CommitFileDescriptor] = []
-            for file_num, full_key in enumerate(found_keys):
+            for file_num, raw_key in enumerate(found_keys):
+                full_key = str(raw_key).replace("\\", "/")
                 # Extract relative object key (without bucket prefix)
-                object_key = full_key.removeprefix(f"{self.bucket}/")
+                object_key = (
+                    full_key.removeprefix(f"{clean_bucket}/")
+                    .removeprefix(f"{self.bucket}/")
+                    .lstrip("/")
+                )
                 # Table name is typically: bronze/{dataset}/{table}/source_date=...
                 parts = object_key.split("/")
                 table_name = parts[2] if len(parts) > 2 else request.resource

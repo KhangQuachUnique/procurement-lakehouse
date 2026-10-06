@@ -39,8 +39,22 @@ def create_bronze_destination(
     if ep:
         credentials["endpoint_url"] = ep
 
+    is_local = (
+        ":\\" in str(b)
+        or ":/" in str(b)
+        or str(b).startswith("file://")
+        or "\\" in str(b)
+        or (str(b).startswith("/") and not str(b).startswith("/procurement"))
+    )
+    if is_local:
+        clean_path = str(b).removeprefix("file://").replace("\\", "/")
+        bucket_url = clean_path.rstrip("/") + "/bronze"
+    else:
+        bucket_name = str(b).removeprefix("s3://")
+        bucket_url = f"s3://{bucket_name}/bronze"
+
     return filesystem_factory(
-        bucket_url=f"s3://{b}/bronze",
+        bucket_url=bucket_url,
         credentials=credentials,
         layout=bronze_layout_template(),
         extra_placeholders={

@@ -7,6 +7,7 @@ from typing import Protocol
 
 from procurement.bronze.models import BronzeRecord
 from procurement.common.cancellation import INTERRUPTIONS
+from procurement.common.settings import settings
 
 
 class BronzeWriter(Protocol):
@@ -34,11 +35,15 @@ class BufferedBronzeWriter:
     """Bounded page batches; receipts only describe confirmed loads, never queued rows."""
 
     def __init__(
-        self, writer: BronzeWriter, *, max_bytes: int = 16 * 1024 * 1024, max_records: int = 5000
+        self,
+        writer: BronzeWriter,
+        *,
+        max_bytes: int | None = None,
+        max_records: int | None = None,
     ):
         self.writer = writer
-        self.max_bytes = max_bytes
-        self.max_records = max_records
+        self.max_bytes = max_bytes if max_bytes is not None else settings.BRONZE_BATCH_BYTES
+        self.max_records = max_records if max_records is not None else settings.BRONZE_BATCH_RECORDS
         self.pending: list[tuple[int, Mapping[str, list[BronzeRecord]]]] = []
         self.size = 0
         self.count = 0

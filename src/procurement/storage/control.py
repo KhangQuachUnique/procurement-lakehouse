@@ -1,4 +1,6 @@
 import json
+import os
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
@@ -8,6 +10,18 @@ from procurement.common.resources import ResourceIdentity
 from procurement.common.settings import settings
 from procurement.models.control import DayManifest, DayStatus, PageManifest, RunManifest
 from procurement.storage.io import read_json, write_json
+
+
+def _check_legacy_write_allowed() -> None:
+    if os.getenv("PREVENT_LEGACY_MANIFEST_WRITES") == "1":
+        raise RuntimeError(
+            "Legacy S3 manifest writing is disabled. Use IngestionService and PostgreSQL metadata."
+        )
+    warnings.warn(
+        "Writing S3 JSON manifests is deprecated; migrate to PostgreSQL MetadataService.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 
 class DayCommitUncertainError(RuntimeError):
@@ -53,6 +67,7 @@ def write_run_manifest(
     identity: ResourceIdentity,
     manifest: RunManifest,
 ) -> str:
+    _check_legacy_write_allowed()
     return write_json(
         fs,
         f"{_run_prefix(identity, manifest.run_id)}/run.json",
@@ -85,14 +100,19 @@ def list_run_manifests(
         entries = fs.ls(prefix, detail=False)
     except FileNotFoundError:
         entries = []
-    keys = sorted(f"{str(entry).rstrip('/')}/run.json" for entry in entries
-                  if str(entry).rstrip('/').rsplit('/', 1)[-1].startswith('run_id='))
+    keys = sorted(
+        f"{str(entry).rstrip('/')}/run.json"
+        for entry in entries
+        if str(entry).rstrip("/").rsplit("/", 1)[-1].startswith("run_id=")
+    )
+
     def read(key):
         try:
             # One GET, without the exists + open metadata requests per header.
             return json.loads(fs.cat_file(key))
         except FileNotFoundError:
             return None
+
     with ThreadPoolExecutor(max_workers=workers) as pool:
         data_rows = list(pool.map(read, keys))
     for data in data_rows:
@@ -112,6 +132,7 @@ def write_day_manifest(
     identity: ResourceIdentity,
     manifest: DayManifest,
 ) -> str:
+    _check_legacy_write_allowed()
     return write_json(
         fs,
         f"{_day_prefix(identity, manifest.run_id, manifest.source_date)}/day.json",
@@ -152,6 +173,7 @@ def write_page_manifest(
     identity: ResourceIdentity,
     manifest: PageManifest,
 ) -> str:
+    _check_legacy_write_allowed()
     return write_json(
         fs,
         (
