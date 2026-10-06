@@ -40,7 +40,7 @@ def create_bronze_destination(
         credentials["endpoint_url"] = ep
 
     return filesystem_factory(
-        bucket_url=f"s3://{b}/bronze/{dataset}",
+        bucket_url=f"s3://{b}/bronze",
         credentials=credentials,
         layout=bronze_layout_template(),
         extra_placeholders={
