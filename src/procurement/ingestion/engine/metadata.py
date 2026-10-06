@@ -1,21 +1,12 @@
-import hashlib
-import json
+"""Compatibility shim: Hashing moved to procurement.bronze.hashing."""
+
 from datetime import UTC, datetime
-from typing import Any
+
+from procurement.bronze.hashing import calculate_content_hash
 
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def calculate_content_hash(payload: Any) -> str:
-    canonical_json = json.dumps(
-        payload,
-        sort_keys=True,
-        ensure_ascii=False,
-        separators=(",", ":"),
-    )
-
-    return hashlib.sha256(
-        canonical_json.encode("utf-8")
-    ).hexdigest()
+__all__ = ["calculate_content_hash", "utc_now"]
