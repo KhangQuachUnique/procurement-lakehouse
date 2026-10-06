@@ -1,0 +1,256 @@
+name: procurement-refactor-test
+services:
+  dagster-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_DB: dagster
+      POSTGRES_PASSWORD: sandbox-dagster-only
+    volumes:
+    - dagster-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U dagster -d dagster
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: 'no'
+    mem_limit: 512m
+    cpus: 0.5
+    networks:
+    - sandbox
+  dagster-code-location:
+    environment:
+      DAGSTER_HOME: /var/lib/procurement/dagster
+      DAGSTER_POSTGRES_PASSWORD: sandbox-dagster-only
+      APP_ENV: test
+      DAGSTER_TELEMETRY_ENABLED: 'false'
+      ORCHESTRATION_ENABLED: 'true'
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: procurement-refactor-test
+      OBJECT_STORAGE_ACCESS_KEY: sandbox-access
+      OBJECT_STORAGE_SECRET_KEY: sandbox-secret-only
+      MUASAMCONG_BASE_URL: http://fixture-source:8077
+      MUASAMCONG_TOKEN: fixture-not-a-live-token
+      DAGSTER_BRONZE_START_DATE: '2022-01-01'
+      BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
+      APP_DATABASE_URL: postgresql://procurement:sandbox-app-only@app-postgres:5432/procurement
+    volumes:
+    - ingestion-state:/var/lib/procurement
+    - dagster-state:/var/lib/procurement/dagster
+    restart: 'no'
+    init: true
+    stop_grace_period: 60s
+    logging: &id001
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    command:
+    - dagster
+    - api
+    - grpc
+    - --host
+    - 0.0.0.0
+    - --port
+    - '4000'
+    - --module-name
+    - procurement.orchestration.definitions
+    depends_on:
+      dagster-postgres:
+        condition: service_healthy
+      object-storage:
+        condition: service_started
+      fixture-source:
+        condition: service_healthy
+      app-postgres:
+        condition: service_healthy
+      storage-ready:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD
+      - dagster
+      - api
+      - grpc-health-check
+      - --port
+      - '4000'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    image: procurement-refactor-test:local
+    cpus: 1.0
+    mem_limit: 1536m
+    build:
+      context: ../..
+      dockerfile: infra/sandbox/Dockerfile
+      args:
+        UV_EXTRA: orchestration
+    networks:
+    - sandbox
+    pull_policy: never
+  dagster-webserver:
+    environment:
+      DAGSTER_HOME: /var/lib/procurement/dagster
+      DAGSTER_POSTGRES_PASSWORD: sandbox-dagster-only
+      APP_ENV: test
+      DAGSTER_TELEMETRY_ENABLED: 'false'
+    volumes:
+    - dagster-state:/var/lib/procurement/dagster
+    restart: 'no'
+    init: true
+    stop_grace_period: 60s
+    logging: *id001
+    command:
+    - dagster-webserver
+    - --host
+    - 0.0.0.0
+    - --port
+    - '3000'
+    - --workspace
+    - /opt/dagster/workspace.yaml
+    ports:
+    - 127.0.0.1:23000:3000
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:3000/server_info',
+        timeout=5)
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    image: procurement-refactor-test:local
+    cpus: 1.0
+    mem_limit: 1536m
+    networks:
+    - sandbox
+    - access
+    pull_policy: never
+  dagster-daemon:
+    environment:
+      DAGSTER_HOME: /var/lib/procurement/dagster
+      DAGSTER_POSTGRES_PASSWORD: sandbox-dagster-only
+      APP_ENV: test
+      DAGSTER_TELEMETRY_ENABLED: 'false'
+    volumes:
+    - dagster-state:/var/lib/procurement/dagster
+    restart: 'no'
+    init: true
+    stop_grace_period: 60s
+    logging: *id001
+    command:
+    - dagster-daemon
+    - run
+    - --workspace
+    - /opt/dagster/workspace.yaml
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - dagster-daemon
+      - liveness-check
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    image: procurement-refactor-test:local
+    cpus: 1.0
+    mem_limit: 1536m
+    networks:
+    - sandbox
+    pull_policy: never
+  app-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: procurement
+      POSTGRES_DB: procurement
+      POSTGRES_PASSWORD: sandbox-app-only
+    volumes:
+    - app-postgres-data:/var/lib/postgresql/data
+    ports:
+    - 127.0.0.1:25432:5432
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U procurement -d procurement
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 512m
+    cpus: 0.5
+    networks:
+    - sandbox
+    - access
+  object-storage:
+    image: chrislusf/seaweedfs:4.46
+    command:
+    - mini
+    - -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: sandbox-access
+      AWS_SECRET_ACCESS_KEY: sandbox-secret-only
+      S3_BUCKET: procurement-refactor-test
+    ports:
+    - 127.0.0.1:28333:8333
+    volumes:
+    - object-storage-data:/data
+    mem_limit: 1024m
+    cpus: 1.0
+    networks:
+    - sandbox
+    - access
+  fixture-source:
+    image: procurement-refactor-test:local
+    command:
+    - python
+    - /opt/sandbox/mock_source.py
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import socket; socket.create_connection(('localhost',8077),timeout=2).close()
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    mem_limit: 128m
+    cpus: 0.25
+    networks:
+    - sandbox
+    pull_policy: never
+  storage-ready:
+    image: procurement-refactor-test:local
+    command:
+    - python
+    - /opt/sandbox/wait_storage.py
+    environment:
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: procurement-refactor-test
+      OBJECT_STORAGE_ACCESS_KEY: sandbox-access
+      OBJECT_STORAGE_SECRET_KEY: sandbox-secret-only
+    depends_on:
+      object-storage:
+        condition: service_started
+    mem_limit: 256m
+    cpus: 0.25
+    networks:
+    - sandbox
+    pull_policy: never
+networks:
+  sandbox:
+    internal: true
+  access: {}
+volumes:
+  dagster-state: {}
+  dagster-postgres-data: {}
+  app-postgres-data: {}
+  object-storage-data: {}
+  ingestion-state: {}
