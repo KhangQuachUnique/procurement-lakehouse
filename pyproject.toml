@@ -26,12 +26,23 @@ ops = [
     "fastapi>=0.116,<1",
     "uvicorn[standard]>=0.35,<1",
 ]
+orchestration = [
+    "dagster>=1.13,<1.14",
+    "dagster-webserver>=1.13,<1.14",
+    "dagster-postgres>=0.29,<0.30",
+    # Dagster's PostgreSQL backend currently uses the psycopg2 driver.
+    "sqlalchemy>=2,<2.1",
+]
+
+[tool.dagster]
+module_name = "procurement.orchestration.definitions"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 "procurement.quality" = ["*.toml"]
+"procurement.api.ops" = ["static/*.css", "static/*.js", "templates/*.html"]
 "procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]
 
 [tool.pytest.ini_options]

@@ -1,352 +1,60 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from html import escape
-from typing import Annotated, Any
-from urllib.parse import quote, urlencode
+from pathlib import Path
+from typing import Annotated
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from procurement.api.ops.dependencies import get_ops_service
+from procurement.api.ops.views import (
+    _attempt_row,
+    _bad_request,
+    _badge,
+    _breadcrumbs,
+    _date_url,
+    _e,
+    _error_row,
+    _layout,
+    _not_found,
+    _query,
+    _resource_options,
+    _run_row,
+    _run_url,
+    _sync_banner,
+    _year_heatmap,
+)
 from procurement.models.control import RunStatus
-from procurement.ops.models import AttemptSummary, DateSummary, ErrorSummary, RunSummary
-from procurement.ops.service import DEFAULT_SOURCE, SUPPORTED_RESOURCES, OpsService
+from procurement.ops.service import DEFAULT_SOURCE, OpsService
 
 router = APIRouter(include_in_schema=False)
+
+@router.get("/ops/static/{name}")
+def static_asset(name: str):
+    if name not in {"ops.css", "tooltip.js", "calendar.js"}:
+        raise HTTPException(404)
+    return FileResponse(Path(__file__).parent / "static" / name)
+
 Service = Annotated[OpsService, Depends(get_ops_service)]
 VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
-_STYLE = """
-:root {
-  color-scheme: light;
-  --bg: #f7f8fa;
-  --surface: #fff;
-  --text: #172033;
-  --muted: #6c778b;
-  --line: #e5e9ef;
-  --line-strong: #ccd4df;
-  --accent: #1769e0;
-  --success: #1f9d62;
-  --danger: #d94b45;
-  --warn: #c99722;
-  --neutral: #dfe3e9;
-  --cell: 11px;
-  --gap: 3px;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-a { color: inherit; text-decoration: none; }
-a:hover { color: var(--accent); }
-.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; min-height: 58px; padding: 0 28px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(10px); }
-.brand { font-weight: 760; letter-spacing: -.02em; }
-.brand span { color: var(--muted); font-weight: 560; margin-left: 7px; }
-.nav { display: flex; align-items: center; gap: 4px; }
-.nav a { padding: 7px 10px; border-radius: 8px; color: var(--muted); font-weight: 650; }
-.nav a.active { background: #eef3fb; color: var(--accent); }
-.main { width: min(1180px, calc(100% - 36px)); margin: 0 auto; padding: 32px 0 56px; }
-.heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 20px; }
-h1 { margin: 0; font-size: clamp(25px,3vw,34px); line-height: 1.12; letter-spacing: -.035em; }
-h2 { margin: 0 0 12px; font-size: 17px; letter-spacing: -.02em; }
-p { margin: 5px 0 0; color: var(--muted); }
-.mono { font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size: .92em; }
-.link { color: var(--accent); font-weight: 680; }
-.panel { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.panel-pad { padding: 16px; }
-.section { margin-top: 26px; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th,td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; white-space: nowrap; }
-th { background: #fafbfc; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .055em; }
-tr:last-child td { border-bottom: 0; }
-tbody tr:hover { background: #fbfcfe; }
-.wrap { min-width: 260px; white-space: normal; }
-.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 760; text-transform: uppercase; letter-spacing: .035em; }
-.badge.success,.badge.healthy { color: #157347; background: #edf8f2; }
-.badge.failed,.badge.partial_failed,.badge.error { color: #b42318; background: #fff0ee; }
-.badge.stale,.badge.unknown,.badge.interrupted,.badge.running,.badge.degraded { color: #8a6100; background: #fff6d8; }
-.badge.no_attempt,.badge.no_data { color: #657083; background: #f0f2f5; }
-.filters { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; }
-.field { display: grid; gap: 5px; }
-.field label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .045em; }
-input,select,button { min-height: 36px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; color: var(--text); padding: 7px 9px; font: inherit; }
-button { border-color: var(--text); background: var(--text); color: #fff; cursor: pointer; font-weight: 700; padding-inline: 14px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.actions a { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 650; }
-.stats { display: flex; flex-wrap: wrap; gap: 10px 22px; color: var(--muted); font-size: 13px; }
-.stats strong { color: var(--text); }
-.kv { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); margin: 0; }
-.kv > div { padding: 15px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.kv > div:nth-child(4n) { border-right: 0; }
-.kv dt { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .045em; }
-.kv dd { margin: 5px 0 0; font-weight: 680; overflow-wrap: anywhere; }
-.empty { padding: 36px 18px; text-align: center; color: var(--muted); }
-.breadcrumbs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; color: var(--muted); font-size: 12px; }
-.error-box { padding: 14px 16px; border: 1px solid #ffd2cc; border-radius: 10px; background: #fff0ee; color: #b42318; }
-.year-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-.year-nav { display: flex; align-items: center; gap: 7px; }
-.year-nav a { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); font-size: 18px; }
-.year-label { min-width: 76px; text-align: center; font-size: 17px; font-weight: 760; letter-spacing: -.02em; }
-.heatmap-panel { padding: 18px; }
-.heatmap-scroll { overflow-x: auto; padding: 4px 3px 12px; scrollbar-width: thin; }
-.heatmap { display: grid; grid-template-columns: 28px repeat(var(--weeks), var(--cell)); grid-template-rows: 18px repeat(7, var(--cell)); gap: var(--gap); width: max-content; min-width: 100%; align-items: center; }
-.month-label { grid-row: 1; align-self: end; color: var(--muted); font-size: 10px; font-weight: 700; white-space: nowrap; pointer-events: none; }
-.weekday-label { grid-column: 1; color: var(--muted); font-size: 9px; line-height: 1; text-align: right; padding-right: 4px; }
-.heat-day { width: var(--cell); height: var(--cell); border: 1px solid rgba(23,32,51,.06); border-radius: 2px; background: var(--neutral); outline: none; transition: transform .08s ease, box-shadow .08s ease; }
-.heat-day:hover,.heat-day:focus-visible { z-index: 3; transform: scale(1.35); box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(23,32,51,.16); }
-.heat-day.success { background: var(--success); }
-.heat-day.failed { background: var(--danger); }
-.heat-day.stale,.heat-day.unknown,.heat-day.interrupted { background: #a879b9; }
-.sync-status { padding: 10px 0; color: #64748b; font-size: 13px; }
-.heat-day.running { background: var(--warn); }
-.heat-day.no_attempt { background: var(--neutral); }
-.heat-day.future { opacity: .42; }
-.heat-day.today { box-shadow: 0 0 0 1px #fff, 0 0 0 2px var(--accent); }
-.heat-legend { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 13px; color: var(--muted); font-size: 12px; }
-.legend-items { display: flex; gap: 13px; flex-wrap: wrap; }
-.legend-item { display: inline-flex; align-items: center; gap: 6px; }
-.legend-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--neutral); }
-.legend-dot.success { background: var(--success); }
-.legend-dot.failed { background: var(--danger); }
-.legend-dot.running { background: var(--warn); }
-.year-counts { display: flex; gap: 12px; flex-wrap: wrap; }
-.year-counts strong { color: var(--text); }
-.day-tooltip { position: fixed; z-index: 1000; display: none; max-width: 280px; pointer-events: none; padding: 9px 11px; border: 1px solid rgba(23,32,51,.12); border-radius: 9px; background: #111827; color: #fff; box-shadow: 0 10px 30px rgba(17,24,39,.22); font-size: 12px; line-height: 1.45; white-space: pre-line; }
-.day-tooltip.show { display: block; }
-@media (max-width: 850px) { .kv { grid-template-columns: repeat(2,minmax(0,1fr)); }.kv > div:nth-child(4n) { border-right: 1px solid var(--line); }.kv > div:nth-child(2n) { border-right: 0; } }
-@media (max-width: 620px) { .topbar { padding: 0 14px; }.brand span,.nav .api-docs { display:none; }.main { width: min(100% - 22px,1180px); padding-top: 22px; }.heading { align-items:flex-start; flex-direction:column; }.kv { grid-template-columns:1fr; }.kv > div { border-right:0 !important; }.heatmap-panel { padding: 13px; }:root { --cell: 10px; --gap: 3px; } }
-"""
-
-_TOOLTIP_SCRIPT = """
-<script>
-(() => {
-  const tooltip = document.getElementById("day-tooltip");
-  if (!tooltip) return;
-  const cells = document.querySelectorAll(".heat-day[data-tip]");
-  const move = (event) => {
-    const pad = 14;
-    const rect = tooltip.getBoundingClientRect();
-    let left = event.clientX + pad;
-    let top = event.clientY + pad;
-    if (left + rect.width + 8 > window.innerWidth) left = event.clientX - rect.width - pad;
-    if (top + rect.height + 8 > window.innerHeight) top = event.clientY - rect.height - pad;
-    tooltip.style.left = Math.max(8, left) + "px";
-    tooltip.style.top = Math.max(8, top) + "px";
-  };
-  cells.forEach((cell) => {
-    cell.addEventListener("mouseenter", (event) => {
-      tooltip.textContent = cell.dataset.tip || "";
-      tooltip.classList.add("show");
-      move(event);
-    });
-    cell.addEventListener("mousemove", move);
-    cell.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
-  });
-})();
-</script>
-"""
-
-_CALENDAR_REFRESH_SCRIPT = """
-<script>
-(() => {
-  const status = document.createElement("p");
-  status.id = "calendar-live-status";
-  status.className = "sync-status";
-  status.setAttribute("role", "status");
-  status.textContent = "Auto-refresh every 5 seconds; storage synchronization may take longer.";
-  document.querySelector(".heatmap-panel").before(status);
-  const refresh = async () => {
-    try {
-      if (document.hidden) return;
-      const response = await fetch(window.location.href, {cache: "no-store"});
-      if (!response.ok) throw new Error("HTTP " + response.status);
-      const page = new DOMParser().parseFromString(await response.text(), "text/html");
-      const updated = page.querySelector(".heatmap-panel");
-      if (!updated) throw new Error("Calendar unavailable");
-      const cells = new Map([...updated.querySelectorAll(".heat-day")].map(
-        cell => [cell.getAttribute("href"), cell]));
-      document.querySelectorAll(".heat-day").forEach(cell => {
-        const next = cells.get(cell.getAttribute("href"));
-        if (!next) return;
-        // Keep existing nodes and tooltip listeners while updating status and evidence.
-        for (const name of ["class", "data-tip", "title", "aria-label"]) {
-          if (next.hasAttribute(name)) cell.setAttribute(name, next.getAttribute(name));
-          else cell.removeAttribute(name);
-        }
-      });
-      document.querySelector(".year-counts").innerHTML = updated.querySelector(".year-counts").innerHTML;
-      const banner = document.querySelector(".main > .sync-status:not(#calendar-live-status)");
-      const nextBanner = page.querySelector(".main > .sync-status");
-      if (banner && nextBanner) banner.replaceWith(nextBanner);
-      status.textContent = "Calendar updated " + new Date().toLocaleTimeString() +
-        "; auto-refresh every 5 seconds. Storage synchronization may take longer.";
-    } catch (error) {
-      status.textContent = "Calendar refresh failed (" + error.message + "). Retrying in 5 seconds.";
-    } finally {
-      setTimeout(refresh, 5000);
-    }
-  };
-  setTimeout(refresh, 5000);
-})();
-</script>
-"""
 
 
-def _text(value: Any) -> str:
-    if value is None:
-        return "—"
-    if isinstance(value, datetime):
-        return value.astimezone(VIETNAM_TZ).strftime("%Y-%m-%d %H:%M:%S")
-    return str(getattr(value, "value", value))
+_TOOLTIP_SCRIPT = '<script src="/ops/static/tooltip.js" defer></script>'
+
+_CALENDAR_REFRESH_SCRIPT = '<script src="/ops/static/calendar.js" defer></script>'
 
 
-def _e(value: Any) -> str:
-    return escape(_text(value))
 
-
-def _badge(value: Any) -> str:
-    raw = _text(value).lower()
-    return f'<span class="badge {escape(raw)}">{escape(raw.replace("_", " "))}</span>'
-
-
-def _sync_banner(service) -> str:
-    state = getattr(service, "sync_status", None)
-    if not state:
-        return ""
-    updated = datetime.fromisoformat(state["last_success_at"])
-    age = max(0, int((datetime.now(updated.tzinfo) - updated).total_seconds()))
-    warning = " · Sync delayed; showing the last snapshot" if state["last_error"] or age > 30 else ""
-    return (
-        f'<div class="sync-status" role="status">Updated {_e(updated)} '
-        f'({age}s ago){warning}</div>'
-    )
-
-
-def _query(path: str, **params: Any) -> str:
-    clean = {key: _text(value) for key, value in params.items() if value not in (None, "")}
-    return path if not clean else f"{path}?{urlencode(clean)}"
-
-
-def _run_url(run_id: str, source: str = DEFAULT_SOURCE) -> str:
-    return _query(f"/ops/runs/{quote(run_id, safe='')}", source=source)
-
-
-def _attempt_url(run_id: str, source_date: date, source: str = DEFAULT_SOURCE) -> str:
-    return _query(f"/ops/attempts/{quote(run_id, safe='')}/{source_date.isoformat()}", source=source)
-
-
-def _date_url(resource: str, source_date: date, source: str = DEFAULT_SOURCE) -> str:
-    return _query(f"/ops/calendar/{quote(resource, safe='')}/{source_date.isoformat()}", source=source)
-
-
-def _breadcrumbs(*items: tuple[str, str | None]) -> str:
-    rendered: list[str] = []
-    for label, href in items:
-        rendered.append(f'<a href="{escape(href, quote=True)}">{escape(label)}</a>' if href else f"<span>{escape(label)}</span>")
-    return '<div class="breadcrumbs">' + '<span>/</span>'.join(rendered) + "</div>"
-
-
-def _layout(title: str, body: str, *, active: str, source: str = DEFAULT_SOURCE, extra_script: str = "") -> HTMLResponse:
-    runs_class = "active" if active == "runs" else ""
-    calendar_class = "active" if active == "calendar" else ""
-    errors_class = "active" if active == "errors" else ""
-    html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)} · Procurement Ops</title><style>{_STYLE}</style></head><body><header class="topbar"><a class="brand" href="{escape(_query('/ops', source=source), quote=True)}">Procurement <span>Ops</span></a><nav class="nav"><a class="{runs_class}" href="{escape(_query('/ops', source=source), quote=True)}">Runs</a><a class="{calendar_class}" href="{escape(_query('/ops/calendar', source=source), quote=True)}">Calendar</a><a class="{errors_class}" href="{escape(_query('/ops/errors', source=source), quote=True)}">Errors</a><a href="/ops/benchmark">Benchmark</a><a class="api-docs" href="/docs">API</a></nav></header><main class="main">{body}</main>{extra_script}</body></html>"""
-    return HTMLResponse(html)
-
-
-def _not_found(title: str, message: str, *, source: str, active: str) -> HTMLResponse:
-    response = _layout(title, f'<div class="heading"><div><h1>{escape(title)}</h1><p>{escape(message)}</p></div></div>', active=active, source=source)
-    response.status_code = 404
-    return response
-
-
-def _bad_request(exc: ValueError, *, source: str, active: str) -> HTMLResponse:
-    response = _layout("Invalid request", f'<div class="heading"><div><h1>Invalid request</h1></div></div><div class="error-box">{escape(str(exc))}</div>', active=active, source=source)
-    response.status_code = 400
-    return response
-
-
-def _resource_options(selected: str | None, *, include_all: bool = True) -> str:
-    items = ['<option value="">All resources</option>'] if include_all else []
-    for resource in SUPPORTED_RESOURCES:
-        mark = " selected" if resource == selected else ""
-        items.append(f'<option value="{escape(resource, quote=True)}"{mark}>{escape(resource)}</option>')
-    return "".join(items)
-
-
-def _run_row(run: RunSummary, source: str) -> str:
-    return f"""<tr><td><a class="link mono" href="{escape(_run_url(run.run_id, source), quote=True)}">{_e(run.run_id)}</a></td><td>{_e(run.resource)}</td><td>{_e(run.start_date)} → {_e(run.end_date)}</td><td>{_badge(run.execution_state or run.status)}</td><td>{run.success_dates}/{run.total_dates}</td><td>{run.failed_dates}</td><td>{_e(run.duration_seconds)}s</td><td>{_e(run.started_at)}</td></tr>"""
-
-
-def _attempt_row(attempt: AttemptSummary, source: str) -> str:
-    return f"""<tr><td><a class="link" href="{escape(_attempt_url(attempt.run_id, attempt.source_date, source), quote=True)}">{_e(attempt.source_date)}</a></td><td>{_badge(attempt.execution_state or attempt.status)}</td><td>{attempt.completed_pages}/{_e(attempt.expected_pages)}</td><td>{attempt.search_items}</td><td>{attempt.bronze_records}</td><td>{attempt.error_count}</td><td>{_e(attempt.duration_seconds)}s</td><td>{_e(attempt.started_at)}</td></tr>"""
-
-
-def _error_row(error: ErrorSummary, source: str) -> str:
-    return f"""<tr><td>{_e(error.occurred_at)}</td><td>{_e(error.resource)}</td><td><a class="link" href="{escape(_date_url(error.resource, error.source_date, source), quote=True)}">{_e(error.source_date)}</a></td><td>{_e(error.stage)}</td><td>{_e(error.error_type)}</td><td>{_e(error.page_number)}</td><td>{_e(error.http_status)}</td><td class="wrap">{_e(error.message)}</td><td><a class="link mono" href="{escape(_run_url(error.run_id, source), quote=True)}">{_e(error.run_id)}</a></td></tr>"""
-
-
-def _day_tip(item: DateSummary, *, today: date) -> str:
-    state = item.status.value
-    if item.source_date > today:
-        return f"{item.source_date.isoformat()}\nFuture date\nNo attempt yet"
-    if state == "success":
-        run = item.effective_run_id or item.latest_run_id or "—"
-        return f"{item.source_date.isoformat()}\nSUCCESS\n{item.bronze_records} records · {item.attempt_count} attempt(s)\nRun {run}"
-    if state == "failed":
-        run = item.latest_run_id or "—"
-        return f"{item.source_date.isoformat()}\nFAILED\n{item.error_count} error(s) · {item.attempt_count} attempt(s)\nRun {run}"
-    if state == "running":
-        run = item.latest_run_id or "—"
-        return f"{item.source_date.isoformat()}\nRUNNING\n{item.bronze_records} records so far · {item.attempt_count} attempt(s)\nRun {run}"
-    if state in {"stale", "unknown", "interrupted"}:
-        return (
-            f"{item.source_date.isoformat()}\n{state.upper()}\n"
-            f"Worker liveness is not confirmed\nRun {item.latest_run_id or '—'}"
-        )
-    return f"{item.source_date.isoformat()}\nNO ATTEMPT\nNo ingestion attempt was recorded"
-
-
-def _year_heatmap(items: list[DateSummary], *, resource: str, source: str, year: int, today: date) -> tuple[str, int]:
-    by_date = {item.source_date: item for item in items}
-    first = date(year, 1, 1)
-    last = date(year, 12, 31)
-    grid_start = first - timedelta(days=first.weekday())
-    grid_end = last + timedelta(days=6 - last.weekday())
-    weeks = ((grid_end - grid_start).days // 7) + 1
-    parts: list[str] = []
-    for label, weekday in (("Mon", 0), ("Wed", 2), ("Fri", 4), ("Sun", 6)):
-        parts.append(f'<div class="weekday-label" style="grid-row:{weekday + 2}">{label}</div>')
-    seen_months: set[int] = set()
-    cursor = first
-    while cursor <= last:
-        if cursor.month not in seen_months:
-            week_index = (cursor - grid_start).days // 7
-            parts.append(f'<div class="month-label" style="grid-column:{week_index + 2}">{cursor.strftime("%b")}</div>')
-            seen_months.add(cursor.month)
-        cursor += timedelta(days=1)
-    cursor = first
-    while cursor <= last:
-        item = by_date[cursor]
-        week_index = (cursor - grid_start).days // 7
-        weekday = cursor.weekday()
-        state = item.status.value
-        classes = ["heat-day", state]
-        if cursor > today:
-            classes.append("future")
-        if cursor == today:
-            classes.append("today")
-        href = _date_url(resource, cursor, source)
-        tip = _day_tip(item, today=today)
-        parts.append(f'<a class="{" ".join(classes)}" style="grid-column:{week_index + 2};grid-row:{weekday + 2}" href="{escape(href, quote=True)}" data-tip="{escape(tip, quote=True)}" aria-label="{escape(tip.replace(chr(10), ". "), quote=True)}"></a>')
-        cursor += timedelta(days=1)
-    return "".join(parts), weeks
 
 
 @router.get("/")
 def root() -> RedirectResponse:
-    return RedirectResponse("/ops", status_code=307)
+    return RedirectResponse("/ops/overview", status_code=307)
 
 
 @router.get("/ops", response_class=HTMLResponse)
@@ -478,3 +186,20 @@ def errors_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | 
     table = f'<div class="panel table-wrap"><table><thead><tr><th>Occurred</th><th>Resource</th><th>Date</th><th>Stage</th><th>Type</th><th>Page</th><th>HTTP</th><th>Message</th><th>Run</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="panel empty">No errors match these filters.</div>'
     body = f"""<div class="heading"><div><h1>Errors</h1><p>Actual ingestion errors only. A date with no attempt is not listed here.</p></div></div><div class="panel panel-pad"><form class="filters" method="get"><input type="hidden" name="source" value="{escape(source, quote=True)}"><div class="field"><label>Resource</label><select name="resource">{_resource_options(resource)}</select></div><div class="field"><label>Date</label><input type="date" name="source_date" value="{'' if source_date is None else source_date.isoformat()}"></div><div class="field"><label>Run ID</label><input name="run_id" value="{escape(run_id or '', quote=True)}"></div><div class="field"><label>Stage</label><input name="stage" value="{escape(stage or '', quote=True)}"></div><div class="field"><label>Error type</label><input name="error_type" value="{escape(error_type or '', quote=True)}"></div><button type="submit">Filter</button></form></div><div class="section">{table}</div>"""
     return _layout("Errors", _sync_banner(service) + body, active="errors", source=source)
+
+
+@router.get("/ops/overview", response_class=HTMLResponse)
+def overview_page(service: Service, source: str = DEFAULT_SOURCE):
+    try:
+        overview = service.overview(source=source)
+    except ValueError as exc:
+        return _bad_request(exc, source=source, active="overview")
+    rows = "".join(
+        f'<tr><td><a href="{escape(_query("/ops/calendar", source=source, resource=item.resource), quote=True)}">{_e(item.resource)}</a></td>'
+        f'<td>{_badge(item.health)}</td><td>{_e(item.latest_success_source_date)}</td>'
+        f'<td>{_e(item.freshness_days)}</td><td>{item.unresolved_failed_dates}</td><td>{item.total_attempts}</td></tr>'
+        for item in overview.resources
+    )
+    body = '<h1>Data health</h1><p>Coverage and freshness from committed Bronze manifests.</p>'
+    body += '<div class="panel table-wrap"><table><thead><tr><th>Resource</th><th>Health</th><th>Latest success</th><th>Age (days)</th><th>Unresolved failed dates</th><th>Attempts</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    return _layout("Data health", _sync_banner(service) + body, active="overview", source=source)

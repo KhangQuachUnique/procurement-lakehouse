@@ -1,3 +1,4 @@
+import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
@@ -76,11 +77,22 @@ def list_run_manifests(
     end_date: date | None = None,
     workers: int = 1,
 ) -> list[RunManifest]:
-    pattern = f"{_resource_prefix(identity)}/run_id=*/run.json"
     manifests: list[RunManifest] = []
-    keys = fs.glob(pattern)
+    # A wildcard glob descends into every run directory on S3, issuing a LIST
+    # per historical run. List only the resource's immediate children instead.
+    prefix = _resource_prefix(identity)
+    try:
+        entries = fs.ls(prefix, detail=False)
+    except FileNotFoundError:
+        entries = []
+    keys = sorted(f"{str(entry).rstrip('/')}/run.json" for entry in entries
+                  if str(entry).rstrip('/').rsplit('/', 1)[-1].startswith('run_id='))
     def read(key):
-        return read_json(fs, key)
+        try:
+            # One GET, without the exists + open metadata requests per header.
+            return json.loads(fs.cat_file(key))
+        except FileNotFoundError:
+            return None
     with ThreadPoolExecutor(max_workers=workers) as pool:
         data_rows = list(pool.map(read, keys))
     for data in data_rows:

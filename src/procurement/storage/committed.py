@@ -21,10 +21,11 @@ class CommittedDay:
 
 
 def select_committed_days(
-    fs, definition: ResourceDefinition, start: date, end: date, *, dataset: str = "muasamcong"
+    fs, definition: ResourceDefinition, start: date, end: date, *, dataset: str = "muasamcong",
+    workers: int = 1,
 ) -> tuple[CommittedDay, ...]:
     selected = []
-    for day in read_coverage(fs, definition.identity, start, end):
+    for day in read_coverage(fs, definition.identity, start, end, workers=workers):
         if day.effective is None:
             raise ValueError(f"No committed attempt: {definition.identity.resource}/{day.source_date}")
         attempt = day.effective

@@ -4,17 +4,19 @@ COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock ./
-RUN uv sync --locked --extra ops --no-install-project --no-editable
+ARG UV_EXTRA=ops
+RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --no-install-project --no-editable
 COPY src ./src
-RUN uv sync --locked --extra ops --no-editable
+RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --no-editable
 
 FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
 RUN groupadd --gid 10001 procurement \
     && useradd --uid 10001 --gid procurement --create-home procurement \
-    && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch \
+    && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch /var/lib/procurement/dagster \
     && chown -R procurement:procurement /var/lib/procurement
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
+COPY infra/dagster/workspace.yaml /opt/dagster/workspace.yaml
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     APP_ENV=production \

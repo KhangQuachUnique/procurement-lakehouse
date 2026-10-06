@@ -7,6 +7,8 @@ Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit b�
 | Cấu hình, crawl/recovery, Ops, query, quality, profile, chuyển dữ liệu | [Vận hành](docs/operations.md) |
 | Hiểu bảng/identity, validation, mô hình Silver và Gold | [Kiến trúc dữ liệu](docs/architecture.md) |
 | Chạy tests, lint, build và thêm resource | [Công cụ phát triển](docs/development.md) |
+| Dagster, partition backfill và chuyển scheduler | [Orchestration](docs/orchestration.md) |
+| Đánh giá và tiến độ modernization | [Đánh giá kế hoạch](docs/modernization_review.md) |
 
 ## Bắt đầu
 

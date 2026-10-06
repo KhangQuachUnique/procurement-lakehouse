@@ -1,3 +1,5 @@
+# DEPRECATED: legacy scheduler. See docs/orchestration.md for cutover.
+# Do not enable alongside Dagster. Historical ExecStart lacks --resource.
 [Unit]
 Description=Procurement daily ingestion and committed-data verification
 Wants=network-online.target

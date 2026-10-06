@@ -67,6 +67,18 @@ class WatchStore:
     def close(self):
         self.db.close()
 
+    def due_days(self, *, now=None, start=None, end=None, limit=31):
+        """Read due closed dates without changing watch state."""
+        if limit < 1:
+            raise ValueError("limit must be positive")
+        now = now or datetime.now(UTC)
+        end = min(end or date.max, today_vn() - timedelta(days=1))
+        return [dict(row) for row in self.db.execute("""
+            SELECT day,min(next_check) AS due FROM notices
+            WHERE status='pending' AND next_check<=? AND day>=? AND day<=?
+            GROUP BY day ORDER BY due,day LIMIT ?
+        """, (now.isoformat(), str(start or date.min), str(end), limit)).fetchall()]
+
     def status(self, now=None, *, start=None, end=None):
         now = now or datetime.now(UTC)
         bounds = (str(start or date.min), str(end or date.max))
@@ -231,10 +243,7 @@ def check(fs, store, client, *, start=None, end=None, max_days=31, dry_run=False
     from procurement.jobs.runner import run_resource_day
     run_day = run_day or run_resource_day
     now = now or datetime.now(UTC)
-    rows = store.db.execute("""SELECT day,min(next_check) AS due FROM notices
-        WHERE status='pending' AND next_check<=? AND day>=? AND day<=?
-        GROUP BY day ORDER BY due,day LIMIT ?""",
-        (now.isoformat(), str(start or date.min), str(end or today_vn() - timedelta(days=1)), max_days)).fetchall()
+    rows = store.due_days(now=now, start=start, end=end, limit=max_days)
     if dry_run:
         return {"planned_days": [r["day"] for r in rows], **store.status(now, start=start, end=end)}
     results = []

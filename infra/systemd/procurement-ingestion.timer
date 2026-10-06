@@ -1,3 +1,4 @@
+# DEPRECATED: disable before enabling bronze_daily_schedule in Dagster.
 [Unit]
 Description=Run procurement ingestion at 08:00 Vietnam time
 

@@ -30,6 +30,8 @@ class BenchmarkService:
                 pass
 
     def start(self, config):
+        if settings.ORCHESTRATION_ENABLED:
+            raise ValueError("Launch benchmark_job in Dagster; background API workers are disabled")
         if not settings.MUASAMCONG_TOKEN:
             raise ValueError("MUASAMCONG_TOKEN is not configured on the server")
         with exclusive_file_lock(self.store.state_dir / "launch.lock"):

@@ -10,6 +10,8 @@ class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
 
     APP_ENV: str = "dev"
+    ORCHESTRATION_ENABLED: bool = False
+    DAGSTER_URL: str = "http://127.0.0.1:3000"
     LOG_LEVEL: str = "INFO"
     MUASAMCONG_BASE_URL: str = "https://muasamcong.mpi.gov.vn"
     MUASAMCONG_TIMEOUT_SECONDS: float = Field(default=30, gt=0)
@@ -18,7 +20,6 @@ class Settings(BaseModel):
     MUASAMCONG_MAX_INFLIGHT: int = Field(default=3, ge=1, le=32)
     MUASAMCONG_REQUEST_INTERVAL_SECONDS: float = Field(default=0, ge=0, le=60, allow_inf_nan=False)
     KHLCNT_PACKAGE_WORKERS: int = Field(default=3, ge=1, le=32)
-    INGESTION_RESOURCE_WORKERS: int = Field(default=2, ge=1, le=4)
     MUASAMCONG_TOKEN: str | None = Field(default=None, repr=False)
     NOTIFY_QUALITY_CONFIG: str | None = None
     BRONZE_BATCH_BYTES: int = Field(default=64 * 1024 * 1024, gt=0)

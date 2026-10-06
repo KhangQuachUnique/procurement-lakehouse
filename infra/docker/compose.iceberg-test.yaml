@@ -1,0 +1,15 @@
+name: procurement-iceberg-test
+services:
+  storage:
+    image: chrislusf/seaweedfs:4.46
+    command: [mini, -dir=/data, -tableBucket=warehouse]
+    environment:
+      AWS_ACCESS_KEY_ID: integration
+      AWS_SECRET_ACCESS_KEY: integration-test-only
+    ports:
+      - "127.0.0.1:18333:8333"
+      - "127.0.0.1:18181:8181"
+    volumes:
+      - iceberg-test-data:/data
+volumes:
+  iceberg-test-data:

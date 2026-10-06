@@ -16,7 +16,7 @@ from procurement.storage.object_store import create_s3_filesystem
 
 
 def run_watch(fs, *, mode="check", path=None, start=None, end=None, max_days=None,
-              dry_run=False, request_budget=None, detail_workers=None):
+              dry_run=False, request_budget=None, detail_workers=None, seed_before_check=True):
     workers = settings.BID_OPENING_DETAIL_WORKERS if detail_workers is None else detail_workers
     if not 1 <= workers <= 32:
         raise ValueError("bid opening detail_workers must be between 1 and 32")
@@ -28,7 +28,9 @@ def run_watch(fs, *, mode="check", path=None, start=None, end=None, max_days=Non
         try:
             if mode == "status":
                 return store.status(start=start, end=end)
-            report = {"seed": seed(fs, store, start=start, end=end)}
+            report = {}
+            if mode == "seed" or seed_before_check:
+                report["seed"] = seed(fs, store, start=start, end=end)
             if mode == "check":
                 budget = request_budget or RequestBudget(
                     settings.BID_OPENING_MAX_INFLIGHT,

@@ -12,7 +12,11 @@ from procurement.common.dates import api_day_window
 from procurement.common.resources import ResourceIdentity
 from procurement.ingestion.engine.models import DailyResult
 from procurement.models.control import DayStatus, RunManifest, RunStatus
-from procurement.storage.control import list_day_manifests, write_run_manifest
+from procurement.storage.control import (
+    DayCommitUncertainError,
+    list_day_manifests,
+    write_run_manifest,
+)
 from procurement.storage.execution import ExecutionHeartbeat
 
 logger = logging.getLogger(__name__)
@@ -121,6 +125,9 @@ def run_batch_range(
                 else:
                     failed_dates += 1
             except INTERRUPTIONS:
+                raise
+            except DayCommitUncertainError:
+                # Preserve unresolved state until object storage is reconciled.
                 raise
             except Exception:
                 failed_dates += 1

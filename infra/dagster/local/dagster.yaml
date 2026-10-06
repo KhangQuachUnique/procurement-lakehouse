@@ -1,0 +1,10 @@
+concurrency:
+  runs:
+    max_concurrent_runs: 1
+  pools:
+    default_limit: 1
+    granularity: op
+run_retries:
+  enabled: false
+telemetry:
+  enabled: false

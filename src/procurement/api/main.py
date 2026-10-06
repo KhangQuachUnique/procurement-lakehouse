@@ -6,7 +6,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from procurement.api.benchmark import router as benchmark_router
-
 from procurement.api.ops import router as ops_api_router
 from procurement.api.ops.dependencies import get_ops_runtime
 from procurement.api.ops.ui import router as ops_ui_router

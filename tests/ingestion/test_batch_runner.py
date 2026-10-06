@@ -108,3 +108,23 @@ def test_interrupt_after_day_commit_recovers_success_from_storage(monkeypatch):
         )
     assert manifests[-1].status is RunStatus.SUCCESS
     assert manifests[-1].failed_dates == 0
+
+
+def test_uncertain_commit_stops_range_without_failed_summary(monkeypatch):
+    from procurement.storage.control import DayCommitUncertainError
+
+    manifests, calls = [], []
+    monkeypatch.setattr(batch_runner, 'write_run_manifest', lambda *args: manifests.append(args[-1]))
+
+    def run_day(run_id, day):
+        calls.append(day)
+        raise DayCommitUncertainError('cannot acknowledge')
+
+    with pytest.raises(DayCommitUncertainError):
+        batch_runner.run_batch_range(
+            date(2025, 1, 1), date(2025, 1, 3), fs=object(), identity=IDENTITY, run_day=run_day,
+        )
+    assert calls == [date(2025, 1, 1)]
+    assert len(manifests) == 1
+    assert manifests[-1].status is RunStatus.RUNNING
+    assert manifests[-1].failed_dates == 0

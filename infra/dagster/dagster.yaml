@@ -1,0 +1,31 @@
+storage:
+  postgres:
+    postgres_db:
+      username: dagster
+      password:
+        env: DAGSTER_POSTGRES_PASSWORD
+      hostname: dagster-postgres
+      db_name: dagster
+      port: 5432
+
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+
+# Execute child processes inside the code-location container; no Docker socket.
+run_launcher:
+  module: dagster.core.launcher
+  class: DefaultRunLauncher
+
+concurrency:
+  runs:
+    max_concurrent_runs: 1
+  pools:
+    default_limit: 1
+    granularity: op
+
+run_retries:
+  enabled: false
+
+telemetry:
+  enabled: false

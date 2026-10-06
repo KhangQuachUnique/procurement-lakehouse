@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from procurement.common.attempts import effective_attempt
 from procurement.common.resources import ResourceIdentity
 from procurement.models.control import DayManifest, DayStatus, RunStatus
-from procurement.storage.control import list_day_manifests, list_run_manifests
+from procurement.storage.control import list_day_manifests, list_run_manifests, read_day_manifest
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,9 @@ def read_coverage(fs, identity: ResourceIdentity, start: date, end: date, *, run
         runs = list_run_manifests(fs, identity, start_date=start, end_date=end, workers=workers)
     runs = [run for run in runs if run.end_date >= start and run.start_date <= end]
     def read_days(run):
+        if start == end:
+            day = read_day_manifest(fs, identity, run.run_id, start)
+            return [] if day is None else [day]
         return list_day_manifests(fs, identity, run_id=run.run_id)
     with ThreadPoolExecutor(max_workers=workers) as pool:
         attempts_by_run = list(pool.map(read_days, runs))

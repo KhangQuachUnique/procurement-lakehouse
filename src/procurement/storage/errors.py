@@ -9,6 +9,7 @@ from procurement.common.errors import build_error_record  # noqa: F401 -- compat
 from procurement.common.resources import ResourceIdentity
 from procurement.common.settings import settings
 from procurement.models.errors import ErrorRecord
+from procurement.storage.events import notify_changed
 
 
 def save_error_records(
@@ -33,6 +34,7 @@ def save_error_records(
     ).encode("utf-8")
     with fs.open(key, "wb") as raw_file:
         cast(BinaryIO, raw_file).write(content)
+    notify_changed(fs, key)
     return f"s3://{key}"
 
 
