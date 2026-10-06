@@ -36,29 +36,29 @@ def partition(conn, day=date(2025, 1, 1)):
 
 
 def attempt(conn, partition_id, **overrides):
-    values = dict(
-        id=uuid4(),
-        partition_id=partition_id,
-        request_id=uuid4(),
-        kind="ingestion",
-        owner_id=uuid4(),
-        lease_generation=1,
-    )
+    values = {
+        "id": uuid4(),
+        "partition_id": partition_id,
+        "request_id": uuid4(),
+        "kind": "ingestion",
+        "owner_id": uuid4(),
+        "lease_generation": 1,
+    }
     values.update(overrides)
     conn.execute(attempts.insert().values(**values))
     return values
 
 
 def commit(conn, a, **overrides):
-    values = dict(
-        id=uuid4(),
-        partition_id=a["partition_id"],
-        attempt_id=a["id"],
-        data_version=uuid4(),
-        record_count=0,
-        file_count=0,
-        verification={},
-    )
+    values = {
+        "id": uuid4(),
+        "partition_id": a["partition_id"],
+        "attempt_id": a["id"],
+        "data_version": uuid4(),
+        "record_count": 0,
+        "file_count": 0,
+        "verification": {},
+    }
     values.update(overrides)
     conn.execute(commits.insert().values(**values))
     return values
@@ -165,14 +165,14 @@ def test_lease_holder_must_match_attempt_owner_generation_and_partition(connecti
     p = partition(connection)
     a = attempt(connection, p)
     now = datetime.now(UTC)
-    values = dict(
-        partition_id=p,
-        attempt_id=a["id"],
-        owner_id=a["owner_id"],
-        generation=1,
-        heartbeat_at=now,
-        expires_at=now + timedelta(seconds=60),
-    )
+    values = {
+        "partition_id": p,
+        "attempt_id": a["id"],
+        "owner_id": a["owner_id"],
+        "generation": 1,
+        "heartbeat_at": now,
+        "expires_at": now + timedelta(seconds=60),
+    }
     for wrong in (
         {"owner_id": uuid4()},
         {"generation": 2},
@@ -197,17 +197,17 @@ def test_lease_holder_must_match_attempt_owner_generation_and_partition(connecti
 def test_files_have_checksum_bounds_and_unique_storage_identity(connection):
     p = partition(connection)
     c = commit(connection, attempt(connection, p), record_count=1, file_count=1)
-    values = dict(
-        commit_id=c["id"],
-        file_number=0,
-        table_name="project_detail",
-        bucket="test",
-        object_key="bronze/attempt/part.parquet",
-        row_count=1,
-        size_bytes=128,
-        sha256="a" * 64,
-        schema_version=1,
-    )
+    values = {
+        "commit_id": c["id"],
+        "file_number": 0,
+        "table_name": "project_detail",
+        "bucket": "test",
+        "object_key": "bronze/attempt/part.parquet",
+        "row_count": 1,
+        "size_bytes": 128,
+        "sha256": "a" * 64,
+        "schema_version": 1,
+    }
     for wrong in ({"sha256": "invalid"}, {"row_count": -1}, {"size_bytes": 0}, {"bucket": ""}):
         rejected(connection, commit_files.insert().values({**values, **wrong}))
     connection.execute(commit_files.insert().values(**values))
@@ -216,19 +216,19 @@ def test_files_have_checksum_bounds_and_unique_storage_identity(connection):
 
 def test_page_and_error_idempotency_and_bounds(connection):
     a = attempt(connection, partition(connection))
-    page = dict(attempt_id=a["id"], page_number=0, page_size=50, status="running")
+    page = {"attempt_id": a["id"], "page_number": 0, "page_size": 50, "status": "running"}
     connection.execute(attempt_pages.insert().values(**page))
     rejected(connection, attempt_pages.insert().values(**page))
     rejected(connection, attempt_pages.insert().values({**page, "page_number": -1}))
-    error = dict(
-        id=uuid4(),
-        attempt_id=a["id"],
-        page_number=2,
-        stage="fetch",
-        error_type="HTTPError",
-        message="fixture failure",
-        http_status=500,
-    )
+    error = {
+        "id": uuid4(),
+        "attempt_id": a["id"],
+        "page_number": 2,
+        "stage": "fetch",
+        "error_type": "HTTPError",
+        "message": "fixture failure",
+        "http_status": 500,
+    }
     # Error context may refer to a page that could not be initialized.
     connection.execute(errors.insert().values(**error))
     rejected(connection, errors.insert().values(**error))

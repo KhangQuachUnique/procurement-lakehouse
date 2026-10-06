@@ -46,7 +46,7 @@ def stage(db, catalog, namespace, tables, release_id, schemas=SCHEMAS):
             # Never retry an uncertain remote commit. Existing certified snapshot tags remain valid.
             try:
                 db.execute("ROLLBACK")
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
             raise
         metadata = catalog.table(namespace, name)["metadata"]

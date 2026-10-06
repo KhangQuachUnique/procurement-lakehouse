@@ -1,7 +1,7 @@
 """DuckDB connection to the SeaweedFS Iceberg REST catalog (format v2)."""
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from urllib.parse import urlsplit
 
 import duckdb

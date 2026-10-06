@@ -2,8 +2,6 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-import pytest
-
 from procurement.cli.ingest import build_parser, main, run_ingest
 from procurement.ingestion.contracts import MaterializeDayResult
 

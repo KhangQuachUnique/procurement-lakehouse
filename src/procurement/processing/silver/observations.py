@@ -4,7 +4,14 @@ import json
 from datetime import datetime
 from decimal import Decimal
 
-from procurement.processing.silver.contracts import MAPPINGS, REFERENCES, VERSION, lookup, money, text
+from procurement.processing.silver.contracts import (
+    MAPPINGS,
+    REFERENCES,
+    VERSION,
+    lookup,
+    money,
+    text,
+)
 from procurement.processing.silver.selection import digest
 
 

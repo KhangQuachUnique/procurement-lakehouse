@@ -44,7 +44,7 @@ def _set_pointer(fs, key, pointer):
         try:
             if read_json(fs, key) == pointer:
                 return
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
         raise ReleaseCommitUncertainError("Release pointer was not acknowledged; reconcile before retry") from exc
     if read_json(fs, key) != pointer:

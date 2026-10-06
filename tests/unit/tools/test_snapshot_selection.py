@@ -17,7 +17,9 @@ def test_select_snapshot_files_retrieves_files_and_commits():
 
     part = PartitionRecord(
         id=uuid4(),
-        identity=PartitionIdentity(source="muasamcong", resource="project", source_date=date(2024, 1, 1)),
+        identity=PartitionIdentity(
+            source="muasamcong", resource="project", source_date=date(2024, 1, 1)
+        ),
         current_commit_id=uuid4(),
         created_at=MagicMock(),
     )
@@ -63,7 +65,9 @@ def test_select_snapshot_files_retrieves_files_and_commits():
 
     table_key = tables[0]
     assert len(selected[table_key]) == 1
-    assert selected[table_key][0] == "s3://test-bucket/bronze/muasamcong/project_detail/part_1.parquet"
+    assert (
+        selected[table_key][0] == "s3://test-bucket/bronze/muasamcong/project_detail/part_1.parquet"
+    )
     assert "project" in committed_days
     assert "2024-01-01" in committed_days["project"]
     assert committed_days["project"]["2024-01-01"].record_count == 10

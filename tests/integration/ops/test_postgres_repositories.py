@@ -2,7 +2,6 @@ from datetime import UTC, date, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-import sqlalchemy as sa
 
 from procurement.common.resources import ResourceIdentity
 from procurement.metadata.postgres.schema import (
@@ -85,7 +84,9 @@ def test_postgres_ops_control_repository(database):
             )
         )
         conn.execute(
-            partitions.update().where(partitions.c.id == part_id).values(current_commit_id=commit_id)
+            partitions.update()
+            .where(partitions.c.id == part_id)
+            .values(current_commit_id=commit_id)
         )
         conn.execute(
             attempt_pages.insert().values(
@@ -221,4 +222,8 @@ def test_ops_service_integration_with_postgres_repos(database):
 
     service = OpsService(ctrl_repo, err_repo)
     summary = service.get_resource_summary("project")
-    assert summary.health in {ResourceHealth.HEALTHY, ResourceHealth.DEGRADED, ResourceHealth.FAILED}
+    assert summary.health in {
+        ResourceHealth.HEALTHY,
+        ResourceHealth.DEGRADED,
+        ResourceHealth.FAILED,
+    }

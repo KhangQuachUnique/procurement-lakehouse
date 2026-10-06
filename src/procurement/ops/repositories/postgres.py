@@ -1,8 +1,7 @@
 """PostgreSQL read repositories for Ops monitoring."""
 
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from typing import Any
-from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy import func, select
@@ -46,7 +45,9 @@ class PostgresOpsControlRepository:
         """Aggregate attempts by dagster_run_id or attempt_id to reconstruct runs."""
         with self._engine.begin() as conn:
             # Query attempts joined with partitions for this resource
-            run_col = func.coalesce(attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)).label("run_id")
+            run_col = func.coalesce(
+                attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)
+            ).label("run_id")
             stmt = (
                 select(
                     run_col,
@@ -137,7 +138,9 @@ class PostgresOpsControlRepository:
     ) -> list[DayManifest]:
         """List day attempts for the given resource identity."""
         with self._engine.begin() as conn:
-            run_col = func.coalesce(attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)).label("run_id")
+            run_col = func.coalesce(
+                attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)
+            ).label("run_id")
             stmt = (
                 select(
                     run_col,
@@ -187,16 +190,25 @@ class PostgresOpsControlRepository:
 
                 # Get page stats and error count for this attempt
                 att_id = row["attempt_id"]
-                page_stats = conn.execute(
-                    select(
-                        func.count(attempt_pages.c.page_number).label("completed_pages"),
-                        func.coalesce(func.sum(attempt_pages.c.search_items), 0).label("search_items"),
-                    ).where(attempt_pages.c.attempt_id == att_id)
-                ).mappings().one()
+                page_stats = (
+                    conn.execute(
+                        select(
+                            func.count(attempt_pages.c.page_number).label("completed_pages"),
+                            func.coalesce(func.sum(attempt_pages.c.search_items), 0).label(
+                                "search_items"
+                            ),
+                        ).where(attempt_pages.c.attempt_id == att_id)
+                    )
+                    .mappings()
+                    .one()
+                )
 
-                err_count = conn.execute(
-                    select(func.count(errors.c.id)).where(errors.c.attempt_id == att_id)
-                ).scalar() or 0
+                err_count = (
+                    conn.execute(
+                        select(func.count(errors.c.id)).where(errors.c.attempt_id == att_id)
+                    ).scalar()
+                    or 0
+                )
 
                 results.append(
                     DayManifest(
@@ -271,7 +283,9 @@ class PostgresOpsControlRepository:
                     source_date=source_date,
                     page_number=r["page_number"],
                     page_size=r["page_size"],
-                    status=PageStatus.SUCCESS if r["status"] == "success" else PageStatus(r["status"]),
+                    status=PageStatus.SUCCESS
+                    if r["status"] == "success"
+                    else PageStatus(r["status"]),
                     search_items=r["search_items"],
                     bronze_records=r["bronze_records"],
                     error_count=r["error_count"],
@@ -292,8 +306,9 @@ class PostgresOpsControlRepository:
                     attempts.c.status,
                 )
                 .select_from(
-                    partition_leases.join(partitions, partition_leases.c.partition_id == partitions.c.id)
-                    .join(attempts, partition_leases.c.attempt_id == attempts.c.id)
+                    partition_leases.join(
+                        partitions, partition_leases.c.partition_id == partitions.c.id
+                    ).join(attempts, partition_leases.c.attempt_id == attempts.c.id)
                 )
                 .where(
                     partitions.c.source == identity.source,
@@ -337,7 +352,9 @@ class PostgresOpsErrorRepository:
     ) -> list[ErrorRecord]:
         """Query recorded errors from PostgreSQL."""
         with self._engine.begin() as conn:
-            run_col = func.coalesce(attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)).label("run_id")
+            run_col = func.coalesce(
+                attempts.c.dagster_run_id, func.cast(attempts.c.id, sa.Text)
+            ).label("run_id")
             stmt = (
                 select(
                     errors.c.id,
@@ -354,8 +371,9 @@ class PostgresOpsErrorRepository:
                     errors.c.occurred_at,
                 )
                 .select_from(
-                    errors.join(attempts, errors.c.attempt_id == attempts.c.id)
-                    .join(partitions, attempts.c.partition_id == partitions.c.id)
+                    errors.join(attempts, errors.c.attempt_id == attempts.c.id).join(
+                        partitions, attempts.c.partition_id == partitions.c.id
+                    )
                 )
                 .where(
                     partitions.c.source == identity.source,

@@ -13,10 +13,13 @@ def include_name(name, type_, parent_names):
 
 
 def configure(connection=None):
-    options = dict(
-        target_metadata=metadata, include_schemas=True, include_name=include_name,
-        compare_type=True, compare_server_default=True,
-    )
+    options = {
+        "target_metadata": metadata,
+        "include_schemas": True,
+        "include_name": include_name,
+        "compare_type": True,
+        "compare_server_default": True,
+    }
     if connection is None:
         context.configure(url=application_database_url(), literal_binds=True, **options)
     else:

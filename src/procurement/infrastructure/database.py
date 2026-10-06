@@ -12,7 +12,7 @@ def application_database_url(value: str | None = None) -> URL:
         raise ValueError("APP_DATABASE_URL is required for application metadata")
     try:
         url = make_url(value)
-    except Exception:
+    except Exception:  # noqa: BLE001
         raise ValueError("APP_DATABASE_URL must be a PostgreSQL URL") from None
     if url.drivername not in {"postgresql", "postgresql+psycopg2"} or not url.database:
         raise ValueError("APP_DATABASE_URL must name a PostgreSQL database")
@@ -22,6 +22,10 @@ def application_database_url(value: str | None = None) -> URL:
 
 def create_application_engine(value: str | None = None) -> Engine:
     return create_engine(
-        application_database_url(value), pool_pre_ping=True, pool_size=5, max_overflow=5,
-        hide_parameters=True, connect_args={"connect_timeout": 10},
+        application_database_url(value),
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=5,
+        hide_parameters=True,
+        connect_args={"connect_timeout": 10},
     )

@@ -1,6 +1,8 @@
 import time
+
 from procurement.common.settings import settings
 from procurement.storage.object_store import create_s3_filesystem
+
 fs = create_s3_filesystem()
 for attempt in range(60):
     try:

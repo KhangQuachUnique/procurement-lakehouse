@@ -31,10 +31,12 @@ def test_quality_repair_propagates_failure_and_releases_host_lock(tmp_path, monk
     monkeypatch.setattr(workflows, "MuasamcongClient", Mock(return_value=nullcontext(Mock())))
     repair = Mock(return_value={"status": "needs_attention", "report": "report.json"})
     monkeypatch.setattr(workflows, "run_workflow", repair)
-    with build_op_context(resources={"object_storage": Mock()}) as context:
-        with pytest.raises(Failure, match="resume"):
-            workflows.quality_repair(context, workflows.QualityJobConfig(
-                resource="bid_opening", year=2024, directory=str(tmp_path)))
+    with (
+        build_op_context(resources={"object_storage": Mock()}) as context,
+        pytest.raises(Failure, match="resume"),
+    ):
+        workflows.quality_repair(context, workflows.QualityJobConfig(
+            resource="bid_opening", year=2024, directory=str(tmp_path)))
     lock.assert_called_once()
     assert repair.call_args.kwargs["resource"] == "bid_opening"
 

@@ -96,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
         report = run_ingest(args)
         print(json.dumps(report, indent=2))
         return 0 if report["status"] == "success" else 1
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         err_report = {
             "source": args.source,
             "resource": args.resource,

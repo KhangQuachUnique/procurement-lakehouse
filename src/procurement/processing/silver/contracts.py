@@ -44,7 +44,7 @@ def money(value):
     if value is None or value == "":
         return None
     if isinstance(value, (bool, float)):
-        raise ValueError("Money must be parsed from exact JSON decimals")
+        raise ValueError("Money must be parsed from exact JSON decimals")  # noqa: TRY004
     try:
         with localcontext() as ctx:
             ctx.prec = 50

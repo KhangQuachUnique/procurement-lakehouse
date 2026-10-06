@@ -1,4 +1,5 @@
 import sys
+
 from dlt.destinations import filesystem
 
 from procurement.bronze import dlt_writer as _dlt_writer
@@ -23,12 +24,12 @@ def create_bronze_destination(*args, **kwargs):
 
 
 __all__ = [
-    "filesystem",
-    "BronzeWriter",
     "BronzeWriteError",
-    "DltBronzeWriter",
+    "BronzeWriter",
     "BufferedBronzeWriter",
+    "DltBronzeWriter",
     "create_bronze_destination",
     "create_bronze_resource",
+    "filesystem",
     "serialize_record",
 ]
