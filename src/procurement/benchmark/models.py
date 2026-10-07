@@ -40,7 +40,9 @@ class Sample(BaseModel):
 
 class BenchmarkConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    resource: Literal["bid_opening"] = "bid_opening"
+    resource: Literal[
+        "bid_opening", "notify_contractor", "khlcnt", "project", "contractor_result"
+    ] = "bid_opening"
     mode: Literal["manual", "auto"] = "manual"
     stages: list[StageConfig] = Field(default_factory=lambda: [StageConfig()], min_length=1)
     start_date: date | None = None

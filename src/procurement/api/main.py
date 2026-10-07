@@ -21,11 +21,13 @@ configure_logging()
 async def lifespan(app):
     factory = app.dependency_overrides.get(get_ops_runtime, get_ops_runtime)
     runtime = factory()
-    runtime.start()
+    if runtime is not None:
+        runtime.start()
     try:
         yield
     finally:
-        runtime.stop()
+        if runtime is not None:
+            runtime.stop()
         get_ops_runtime.cache_clear()
 
 

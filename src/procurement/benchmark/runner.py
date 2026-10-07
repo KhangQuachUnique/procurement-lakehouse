@@ -19,6 +19,10 @@ from procurement.common.settings import settings
 from procurement.ingestion.sources.muasamcong.bid_opening.resource import BidOpeningApi
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
+from procurement.ingestion.sources.muasamcong.contractor_result.resource import ContractorResultApi
+from procurement.ingestion.sources.muasamcong.khlcnt.resource import KhlcntApi
+from procurement.ingestion.sources.muasamcong.notify_contractor.resource import NotifyContractorApi
+from procurement.ingestion.sources.muasamcong.project.resource import ProjectApi
 from procurement.quality.contracts import load_config, validate_detail
 
 

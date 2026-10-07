@@ -84,108 +84,112 @@ def build_bronze_asset(definition):
     if resource_name in QUALITY_RESOURCES:
         checks.append(AssetCheckSpec("quality_contract", asset=name, blocking=True))
 
-    @asset(
-        name=name,
-        group_name="bronze",
-        partitions_def=BRONZE_PARTITIONS,
-        required_resource_keys={"object_storage"},
-        pool=INGESTION_POOL,
-        backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
-        retry_policy=RetryPolicy(max_retries=0),
-        check_specs=checks,
-        config_schema=config_cls,
-        description=f"Committed {definition.identity.resource} resource/day; immutable attempts",
-    )
-    def bronze_asset(context: AssetExecutionContext):
-        source_date = date.fromisoformat(context.partition_key)
-        validate_closed_range(source_date, source_date, today=today_vn())
-
-        cfg = context.op_execution_context.op_config or {}
-        if not isinstance(cfg, dict):
-            cfg = getattr(cfg, "__dict__", {})
-
-        refresh = cfg.get("refresh", False)
-        page_size = cfg.get("page_size", 50)
-        req_interval = cfg.get("request_interval_seconds")
-        max_inflight = cfg.get("max_inflight")
-        max_attempts = cfg.get("max_attempts")
-        bid_workers = cfg.get("detail_workers")
-        khlcnt_workers = cfg.get("package_workers")
-
-        service, _ = bootstrap.bootstrap_services(
-            request_interval_seconds=req_interval,
-            max_inflight=max_inflight,
-            max_attempts=max_attempts,
-            bid_opening_workers=bid_workers,
-            khlcnt_workers=khlcnt_workers,
+    def _create_asset_fn(cfg_cls):
+        @asset(
+            name=name,
+            group_name="bronze",
+            partitions_def=BRONZE_PARTITIONS,
+            required_resource_keys={"object_storage"},
+            pool=INGESTION_POOL,
+            backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
+            retry_policy=RetryPolicy(max_retries=0),
+            check_specs=checks,
+            description=f"Committed {definition.identity.resource} resource/day; immutable attempts",
         )
+        def bronze_asset(context: AssetExecutionContext, config: cfg_cls):
+            source_date = date.fromisoformat(context.partition_key)
+            validate_closed_range(source_date, source_date, today=today_vn())
 
-        # Safely resolve run_id avoiding attribute error on None
-        run_id: str | None = None
-        dagster_run = getattr(context, "run", None)
-        if dagster_run is not None:
-            run_id = getattr(dagster_run, "run_id", None)
-        if not run_id:
-            run_id = getattr(context, "run_id", None)
+            refresh = config.refresh
+            page_size = config.page_size
+            req_interval = config.request_interval_seconds
+            max_inflight = config.max_inflight
+            max_attempts = config.max_attempts
+            bid_workers = getattr(config, "detail_workers", None)
+            khlcnt_workers = getattr(config, "package_workers", None)
 
-        request = MaterializeDayRequest(
-            source_date=source_date,
-            resource=resource_name,
-            refresh=refresh,
-            dagster_run_id=run_id,
-            page_size=page_size,
-        )
-        result = service.materialize_day(request)
-
-        if result.status != "success":
-            yield AssetCheckResult(
-                check_name="committed_manifest",
-                passed=False,
-                metadata={"status": result.status},
-            )
-            raise Failure(
-                f"Committed Bronze materialization failed for {resource_name}/{source_date}",
-                allow_retries=False,
+            service, _ = bootstrap.bootstrap_services(
+                request_interval_seconds=req_interval,
+                max_inflight=max_inflight,
+                max_attempts=max_attempts,
+                bid_opening_workers=bid_workers,
+                khlcnt_workers=khlcnt_workers,
             )
 
+            # Safely resolve run_id avoiding attribute error on None
+            run_id: str | None = None
+            dagster_run = getattr(context, "run", None)
+            if dagster_run is not None:
+                run_id = getattr(dagster_run, "run_id", None)
+            if not run_id:
+                run_id = getattr(context, "run_id", None)
+
+            request = MaterializeDayRequest(
+                source_date=source_date,
+                resource=resource_name,
+                refresh=refresh,
+                dagster_run_id=run_id,
+                page_size=page_size,
+            )
+            return _execute_bronze_materialize(service, request, resource_name, source_date)
+
+        return bronze_asset
+
+    return _create_asset_fn(config_cls)
+
+
+def _execute_bronze_materialize(service, request, resource_name, source_date):
+    result = service.materialize_day(request)
+
+
+    if result.status != "success":
         yield AssetCheckResult(
             check_name="committed_manifest",
-            passed=True,
-            metadata={
-                "commit_id": str(result.commit_id) if result.commit_id else "",
-                "reused": result.reused,
-            },
+            passed=False,
+            metadata={"status": result.status},
         )
-        yield AssetCheckResult(
-            check_name="committed_integrity",
-            passed=True,
-            metadata={
-                "records": result.record_count,
-                "files": result.file_count,
-            },
-        )
-        if resource_name in QUALITY_RESOURCES:
-            yield AssetCheckResult(
-                check_name="quality_contract",
-                passed=True,
-                metadata={
-                    "commit_id": str(result.commit_id) if result.commit_id else "",
-                    "records": result.record_count,
-                },
-            )
-        yield MaterializeResult(
-            metadata={
-                "resource": result.resource,
-                "source_date": result.source_date.isoformat(),
-                "reused": result.reused,
-                "commit_id": str(result.commit_id) if result.commit_id else "",
-                "attempt_id": str(result.attempt_id) if result.attempt_id else "",
-                "record_count": result.record_count,
-                "file_count": result.file_count,
-            }
+        raise Failure(
+            f"Committed Bronze materialization failed for {resource_name}/{source_date}",
+            allow_retries=False,
         )
 
-    return bronze_asset
+    yield AssetCheckResult(
+        check_name="committed_manifest",
+        passed=True,
+        metadata={
+            "commit_id": str(result.commit_id) if result.commit_id else "",
+            "reused": result.reused,
+        },
+    )
+    yield AssetCheckResult(
+        check_name="committed_integrity",
+        passed=True,
+        metadata={
+            "records": result.record_count,
+            "files": result.file_count,
+        },
+    )
+    if resource_name in QUALITY_RESOURCES:
+        yield AssetCheckResult(
+            check_name="quality_contract",
+            passed=True,
+            metadata={
+                "commit_id": str(result.commit_id) if result.commit_id else "",
+                "records": result.record_count,
+            },
+        )
+    yield MaterializeResult(
+        metadata={
+            "resource": result.resource,
+            "source_date": result.source_date.isoformat(),
+            "reused": result.reused,
+            "commit_id": str(result.commit_id) if result.commit_id else "",
+            "attempt_id": str(result.attempt_id) if result.attempt_id else "",
+            "record_count": result.record_count,
+            "file_count": result.file_count,
+        }
+    )
+
 
 
 bronze_assets = [build_bronze_asset(definition) for definition in RESOURCE_CATALOG]
