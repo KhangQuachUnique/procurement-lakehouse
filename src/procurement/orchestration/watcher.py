@@ -21,23 +21,24 @@ from dagster import (
 )
 
 from procurement.common.settings import settings
-from procurement.ingestion.bid_opening_watch import WatchStore, namespace
 from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.jobs.lock import execution_lock
 from procurement.orchestration.bronze import INGESTION_POOL
 from procurement.storage.control import DayCommitUncertainError
-from procurement.tools.watch_bid_opening import run_watch
+from procurement.watcher import (
+    due_days as read_due_days,
+)
+from procurement.watcher import (
+    namespace,
+    run_watch,
+)
 
 ACTIVE = [DagsterRunStatus.NOT_STARTED, DagsterRunStatus.QUEUED,
           DagsterRunStatus.STARTING, DagsterRunStatus.STARTED, DagsterRunStatus.CANCELING]
 
 
 def due_days():
-    store = WatchStore(settings.BID_OPENING_WATCH_PATH, read_only=True)
-    try:
-        return store.due_days(limit=settings.BID_OPENING_WATCH_MAX_DAYS)
-    finally:
-        store.close()
+    return read_due_days()
 
 
 @op(required_resource_keys={"object_storage"}, pool=INGESTION_POOL,
