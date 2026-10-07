@@ -10,8 +10,8 @@ from procurement.ingestion.engine.daily_runner import run_daily_resource
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.storage.committed import select_committed_days, verify_committed
 from procurement.storage.control import list_page_manifests, read_day_manifest, read_run_manifest
-from procurement.storage.transfer_archive import BundleDay, validate_day_metadata
 from procurement.tools.recover_result_2024 import recovery_spec
+from procurement.transfer.archive import BundleDay, validate_day_metadata
 
 pytestmark = pytest.mark.integration
 

@@ -102,7 +102,7 @@ def _source_plan(
 
 
 def _get_source_plan_fn():
-    for mod_name in ("procurement.storage.transfer", "procurement.transfer.export", "procurement.transfer"):
+    for mod_name in ("procurement.transfer", "procurement.transfer.export"):
         mod = sys.modules.get(mod_name)
         if mod and "_source_plan" in mod.__dict__:
             return mod.__dict__["_source_plan"]

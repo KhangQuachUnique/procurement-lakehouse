@@ -4,8 +4,8 @@ from datetime import date
 import pytest
 
 from procurement.common.settings import settings
-from procurement.storage.transfer import TransferError
 from procurement.tools import bronze_transfer as cli
+from procurement.transfer import TransferError
 
 
 @pytest.mark.parametrize("argv", [[], ["export"], ["export", "--year", "9999", "--output", "x"],
@@ -18,7 +18,7 @@ def test_invalid_cli_arguments_exit_two(argv):
 
 
 def test_current_year_is_rejected(monkeypatch):
-    from procurement.storage import transfer_archive
+    from procurement.transfer import archive as transfer_archive
 
     monkeypatch.setattr(transfer_archive, "today_vn", lambda: date(2026, 1, 1))
     with pytest.raises(SystemExit) as result:

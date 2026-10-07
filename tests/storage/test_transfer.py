@@ -10,13 +10,13 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from procurement import transfer
 from procurement.common.catalog import get_resource
 from procurement.common.settings import settings
 from procurement.ingestion.coverage import read_coverage
 from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.jobs.lock import execution_lock
 from procurement.models.control import DayManifest, PageManifest, RunManifest
-from procurement.storage import transfer
 from procurement.storage.committed import select_committed_days, verify_committed
 from procurement.storage.control import (
     DayCommitUncertainError,
@@ -26,7 +26,7 @@ from procurement.storage.control import (
     write_page_manifest,
     write_run_manifest,
 )
-from procurement.storage.transfer_archive import BundleIndex, ValidatedArchive
+from procurement.transfer.archive import BundleIndex, ValidatedArchive
 
 
 def seed_day(fs, *, resource="project", day=date(2024, 2, 29), run_id="run-a",

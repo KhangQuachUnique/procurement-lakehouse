@@ -6,14 +6,14 @@ import zipfile
 import httpx
 import pytest
 
+from procurement import transfer
 from procurement.common.catalog import get_resource
 from procurement.common.settings import settings
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.jobs import ingest, runner
 from procurement.ops.repositories.control import ControlRepository
-from procurement.storage import transfer
-from procurement.storage.transfer import export_bundle, import_bundle, inspect_bundle
-from procurement.storage.transfer_archive import CHUNK_SIZE, copy_digest
+from procurement.transfer import export_bundle, import_bundle, inspect_bundle
+from procurement.transfer.archive import CHUNK_SIZE, copy_digest
 
 pytestmark = pytest.mark.integration
 

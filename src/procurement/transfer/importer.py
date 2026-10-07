@@ -67,7 +67,7 @@ def _lock(lock_dir: Path | str | None) -> Any:
 
 
 def _get_commit_day_manifest():
-    for mod_name in ("procurement.storage.transfer", "procurement.transfer.importer", "procurement.transfer"):
+    for mod_name in ("procurement.transfer", "procurement.transfer.importer"):
         mod = sys.modules.get(mod_name)
         if mod and "commit_day_manifest" in mod.__dict__:
             return mod.__dict__["commit_day_manifest"]
@@ -75,7 +75,7 @@ def _get_commit_day_manifest():
 
 
 def _get_copy_digest():
-    for mod_name in ("procurement.storage.transfer", "procurement.transfer.importer", "procurement.transfer"):
+    for mod_name in ("procurement.transfer", "procurement.transfer.importer"):
         mod = sys.modules.get(mod_name)
         if mod and "copy_digest" in mod.__dict__:
             return mod.__dict__["copy_digest"]
@@ -83,7 +83,7 @@ def _get_copy_digest():
 
 
 def _get_put_missing():
-    for mod_name in ("procurement.storage.transfer", "procurement.transfer.importer", "procurement.transfer"):
+    for mod_name in ("procurement.transfer", "procurement.transfer.importer"):
         mod = sys.modules.get(mod_name)
         if mod and "_put_missing" in mod.__dict__:
             return mod.__dict__["_put_missing"]
@@ -91,7 +91,7 @@ def _get_put_missing():
 
 
 def _get_read_coverage():
-    for mod_name in ("procurement.storage.transfer", "procurement.transfer.importer", "procurement.transfer"):
+    for mod_name in ("procurement.transfer", "procurement.transfer.importer"):
         mod = sys.modules.get(mod_name)
         if mod and "read_coverage" in mod.__dict__:
             return mod.__dict__["read_coverage"]

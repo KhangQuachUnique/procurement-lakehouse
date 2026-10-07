@@ -13,9 +13,9 @@ from dagster import (
 )
 
 from procurement.common.settings import settings
-from procurement.ingestion.bid_opening_watch import WatchStore
 from procurement.orchestration import watcher
 from procurement.storage.control import DayCommitUncertainError
+from procurement.watcher import WatchStore
 
 
 @pytest.fixture

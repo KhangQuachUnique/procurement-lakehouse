@@ -49,6 +49,11 @@ __all__ = [
 
 def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
     """Build CommittedDay partition selection for given resource and manifest."""
+    if hasattr(manifest, "files") and manifest.files:
+        files = tuple((getattr(f, "table_name", f[0]), getattr(f, "object_key", f[1])) for f in manifest.files)
+        run_id = getattr(manifest, "run_id", str(getattr(manifest, "id", "")))
+        records = getattr(manifest, "bronze_records", getattr(manifest, "record_count", 0))
+        return CommittedDay(manifest.source_date, run_id, records, files)
     definition = get_resource(resource)
     files = []
     for table in definition.tables:
@@ -245,8 +250,30 @@ def check(
 ) -> dict[str, Any]:
     """Check due closed dates for late bid opening publications and refresh if found."""
     if run_day is None:
-        from procurement.jobs.runner import run_resource_day
-        run_day = run_resource_day
+        def _default_run_day(
+            resource: str,
+            source_date: date,
+            *,
+            page_size: int = 50,
+            **kwargs: Any,
+        ) -> Any:
+            from procurement.bootstrap import get_ingestion_service
+            from procurement.ingestion.contracts import MaterializeDayRequest
+
+            service = get_ingestion_service()
+            result = service.materialize_day(
+                MaterializeDayRequest(
+                    source_date=source_date,
+                    resource=resource,
+                    refresh=True,
+                    page_size=page_size,
+                )
+            )
+            if result.status != "success":
+                raise ValueError(f"Bid opening refresh did not commit SUCCESS: status={result.status}")
+            return str(result.commit_id or result.attempt_id or "success")
+
+        run_day = _default_run_day
     now = now or datetime.now(UTC)
     rows = store.due_days(now=now, start=start, end=end, limit=max_days)
     if dry_run:
@@ -318,8 +345,34 @@ def check(
                     search_pages=pages,
                     bid_opening_detail_workers=detail_workers,
                 )
-                manifest = read_day_manifest(fs, identity, run, day)
-                if manifest is None or manifest.status.value != "success":
+                try:
+                    manifest = read_day_manifest(fs, identity, run, day)
+                except Exception:  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
+                    manifest = None
+                if manifest is None:
+                    try:
+                        from types import SimpleNamespace
+
+                        from procurement.bootstrap import get_metadata_service
+                        from procurement.metadata.models import PartitionIdentity
+
+                        meta_svc = get_metadata_service()
+                        snapshot = meta_svc.get_snapshot(
+                            [PartitionIdentity(source=identity.source, resource=identity.resource, source_date=day)]
+                        )
+                        part_commit = snapshot.partitions.get((identity.source, identity.resource, day))
+                        if part_commit and part_commit.commit:
+                            c = part_commit.commit
+                            manifest = SimpleNamespace(
+                                run_id=str(c.id),
+                                source_date=day,
+                                bronze_records=c.record_count,
+                                status=SimpleNamespace(value="success"),
+                                files=c.files,
+                            )
+                    except Exception:  # noqa: BLE001, S110 -- best-effort metadata service lookup
+                        pass
+                if manifest is None or (hasattr(manifest, "status") and manifest.status.value != "success"):
                     raise ValueError("Bid opening refresh did not commit SUCCESS")
                 states = opening_states(fs, manifest)
                 if not found <= states.keys():

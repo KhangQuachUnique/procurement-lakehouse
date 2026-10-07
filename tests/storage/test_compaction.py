@@ -10,7 +10,9 @@ import pytest
 
 from procurement.common.catalog import get_resource
 from procurement.common.settings import settings
-from procurement.ingestion.bid_opening_watch import selection_for
+from procurement.compaction import executor as compaction
+from procurement.compaction.executor import rewrite_table
+from procurement.compaction.verification import verify_multiset
 from procurement.ingestion.coverage import read_coverage
 from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.models.control import DayManifest, PageManifest, RunManifest
@@ -19,13 +21,11 @@ from procurement.ops.service import OpsService
 from procurement.quality.audit import frozen_selection, selection_day
 from procurement.quality.files import read_json
 from procurement.quality.storage import read_quality_contexts, save_quality_page
-from procurement.storage import compaction
 from procurement.storage.committed import (
     iter_committed_records,
     select_committed_days,
     verify_committed,
 )
-from procurement.storage.compact_parquet import rewrite_table, verify_multiset
 from procurement.storage.control import (
     DayCommitUncertainError,
     read_day_manifest,
@@ -33,13 +33,14 @@ from procurement.storage.control import (
     write_page_manifest,
     write_run_manifest,
 )
-from procurement.storage.transfer import export_bundle, import_bundle
 from procurement.tools.bronze_explorer import (
     BronzeTable,
     _create_bronze_views,
     _select_current_files,
 )
 from procurement.tools.count_records import build_report, count_files
+from procurement.transfer import export_bundle, import_bundle
+from procurement.watcher.service import selection_for
 
 DAY = date(2022, 9, 23)
 START = datetime(2022, 9, 24, tzinfo=UTC)

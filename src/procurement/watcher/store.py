@@ -61,7 +61,7 @@ class WatchStore:
                 self.db.execute("INSERT OR REPLACE INTO metadata VALUES ('phase_rules', '2')")
 
     def _get_namespace(self) -> str:
-        for mod_name in ("procurement.watcher.service", "procurement.ingestion.bid_opening_watch", "procurement.watcher"):
+        for mod_name in ("procurement.watcher.service", "procurement.watcher"):
             mod = sys.modules.get(mod_name)
             if mod and "namespace" in mod.__dict__:
                 return mod.__dict__["namespace"]()

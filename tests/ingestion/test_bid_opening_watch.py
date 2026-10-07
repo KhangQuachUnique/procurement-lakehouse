@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from procurement.ingestion import bid_opening_watch as watch
+from procurement.watcher import service as watch
 
 DAY = date(2025, 8, 3)
 NOW = datetime(2025, 8, 22, tzinfo=UTC)

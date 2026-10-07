@@ -63,7 +63,7 @@ def runs_page(service: Service, source: str = DEFAULT_SOURCE, resource: str | No
         runs = service.list_runs(source=source, resource=resource, status=status, start_date=start_date, end_date=end_date, limit=limit, offset=offset)
     except ValueError as exc:
         return _bad_request(exc, source=source, active="runs")
-    from procurement.ingestion.bid_opening_watch import read_status
+    from procurement.watcher import read_status
     try:
         watch = read_status()
         watch_summary = " | ".join(f"{_e(key)}: {_e(value)}" for key, value in watch.items())

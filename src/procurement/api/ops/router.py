@@ -23,7 +23,7 @@ Service = Annotated[OpsService, Depends(get_ops_service)]
 
 @router.get("/bid-opening-watch")
 def bid_opening_watch():
-    from procurement.ingestion.bid_opening_watch import read_status
+    from procurement.watcher import read_status
     return read_status()
 
 
