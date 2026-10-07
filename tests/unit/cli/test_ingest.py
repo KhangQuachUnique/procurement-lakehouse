@@ -79,3 +79,71 @@ def test_cli_main_exit_codes():
     with patch("procurement.cli.ingest.get_ingestion_service", return_value=mock_service):
         code = main(["--resource", "project", "--date", "2024-03-01"])
         assert code == 1
+
+
+def test_run_ingest_date_range():
+    mock_service = MagicMock()
+    mock_service.materialize_day.return_value = MaterializeDayResult(
+        source="muasamcong",
+        resource="project",
+        source_date=date(2024, 3, 1),
+        reused=False,
+        status="success",
+        record_count=10,
+        file_count=1,
+    )
+
+    with patch("procurement.cli.ingest.get_ingestion_service", return_value=mock_service):
+        parser = build_parser()
+        args = parser.parse_args([
+            "--resource", "project",
+            "--start-date", "2024-03-01",
+            "--end-date", "2024-03-03",
+        ])
+        report = run_ingest(args)
+
+    assert report["total_days"] == 3
+    assert report["success_days"] == 3
+    assert report["status"] == "success"
+    assert mock_service.materialize_day.call_count == 3
+
+
+def test_run_ingest_continue_on_error():
+    mock_service = MagicMock()
+    # First day fails, second day succeeds
+    mock_service.materialize_day.side_effect = [
+        MaterializeDayResult(
+            source="muasamcong",
+            resource="project",
+            source_date=date(2024, 3, 1),
+            reused=False,
+            status="failed",
+            record_count=0,
+            file_count=0,
+        ),
+        MaterializeDayResult(
+            source="muasamcong",
+            resource="project",
+            source_date=date(2024, 3, 2),
+            reused=False,
+            status="success",
+            record_count=10,
+            file_count=1,
+        ),
+    ]
+
+    with patch("procurement.cli.ingest.get_ingestion_service", return_value=mock_service):
+        parser = build_parser()
+        args = parser.parse_args([
+            "--resource", "project",
+            "--start-date", "2024-03-01",
+            "--end-date", "2024-03-02",
+            "--continue-on-error",
+        ])
+        report = run_ingest(args)
+
+    assert report["total_days"] == 2
+    assert report["success_days"] == 1
+    assert report["failed_days"] == 1
+    assert report["status"] == "failed"
+    assert mock_service.materialize_day.call_count == 2
