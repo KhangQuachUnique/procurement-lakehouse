@@ -8,7 +8,7 @@ x-dagster: &dagster
       UV_EXTRA: orchestration
   environment: &dagster-env
     DAGSTER_HOME: /var/lib/procurement/dagster
-    DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:?Set a Dagster metadata password}
+    DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
   volumes:
     - dagster-state:/var/lib/procurement/dagster
     - ../dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
@@ -31,7 +31,7 @@ services:
     environment:
       POSTGRES_USER: dagster
       POSTGRES_DB: dagster
-      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:?Set a Dagster metadata password}
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
     volumes:
       - dagster-postgres-data:/var/lib/postgresql/data
     healthcheck:
