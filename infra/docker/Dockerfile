@@ -12,7 +12,7 @@ RUN uv sync --locked --extra ops --extra ${UV_EXTRA} --no-editable
 FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
 RUN groupadd --gid 10001 procurement \
     && useradd --uid 10001 --gid procurement --create-home procurement \
-    && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch /var/lib/procurement/dagster \
+    && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch /var/lib/procurement/dagster /var/lib/procurement/benchmarks /var/lib/procurement/benchmark-artifacts \
     && chown -R procurement:procurement /var/lib/procurement
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
@@ -22,6 +22,8 @@ ENV PATH="/app/.venv/bin:$PATH" \
     APP_ENV=production \
     DLT_PIPELINES_DIR=/var/lib/procurement/pipelines \
     INGESTION_LOCK_DIR=/var/lib/procurement/locks \
+    BENCHMARK_STATE_DIR=/var/lib/procurement/benchmarks \
+    BENCHMARK_EXPORT_DIR=/var/lib/procurement/benchmark-artifacts \
     RUNTIME__DLTHUB_TELEMETRY=false
 USER procurement
 CMD ["python", "-m", "procurement.jobs.ingest", "--help"]

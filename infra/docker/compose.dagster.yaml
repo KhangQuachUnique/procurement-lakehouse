@@ -25,6 +25,10 @@ services:
   ops:
     environment:
       ORCHESTRATION_ENABLED: "true"
+      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
+      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
+    volumes:
+      - ingestion-state:/var/lib/procurement
 
   dagster-postgres:
     image: postgres:17

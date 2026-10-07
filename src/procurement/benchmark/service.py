@@ -39,12 +39,15 @@ class BenchmarkService:
             run_id = self.store.create(config)
             args = [sys.executable, "-m", "procurement.tools.benchmark", "worker", run_id,
                     "--state-dir", str(self.store.state_dir), "--export-dir", str(self.store.export_dir)]
-            options = {"start_new_session": True} if os.name != "nt" else {
-                "creationflags": subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP}
             try:
                 # Output is intentionally discarded: structured diagnostics are persisted without secrets.
-                process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                           stderr=subprocess.DEVNULL, close_fds=True, **options)
+                if os.name != "nt":
+                    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                               stderr=subprocess.DEVNULL, close_fds=True, start_new_session=True)
+                else:
+                    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                               stderr=subprocess.DEVNULL, close_fds=True,
+                                               creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
                 # Reap on POSIX without tying worker lifetime to the API server.
                 import threading
                 threading.Thread(target=process.wait, daemon=True).start()

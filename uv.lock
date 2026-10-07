@@ -1394,6 +1394,8 @@ metadata = [
 ]
 ops = [
     { name = "fastapi" },
+    { name = "psycopg2-binary" },
+    { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 orchestration = [
@@ -1419,12 +1421,14 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'ops'", specifier = ">=0.116,<1" },
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "psycopg2-binary", marker = "extra == 'metadata'", specifier = ">=2.9,<3" },
+    { name = "psycopg2-binary", marker = "extra == 'ops'", specifier = ">=2.9,<3" },
     { name = "pydantic", specifier = ">=2.11,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<9" },
     { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12,<1" },
     { name = "s3fs", specifier = ">=2026.7,<2027" },
     { name = "sqlalchemy", marker = "extra == 'metadata'", specifier = ">=2,<2.1" },
+    { name = "sqlalchemy", marker = "extra == 'ops'", specifier = ">=2,<2.1" },
     { name = "sqlalchemy", marker = "extra == 'orchestration'", specifier = ">=2,<2.1" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'ops'", specifier = ">=0.35,<1" },
 ]

@@ -19,10 +19,6 @@ from procurement.common.settings import settings
 from procurement.ingestion.sources.muasamcong.bid_opening.resource import BidOpeningApi
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
-from procurement.ingestion.sources.muasamcong.contractor_result.resource import ContractorResultApi
-from procurement.ingestion.sources.muasamcong.khlcnt.resource import KhlcntApi
-from procurement.ingestion.sources.muasamcong.notify_contractor.resource import NotifyContractorApi
-from procurement.ingestion.sources.muasamcong.project.resource import ProjectApi
 from procurement.quality.contracts import load_config, validate_detail
 
 
@@ -58,6 +54,8 @@ class BenchmarkRunner:
             self.budget.cancel()
 
     def observe(self, event):
+        if self.metrics is None or self.events is None:
+            return
         event = {**event, "at": now(), "stage": self.metrics.stage, "phase": self.metrics.phase}
         self.metrics.observe(event)
         reason = None
@@ -110,7 +108,7 @@ class BenchmarkRunner:
     def client(self, stage):
         self.budget = RequestBudget(stage.max_inflight, min_interval=stage.request_interval)
         return self.client_factory(
-            token=settings.MUASAMCONG_TOKEN,
+            token=settings.MUASAMCONG_TOKEN or "",
             request_budget=self.budget, observer=self.observe,
             max_attempts=self.config.max_attempts,
             max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
@@ -172,7 +170,8 @@ class BenchmarkRunner:
             outcome = "cancelled"
         except (httpx.HTTPError, ValueError, TypeError, KeyError):
             outcome = "failed"
-        self.metrics.record(outcome)
+        if self.metrics is not None:
+            self.metrics.record(outcome)
 
     def phase(self, api, samples, stage, name, seconds):
         self.metrics = Metrics(self.stage_number, name, stage.model_dump())

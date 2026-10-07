@@ -4,13 +4,13 @@
 
 Hệ thống thu thập, kiểm định và lưu trữ dữ liệu Mua Sắm Công vào **Bronze Parquet**, quản lý metadata giao dịch bằng PostgreSQL (`bronze_meta`), điều phối bằng **Dagster** và giám sát qua **Ops UI**.
 
-| Cần làm gì? | Hướng dẫn |
-| --- | --- |
-| Cấu hình, crawl/recovery, Ops, query, quality, profile, chuyển dữ liệu | [Vận hành](docs/operations.md) |
-| Hiểu bảng/identity, validation, mô hình Silver và Gold | [Kiến trúc dữ liệu](docs/architecture.md) |
-| Chạy tests, lint, build và thêm resource | [Công cụ phát triển](docs/development.md) |
-| Dagster, partition backfill và chuyển scheduler | [Orchestration](docs/orchestration.md) |
-| Đánh giá và tiến độ modernization | [Đánh giá kế hoạch](docs/modernization_review.md) |
+| Cần làm gì?                                                            | Hướng dẫn                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------- |
+| Cấu hình, crawl/recovery, Ops, query, quality, profile, chuyển dữ liệu | [Vận hành](docs/operations.md)                    |
+| Hiểu bảng/identity, validation, mô hình Silver và Gold                 | [Kiến trúc dữ liệu](docs/architecture.md)         |
+| Chạy tests, lint, build và thêm resource                               | [Công cụ phát triển](docs/development.md)         |
+| Dagster, partition backfill và chuyển scheduler                        | [Orchestration](docs/orchestration.md)            |
+| Đánh giá và tiến độ modernization                                      | [Đánh giá kế hoạch](docs/modernization_review.md) |
 
 ---
 
@@ -19,17 +19,19 @@ Hệ thống thu thập, kiểm định và lưu trữ dữ liệu Mua Sắm Cô
 Toàn bộ hệ thống (PostgreSQL metadata, SeaweedFS Object Storage, Dagster Orchestrator, Dagster Web UI) được đóng gói và vận hành hoàn chỉnh qua Docker Compose mà **không cần cài đặt môi trường Python hay dịch vụ nào trên máy host**.
 
 ### 1. Chuẩn bị môi trường
+
 Tạo file cấu hình `.env` từ file mẫu:
 
 ```powershell
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 ```
-*(Nếu cần cào dữ liệu mới trực tiếp từ Mua Sắm Công, hãy cập nhật `MUASAMCONG_TOKEN` trong `.env`)*.
+
+_(Nếu cần cào dữ liệu mới trực tiếp từ Mua Sắm Công, hãy cập nhật `MUASAMCONG_TOKEN` trong `.env`)_.
 
 ### 2. Khởi chạy toàn bộ hệ thống bằng Docker Compose
 
 ```powershell
-docker compose --env-file .env -f infra/docker/compose.yaml -f infra/docker/compose.dagster.yaml up -d --build
+docker compose --env-file .env -f infra/docker/compose.yaml -f infra/docker/compose.dagster.yaml --profile ops up -d --build
 ```
 
 ### 3. Khởi tạo Schema Metadata (Chỉ chạy 1 lần khi dựng mới)
@@ -49,7 +51,7 @@ Sau khi khởi chạy, các dịch vụ sẵn sàng tại:
 - **Dagster Web UI**: [http://localhost:3000](http://localhost:3000) (Điều phối Asset, trigger pipeline, xem log jobs)
 - **SeaweedFS S3 Storage**: [http://localhost:8333](http://localhost:8333) (S3-compatible Object Storage chứa Bronze Parquet)
 - **Application PostgreSQL**: `127.0.0.1:25432` (Database metadata `bronze_meta`, user: `procurement`, db: `procurement`)
-- **Ops Web UI & REST API** *(tùy chọn)*: [http://localhost:8000/ops](http://localhost:8000/ops) (Heatmap giám sát nghiệp vụ thầu)
+- **Ops Web UI & REST API** _(tùy chọn)_: [http://localhost:8000/ops](http://localhost:8000/ops) (Heatmap giám sát nghiệp vụ thầu)
 
 ---
 
@@ -71,6 +73,7 @@ Nếu bạn có các file nén dữ liệu lịch sử trong thư mục `exports
 ## 🛠️ Chạy cục bộ / Phát triển (Dành cho Developer)
 
 Nếu bạn muốn debug trực tiếp trên máy host thay vì dùng Docker:
+
 - Yêu cầu Python 3.12+, `uv`.
 - Cài đặt thư viện: `uv sync --locked --extra dev --extra ops --extra metadata`
 - Xem chi tiết tại [Tài liệu Phát triển](docs/development.md) và [Hướng dẫn Vận hành](docs/operations.md).
