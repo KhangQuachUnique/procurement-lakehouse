@@ -21,6 +21,11 @@ def graphql(url, query, variables=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:13000")
+    parser.add_argument(
+        "--db-url",
+        default=None,
+        help="PostgreSQL connection string to verify metadata persistence.",
+    )
     args = parser.parse_args()
     repositories = graphql(args.url, """{
       repositoriesOrError { __typename ... on RepositoryConnection {
@@ -60,7 +65,30 @@ def main():
     }""", {"id": run_id})["logsForRun"]["events"]
     assert sum(e["__typename"] == "MaterializationEvent" for e in logs) == 5, logs
     assert sum(e["__typename"] == "AssetCheckEvaluationEvent" for e in logs) == 12, logs
-    print("SUCCESS: five materializations and twelve checks through the queued launcher", flush=True)
+    print(
+        "SUCCESS: five materializations and twelve checks through the queued launcher",
+        flush=True,
+    )
+
+    db_url = args.db_url
+    if db_url:
+        import sqlalchemy as sa
+
+        engine = sa.create_engine(db_url)
+        with engine.connect() as conn:
+            rows = conn.execute(
+                sa.text(
+                    "SELECT count(*) FROM bronze_meta.attempts WHERE dagster_run_id = :run_id AND status = 'success'"
+                ),
+                {"run_id": run_id},
+            ).scalar()
+            assert rows == 5, (
+                f"Expected 5 success attempts in DB for dagster_run_id {run_id}, got {rows}"
+            )
+        print(
+            f"SUCCESS: verified 5 PostgreSQL attempts correlated with Dagster run {run_id}",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

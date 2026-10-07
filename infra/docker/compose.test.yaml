@@ -1,15 +1,37 @@
 # Use only with an isolated --project-name and tests/deployment/test.env.
 # Requires Compose >=2.24.4 for !override; no production endpoints or credentials.
 services:
+  app-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: procurement
+      POSTGRES_DB: procurement
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:-isolated-test-only}
+    ports:
+      - "127.0.0.1:25432:5432"
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U procurement -d procurement"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
   object-storage:
     ports: !override
       - "127.0.0.1:18333:8333"
   dagster-code-location:
     environment:
       MUASAMCONG_BASE_URL: http://fixture-source:8077
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-postgresql://procurement:isolated-test-only@app-postgres:5432/procurement}
     depends_on:
       fixture-source:
         condition: service_started
+      app-postgres:
+        condition: service_healthy
+  dagster-daemon:
+    environment:
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-postgresql://procurement:isolated-test-only@app-postgres:5432/procurement}
+    depends_on:
+      app-postgres:
+        condition: service_healthy
   dagster-webserver:
     ports: !override
       - "127.0.0.1:13000:3000"

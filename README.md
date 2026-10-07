@@ -1,10 +1,10 @@
 # Procurement Lakehouse
 
-> Nhánh refactor: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md)
-> và [hướng dẫn sandbox](infra/sandbox/README.md). PostgreSQL metadata bên dưới là
-> kiến trúc đích; các hướng dẫn vận hành cũ vẫn mô tả code checkpoint hiện tại.
+> Core refactor đã được tích hợp vào `main`: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md)
+> và [hướng dẫn sandbox](infra/sandbox/README.md). Core metadata hiện lưu trên PostgreSQL (`bronze_meta`),
+> trong khi các công cụ phân tích và batch runner cũ tiếp tục được hỗ trợ song song.
 
-Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit bằng manifest và theo dõi qua Ops. Silver/Gold hiện là thiết kế, chưa triển khai.
+Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit bằng metadata PostgreSQL (hoặc manifest kế thừa) và theo dõi qua Ops. Silver/Gold hiện là thiết kế, chưa triển khai.
 
 | Cần làm gì? | Hướng dẫn |
 | --- | --- |
@@ -19,10 +19,15 @@ Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit b�
 Cần Python 3.12–3.14, uv và Docker Compose. Chạy tại thư mục gốc repository:
 
 ```powershell
-uv sync --locked --extra dev --extra ops
+uv sync --locked --extra dev --extra ops --extra metadata
 # Chỉ tạo .env khi chưa có; sau đó chỉnh cấu hình trong file
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 docker compose --env-file .env -f infra/docker/compose.yaml up -d object-storage
+# Khởi tạo schema và bảng metadata PostgreSQL (yêu cầu APP_DATABASE_URL trong .env)
+uv run --locked alembic upgrade head
+# Ingestion qua core CLI mới:
+uv run --locked python -m procurement.cli.ingest --resource notify_contractor --date 2025-01-01
+# Hoặc batch runner kế thừa:
 uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor --dry-run
 uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor
 uv run --locked uvicorn procurement.api.main:app --host 127.0.0.1 --port 8000

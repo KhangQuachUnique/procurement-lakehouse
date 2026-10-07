@@ -79,10 +79,19 @@ jobs:
       COMPOSE_FILE: infra/docker/compose.yaml:infra/docker/compose.dagster.yaml:infra/docker/compose.test.yaml
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.15'
+          enable-cache: true
+      - run: uv sync --locked --python 3.12 --extra metadata
       - name: Start isolated Dagster stack with fixture source
         run: docker compose --env-file tests/deployment/test.env up -d --build --wait --wait-timeout 180
+      - name: Apply application metadata migrations
+        run: uv run --locked --no-sync alembic upgrade head
+        env:
+          APP_DATABASE_URL: postgresql://procurement:isolated-test-only@127.0.0.1:25432/procurement
       - name: Exercise queued run through daemon and code location
-        run: python tests/deployment/smoke.py
+        run: uv run --locked --no-sync python tests/deployment/smoke.py --db-url postgresql://procurement:isolated-test-only@127.0.0.1:25432/procurement
       - name: Deployment logs
         if: failure()
         run: docker compose --env-file tests/deployment/test.env logs --tail 150
