@@ -1,9 +1,12 @@
 """Migrate only the application schema, using an explicit APP_DATABASE_URL."""
 
 from alembic import context
+from dotenv import find_dotenv, load_dotenv
 
 from procurement.infrastructure.database import application_database_url, create_application_engine
 from procurement.metadata.postgres.schema import SCHEMA, metadata
+
+load_dotenv(find_dotenv(usecwd=True))
 
 
 def include_name(name, type_, parent_names):

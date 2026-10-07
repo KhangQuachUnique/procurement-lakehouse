@@ -45,7 +45,7 @@ services:
       OPS_RECONCILE_INTERVAL_SECONDS: ${OPS_RECONCILE_INTERVAL_SECONDS:-300}
       OPS_SYNC_WORKERS: ${OPS_SYNC_WORKERS:-8}
       OPS_STALE_AFTER_SECONDS: ${OPS_STALE_AFTER_SECONDS:-600}
-      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
+      APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
     command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
     volumes:
       - ops-state:/var/lib/procurement/ops
@@ -53,7 +53,10 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
-      - object-storage
+      object-storage:
+        condition: service_started
+      app-postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
@@ -92,10 +95,13 @@ services:
       BRONZE_BATCH_RECORDS: ${BRONZE_BATCH_RECORDS:-5000}
       BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
       BID_OPENING_WATCH_MAX_DAYS: ${BID_OPENING_WATCH_MAX_DAYS:-31}
-      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
+      APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
-      - object-storage
+      object-storage:
+        condition: service_started
+      app-postgres:
+        condition: service_healthy
     init: true
     restart: "no"
     stop_grace_period: 60s
@@ -108,8 +114,31 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  app-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP_POSTGRES_USER:-procurement}
+      POSTGRES_DB: ${APP_POSTGRES_DB:-procurement}
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:-password}
+    ports:
+      - "${APP_POSTGRES_PORT:-25432}:5432"
+    volumes:
+      - app-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ${APP_POSTGRES_USER:-procurement} -d ${APP_POSTGRES_DB:-procurement}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   watch-state:
   ops-state:
   object-storage-data:
   ingestion-state:
+  app-postgres-data:

@@ -14,7 +14,7 @@ def application_database_url(value: str | None = None) -> URL:
         url = make_url(value)
     except Exception:  # noqa: BLE001
         raise ValueError("APP_DATABASE_URL must be a PostgreSQL URL") from None
-    if url.drivername not in {"postgresql", "postgresql+psycopg2"} or not url.database:
+    if url.drivername not in {"postgresql", "postgresql+psycopg2", "postgresql+psycopg"} or not url.database:
         raise ValueError("APP_DATABASE_URL must name a PostgreSQL database")
     # Avoid relying on SQLAlchemy's default driver selection.
     return url.set(drivername="postgresql+psycopg2")

@@ -1,10 +1,8 @@
 # Procurement Lakehouse
 
-> Core refactor đã được tích hợp vào `main`: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md)
-> và [hướng dẫn sandbox](infra/sandbox/README.md). Core metadata hiện lưu trên PostgreSQL (`bronze_meta`),
-> trong khi các công cụ phân tích và batch runner cũ tiếp tục được hỗ trợ song song.
+> Core refactor đã được tích hợp vào `main`: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md). Core metadata lưu trên PostgreSQL (`bronze_meta`).
 
-Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit bằng metadata PostgreSQL (hoặc manifest kế thừa) và theo dõi qua Ops. Silver/Gold hiện là thiết kế, chưa triển khai.
+Hệ thống thu thập, kiểm định và lưu trữ dữ liệu Mua Sắm Công vào **Bronze Parquet**, quản lý metadata giao dịch bằng PostgreSQL (`bronze_meta`), điều phối bằng **Dagster** và giám sát qua **Ops UI**.
 
 | Cần làm gì? | Hướng dẫn |
 | --- | --- |
@@ -14,54 +12,65 @@ Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit b�
 | Dagster, partition backfill và chuyển scheduler | [Orchestration](docs/orchestration.md) |
 | Đánh giá và tiến độ modernization | [Đánh giá kế hoạch](docs/modernization_review.md) |
 
-## Bắt đầu
+---
 
-Cần Python 3.12–3.14, uv và Docker Compose. Chạy tại thư mục gốc repository:
+## 🚀 Khởi chạy nhanh (Turnkey Docker - Mặc định)
+
+Toàn bộ hệ thống (PostgreSQL metadata, SeaweedFS Object Storage, Dagster Orchestrator, Dagster Web UI) được đóng gói và vận hành hoàn chỉnh qua Docker Compose mà **không cần cài đặt môi trường Python hay dịch vụ nào trên máy host**.
+
+### 1. Chuẩn bị môi trường
+Tạo file cấu hình `.env` từ file mẫu:
 
 ```powershell
-uv sync --locked --extra dev --extra ops --extra metadata
-# Chỉ tạo .env khi chưa có; sau đó chỉnh cấu hình trong file
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
-docker compose --env-file .env -f infra/docker/compose.yaml up -d object-storage
-# Khởi tạo schema và bảng metadata PostgreSQL (yêu cầu APP_DATABASE_URL trong .env)
-uv run --locked alembic upgrade head
-# Ingestion qua core CLI mới:
-uv run --locked python -m procurement.cli.ingest --resource notify_contractor --date 2025-01-01
-# Hoặc batch runner kế thừa:
-uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor --dry-run
-uv run --locked python -m procurement.jobs.ingest daily --resource notify_contractor
-uv run --locked uvicorn procurement.api.main:app --host 127.0.0.1 --port 8000
 ```
+*(Nếu cần cào dữ liệu mới trực tiếp từ Mua Sắm Công, hãy cập nhật `MUASAMCONG_TOKEN` trong `.env`)*.
 
-Sửa token/cấu hình storage trong `.env` trước khi crawl; bucket phải tồn tại và truy cập được. Ops tại `http://127.0.0.1:8000/ops`. Daily mặc định ngày hôm qua theo lịch Việt Nam; nên chạy lúc 08:00 hoặc muộn hơn. Xem [tham số ingestion](docs/operations.md#ingestion-và-recovery) trước khi mở rộng khoảng ngày.
-
-Một ngày chỉ được coi là committed khi **DayManifest SUCCESS**. File Parquet của attempt FAILED có thể vẫn tồn tại; dùng Ops hoặc committed reader để chọn dữ liệu sử dụng.
-
-## Các tác vụ thường dùng
-
-Kiểm tra routing, chất lượng detail và sửa từng record: [Quality](docs/operations.md#kiểm-tra-và-sửa-chất-lượng-thông-báo).
-Quy trình này tự audit, lập plan, repair và kiểm tra lại; chạy lại cùng lệnh để resume:
+### 2. Khởi chạy toàn bộ hệ thống bằng Docker Compose
 
 ```powershell
-.venv\Scripts\python.exe -m procurement.tools.repair_bronze_quality run --year 2025
-.venv\Scripts\python.exe -m procurement.tools.profile_notify_fields --year 2025
+docker compose --env-file .env -f infra/docker/compose.yaml -f infra/docker/compose.dagster.yaml up -d --build
 ```
 
-Backfill hoặc retry các ngày ingestion chưa SUCCESS:
+### 3. Khởi tạo Schema Metadata (Chỉ chạy 1 lần khi dựng mới)
+
+Khởi tạo các bảng metadata PostgreSQL (`bronze_meta`) trực tiếp bên trong container:
 
 ```powershell
-uv run --locked python -m procurement.jobs.ingest backfill --resource notify_contractor --year 2025 --continue-on-error
-uv run --locked python -m procurement.jobs.ingest repair --resource notify_contractor --year 2025 --continue-on-error
-uv run --locked python -m procurement.jobs.ingest status --year 2025
-uv run --locked python -m procurement.jobs.ingest verify --year 2025
+docker exec procurement-lakehouse-dagster-code-location-1 uv run alembic upgrade head
 ```
 
-`--continue-on-error` cho phép đi tiếp sau ngày lỗi nguồn; cuối lượt vẫn báo lỗi để repair. Lỗi xác thực/storage hoặc trạng thái chưa xác nhận sẽ dừng flow. Mọi lệnh dùng cùng planner, bỏ qua ngày đã SUCCESS nếu không bật `--refresh`.
+---
 
-Mỗi lệnh cào chỉ chạy một resource; `daily/backfill/repair` bắt buộc `--resource`
-cụ thể và từ chối `all`. `--year` vẫn dùng được cho từng resource. `status/verify`
-vẫn cho xem tổng hợp. Worker chi tiết của KHLCNT/biên bản mở thầu điều chỉnh riêng;
-không còn `--resource-workers`. Xem hướng dẫn vận hành trước khi cập nhật scheduler cũ.
+## 🌐 Các cổng dịch vụ & Giao diện quản trị
 
-Báo cáo theo lần chạy nằm trong `exports/`, cache/nghiên cứu trong `tmp/`.
-`docs/` chỉ giữ ba tài liệu dùng lâu dài ở trên; mỗi công cụ có `--help`.
+Sau khi khởi chạy, các dịch vụ sẵn sàng tại:
+
+- **Dagster Web UI**: [http://localhost:3000](http://localhost:3000) (Điều phối Asset, trigger pipeline, xem log jobs)
+- **SeaweedFS S3 Storage**: [http://localhost:8333](http://localhost:8333) (S3-compatible Object Storage chứa Bronze Parquet)
+- **Application PostgreSQL**: `127.0.0.1:25432` (Database metadata `bronze_meta`, user: `procurement`, db: `procurement`)
+- **Ops Web UI & REST API** *(tùy chọn)*: [http://localhost:8000/ops](http://localhost:8000/ops) (Heatmap giám sát nghiệp vụ thầu)
+
+---
+
+## 📦 Nạp dữ liệu lịch sử (Historical Bronze Data)
+
+Nếu bạn có các file nén dữ liệu lịch sử trong thư mục `exports/` (`bronze-2022.zip`, `bronze-2023.zip`, v.v.):
+
+1. **Import Parquet vào S3 Storage**:
+   ```powershell
+   uv run python -m procurement.tools.bronze_transfer import --archive exports/bronze-2025.zip
+   ```
+2. **Đồng bộ Metadata vào PostgreSQL**:
+   ```powershell
+   uv run python -m procurement.tools.import_metadata --resource all
+   ```
+
+---
+
+## 🛠️ Chạy cục bộ / Phát triển (Dành cho Developer)
+
+Nếu bạn muốn debug trực tiếp trên máy host thay vì dùng Docker:
+- Yêu cầu Python 3.12+, `uv`.
+- Cài đặt thư viện: `uv sync --locked --extra dev --extra ops --extra metadata`
+- Xem chi tiết tại [Tài liệu Phát triển](docs/development.md) và [Hướng dẫn Vận hành](docs/operations.md).

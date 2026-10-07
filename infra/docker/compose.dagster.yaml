@@ -68,7 +68,7 @@ services:
       BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
       BID_OPENING_WATCH_MAX_DAYS: ${BID_OPENING_WATCH_MAX_DAYS:-31}
       DAGSTER_BRONZE_START_DATE: ${DAGSTER_BRONZE_START_DATE:-2000-01-01}
-      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
+      APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
     command: [dagster, api, grpc, --host, 0.0.0.0, --port, "4000", --module-name, procurement.orchestration.definitions]
     volumes:
       - dagster-state:/var/lib/procurement/dagster
@@ -77,6 +77,8 @@ services:
       - watch-state:/var/lib/procurement/watch
     depends_on:
       dagster-postgres:
+        condition: service_healthy
+      app-postgres:
         condition: service_healthy
       object-storage:
         condition: service_started
