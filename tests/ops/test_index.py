@@ -208,7 +208,7 @@ def test_writer_ownership_prevents_competing_background_sync(index_env, monkeypa
     _, _, index, sync = index_env
     called = Event()
     sync.interval = 0.01
-    monkeypatch.setattr(sync, "sync_once", lambda: called.set())
+    monkeypatch.setattr(sync, "sync_events", lambda: called.set())
     try:
         with exclusive_file_lock(index.path.with_suffix(".sync.lock")):
             sync.start()
@@ -251,3 +251,51 @@ def test_api_bootstrap_and_ui_freshness_use_index_without_network(index_env, mon
             assert response.headers["X-Ops-Sync-State"] == "degraded"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_events_update_only_targets_and_reconciliation_recovers_missing_events(index_env, monkeypatch):
+    from procurement.storage.events import notify_changed
+    fs, bucket, index, sync = index_env
+    seed(fs, bucket)
+    sync.sync_events()
+    new_key = seed(fs, bucket, run_id="new")
+    notify_changed(fs, new_key)
+    find = Mock(wraps=fs.find)
+    monkeypatch.setattr(fs, "find", find)
+    sync.sync_events()
+    assert all("/_events/" in call.args[0] for call in find.call_args_list)
+    with index.connect() as db:
+        assert db.execute("SELECT count(*) FROM objects WHERE run_id='new'").fetchone()[0] == 1
+    read = Mock(wraps=fs.cat_file)
+    monkeypatch.setattr(fs, "cat_file", read)
+    sync.sync_events()
+    read.assert_not_called()
+    sync._last_reconcile = 0
+    sync.sync_events()
+    with index.connect() as db:
+        assert db.execute("SELECT count(*) FROM objects WHERE run_id='new'").fetchone()[0] == 2
+
+
+def test_failed_event_download_is_retried_without_advancing(index_env, monkeypatch):
+    from procurement.storage.events import notify_changed
+    fs, bucket, index, sync = index_env
+    sync.sync_events()
+    key = seed(fs, bucket)
+    notify_changed(fs, key)
+    with monkeypatch.context() as patch:
+        patch.setattr(fs, "cat_file", Mock(side_effect=OSError("offline")))
+        with pytest.raises(OSError):
+            sync.sync_events()
+    assert not sync._seen_events
+    sync.sync_events()
+    with index.connect() as db:
+        assert db.execute("SELECT count(*) FROM objects").fetchone()[0] == 1
+
+
+def test_notification_failure_does_not_fail_acknowledged_manifest(index_env, monkeypatch):
+    from procurement.storage.io import write_json
+    fs, bucket, _, _ = index_env
+    monkeypatch.setattr(fs, "pipe_file", Mock(side_effect=OSError("events offline")))
+    key = f"{bucket}/_control/muasamcong/project/run_id=x/run.json"
+    assert write_json(fs, key, {"ok": True}) == "s3://" + key
+    assert json.loads(fs.cat_file(key)) == {"ok": True}

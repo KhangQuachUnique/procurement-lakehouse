@@ -267,18 +267,18 @@ def run_daily_resource(
         # This handler ends before commit starts: never downgrade an uncertain SUCCESS.
         error = build_error_record(
             identity=spec.identity, run_id=run_id, stage="interrupted",
-            source_date=source_date, page_number=page.page_number if page_open else None,
+            source_date=source_date, page_number=page.page_number if (page_open and page is not None) else None,
             exc=exc,
         )
         try:
             save_error_records(
                 fs=fs, identity=spec.identity, source_date=source_date, run_id=run_id,
-                page_number=page.page_number if page_open else day.completed_pages,
+                page_number=page.page_number if (page_open and page is not None) else day.completed_pages,
                 records=[error], interrupted=True,
             )
         except Exception:
             logger.exception("failed_to_persist_interruption_error run_id=%s", run_id)
-        if page_open:
+        if page_open and page is not None:
             try:
                 write_page_manifest(fs, spec.identity, page.model_copy(update={
                     "status": PageStatus.FAILED, "error_count": 1, "completed_at": _now(),

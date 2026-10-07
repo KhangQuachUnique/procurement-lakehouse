@@ -16,9 +16,9 @@ from procurement.storage.execution import read_execution
 pytestmark = pytest.mark.integration
 
 
-def test_interrupt_drains_parallel_workers_and_persists_terminal_manifests(store, monkeypatch):
+def test_interrupt_drains_active_worker_and_persists_terminal_manifests(store, monkeypatch):
     fs, _ = store
-    started = Barrier(3)
+    started = Barrier(2)
     cancelled = Event()
     real_cancel = ingest.RequestBudget.cancel
 
@@ -45,9 +45,9 @@ def test_interrupt_drains_parallel_workers_and_persists_terminal_manifests(store
         **kwargs, transport=httpx.MockTransport(source),
     ))
     args = ingest._parser().parse_args([
-        "backfill", "--year", "2025", "--resource-workers", "2", "--source-max-inflight", "2",
+        "backfill", "--year", "2025", "--resource", "project", "--source-max-inflight", "2",
     ])
-    plan = [(name, date(2025, 1, 1)) for name in ("project", "khlcnt")]
+    plan = [("project", date(2025, 1, 1))]
     report = {"attempted_days": 0, "execution_errors": []}
     with pytest.raises(KeyboardInterrupt):
         ingest._execute_plan(args, fs, plan, report, runner.run_resource_day)

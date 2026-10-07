@@ -136,9 +136,13 @@ class MuasamcongClient:
                 return payload
             except httpx.TransportError as exc:
                 if attempt >= self._max_attempts:
-                    exc.diagnostics = {
-                        "stage": "transport", "attempts": attempt, "endpoint": path.split("?", 1)[0],
-                        "request_id": str(body.get("id")) if isinstance(body, dict) and body.get("id") else None,
+                    exc.diagnostics = {  # pyright: ignore[reportAttributeAccessIssue]
+                        "stage": "transport",
+                        "attempts": attempt,
+                        "endpoint": path.split("?", 1)[0],
+                        "request_id": str(body.get("id"))
+                        if isinstance(body, dict) and body.get("id")
+                        else None,
                     }
                     raise
                 self._wait_retry(self._retry_delay(attempt) or 0)

@@ -1,0 +1,20 @@
+# Use only with an isolated --project-name and tests/deployment/test.env.
+# Requires Compose >=2.24.4 for !override; no production endpoints or credentials.
+services:
+  object-storage:
+    ports: !override
+      - "127.0.0.1:18333:8333"
+  dagster-code-location:
+    environment:
+      MUASAMCONG_BASE_URL: http://fixture-source:8077
+    depends_on:
+      fixture-source:
+        condition: service_started
+  dagster-webserver:
+    ports: !override
+      - "127.0.0.1:13000:3000"
+  fixture-source:
+    image: python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea
+    volumes:
+      - ../../tests/deployment/mock_source.py:/fixture.py:ro
+    command: [python, /fixture.py]

@@ -23,7 +23,6 @@ def test_settings_validate_environment_without_dotenv(monkeypatch):
         ("MUASAMCONG_REQUEST_INTERVAL_SECONDS", float("nan")),
         ("MUASAMCONG_REQUEST_INTERVAL_SECONDS", float("inf")),
         ("KHLCNT_PACKAGE_WORKERS", 0),
-        ("INGESTION_RESOURCE_WORKERS", 5),
         ("OPS_SYNC_INTERVAL_SECONDS", 0),
         ("OPS_RECONCILE_INTERVAL_SECONDS", 0),
         ("OPS_SYNC_WORKERS", 0),

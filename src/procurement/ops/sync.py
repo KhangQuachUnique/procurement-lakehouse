@@ -5,7 +5,7 @@ import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from procurement.common.catalog import DEFAULT_SOURCE, SUPPORTED_RESOURCES
 from procurement.common.errors import sanitize_error_message
@@ -25,6 +25,7 @@ class IndexSynchronizer:
         self._stop = threading.Event()
         self._thread = None
         self._last_reconcile = 0.0
+        self._seen_events = set()
 
     def _identity(self, key):
         parts = key.removeprefix(self.bucket + "/").split("/")
@@ -122,13 +123,47 @@ class IndexSynchronizer:
             self.index.record_failure(sanitize_error_message(str(exc)))
             raise
 
+    def sync_events(self):
+        """Poll only recent invalidations; startup and periodic full scans recover missed events."""
+        if not self._last_reconcile or time.monotonic() - self._last_reconcile >= self.reconcile_interval:
+            self.sync_once(force=True)
+            self._seen_events.clear()
+            return
+        now = datetime.now(UTC)
+        try:
+            listed = set()
+            for hour in (now, now - timedelta(hours=1)):
+                listed.update(self.fs.find(f"{self.bucket}/_events/{hour:%Y-%m-%d/%H}"))
+            pending = listed - self._seen_events
+            keys = set()
+            for event in pending:
+                key = json.loads(self.fs.cat_file(event))["key"]
+                if not key.startswith(self.bucket + "/") or self._identity(key) is None:
+                    raise ValueError("Invalid Ops event target")
+                keys.add(key)
+            items, removed = [], []
+            for key in keys:
+                if self.fs.exists(key):
+                    items.append((key, self._fingerprint(self.fs.info(key)), self._identity(key)))
+                else:
+                    removed.append(key)
+            with ThreadPoolExecutor(max_workers=self.workers) as pool:
+                objects = list(pool.map(self._download, items))
+            if self._stop.is_set():
+                return
+            self.index.apply(objects, removed, started_at=now.isoformat())
+            self._seen_events = (self._seen_events | pending) & listed
+        except Exception as exc:
+            self.index.record_failure(sanitize_error_message(str(exc)))
+            raise
+
     def _run(self):
         while not self._stop.is_set():
             try:
                 with exclusive_file_lock(self.index.path.with_suffix(".sync.lock")):
                     while not self._stop.is_set():
                         try:
-                            self.sync_once()
+                            self.sync_events()
                         except Exception:
                             logger.exception("ops_index_sync_failed")
                         self._stop.wait(self.interval)

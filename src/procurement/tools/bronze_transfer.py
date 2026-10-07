@@ -11,13 +11,13 @@ from procurement.common.errors import sanitize_error_message
 from procurement.common.logging_config import configure_logging
 from procurement.common.settings import settings
 from procurement.storage.object_store import create_s3_filesystem
-from procurement.storage.transfer import (
+from procurement.transfer import (
     TransferError,
     export_bundle,
     import_bundle,
     inspect_bundle,
+    year_dates,
 )
-from procurement.storage.transfer_archive import year_dates
 
 
 def _parser():

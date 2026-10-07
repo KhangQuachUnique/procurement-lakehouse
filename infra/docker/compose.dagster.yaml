@@ -1,0 +1,117 @@
+# Overlay: docker compose --env-file .env -f infra/docker/compose.yaml
+#          -f infra/docker/compose.dagster.yaml up -d --build
+x-dagster: &dagster
+  build:
+    context: ../..
+    dockerfile: infra/docker/Dockerfile
+    args:
+      UV_EXTRA: orchestration
+  environment: &dagster-env
+    DAGSTER_HOME: /var/lib/procurement/dagster
+    DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:?Set a Dagster metadata password}
+  volumes:
+    - dagster-state:/var/lib/procurement/dagster
+    - ../dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 60s
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  ops:
+    environment:
+      ORCHESTRATION_ENABLED: "true"
+
+  dagster-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_DB: dagster
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:?Set a Dagster metadata password}
+    volumes:
+      - dagster-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U dagster -d dagster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  dagster-code-location:
+    <<: *dagster
+    environment:
+      <<: *dagster-env
+      ORCHESTRATION_ENABLED: "true"
+      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
+      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY}
+      MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mpi.gov.vn}
+      MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN}
+      MUASAMCONG_TIMEOUT_SECONDS: ${MUASAMCONG_TIMEOUT_SECONDS:-30}
+      MUASAMCONG_MAX_ATTEMPTS: ${MUASAMCONG_MAX_ATTEMPTS:-3}
+      MUASAMCONG_MAX_RETRY_DELAY_SECONDS: ${MUASAMCONG_MAX_RETRY_DELAY_SECONDS:-30}
+      MUASAMCONG_MAX_INFLIGHT: ${MUASAMCONG_MAX_INFLIGHT:-3}
+      MUASAMCONG_REQUEST_INTERVAL_SECONDS: ${MUASAMCONG_REQUEST_INTERVAL_SECONDS:-0}
+      KHLCNT_PACKAGE_WORKERS: ${KHLCNT_PACKAGE_WORKERS:-3}
+      BID_OPENING_DETAIL_WORKERS: ${BID_OPENING_DETAIL_WORKERS:-4}
+      BID_OPENING_MAX_INFLIGHT: ${BID_OPENING_MAX_INFLIGHT:-4}
+      BID_OPENING_REQUEST_INTERVAL_SECONDS: ${BID_OPENING_REQUEST_INTERVAL_SECONDS:-0.1}
+      BRONZE_BATCH_BYTES: ${BRONZE_BATCH_BYTES:-67108864}
+      BRONZE_BATCH_RECORDS: ${BRONZE_BATCH_RECORDS:-5000}
+      BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
+      BID_OPENING_WATCH_MAX_DAYS: ${BID_OPENING_WATCH_MAX_DAYS:-31}
+      DAGSTER_BRONZE_START_DATE: ${DAGSTER_BRONZE_START_DATE:-2000-01-01}
+    command: [dagster, api, grpc, --host, 0.0.0.0, --port, "4000", --module-name, procurement.orchestration.definitions]
+    volumes:
+      - dagster-state:/var/lib/procurement/dagster
+      - ../dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
+      - ingestion-state:/var/lib/procurement
+      - watch-state:/var/lib/procurement/watch
+    depends_on:
+      dagster-postgres:
+        condition: service_healthy
+      object-storage:
+        condition: service_started
+    healthcheck:
+      test: [CMD, dagster, api, grpc-health-check, --port, "4000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  dagster-webserver:
+    <<: *dagster
+    command: [dagster-webserver, --host, 0.0.0.0, --port, "3000", --workspace, /opt/dagster/workspace.yaml]
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:3000/server_info', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  dagster-daemon:
+    <<: *dagster
+    command: [dagster-daemon, run, --workspace, /opt/dagster/workspace.yaml]
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, dagster-daemon, liveness-check]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  dagster-state:
+  dagster-postgres-data:

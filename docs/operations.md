@@ -86,7 +86,7 @@ Backoff khi retry vẫn áp dụng.
 
 Mỗi resource giữ thứ tự ngày/trang; KHLCNT có thể tải các package của một plan
 đồng thời, bid_opening có thể lấy nhiều biên bản trong cùng trang. `--resource-workers`
-đã bỏ; cấu hình cũ `INGESTION_RESOURCE_WORKERS` không còn tác dụng. Trần HTTP chỉ
+đã bỏ. Trần HTTP chỉ
 áp dụng trong một flow. Khóa OS chỉ điều phối cùng host,
 không phải distributed lock. 401/403, lỗi storage/internal hoặc commit chưa xác
 nhận dừng flow ngay cả với `--continue-on-error`. Ctrl+C chờ worker ghi trạng thái;
@@ -404,6 +404,33 @@ và writer vẫn tuần tự. Worker có stats/evidence riêng, ghép theo thứ
 một record lỗi vẫn chặn ghi cả trang. Interrupt hủy request đang chờ và đợi
 worker đang chạy kết thúc trước khi đóng client. Tăng worker không tăng số file
 Parquet; có thể đặt worker=1 để trở về cách chạy tuần tự.
+
+## Bronze compaction
+
+Gộp file Parquet của ngày cũ thành run SUCCESS mới: xem
+[hướng dẫn compaction](bronze_compaction.md) cho CLI, resume và nghiệm thu.
+
+## Khôi phục riêng kết quả tháng 09/2024
+
+Job bảo trì riêng cho ba ngày `contractor_result` 09/09, 12/09, 16/09/2024:
+
+```powershell
+python -m procurement.tools.recover_result_2024 --retry-stale --continue-on-error --source-request-interval 0.075
+```
+
+Job chỉ chấp nhận HTTP 500 của `IB2400333221` ngày 09/09, `IB2400340694` ngày
+12/09 và `IB2400347507` ngày 16/09 sau retry; nếu detail trả dữ liệu thì vẫn lưu
+bình thường. Lỗi khác vẫn FAILED; ngày đã SUCCESS được bỏ qua. `--retry-stale` chỉ
+dùng khi worker cũ đã dừng, không vượt heartbeat còn sống. Có `--dry-run` để xem
+kế hoạch mà không gọi nguồn. Ingest mặc định và schema manifest không thay đổi.
+
+SUCCESS của job có thể thiếu ba hồ sơ trên. Báo cáo tại
+`exports/result-recovery-2024/<job_id>/report.json` ghi `recorded_excluded_records`
+và từng mã đã loại. Bằng chứng trước commit lưu dưới `_quality` của run trong
+`recovery-*.json` và quality page; trạng thái cuối vẫn theo DayManifest. Compaction
+sao chép evidence này; định dạng export/import hiện tại không mang quality sidecar,
+nên giữ báo cáo riêng khi chuyển dữ liệu. Ops/count dùng cơ chế SUCCESS cũ, không
+có nhãn ngoại lệ mới. Muốn lấy lại hồ sơ sau này dùng ingest thường với `--refresh`.
 
 ## API benchmark
 

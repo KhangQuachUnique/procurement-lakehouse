@@ -1,5 +1,9 @@
 # Procurement Lakehouse
 
+> Nhánh refactor: xem [thiết kế core và bản đồ tổ chức code](docs/refactor/core-architecture.md)
+> và [hướng dẫn sandbox](infra/sandbox/README.md). PostgreSQL metadata bên dưới là
+> kiến trúc đích; các hướng dẫn vận hành cũ vẫn mô tả code checkpoint hiện tại.
+
 Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit bằng manifest và theo dõi qua Ops. Silver/Gold hiện là thiết kế, chưa triển khai.
 
 | Cần làm gì? | Hướng dẫn |
@@ -7,6 +11,8 @@ Thu thập dữ liệu Mua Sắm Công vào Bronze Parquet, quản lý commit b�
 | Cấu hình, crawl/recovery, Ops, query, quality, profile, chuyển dữ liệu | [Vận hành](docs/operations.md) |
 | Hiểu bảng/identity, validation, mô hình Silver và Gold | [Kiến trúc dữ liệu](docs/architecture.md) |
 | Chạy tests, lint, build và thêm resource | [Công cụ phát triển](docs/development.md) |
+| Dagster, partition backfill và chuyển scheduler | [Orchestration](docs/orchestration.md) |
+| Đánh giá và tiến độ modernization | [Đánh giá kế hoạch](docs/modernization_review.md) |
 
 ## Bắt đầu
 
