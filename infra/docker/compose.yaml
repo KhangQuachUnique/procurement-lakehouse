@@ -45,6 +45,7 @@ services:
       OPS_RECONCILE_INTERVAL_SECONDS: ${OPS_RECONCILE_INTERVAL_SECONDS:-300}
       OPS_SYNC_WORKERS: ${OPS_SYNC_WORKERS:-8}
       OPS_STALE_AFTER_SECONDS: ${OPS_STALE_AFTER_SECONDS:-600}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
     command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
     volumes:
       - ops-state:/var/lib/procurement/ops
@@ -91,6 +92,7 @@ services:
       BRONZE_BATCH_RECORDS: ${BRONZE_BATCH_RECORDS:-5000}
       BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
       BID_OPENING_WATCH_MAX_DAYS: ${BID_OPENING_WATCH_MAX_DAYS:-31}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       - object-storage
