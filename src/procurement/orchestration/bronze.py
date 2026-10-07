@@ -30,14 +30,48 @@ BRONZE_PARTITIONS = DailyPartitionsDefinition(
 )
 
 
-class BronzeConfig(Config):
+class BaseBronzeConfig(Config):
     refresh: bool = False
     page_size: int = Field(default=50, gt=0)
     reconciled_run_ids: list[str] = Field(default_factory=list)
+    request_interval_seconds: float | None = Field(
+        default=None, ge=0.0, description="Pacing interval between requests in seconds"
+    )
+    max_inflight: int | None = Field(
+        default=None, ge=1, le=32, description="Max concurrent in-flight requests"
+    )
+    max_attempts: int | None = Field(
+        default=None, ge=1, le=10, description="Max retry attempts for retryable errors"
+    )
+
+
+class BidOpeningBronzeConfig(BaseBronzeConfig):
+    detail_workers: int = Field(
+        default=4, ge=1, le=32, description="Concurrent worker threads for bid opening details"
+    )
+
+
+class KhlcntBronzeConfig(BaseBronzeConfig):
+    package_workers: int = Field(
+        default=3, ge=1, le=16, description="Concurrent worker threads for KHLCNT bid packages"
+    )
+
+
+BronzeConfig = BaseBronzeConfig
+
+
+def get_config_cls(resource: str) -> type[BaseBronzeConfig]:
+    if resource == "bid_opening":
+        return BidOpeningBronzeConfig
+    if resource == "khlcnt":
+        return KhlcntBronzeConfig
+    return BaseBronzeConfig
 
 
 def build_bronze_asset(definition):
-    name = f"bronze_{definition.identity.resource}"
+    resource_name = definition.identity.resource
+    name = f"bronze_{resource_name}"
+    config_cls = get_config_cls(resource_name)
     checks = [
         AssetCheckSpec("committed_manifest", asset=name, blocking=True),
         AssetCheckSpec(
@@ -47,7 +81,7 @@ def build_bronze_asset(definition):
             description="Existing file, count, lineage and content hash verifier",
         ),
     ]
-    if definition.identity.resource in QUALITY_RESOURCES:
+    if resource_name in QUALITY_RESOURCES:
         checks.append(AssetCheckSpec("quality_contract", asset=name, blocking=True))
 
     @asset(
@@ -59,14 +93,32 @@ def build_bronze_asset(definition):
         backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
         retry_policy=RetryPolicy(max_retries=0),
         check_specs=checks,
+        config_schema=config_cls,
         description=f"Committed {definition.identity.resource} resource/day; immutable attempts",
     )
-    def bronze_asset(context: AssetExecutionContext, config: BronzeConfig):
+    def bronze_asset(context: AssetExecutionContext):
         source_date = date.fromisoformat(context.partition_key)
         validate_closed_range(source_date, source_date, today=today_vn())
 
-        resource_name = definition.identity.resource
-        service, _ = bootstrap.bootstrap_services()
+        cfg = context.op_execution_context.op_config or {}
+        if not isinstance(cfg, dict):
+            cfg = getattr(cfg, "__dict__", {})
+
+        refresh = cfg.get("refresh", False)
+        page_size = cfg.get("page_size", 50)
+        req_interval = cfg.get("request_interval_seconds")
+        max_inflight = cfg.get("max_inflight")
+        max_attempts = cfg.get("max_attempts")
+        bid_workers = cfg.get("detail_workers")
+        khlcnt_workers = cfg.get("package_workers")
+
+        service, _ = bootstrap.bootstrap_services(
+            request_interval_seconds=req_interval,
+            max_inflight=max_inflight,
+            max_attempts=max_attempts,
+            bid_opening_workers=bid_workers,
+            khlcnt_workers=khlcnt_workers,
+        )
 
         # Safely resolve run_id avoiding attribute error on None
         run_id: str | None = None
@@ -79,9 +131,9 @@ def build_bronze_asset(definition):
         request = MaterializeDayRequest(
             source_date=source_date,
             resource=resource_name,
-            refresh=config.refresh,
+            refresh=refresh,
             dagster_run_id=run_id,
-            page_size=config.page_size,
+            page_size=page_size,
         )
         result = service.materialize_day(request)
 

@@ -21,17 +21,22 @@ from procurement.ingestion.sources.muasamcong.project.resource import create_pro
 from procurement.metadata.service import PostgresMetadataService
 
 
-def create_spec_factory(client: MuasamcongClient) -> Callable[[str], ResourceSpec]:
+def create_spec_factory(
+    client: MuasamcongClient,
+    *,
+    bid_opening_workers: int | None = None,
+    khlcnt_workers: int | None = None,
+) -> Callable[[str], ResourceSpec]:
     def factory(resource_name: str) -> ResourceSpec:
         match resource_name:
             case "project":
                 return create_project_spec(client)
             case "bid_opening":
-                return create_bid_opening_spec(client)
+                return create_bid_opening_spec(client, detail_workers=bid_opening_workers)
             case "contractor_result":
                 return create_contractor_result_spec(client)
             case "khlcnt":
-                return create_khlcnt_spec(client)
+                return create_khlcnt_spec(client, package_workers=khlcnt_workers)
             case "notify_contractor":
                 return create_notify_contractor_spec(client)
             case _:
@@ -48,6 +53,11 @@ def bootstrap_services(
     secret_key: str | None = None,
     endpoint_url: str | None = None,
     client: MuasamcongClient | None = None,
+    request_interval_seconds: float | None = None,
+    max_inflight: int | None = None,
+    max_attempts: int | None = None,
+    bid_opening_workers: int | None = None,
+    khlcnt_workers: int | None = None,
 ) -> tuple[IngestionService, PostgresMetadataService]:
     """Bootstrap and connect the production/sandbox metadata and ingestion services."""
     engine = create_application_engine(db_url)
@@ -60,13 +70,31 @@ def bootstrap_services(
 
     if client is None:
         token = settings.MUASAMCONG_TOKEN or "placeholder-token"
+        budget = None
+        if request_interval_seconds is not None or max_inflight is not None:
+            from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
+
+            inflight = max_inflight if max_inflight is not None else settings.MUASAMCONG_MAX_INFLIGHT
+            interval = (
+                request_interval_seconds
+                if request_interval_seconds is not None
+                else settings.MUASAMCONG_REQUEST_INTERVAL_SECONDS
+            )
+            budget = RequestBudget(inflight, min_interval=interval)
+
+        attempts = max_attempts if max_attempts is not None else settings.MUASAMCONG_MAX_ATTEMPTS
         client = MuasamcongClient(
             token=token,
-            max_attempts=settings.MUASAMCONG_MAX_ATTEMPTS,
+            max_attempts=attempts,
             max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
+            request_budget=budget,
         )
 
-    spec_factory = create_spec_factory(client)
+    spec_factory = create_spec_factory(
+        client,
+        bid_opening_workers=bid_opening_workers,
+        khlcnt_workers=khlcnt_workers,
+    )
 
     ingestion_service = IngestionService(
         metadata=metadata_service,

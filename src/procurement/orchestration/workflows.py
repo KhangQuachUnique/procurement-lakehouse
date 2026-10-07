@@ -104,6 +104,14 @@ def quality_repair_job():
     quality_repair()
 
 
-@job(tags={"dagster/max_retries": "0"})
-def benchmark_job():
+@job(
+    name="api_rate_limit_probe_job",
+    description="Probes and benchmarks Muasamcong API rate limits, safe pacing, and throughput",
+    tags={"dagster/max_retries": "0"},
+)
+def api_rate_limit_probe_job():
     benchmark()
+
+
+# Maintain backwards compatibility
+benchmark_job = api_rate_limit_probe_job
