@@ -16,7 +16,7 @@ from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.models.control import DayManifest, DayStatus
 from procurement.quality.storage import quality_prefix
 from procurement.storage.control import list_page_manifests, read_run_manifest
-from procurement.storage.transfer_archive import BundleDay, validate_day_metadata
+from procurement.transfer import BundleDay, validate_day_metadata
 
 logger = logging.getLogger(__name__)
 
