@@ -133,6 +133,93 @@ def cmd_inspect(args: argparse.Namespace) -> None:
     print("=" * 65 + "\n")
 
 
+def cmd_run(args: argparse.Namespace) -> None:
+    """Run Silver transformation for a specific partition date and write Parquet to S3."""
+    import pyarrow as pa
+
+    from procurement.processing.silver.revisions import assemble, validate
+
+    table_name = args.table or f"{args.resource}_detail"
+    transformer = get_transformer(table_name)
+    if not transformer:
+        print(f"[ERROR] No transformer registered for table '{table_name}'.")
+        return
+
+    fs, bucket = get_s3_fs()
+    table_path = f"{bucket}/bronze/muasamcong/{table_name}/source_date={args.date}"
+    if not fs.exists(table_path):
+        print(f"[ERROR] Bronze date path not found: {table_path}")
+        return
+
+    parquet_files = [f for f in fs.find(table_path) if f.endswith(".parquet")]
+    if not parquet_files:
+        print(f"[WARN] No Parquet files found in: {table_path}")
+        return
+
+    print(f"\n[START] Processing Bronze '{table_name}' for date {args.date}...")
+    print(f"  Found {len(parquet_files)} parquet file(s).")
+
+    all_transformed = []
+    total_bronze_records = 0
+
+    for file_path in parquet_files:
+        with fs.open(file_path, "rb") as stream:
+            pq_table = pq.read_table(stream)
+            records = pq_table.to_pylist()
+            total_bronze_records += len(records)
+
+            for ord_idx, row_dict in enumerate(records):
+                raw = row_dict["payload"]
+                payload = json.loads(raw) if isinstance(raw, str) else raw
+
+                envelope = RawRecordEnvelope(
+                    namespace="muasamcong",
+                    table_name=table_name,
+                    resource=args.resource or table_name.replace("_detail", ""),
+                    source_date=str(row_dict["source_date"]),
+                    run_id=row_dict["run_id"],
+                    row_ordinal=ord_idx,
+                    file_key=file_path,
+                    file_sha256="verified_sha256",
+                    source_id=row_dict["source_id"],
+                    source_version=row_dict.get("source_version"),
+                    content_hash=row_dict["content_hash"],
+                    ingested_at=datetime.now(UTC),
+                    payload=payload,
+                )
+                res = transformer.transform(envelope)
+                all_transformed.append(res.to_legacy_dict())
+
+    # Reconcile & assemble tables
+    assembled_tables = assemble(all_transformed)
+    report = validate(assembled_tables)
+
+    # Write each non-empty table to S3 under silver/muasamcong/<table>/source_date=<date>/data.parquet
+    target_base = f"{bucket}/silver/muasamcong"
+    written_tables = {}
+
+    for tbl_name, rows in assembled_tables.items():
+        if not rows:
+            continue
+        out_path = f"{target_base}/{tbl_name}/source_date={args.date}/data.parquet"
+        pa_table = pa.Table.from_pylist(rows)
+        with fs.open(out_path, "wb") as out_stream:
+            pq.write_table(pa_table, out_stream)
+        written_tables[tbl_name] = (len(rows), out_path)
+
+    print("\n" + "=" * 65)
+    print(f"  SILVER MATERIALIZATION COMPLETED FOR DATE: {args.date}")
+    print("=" * 65)
+    print(f"Bronze Input Records:  {total_bronze_records}")
+    print(f"Accepted Records:      {report['accepted']}")
+    print(f"Quarantined Records:   {report['quarantined']}")
+    print(f"Quality Issues:        {report['issues']}")
+    print("\n--- CÁC FILE PARQUET ĐÃ GHI VÀO S3 ---")
+    for tbl_name, (count, s3_loc) in written_tables.items():
+        print(f"  ✓ {tbl_name:<22}: {count:>4} dòng -> s3://{s3_loc}")
+    print("=" * 65 + "\n")
+
+
 def cmd_list(args: argparse.Namespace) -> None:
     """List all registered transformers."""
     registered = list_registered_tables()
@@ -147,13 +234,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Procurement Lakehouse - Silver CLI")
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-    # inspect command
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect and transform a Bronze record")
+    # inspect command (dry-run inspection)
+    inspect_parser = subparsers.add_parser("inspect", help="Inspect and transform a Bronze record (dry-run)")
     inspect_parser.add_argument("--resource", default="project", help="Resource name (project, plan, package, etc.)")
     inspect_parser.add_argument("--table", default=None, help="Exact Bronze table name")
     inspect_parser.add_argument("--date", default="2022-01-01", help="Source date YYYY-MM-DD")
     inspect_parser.add_argument("--row", type=int, default=0, help="Row index in file")
     inspect_parser.set_defaults(func=cmd_inspect)
+
+    # run command (materialize to S3)
+    run_parser = subparsers.add_parser("run", help="Run transformation and write Silver Parquet to S3")
+    run_parser.add_argument("--resource", default="project", help="Resource name")
+    run_parser.add_argument("--table", default=None, help="Exact Bronze table name")
+    run_parser.add_argument("--date", required=True, help="Partition date YYYY-MM-DD")
+    run_parser.set_defaults(func=cmd_run)
 
     # list command
     list_parser = subparsers.add_parser("list", help="List all registered transformers")
