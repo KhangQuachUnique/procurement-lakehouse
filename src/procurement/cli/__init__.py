@@ -6,5 +6,6 @@ __all__ = [
     "import_metadata",
     "ingest",
     "repair_bronze_quality",
+    "silver",
     "watch_bid_opening",
 ]

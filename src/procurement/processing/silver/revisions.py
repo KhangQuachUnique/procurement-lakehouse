@@ -5,9 +5,12 @@ from datetime import datetime
 
 from procurement.processing.silver.selection import digest
 
-TABLES = ("observation", "entity", "entity_revision", "revision_observation", "current_entity",
-          "project_revision", "plan_revision", "package_revision", "notice_revision",
-          "result_revision", "opening_revision", "child", "relationship", "quality_issue", "quarantine")
+TABLES = (
+    "observation", "entity", "entity_revision", "revision_observation", "current_entity",
+    "project_revision", "plan_revision", "package_revision", "notice_revision",
+    "result_revision", "opening_revision", "lot", "bid_participation", "child",
+    "relationship", "quality_issue", "quarantine",
+)
 
 
 def assemble(rows):
@@ -35,12 +38,17 @@ def assemble(rows):
         tables[entity["entity_type"] + "_revision"][rid] = typed
         for child in row["children"]:
             tables["child"][child["child_id"]] = child
+            if child.get("kind") == "lot":
+                tables["lot"][child["child_id"]] = child
+            elif child.get("kind") == "participant":
+                tables["bid_participation"][child["child_id"]] = child
         references.update((ref["relationship_id"], ref) for ref in row["references"])
         observations[eid].append((datetime.fromisoformat(observation["observed_at"]), rid))
         version_revisions[(eid, revision["source_version"])].add(rid)
         identities[(entity["entity_type"], entity["id_scheme"], entity["source_identity"])].add(eid)
-        if typed["business_number"]:
-            identities[(entity["entity_type"], "number", typed["business_number"])].add(eid)
+        biz_no = typed.get("business_number") or typed.get("project_no") or typed.get("package_no") or typed.get("notify_no") or typed.get("plan_no")
+        if biz_no:
+            identities[(entity["entity_type"], "number", biz_no)].add(eid)
     for eid, observed in observations.items():
         latest = max(time for time, _ in observed)
         current = {rid for time, rid in observed if time == latest}

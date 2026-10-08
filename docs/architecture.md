@@ -101,24 +101,33 @@ HTTP 200 chưa chứng minh detail hợp lệ. Validator hiện chưa bắt bu�
 `bidName` hoặc `publicDate`; profile theo năm giúp review thêm rule, không tự đổi
 contract. Xem [quality và profiling](operations.md#kiểm-tra-và-sửa-chất-lượng-thông-báo).
 
-## Silver đề xuất
+## Silver Lakehouse (15 bảng chuẩn)
+
+Xem chi tiết hướng dẫn và schema tại [Cẩm nang Silver](silver_development_guide.md).
 
 Luồng: **Bronze đã verify → observations/lineage → typed revisions → relationships
-và children → latest observed → Gold**. Dùng Python + DuckDB batch và Parquet bất
-biến, một publisher; cân nhắc table format/catalog khác khi cần nhiều writer.
+và children/participants → current entity → Gold**. 
+Dữ liệu lưu trữ vật lý dưới dạng Parquet trên S3/SeaweedFS và quản lý bằng **Apache Iceberg Format v2** qua REST Catalog (`lake.muasamcong`). Trạng thái điều phối và kiểm soát chạy lưu tại PostgreSQL (`silver_meta`).
 
-### Identity, lịch sử và quan hệ
+### Identity, lịch sử và 15 bảng chuẩn mực
 
-| Nhóm | Hợp đồng mục tiêu |
-| --- | --- |
-| `source_observation` | Một occurrence vật lý: source/table/run/ngày/file checksum/row ordinal toàn file, raw pointer và hash |
-| `entity` | Namespace + entity type + ID scheme + source ID; hash canonical tuple, giữ các thành phần gốc |
-| `entity_revision` | Entity + source version token + semantic hash + mapping version; hash gồm children nghiệp vụ |
-| `revision_observation` | Giữ mọi occurrences đóng góp cho revision đã dedup |
-| Typed entities | `project_revision`, `procurement_plan_revision`, `bid_package_revision`, `tender_notice_revision`, `selection_result_revision` |
-| Children | Lots, participants, award suppliers, items, locations, documents, amount components; gắn parent revision |
-| Quan hệ | Reference gốc, scheme/version/path, candidate và trạng thái resolved/unresolved/ambiguous/invalid |
-| Quality | Issue, quarantine, coverage và capability theo release; không âm thầm bỏ record |
+| Nhóm | Bảng Silver (Parquet / Iceberg) | Vai trò nghiệp vụ |
+| --- | --- | --- |
+| **Lineage & Identity** | `observation` | Traceability vật lý: source/table/run/ngày/file key/checksum/row ordinal |
+| | `entity` | Canonical ID: namespace + entity type + ID scheme + source ID |
+| | `entity_revision` | Lịch sử snapshot bất biến: entity + source version + semantic hash |
+| | `current_entity` | Snapshot trạng thái mới nhất có hiệu lực (`selected` vs `ambiguous`) |
+| **Typed Revisions** | `project_revision` | Dự án đầu tư: tổng mức đầu tư Decimal, chủ đầu tư, số quyết định, địa bàn |
+| | `plan_revision` | Kế hoạch LCNT: mục tiêu, quy mô, mã DA liên kết (`project_id`) |
+| | `package_revision` | Gói thầu: giá gói, giá dự toán, lĩnh vực, hình thức, phương thức, loại HĐ |
+| | `notice_revision` | Thông báo mời thầu: ngày đóng/mở thầu, giá gói thầu, bên mời thầu |
+| | `result_revision` | Kết quả LCNT: quyết định trúng thầu, ngày ký, tổng giá trúng |
+| | `opening_revision` | Biên bản mở thầu: thời điểm mở thầu, số lượng nhà thầu nộp HSDT |
+| **Sub-entities & FK** | `lot` | Chi tiết từng lô thầu trong gói thầu / kết quả thầu |
+| | `bid_participation` | Danh sách nhà thầu dự thầu: Thắng/Thua, MST, giá dự thầu, liên danh |
+| | `relationship` | Khóa ngoại động: trạng thái `resolved`, `unresolved`, `ambiguous` |
+| **Governance** | `quarantine` | Cách ly bản ghi lỗi (thiếu ID, rỗng root) - không drop data |
+| | `quality_issue` | Cảnh báo chất lượng dữ liệu: lỗi parse tiền tệ, ngày, schema |
 
 Project/plan/package dựa trên detail UUID có namespace; notice dùng số thông báo
 và giữ document UUID ở revision; result dùng DTO.id. Package không lấy
