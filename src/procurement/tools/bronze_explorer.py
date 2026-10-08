@@ -24,6 +24,7 @@ from procurement.storage.io import read_json
 from procurement.storage.object_store import create_s3_filesystem
 
 BRONZE_SCHEMA = "bronze_raw"
+SILVER_SCHEMA = "silver"
 SECRET_NAME = "bronze_store"
 DEFAULT_UI_PORT = 4213
 
@@ -437,9 +438,78 @@ def _create_notify_view(con, created):
         )
 
 
+def _discover_silver_tables(fs: s3fs.S3FileSystem, bucket: str) -> list[str]:
+    """Discover Silver tables under silver/ (e.g. silver/muasamcong/<table>)."""
+    silver_prefix = f"{bucket}/silver"
+    try:
+        entries = _list_directories(fs, silver_prefix)
+    except Exception:
+        return []
+
+    tables: set[str] = set()
+    for root_name in entries:
+        child_dirs = _list_directories(fs, f"{silver_prefix}/{root_name}")
+        if not child_dirs or any(d.startswith("source_date=") for d in child_dirs):
+            tables.add(root_name)
+        else:
+            for child in child_dirs:
+                tables.add(child)
+    return sorted(tables)
+
+
+def _create_silver_views(
+    con: duckdb.DuckDBPyConnection,
+    *,
+    bucket: str,
+    fs: s3fs.S3FileSystem,
+    schema: str = SILVER_SCHEMA,
+) -> list[str]:
+    silver_tables = _discover_silver_tables(fs, bucket)
+    if not silver_tables:
+        return []
+
+    con.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(schema)}")
+    created: list[str] = []
+    for table_name in silver_tables:
+        pattern = f"s3://{bucket}/silver/*/{table_name}/**/*.parquet"
+        try:
+            con.execute(
+                f"""
+                CREATE OR REPLACE VIEW {_quote_identifier(schema)}.{_quote_identifier(table_name)} AS
+                SELECT *
+                FROM read_parquet(
+                    {_sql_literal(pattern)},
+                    hive_partitioning = true,
+                    union_by_name = true,
+                    filename = true
+                )
+                """
+            )
+            created.append(table_name)
+        except duckdb.Error:
+            direct_pattern = f"s3://{bucket}/silver/{table_name}/**/*.parquet"
+            try:
+                con.execute(
+                    f"""
+                    CREATE OR REPLACE VIEW {_quote_identifier(schema)}.{_quote_identifier(table_name)} AS
+                    SELECT *
+                    FROM read_parquet(
+                        {_sql_literal(direct_pattern)},
+                        hive_partitioning = true,
+                        union_by_name = true,
+                        filename = true
+                    )
+                    """
+                )
+                created.append(table_name)
+            except duckdb.Error:
+                pass
+    return created
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Open a local DuckDB UI for browsing raw Bronze parquet data"
+        description="Open a local DuckDB UI for browsing Bronze and Silver lakehouse parquet data"
     )
     parser.add_argument(
         "--port",
@@ -462,11 +532,22 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Inspect every Parquet schema for legacy schema differences (slower)",
     )
+    parser.add_argument(
+        "--no-silver",
+        action="store_true",
+        help="Do not mount silver layer tables into DuckDB",
+    )
     return parser
 
 
 def open_bronze_explorer(
-    *, port: int = DEFAULT_UI_PORT, year=None, resources=None, history=False, union_by_name=False
+    *,
+    port: int = DEFAULT_UI_PORT,
+    year=None,
+    resources=None,
+    history=False,
+    union_by_name=False,
+    no_silver=False,
 ) -> None:
     if not 1 <= port <= 65535:
         raise ValueError("port must be between 1 and 65535")
@@ -489,9 +570,23 @@ def open_bronze_explorer(
         raise RuntimeError(
             f"No Bronze tables found in s3://{settings.OBJECT_STORAGE_BUCKET}/bronze"
         )
+
+    metadata_service = None
+    try:
+        from procurement.bootstrap import get_metadata_service
+        metadata_service = get_metadata_service()
+        print("Using Postgres MetadataService for fast snapshot selection.", flush=True)
+    except Exception as exc:
+        print(f"Postgres MetadataService unavailable ({exc}); falling back to S3 manifest scanning.", flush=True)
+
     issues = []
     selected = _select_current_files(
-        fs, bucket=settings.OBJECT_STORAGE_BUCKET, tables=tables, year=year, issues=issues
+        fs,
+        bucket=settings.OBJECT_STORAGE_BUCKET,
+        tables=tables,
+        year=year,
+        issues=issues,
+        metadata_service=metadata_service,
     )
 
     con = duckdb.connect()
@@ -515,29 +610,47 @@ def open_bronze_explorer(
                 union_by_name=True,
             )
 
+        silver_created: list[str] = []
+        if not no_silver:
+            silver_created = _create_silver_views(
+                con,
+                bucket=settings.OBJECT_STORAGE_BUCKET,
+                fs=fs,
+                schema=SILVER_SCHEMA,
+            )
+
         _load_extension(con, "ui")
         con.execute(f"SET ui_local_port = {port}")
         con.execute("CALL start_ui()")
 
-        print(f"Bronze explorer is running ({time.perf_counter() - started:.1f}s startup).")
-        print(f"UI: http://localhost:{port}")
-        print(f"Schema: {BRONZE_SCHEMA}")
-        print("Views use a fixed committed snapshot. Restart after repair to refresh.")
+        schemas_active = [BRONZE_SCHEMA]
+        if silver_created:
+            schemas_active.append(SILVER_SCHEMA)
+
+        print(f"Lakehouse explorer is running ({time.perf_counter() - started:.2f}s startup).", flush=True)
+        print(f"UI: http://localhost:{port}", flush=True)
+        print(f"Schemas: {', '.join(schemas_active)}", flush=True)
+        print("Views use a fixed committed snapshot. Restart after repair to refresh.", flush=True)
         if issues:
             print(
                 f"INCOMPLETE: {len(issues)} day(s) missing files. "
-                "See SELECT * FROM bronze_meta.selection_issues;"
+                "See SELECT * FROM bronze_meta.selection_issues;",
+                flush=True,
             )
-        print("Use --union-by-name if legacy Parquet files have different schemas.")
-        print("Views:")
+        print("Use --union-by-name if legacy Parquet files have different schemas.", flush=True)
+        print("Bronze Views:", flush=True)
         for table in created:
-            print(f"  - {BRONZE_SCHEMA}.{table}")
-        print("Press Ctrl+C to stop.")
+            print(f"  - {BRONZE_SCHEMA}.{table}", flush=True)
+        if silver_created:
+            print("Silver Views:", flush=True)
+            for table in silver_created:
+                print(f"  - {SILVER_SCHEMA}.{table}", flush=True)
+        print("Press Ctrl+C to stop.", flush=True)
 
         while True:
             time.sleep(3600)
     except KeyboardInterrupt:
-        print("\nStopping Bronze explorer.")
+        print("\nStopping Lakehouse explorer.")
     finally:
         try:
             con.execute("CALL stop_ui_server()")
@@ -554,6 +667,7 @@ def main() -> None:
         resources=args.resource,
         history=args.history,
         union_by_name=args.union_by_name,
+        no_silver=args.no_silver,
     )
 
 

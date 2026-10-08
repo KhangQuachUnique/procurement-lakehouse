@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.engine import Connection
 
 from procurement.metadata.errors import (
@@ -232,12 +232,119 @@ def get_snapshot_for_partitions(
     partition_identities: list[PartitionIdentity],
 ) -> list[SnapshotView]:
     """Return consistent read snapshot for given partition identities."""
-    views: list[SnapshotView] = []
-    for identity in partition_identities:
-        part = get_partition_by_identity(conn, identity)
+    if not partition_identities:
+        return []
+
+    if len(partition_identities) <= 5:
+        views: list[SnapshotView] = []
+        for identity in partition_identities:
+            part = get_partition_by_identity(conn, identity)
+            if not part or part.current_commit_id is None:
+                continue
+            commit = get_commit_by_id(conn, part.current_commit_id)
+            if not commit:
+                continue
+            views.append(
+                SnapshotView(
+                    partition=part,
+                    commit=commit,
+                    files=commit.files,
+                )
+            )
+        return views
+
+    # Batch resolution for larger lists to avoid N+1 query overhead
+    partitions_map: dict[tuple[str, str, Any], PartitionRecord] = {}
+    chunk_size = 500
+    for i in range(0, len(partition_identities), chunk_size):
+        chunk = partition_identities[i : i + chunk_size]
+        sources = {ident.source for ident in chunk}
+        resources = {ident.resource for ident in chunk}
+        if len(sources) == 1 and len(resources) == 1:
+            src = next(iter(sources))
+            res = next(iter(resources))
+            dates = [ident.source_date for ident in chunk]
+            stmt = select(partitions).where(
+                partitions.c.source == src,
+                partitions.c.resource == res,
+                partitions.c.source_date.in_(dates),
+            )
+        else:
+            stmt = select(partitions).where(
+                tuple_(partitions.c.source, partitions.c.resource, partitions.c.source_date).in_(
+                    [(ident.source, ident.resource, ident.source_date) for ident in chunk]
+                )
+            )
+        for row in conn.execute(stmt).mappings():
+            key = (row["source"], row["resource"], row["source_date"])
+            partitions_map[key] = PartitionRecord(
+                id=row["id"],
+                identity=PartitionIdentity(
+                    source=row["source"],
+                    resource=row["resource"],
+                    source_date=row["source_date"],
+                ),
+                current_commit_id=row["current_commit_id"],
+                created_at=row["created_at"],
+            )
+
+    active_commit_ids = [
+        p.current_commit_id
+        for p in partitions_map.values()
+        if p.current_commit_id is not None
+    ]
+    if not active_commit_ids:
+        return []
+
+    commits_list = list(set(active_commit_ids))
+    commits_map: dict[UUID, CommitRecord] = {}
+    files_map: dict[UUID, list[CommitFileDescriptor]] = {cid: [] for cid in commits_list}
+
+    for i in range(0, len(commits_list), chunk_size):
+        c_chunk = commits_list[i : i + chunk_size]
+        f_stmt = (
+            select(commit_files)
+            .where(commit_files.c.commit_id.in_(c_chunk))
+            .order_by(commit_files.c.commit_id, commit_files.c.file_number)
+        )
+        for f in conn.execute(f_stmt).mappings():
+            files_map[f["commit_id"]].append(
+                CommitFileDescriptor(
+                    commit_id=f["commit_id"],
+                    file_number=f["file_number"],
+                    table_name=f["table_name"],
+                    bucket=f["bucket"],
+                    object_key=f["object_key"],
+                    row_count=f["row_count"],
+                    size_bytes=f["size_bytes"],
+                    sha256=f["sha256"],
+                    schema_version=f["schema_version"],
+                )
+            )
+
+        c_stmt = select(commits).where(commits.c.id.in_(c_chunk))
+        for row in conn.execute(c_stmt).mappings():
+            cid = row["id"]
+            commits_map[cid] = CommitRecord(
+                id=cid,
+                partition_id=row["partition_id"],
+                attempt_id=row["attempt_id"],
+                parent_commit_id=row["parent_commit_id"],
+                data_version=row["data_version"],
+                record_count=row["record_count"],
+                file_count=row["file_count"],
+                verification=row["verification"],
+                committed_at=row["committed_at"],
+                files=tuple(files_map.get(cid, ())),
+            )
+
+    views = []
+    for ident in partition_identities:
+        key = (ident.source, ident.resource, ident.source_date)
+        part = partitions_map.get(key)
         if not part or part.current_commit_id is None:
             continue
-        commit = get_commit_by_id(conn, part.current_commit_id)
+        commit = commits_map.get(part.current_commit_id)
         if not commit:
             continue
         views.append(

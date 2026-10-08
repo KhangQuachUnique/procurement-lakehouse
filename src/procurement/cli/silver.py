@@ -230,6 +230,108 @@ def cmd_list(args: argparse.Namespace) -> None:
     print(f"\nTotal: {len(registered)} registered transformer(s).\n")
 
 
+def cmd_query(args: argparse.Namespace) -> None:
+    """Query Silver tables using DuckDB."""
+    from urllib.parse import urlparse
+
+    import duckdb
+
+    fs, bucket = get_s3_fs()
+    endpoint = os.getenv("OBJECT_STORAGE_ENDPOINT", "http://127.0.0.1:8333")
+    key = os.getenv("OBJECT_STORAGE_ACCESS_KEY", "muasamcong")
+    secret = os.getenv("OBJECT_STORAGE_SECRET_KEY", "muasamcong123")
+    parsed_netloc = urlparse(endpoint).netloc
+    use_ssl = urlparse(endpoint).scheme == "https"
+
+    con = duckdb.connect()
+    try:
+        try:
+            con.load_extension("httpfs")
+        except duckdb.Error:
+            con.install_extension("httpfs")
+            con.load_extension("httpfs")
+
+        con.execute(
+            f"""
+            CREATE SECRET silver_s3 (
+                TYPE s3,
+                KEY_ID '{key}',
+                SECRET '{secret}',
+                ENDPOINT '{parsed_netloc}',
+                REGION 'us-east-1',
+                URL_STYLE 'path',
+                USE_SSL {str(use_ssl).lower()},
+                SCOPE 's3://{bucket}'
+            )
+            """
+        )
+        con.execute("CREATE SCHEMA IF NOT EXISTS silver")
+
+        # Discover and create views for all silver tables
+        silver_prefix = f"{bucket}/silver"
+        if fs.exists(silver_prefix):
+            for root in fs.ls(silver_prefix, detail=False):
+                table_name = root.rstrip("/").rsplit("/", 1)[-1]
+                sub = fs.ls(root, detail=False)
+                has_sub = any(not s.rstrip("/").rsplit("/", 1)[-1].startswith("source_date=") for s in sub)
+                tables_to_view = [s.rstrip("/").rsplit("/", 1)[-1] for s in sub] if has_sub else [table_name]
+                for tbl in tables_to_view:
+                    pattern = f"s3://{bucket}/silver/*/{tbl}/**/*.parquet"
+                    try:
+                        con.execute(
+                            f"""
+                            CREATE OR REPLACE VIEW silver.{tbl} AS
+                            SELECT * FROM read_parquet(
+                                '{pattern}',
+                                hive_partitioning = true,
+                                union_by_name = true
+                            )
+                            """
+                        )
+                    except duckdb.Error:
+                        pass
+
+        if args.sql:
+            sql = args.sql
+        elif args.table:
+            cols = args.columns or "*"
+            sql = f"SELECT {cols} FROM silver.{args.table}"
+            if args.date:
+                sql += f" WHERE source_date = '{args.date}'"
+            if args.limit:
+                sql += f" LIMIT {args.limit}"
+        else:
+            print("[ERROR] Please specify either --table <name> or --sql <query>")
+            return
+
+        print(f"\n--> Running SQL query on Silver:\n    {sql}\n")
+        res = con.execute(sql)
+        desc = [d[0] for d in res.description] if res.description else []
+        rows = res.fetchall()
+        if not rows:
+            print("  (0 rows returned)")
+            return
+
+        # Format column widths for neat tabular display
+        str_rows = [[str(val) if val is not None else "NULL" for val in row] for row in rows]
+        col_widths = [len(h) for h in desc]
+        for row in str_rows:
+            for i, val in enumerate(row):
+                col_widths[i] = max(col_widths[i], min(len(val), 40))
+
+        header_str = " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(desc))
+        sep_str = "-+-".join("-" * col_widths[i] for i in range(len(desc)))
+        print(header_str)
+        print(sep_str)
+        for row in str_rows:
+            print(" | ".join((v[:37] + "..." if len(v) > 40 else v).ljust(col_widths[i]) for i, v in enumerate(row)))
+        print(f"\nTotal: {len(rows)} row(s).\n")
+    except Exception as exc:
+        print(f"[ERROR] Query failed: {exc}")
+    finally:
+        con.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Procurement Lakehouse - Silver CLI")
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
@@ -252,6 +354,15 @@ def main() -> None:
     # list command
     list_parser = subparsers.add_parser("list", help="List all registered transformers")
     list_parser.set_defaults(func=cmd_list)
+
+    # query command (query Silver via DuckDB)
+    query_parser = subparsers.add_parser("query", help="Query Silver Parquet tables via DuckDB SQL")
+    query_parser.add_argument("--table", default=None, help="Silver table name (e.g. project_revision, current_entity)")
+    query_parser.add_argument("--columns", default=None, help="Columns to select (comma separated)")
+    query_parser.add_argument("--date", default=None, help="Filter by source_date YYYY-MM-DD")
+    query_parser.add_argument("--limit", type=int, default=10, help="Row limit (default: 10)")
+    query_parser.add_argument("--sql", default=None, help="Direct SQL query to execute")
+    query_parser.set_defaults(func=cmd_query)
 
     args = parser.parse_args()
     args.func(args)
