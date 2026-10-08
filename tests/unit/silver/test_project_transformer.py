@@ -135,3 +135,50 @@ def test_transform_invalid_money_records_issue():
     assert result.typed_attributes["amount"] is None
     # An issue is recorded
     assert any(iss.code == "invalid_money" for iss in result.issues)
+
+
+def test_clean_pipe_code():
+    from procurement.processing.silver.parsers import clean_pipe_code
+
+    assert clean_pipe_code("|115|") == "115"
+    assert clean_pipe_code("|11509|") == "11509"
+    assert clean_pipe_code("||") is None
+    assert clean_pipe_code(None) is None
+    assert clean_pipe_code("115") == "115"
+    assert clean_pipe_code("  |HN|  ") == "HN"
+
+
+def test_transform_project_with_pipe_codes_and_toplevel_metadata():
+    transformer = ProjectDetailTransformer()
+    # Emulate real Muasamcong raw Bronze payload
+    payload = {
+        "provCode": "|115|",
+        "districtCode": "|11509|",
+        "plocation": "Huyện Đông Hưng, Tỉnh Thái Bình",
+        "investTotalUnit": "VND",
+        "projectDTO": {
+            "id": "PRJ-REAL-123",
+            "no": "PR2400000017",
+            "name": "Kiên cố hóa kênh cấp I",
+            "investorCode": "vnz000031466",
+            "investorName": "UBND xã Liên Giang",
+            "investTotal": "1143267000",
+            "publicDate": "2024-01-01",
+        },
+    }
+    envelope = make_envelope(payload, source_id="PRJ-REAL-123")
+    result = transformer.transform(envelope)
+
+    assert result.quarantine is None
+    assert result.typed_attributes["prov_code"] == "115"
+    assert result.typed_attributes["district_code"] == "11509"
+    assert result.typed_attributes["currency"] == "VND"
+    assert result.typed_attributes["amount"] == "1143267000.000000"
+    assert len(result.issues) == 0
+
+    assert len(result.children) == 1
+    loc_child = result.children[0]
+    assert loc_child.kind == "location"
+    assert loc_child.source_id == "115"
+    assert '"prov_code":"115"' in loc_child.payload_json
+    assert '"district_code":"11509"' in loc_child.payload_json

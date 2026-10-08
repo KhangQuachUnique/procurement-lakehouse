@@ -6,6 +6,7 @@ Team members can use this file as a template for implementing their assigned res
 from typing import Any
 
 from procurement.processing.silver.parsers import (
+    clean_pipe_code,
     clean_text,
     lookup_path,
     parse_date,
@@ -41,9 +42,16 @@ class ProjectDetailTransformer(BaseResourceTransformer):
         return "uuid"
 
     def extract_root(self, payload: dict[str, Any]) -> dict[str, Any] | None:
-        """Extract 'projectDTO' root from the payload."""
-        root = lookup_path(payload, "projectDTO")
-        return root if isinstance(root, dict) else None
+        """Extract root dictionary from payload, merging projectDTO with top-level metadata."""
+        pdto = lookup_path(payload, "projectDTO")
+        if not isinstance(pdto, dict):
+            return payload if isinstance(payload, dict) and "id" in payload else None
+
+        merged = {**payload, **pdto}
+        for loc_key in ("provCode", "provName", "districtCode", "districtName", "plocation"):
+            if loc_key in payload and not pdto.get(loc_key):
+                merged[loc_key] = payload[loc_key]
+        return merged
 
     def extract_source_identity(self, root: dict[str, Any]) -> str | None:
         """The primary key of project is 'id' inside projectDTO."""
@@ -75,7 +83,7 @@ class ProjectDetailTransformer(BaseResourceTransformer):
                     )
                 )
 
-        currency = clean_text(root.get("investUnit"))
+        currency = clean_text(root.get("investTotalUnit") or root.get("investUnit"))
         if amount is not None and currency is None:
             issues.append(
                 QualityIssue(
@@ -103,8 +111,8 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             "currency": currency,
             "decision_no": clean_text(root.get("decisionNo")),
             "decision_date": parse_date(root.get("decisionDate")),
-            "prov_code": clean_text(root.get("provCode")),
-            "district_code": clean_text(root.get("districtCode")),
+            "prov_code": clean_pipe_code(root.get("provCode")),
+            "district_code": clean_pipe_code(root.get("districtCode")),
             "public_date": parse_date(root.get("publicDate")),
             "public_date_raw": parse_date(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
@@ -131,9 +139,9 @@ class ProjectDetailTransformer(BaseResourceTransformer):
         root = payload.get("projectDTO", {})
 
         # Extract primary location as a child component
-        prov_code = clean_text(root.get("provCode"))
-        district_code = clean_text(root.get("districtCode"))
-        location_name = clean_text(root.get("plocation"))
+        prov_code = clean_pipe_code(payload.get("provCode") or root.get("provCode"))
+        district_code = clean_pipe_code(payload.get("districtCode") or root.get("districtCode"))
+        location_name = clean_text(payload.get("plocation") or root.get("plocation"))
 
         if prov_code or district_code or location_name:
             loc_data = {

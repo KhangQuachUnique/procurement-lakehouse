@@ -116,3 +116,12 @@ def parse_boolean(value: Any) -> bool | None:
             return None
         raise ValueError(f"Invalid string boolean value: {value}")
     raise ValueError(f"Cannot parse boolean from type: {type(value).__name__}")
+
+
+def clean_pipe_code(value: Any) -> str | None:
+    """Normalize pipe-enclosed codes (e.g. '|115|' -> '115', '||' -> None)."""
+    text_val = clean_text(value)
+    if not text_val:
+        return None
+    cleaned = text_val.strip("|").strip()
+    return cleaned if cleaned else None
