@@ -30,6 +30,17 @@ PROJECT_OUTPUT_TABLES = (
 )
 PROJECT_TABLES = ("project_detail",)
 
+RESULT_MAPPING_VERSION = "result-1"
+RESULT_OUTPUT_TABLES = (
+    "observation",
+    "result_revision",
+    "award_lot",
+    "award_contractor",
+    "quality_issue",
+    "quarantine",
+)
+RESULT_TABLES = ("contractor_result_detail",)
+
 
 @dataclass(frozen=True)
 class SilverResource:
@@ -64,6 +75,12 @@ def get_silver_resource(name: str) -> SilverResource:
         return SilverResource(
             definition.identity.resource, families, PROJECT_OUTPUT_TABLES, PROJECT_MAPPING_VERSION
         )
+    if name in {"result", "contractor_result", "kq_lcnt"}:
+        definition = get_resource("contractor_result")
+        families = tuple((table.removesuffix("_detail"), table) for table in definition.tables)
+        return SilverResource(
+            definition.identity.resource, families, RESULT_OUTPUT_TABLES, RESULT_MAPPING_VERSION
+        )
     raise ValueError(f"Silver resource not implemented: {name}")
 
 
@@ -72,6 +89,8 @@ __all__ = [
     "NOTICE_OUTPUT_TABLES",
     "PROJECT_MAPPING_VERSION",
     "PROJECT_OUTPUT_TABLES",
+    "RESULT_MAPPING_VERSION",
+    "RESULT_OUTPUT_TABLES",
     "SilverResource",
     "get_silver_resource",
 ]

@@ -7,9 +7,11 @@ from procurement.silver.domain.transformers.notice import (
     VkAdbNoticeTransformer,
 )
 from procurement.silver.domain.transformers.project import ProjectDetailTransformer
+from procurement.silver.domain.transformers.result import ContractorResultTransformer
 
 __all__ = [
     "BaseResourceTransformer",
+    "ContractorResultTransformer",
     "ProjectDetailTransformer",
     "ReofferNoticeTransformer",
     "StandardNoticeTransformer",

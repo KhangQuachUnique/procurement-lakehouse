@@ -159,9 +159,14 @@ uv run python -m procurement.cli.silver notice --date 2025-01-02 --family reoffe
 uv run python -m procurement.cli.silver project --date 2025-08-15
 uv run python -m procurement.cli.silver project --start-date 2025-08-01 --end-date 2025-08-31
 
+# Chạy Silver cho Kết quả lựa chọn nhà thầu (Contractor Result)
+uv run python -m procurement.cli.silver result --date 2022-09-16
+uv run python -m procurement.cli.silver result --start-date 2022-09-01 --end-date 2022-09-30
+
 # Xem báo cáo thực thi gần nhất của một resource
 uv run python -m procurement.cli.silver report --resource notice
 uv run python -m procurement.cli.silver report --resource project
+uv run python -m procurement.cli.silver report --resource contractor_result
 
 # Reset sạch sẽ toàn bộ dữ liệu Silver và candidates trên S3 khi cần rebuild
 uv run python -m procurement.cli.silver reset --all

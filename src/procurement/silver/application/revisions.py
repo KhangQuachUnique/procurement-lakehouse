@@ -55,7 +55,9 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
                 raise ValueError(f"Unsupported typed child table: {target}")
             typed_child = child.get("typed_attributes")
             child_id_key = (
-                typed_child.get("child_id") or typed_child.get("location_id")
+                typed_child.get(f"{target}_id")
+                or typed_child.get("child_id")
+                or typed_child.get("location_id")
                 if isinstance(typed_child, dict)
                 else None
             )

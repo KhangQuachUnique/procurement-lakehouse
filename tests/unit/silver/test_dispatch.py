@@ -11,7 +11,7 @@ from tests.unit.silver.test_project_transformer import make_envelope
 
 def test_unimplemented_resource_is_explicit():
     with pytest.raises(ValueError, match="not implemented"):
-        require_transformer("contractor_result_detail")
+        require_transformer("bid_opening_detail")
 
 
 def test_project_build_uses_same_registered_transformer():
