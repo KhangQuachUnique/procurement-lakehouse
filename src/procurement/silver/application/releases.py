@@ -5,8 +5,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from procurement.common.file_lock import exclusive_file_lock
-from procurement.processing.silver.selection import digest
-from procurement.processing.warehouse import stage
+from procurement.silver.application.warehouse import read_pinned, stage
+from procurement.silver.domain.selection import digest
 from procurement.storage.iceberg import identifier
 from procurement.storage.io import read_json, write_json
 
@@ -32,7 +32,9 @@ def load(fs, bucket, namespace, release_id=None):
     if not release or release["status"] != "certified" or release["namespace"] != namespace:
         raise ValueError("Invalid certified release")
     actual = digest({key: value for key, value in release.items() if key != "manifest_hash"})
-    if actual != release["manifest_hash"] or ("manifest_hash" in pointer and pointer["manifest_hash"] != actual):
+    if actual != release["manifest_hash"] or (
+        "manifest_hash" in pointer and pointer["manifest_hash"] != actual
+    ):
         raise ValueError("Release manifest checksum mismatch")
     return release
 
@@ -46,13 +48,29 @@ def _set_pointer(fs, key, pointer):
                 return
         except Exception:  # noqa: BLE001, S110
             pass
-        raise ReleaseCommitUncertainError("Release pointer was not acknowledged; reconcile before retry") from exc
+        raise ReleaseCommitUncertainError(
+            "Release pointer was not acknowledged; reconcile before retry"
+        ) from exc
     if read_json(fs, key) != pointer:
-        raise ReleaseCommitUncertainError("Release pointer readback differs; reconcile before retry")
+        raise ReleaseCommitUncertainError(
+            "Release pointer readback differs; reconcile before retry"
+        )
 
 
-def publish(fs, db, catalog, *, bucket, namespace, tables, report, inputs, expected_parent,
-            lock_dir, schemas=None):
+def publish(
+    fs,
+    db,
+    catalog,
+    *,
+    bucket,
+    namespace,
+    tables,
+    report,
+    inputs,
+    expected_parent,
+    lock_dir,
+    schemas=None,
+):
     if report.get("blocking_issues", 0) or report.get("quarantined", 0):
         raise ValueError("Candidate has blocking quality issues; inspect its report")
     rid = "r" + uuid4().hex
@@ -62,28 +80,38 @@ def publish(fs, db, catalog, *, bucket, namespace, tables, report, inputs, expec
             raise ValueError("Certified parent changed; rebuild/review candidate")
         kwargs = {} if schemas is None else {"schemas": schemas}
         snapshots = stage(db, catalog, namespace, tables, rid, **kwargs)
-        release = {"release_id": rid, "namespace": namespace, "status": "certified",
-                   "created_at": datetime.now(UTC).isoformat(), "parent": parent,
-                   "tables": snapshots, "quality": report, "inputs": inputs}
+        release = {
+            "release_id": rid,
+            "namespace": namespace,
+            "status": "certified",
+            "created_at": datetime.now(UTC).isoformat(),
+            "parent": parent,
+            "tables": snapshots,
+            "quality": report,
+            "inputs": inputs,
+        }
         release["manifest_hash"] = digest(release)
         key = f"{prefix(bucket, namespace)}/{rid}.json"
         try:
             write_json(fs, key, release)
         except Exception as exc:
             if read_json(fs, key) != release:
-                raise ReleaseCommitUncertainError("Cannot verify immutable release manifest") from exc
+                raise ReleaseCommitUncertainError(
+                    "Cannot verify immutable release manifest"
+                ) from exc
         if read_json(fs, key) != release:
             raise ReleaseCommitUncertainError("Immutable release readback mismatch")
         if current(fs, bucket, namespace) != parent:
             raise ValueError("Release parent changed before publication")
-        _set_pointer(fs, prefix(bucket, namespace) + "/current.json",
-                     {"release_id": rid, "manifest_hash": release["manifest_hash"]})
+        _set_pointer(
+            fs,
+            prefix(bucket, namespace) + "/current.json",
+            {"release_id": rid, "manifest_hash": release["manifest_hash"]},
+        )
     return release
 
 
 def rollback(fs, db, *, bucket, namespace, release_id, expected_parent, lock_dir):
-    from procurement.processing.warehouse import read_pinned
-
     with exclusive_file_lock(Path(lock_dir) / "lakehouse-publisher.lock"):
         if current(fs, bucket, namespace) != expected_parent:
             raise ValueError("Certified parent changed")
@@ -91,6 +119,19 @@ def rollback(fs, db, *, bucket, namespace, release_id, expected_parent, lock_dir
         for name, entry in release["tables"].items():
             if len(read_pinned(db, release, name)) != entry["rows"]:
                 raise ValueError("Rollback snapshot is missing or corrupt")
-        _set_pointer(fs, prefix(bucket, namespace) + "/current.json",
-                     {"release_id": release_id, "manifest_hash": release["manifest_hash"]})
+        _set_pointer(
+            fs,
+            prefix(bucket, namespace) + "/current.json",
+            {"release_id": release_id, "manifest_hash": release["manifest_hash"]},
+        )
         return release
+
+
+__all__ = [
+    "ReleaseCommitUncertainError",
+    "current",
+    "load",
+    "prefix",
+    "publish",
+    "rollback",
+]

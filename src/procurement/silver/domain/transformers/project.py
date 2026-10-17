@@ -5,21 +5,21 @@ Team members can use this file as a template for implementing their assigned res
 
 from typing import Any
 
-from procurement.processing.silver.parsers import (
+from procurement.silver.domain.parsers import (
     clean_pipe_code,
     clean_text,
     lookup_path,
     parse_date,
     parse_money,
 )
-from procurement.processing.silver.protocols import (
+from procurement.silver.domain.protocols import (
     ExtractedChild,
     ExtractedReference,
     QualityIssue,
 )
-from procurement.processing.silver.registry import register_transformer
-from procurement.processing.silver.selection import digest
-from procurement.processing.silver.transformers.base import (
+from procurement.silver.domain.registry import register_transformer
+from procurement.silver.domain.selection import digest
+from procurement.silver.domain.transformers.base import (
     BaseResourceTransformer,
     canonical_json,
 )

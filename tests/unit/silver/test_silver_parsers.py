@@ -2,7 +2,7 @@
 
 import pytest
 
-from procurement.processing.silver.parsers import (
+from procurement.silver.domain.parsers import (
     clean_text,
     lookup_path,
     parse_boolean,

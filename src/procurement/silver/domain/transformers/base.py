@@ -4,9 +4,9 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any
 
-from procurement.processing.silver.contracts import VERSION
-from procurement.processing.silver.parsers import clean_text
-from procurement.processing.silver.protocols import (
+from procurement.silver.domain.contracts import VERSION
+from procurement.silver.domain.parsers import clean_text
+from procurement.silver.domain.protocols import (
     EntityIdentity,
     EntityRevision,
     ExtractedChild,
@@ -17,7 +17,7 @@ from procurement.processing.silver.protocols import (
     SilverTransformerProtocol,
     TransformedRecord,
 )
-from procurement.processing.silver.selection import digest
+from procurement.silver.domain.selection import digest
 
 
 def canonical_json(value: Any) -> str:
@@ -40,6 +40,7 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
     """
 
     mapping_version: str = VERSION.get("mapping", "1")
+    revision_contracts = VERSION
 
     @property
     @abstractmethod
@@ -101,12 +102,14 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
 
     def build_observation(self, envelope: RawRecordEnvelope) -> tuple[str, dict[str, Any]]:
         """Create physical observation metadata and unique observation_id."""
-        obs_id = digest([
-            envelope.namespace,
-            envelope.file_key,
-            envelope.file_sha256,
-            envelope.row_ordinal,
-        ])
+        obs_id = digest(
+            [
+                envelope.namespace,
+                envelope.file_key,
+                envelope.file_sha256,
+                envelope.row_ordinal,
+            ]
+        )
         observation = {
             "observation_id": obs_id,
             "resource": envelope.resource,
@@ -173,7 +176,7 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
         # Build Immutable Entity Revision
         semantic_hash = digest(envelope.payload)
         source_ver = None if self.entity_type == "package" else clean_text(envelope.source_version)
-        revision_id = digest([entity_id, source_ver, semantic_hash, VERSION])
+        revision_id = digest([entity_id, source_ver, semantic_hash, self.revision_contracts])
         revision = EntityRevision(
             revision_id=revision_id,
             entity_id=entity_id,
@@ -198,3 +201,6 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
             issues=issues,
             quarantine=None,
         )
+
+
+__all__ = ["BaseResourceTransformer", "canonical_json"]

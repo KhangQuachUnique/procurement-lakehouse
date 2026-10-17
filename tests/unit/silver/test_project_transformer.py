@@ -2,9 +2,9 @@
 
 from datetime import UTC, datetime
 
-from procurement.processing.silver.protocols import RawRecordEnvelope, SilverTransformerProtocol
-from procurement.processing.silver.registry import get_transformer
-from procurement.processing.silver.transformers.project import ProjectDetailTransformer
+from procurement.silver.domain.protocols import RawRecordEnvelope, SilverTransformerProtocol
+from procurement.silver.domain.registry import get_transformer
+from procurement.silver.domain.transformers.project import ProjectDetailTransformer
 
 
 def make_envelope(payload: dict, source_id: str = "proj-123") -> RawRecordEnvelope:
@@ -138,7 +138,7 @@ def test_transform_invalid_money_records_issue():
 
 
 def test_clean_pipe_code():
-    from procurement.processing.silver.parsers import clean_pipe_code
+    from procurement.silver.domain.parsers import clean_pipe_code
 
     assert clean_pipe_code("|115|") == "115"
     assert clean_pipe_code("|11509|") == "11509"
