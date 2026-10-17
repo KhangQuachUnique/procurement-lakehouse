@@ -54,9 +54,13 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
             if target not in CHILD_SCHEMAS:
                 raise ValueError(f"Unsupported typed child table: {target}")
             typed_child = child.get("typed_attributes")
+            child_id_key = (
+                typed_child.get("child_id") or typed_child.get("location_id")
+                if isinstance(typed_child, dict)
+                else None
+            )
             if not isinstance(typed_child, dict) or (
-                typed_child.get("child_id") != child["child_id"]
-                or typed_child.get("revision_id") != rid
+                child_id_key != child["child_id"] or typed_child.get("revision_id") != rid
             ):
                 raise ValueError("Typed child identity must match its source child")
             if target in tables:

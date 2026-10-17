@@ -79,7 +79,46 @@ def notice(
     )
     typer.echo(f"Status: {report['status']}")
     typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    typer.echo("Output published to Silver Lakehouse tables (s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet).")
+    typer.echo(
+        "Output published to Silver Lakehouse tables (s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+    )
+    if report["status"] != "completed":
+        raise typer.Exit(code=1)
+
+
+@app.command("project")
+@app.command("du_an", hidden=True)
+def project(
+    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
+    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
+    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    continue_on_error: Annotated[
+        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
+    ] = False,
+):
+    """Process project (Dự án đầu tư) automatically for each day."""
+    try:
+        first, last = date_range(day, start, end)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    fs, bucket = get_storage()
+    typer.echo(f"project | {first} .. {last}")
+    report = run_resource(
+        fs,
+        bucket,
+        "project",
+        first,
+        last,
+        family=None,
+        continue_on_error=continue_on_error,
+        on_progress=progress,
+    )
+    typer.echo(f"Status: {report['status']}")
+    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
+    typer.echo(
+        "Output published to Silver Lakehouse tables "
+        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+    )
     if report["status"] != "completed":
         raise typer.Exit(code=1)
 
@@ -88,6 +127,7 @@ def notice(
 def list_resources():
     """List implemented resources and optional family choices."""
     typer.echo("notice (alias: tbmt): standard, vk_adb, reoffer")
+    typer.echo("project (alias: du_an): project")
 
 
 @app.command("reset")

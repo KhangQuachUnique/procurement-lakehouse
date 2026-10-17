@@ -114,7 +114,7 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             "prov_code": clean_pipe_code(root.get("provCode")),
             "district_code": clean_pipe_code(root.get("districtCode")),
             "public_date": parse_date(root.get("publicDate")),
-            "public_date_raw": parse_date(root.get("publicDate")),
+            "public_date_raw": clean_text(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
             "root_json": canonical_json(root),
         }
@@ -136,20 +136,37 @@ class ProjectDetailTransformer(BaseResourceTransformer):
     ) -> list[ExtractedChild]:
         """Extract location components if available."""
         children: list[ExtractedChild] = []
-        root = payload.get("projectDTO", {})
+        root = payload.get("projectDTO")
+        if not isinstance(root, dict):
+            root = {}
 
         # Extract primary location as a child component
         prov_code = clean_pipe_code(payload.get("provCode") or root.get("provCode"))
+        prov_name = clean_text(payload.get("provName") or root.get("provName"))
         district_code = clean_pipe_code(payload.get("districtCode") or root.get("districtCode"))
+        district_name = clean_text(payload.get("districtName") or root.get("districtName"))
         location_name = clean_text(payload.get("plocation") or root.get("plocation"))
 
-        if prov_code or district_code or location_name:
+        if prov_code or district_code or location_name or prov_name or district_name:
             loc_data = {
                 "prov_code": prov_code,
+                "prov_name": prov_name,
                 "district_code": district_code,
+                "district_name": district_name,
                 "location_name": location_name,
             }
             child_id = digest([revision_id, "location", 0, loc_data])
+            typed_attributes = {
+                "location_id": child_id,
+                "revision_id": revision_id,
+                "province_code": prov_code,
+                "province_name": prov_name,
+                "district_code": district_code,
+                "district_name": district_name,
+                "ward_code": None,
+                "ward_name": None,
+                "location_name": location_name,
+            }
             children.append(
                 ExtractedChild(
                     child_id=child_id,
@@ -160,6 +177,8 @@ class ProjectDetailTransformer(BaseResourceTransformer):
                     ordinal=0,
                     source_id=prov_code,
                     payload_json=canonical_json(loc_data),
+                    typed_table="project_location",
+                    typed_attributes=typed_attributes,
                 )
             )
 

@@ -182,3 +182,71 @@ def test_transform_project_with_pipe_codes_and_toplevel_metadata():
     assert loc_child.source_id == "115"
     assert '"prov_code":"115"' in loc_child.payload_json
     assert '"district_code":"11509"' in loc_child.payload_json
+
+
+def test_project_full_assembly_and_validation():
+    from procurement.silver.application.resources import get_silver_resource
+    from procurement.silver.application.revisions import assemble, validate
+    from procurement.silver.application.warehouse import typed_arrow_rows
+
+    contract = get_silver_resource("project")
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "provCode": "|115|",
+        "districtCode": "|11509|",
+        "plocation": "Huyện Đông Hưng, Tỉnh Thái Bình",
+        "investTotalUnit": "VND",
+        "projectDTO": {
+            "id": "PRJ-REAL-123",
+            "no": "PR2400000017",
+            "name": "Kiên cố hóa kênh cấp I",
+            "investorCode": "vnz000031466",
+            "investorName": "UBND xã Liên Giang",
+            "investTotal": "1143267000",
+            "publicDate": "2024-01-01",
+        },
+    }
+    envelope = make_envelope(payload, source_id="PRJ-REAL-123")
+    result = transformer.transform(envelope)
+    tables = assemble([result.to_dict()])
+    quality = validate(tables)
+
+    assert quality["accepted"] == 1
+    assert quality["quarantined"] == 0
+    assert quality["blocking_issues"] == 0
+
+    revisions = tables["project_revision"]
+    assert len(revisions) == 1
+    rev = revisions[0]
+    assert rev["is_current"] is True
+    assert rev["observation_id"] is not None
+    assert rev["project_no"] == "PR2400000017"
+
+    locations = tables["project_location"]
+    assert len(locations) == 1
+    loc = locations[0]
+    assert loc["province_code"] == "115"
+    assert loc["district_code"] == "11509"
+    assert loc["location_name"] == "Huyện Đông Hưng, Tỉnh Thái Bình"
+
+    # Verify PyArrow / DuckDB typed schema casting
+    for name in contract.output_tables:
+        arrow_table = typed_arrow_rows(name, tables[name])
+        assert arrow_table is not None
+        if name in {"project_revision", "project_location", "observation"}:
+            assert arrow_table.num_rows == 1
+
+
+def test_project_resource_catalog_and_contract():
+    from procurement.silver.application.resources import (
+        PROJECT_MAPPING_VERSION,
+        PROJECT_OUTPUT_TABLES,
+        get_silver_resource,
+    )
+
+    for alias in ("project", "du_an"):
+        contract = get_silver_resource(alias)
+        assert contract.resource == "project"
+        assert contract.mapping_version == PROJECT_MAPPING_VERSION
+        assert contract.output_tables == PROJECT_OUTPUT_TABLES
+        assert contract.select_tables() == ("project_detail",)

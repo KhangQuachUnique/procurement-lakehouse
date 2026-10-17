@@ -20,6 +20,16 @@ NOTICE_TABLES = (
     "notify_contractor_reoffer_detail",
 )
 
+PROJECT_MAPPING_VERSION = "project-1"
+PROJECT_OUTPUT_TABLES = (
+    "observation",
+    "project_revision",
+    "project_location",
+    "quality_issue",
+    "quarantine",
+)
+PROJECT_TABLES = ("project_detail",)
+
 
 @dataclass(frozen=True)
 class SilverResource:
@@ -39,21 +49,29 @@ class SilverResource:
 
 def get_silver_resource(name: str) -> SilverResource:
     """Retrieve the SilverResource configuration for a resource alias."""
-    if name not in {"notice", "tbmt", "notify_contractor"}:
-        raise ValueError(f"Silver resource not implemented: {name}")
-    definition = get_resource("notify_contractor")
-    families = tuple(
-        (table.removeprefix("notify_contractor_").removesuffix("_detail"), table)
-        for table in definition.tables
-    )
-    return SilverResource(
-        definition.identity.resource, families, NOTICE_OUTPUT_TABLES, NOTICE_MAPPING_VERSION
-    )
+    if name in {"notice", "tbmt", "notify_contractor"}:
+        definition = get_resource("notify_contractor")
+        families = tuple(
+            (table.removeprefix("notify_contractor_").removesuffix("_detail"), table)
+            for table in definition.tables
+        )
+        return SilverResource(
+            definition.identity.resource, families, NOTICE_OUTPUT_TABLES, NOTICE_MAPPING_VERSION
+        )
+    if name in {"project", "du_an"}:
+        definition = get_resource("project")
+        families = tuple((table.removesuffix("_detail"), table) for table in definition.tables)
+        return SilverResource(
+            definition.identity.resource, families, PROJECT_OUTPUT_TABLES, PROJECT_MAPPING_VERSION
+        )
+    raise ValueError(f"Silver resource not implemented: {name}")
 
 
 __all__ = [
     "NOTICE_MAPPING_VERSION",
     "NOTICE_OUTPUT_TABLES",
+    "PROJECT_MAPPING_VERSION",
+    "PROJECT_OUTPUT_TABLES",
     "SilverResource",
     "get_silver_resource",
 ]
