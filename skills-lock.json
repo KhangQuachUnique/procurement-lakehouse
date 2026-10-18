@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "data-cleaning": {
+      "source": "magnus919/agent-skills",
+      "sourceType": "github",
+      "skillPath": "data-cleaning/SKILL.md",
+      "computedHash": "9f95f81f39ff141a7dfc9bd801f75196b620347208499bf7047d9da1fef55354"
+    },
+    "data-profiling": {
+      "source": "okou-ai/okou-skills",
+      "sourceType": "github",
+      "skillPath": "data-profiling/SKILL.md",
+      "computedHash": "d6690dcea28a8c2117af683da16d8d4cf18567c8fc2d272872a78214e2c852c0"
+    }
+  }
+}
