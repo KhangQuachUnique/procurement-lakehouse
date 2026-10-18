@@ -4,8 +4,11 @@ from enum import StrEnum
 from typing import Annotated
 
 import typer
+from dotenv import load_dotenv
 
 from procurement.silver.service import date_range, run_resource
+
+load_dotenv()
 
 app = typer.Typer(
     no_args_is_help=True,

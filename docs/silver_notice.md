@@ -22,7 +22,7 @@ Hợp đồng `notice-2` xử lý chuẩn hóa 3 bảng Bronze của Thông báo
   - `resources.py`: Quản lý declarative contract `notice-2` và danh mục bảng đầu ra.
   - `warehouse.py`: Ép kiểu kiểm tra (typed casting) qua DuckDB SQL schema contract thành các bảng `PyArrow Table`.
 - **Adapters Layer:**
-  - `ArrowBronzeRepositoryAdapter`: Đọc commit manifests đã kiểm chứng từ `_control` trên S3/MinIO.
+  - `ArrowBronzeRepositoryAdapter`: Truy vấn metadata commit từ PostgreSQL `bronze_meta` (partitions, commits, commit_files) cho tốc độ phân giải sub-second và stream trực tiếp Parquet từ S3/MinIO.
   - `S3SilverCandidateAdapter`: Ghi dữ liệu Parquet chuẩn Hive-partitioning lên S3 và lưu báo cáo thực thi `report.json`.
 
 ---

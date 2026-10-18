@@ -6,6 +6,7 @@ Application Service facade delegating to the Hexagonal Silver Application Servic
 import sys
 from collections.abc import Callable
 from datetime import date
+from typing import Any
 
 from procurement.silver.adapters.driven.bronze.arrow_adapter import ArrowBronzeRepositoryAdapter
 from procurement.silver.adapters.driven.storage.s3_candidate_adapter import S3SilverCandidateAdapter
@@ -45,6 +46,7 @@ def run_resource(
     family: str | None = None,
     continue_on_error: bool = False,
     on_progress: Callable[[dict], None] | None = None,
+    db_engine: Any = None,
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]
@@ -53,6 +55,7 @@ def run_resource(
 
     bronze_repo = ArrowBronzeRepositoryAdapter(
         fs=fs,
+        db_engine=db_engine,
         freeze_fn=active_freeze if active_freeze is not default_freeze else None,
         records_fn=active_records if active_records is not default_records else None,
     )

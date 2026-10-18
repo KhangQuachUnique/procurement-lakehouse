@@ -35,8 +35,9 @@ Tầng Silver được thiết kế theo mô hình **Kiến trúc Lục giác (H
 +------------------------------------+             +-----------------------------------------------+
 | DRIVEN ADAPTER: BRONZE REPOSITORY  |             | DRIVEN ADAPTER: SILVER STORAGE                |
 |   - ArrowBronzeRepositoryAdapter   |             |   - S3SilverCandidateAdapter                  |
-|   - Reads committed S3 manifests   |             |   - Writes Hive-partitioned Parquet files     |
-|     under `_control/...`           |             |   - Saves execution run & latest reports      |
+|   - Queries PostgreSQL `bronze_meta|             |   - Writes Hive-partitioned Parquet files     |
+|     (partitions, commits, files)   |             |   - Saves execution run & latest reports      |
+|   - Streams Parquet from S3/MinIO  |             |                                               |
 +------------------------------------+             +-----------------------------------------------+
 ```
 

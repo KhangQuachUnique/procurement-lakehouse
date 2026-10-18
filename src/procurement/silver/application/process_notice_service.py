@@ -68,17 +68,29 @@ class ProcessNoticeService(ProcessNoticeUseCase):
         def save_report() -> None:
             self.silver_repo.save_run_report(report_prefix, report)
 
+        # Batch select all committed partitions across the date range in 1 single pass
+        try:
+            all_partitions = self.bronze_repo.select_committed_partitions(
+                [self.contract.resource], start_date, end_date
+            )
+            partitions_by_date = {p.source_date: p for p in all_partitions}
+        except Exception:  # noqa: BLE001
+            partitions_by_date = {}
+
         day = start_date
         while day <= end_date:
             entry: dict[str, Any] = {"date": str(day), "status": "running"}
             try:
-                partitions = self.bronze_repo.select_committed_partitions(
-                    [self.contract.resource], day, day
-                )
-                if len(partitions) != 1:
-                    raise ValueError(f"Expected exactly one committed day for {day}")
-
-                partition = partitions[0]
+                day_str = str(day)
+                if day_str in partitions_by_date:
+                    partition = partitions_by_date[day_str]
+                else:
+                    single_parts = self.bronze_repo.select_committed_partitions(
+                        [self.contract.resource], day, day
+                    )
+                    if len(single_parts) != 1:
+                        raise ValueError(f"Expected exactly one committed day for {day}")
+                    partition = single_parts[0]
                 input_counts = dict.fromkeys(dict(self.contract.families), 0)
                 names = {table: name for name, table in self.contract.families}
                 transformed = []

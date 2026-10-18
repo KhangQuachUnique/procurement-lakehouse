@@ -7,7 +7,7 @@ Decoupled from internal Bronze ingestion mechanics.
 import hashlib
 import json
 from collections.abc import Callable, Iterator
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import pyarrow.parquet as pq
@@ -33,20 +33,98 @@ def file_sha256(fs: Any, key: str) -> str:
 
 
 class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
-    """PyArrow-based implementation of BronzeRepositoryPort."""
+    """PyArrow-based implementation of BronzeRepositoryPort with PostgreSQL metadata support."""
 
     def __init__(
         self,
         fs: Any,
+        db_engine: Any = None,
         freeze_fn: Callable[..., Any] | None = None,
         records_fn: Callable[..., Any] | None = None,
         workers: int = 16,
     ) -> None:
         self.fs = fs
+        self.db_engine = db_engine
         self._freeze_fn = freeze_fn
         self._records_fn = records_fn
         self.workers = workers
         self._runs_cache: dict[str, list[Any]] = {}
+
+    def _get_engine(self) -> Any:
+        if self.db_engine is not None:
+            return self.db_engine
+        try:
+            from procurement.infrastructure.database import create_application_engine
+
+            self.db_engine = create_application_engine()
+            return self.db_engine
+        except Exception:  # noqa: BLE001
+            return None
+
+    def _select_committed_from_db(
+        self, engine: Any, resources: list[str], start: date, end: date
+    ) -> list[CommittedBronzePartition]:
+        from sqlalchemy import text
+
+        with engine.connect() as conn:
+            q = text("""
+                SELECT 
+                    p.resource,
+                    p.source_date,
+                    COALESCE(a.dagster_run_id, a.id::text) as run_id,
+                    c.record_count,
+                    c.verification,
+                    cf.table_name,
+                    cf.bucket,
+                    cf.object_key,
+                    cf.sha256
+                FROM bronze_meta.partitions p
+                JOIN bronze_meta.commits c ON p.current_commit_id = c.id
+                JOIN bronze_meta.attempts a ON c.attempt_id = a.id
+                LEFT JOIN bronze_meta.commit_files cf ON c.id = cf.commit_id
+                WHERE p.resource = ANY(:resources)
+                  AND p.source_date BETWEEN :start AND :end
+                ORDER BY p.resource, p.source_date, cf.file_number
+            """)
+            rows = conn.execute(
+                q, {"resources": list(resources), "start": start, "end": end}
+            ).fetchall()
+
+        by_key: dict[tuple[str, str], dict[str, Any]] = {}
+        for r in rows:
+            res_name = r[0]
+            day_str = r[1].isoformat()
+            key = (res_name, day_str)
+            if key not in by_key:
+                by_key[key] = {
+                    "resource": res_name,
+                    "source_date": day_str,
+                    "run_id": r[2],
+                    "expected_records": r[3],
+                    "manifest": r[4] or {},
+                    "files": [],
+                }
+            if r[5] and r[7]:
+                file_key = f"{r[6]}/{r[7]}" if not r[7].startswith(f"{r[6]}/") else r[7]
+                by_key[key]["files"].append(
+                    BronzeFileDescriptor(
+                        table=r[5],
+                        key=file_key,
+                        sha256=r[8] or "",
+                    )
+                )
+
+        return [
+            CommittedBronzePartition(
+                resource=v["resource"],
+                source_date=v["source_date"],
+                run_id=v["run_id"],
+                expected_records=v["expected_records"],
+                files=tuple(v["files"]),
+                manifest=v["manifest"],
+            )
+            for v in by_key.values()
+        ]
 
     def clear_runs_cache(self, resource: str | None = None) -> None:
         """Clear cached run manifests for a resource or all resources."""
@@ -63,31 +141,37 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
     ) -> list[CommittedBronzePartition]:
         """Discover and freeze committed Bronze partitions."""
         if self._freeze_fn is not None:
-            raw_partitions = self._freeze_fn(self.fs, resources, start, end)
             result = []
-            for p in raw_partitions:
-                files = tuple(
-                    BronzeFileDescriptor(
-                        table=f["table"],
-                        key=f["key"],
-                        sha256=f.get("sha256") or "",
+            cur = start
+            while cur <= end:
+                raw_partitions = self._freeze_fn(self.fs, resources, cur, cur)
+                for p in raw_partitions:
+                    files = tuple(
+                        BronzeFileDescriptor(
+                            table=f["table"],
+                            key=f["key"],
+                            sha256=f.get("sha256") or "",
+                        )
+                        for f in p["files"]
                     )
-                    for f in p["files"]
-                )
-                result.append(
-                    CommittedBronzePartition(
-                        resource=p["resource"],
-                        source_date=p["source_date"],
-                        run_id=p["run_id"],
-                        expected_records=p["expected_records"],
-                        files=files,
-                        manifest=p.get("manifest", {}),
+                    result.append(
+                        CommittedBronzePartition(
+                            resource=p["resource"],
+                            source_date=p["source_date"],
+                            run_id=p["run_id"],
+                            expected_records=p["expected_records"],
+                            files=files,
+                            manifest=p.get("manifest", {}),
+                        )
                     )
-                )
+                cur += timedelta(days=1)
             return result
 
         if start > end or not resources or len(set(resources)) != len(resources):
             raise ValueError("Select a nonempty unique resource set and an ordered date range")
+
+        if (engine := self._get_engine()) is not None:
+            return self._select_committed_from_db(engine, resources, start, end)
 
         partitions = []
         for resource in sorted(resources):
@@ -145,6 +229,9 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
                 ],
             }
             yield from self._records_fn(self.fs, raw_partition)
+            return
+
+        if partition.expected_records == 0:
             return
 
         count = 0
