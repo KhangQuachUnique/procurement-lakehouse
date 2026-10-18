@@ -16,6 +16,8 @@ from procurement.silver.domain.protocols import (
     ExtractedChild,
     ExtractedReference,
     QualityIssue,
+    RawRecordEnvelope,
+    TransformedRecord,
 )
 from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
@@ -95,6 +97,20 @@ class ProjectDetailTransformer(BaseResourceTransformer):
                 )
             )
 
+        # Temporal validation: decision date should not be after publication date
+        dec_date = parse_date(root.get("decisionDate"))
+        pub_date = parse_date(root.get("publicDate"))
+        if dec_date and pub_date and dec_date > pub_date:
+            issues.append(
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date_order", "decisionDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date_order",
+                    path="projectDTO.decisionDate",
+                    severity="warn",
+                )
+            )
+
         return {
             "revision_id": revision_id,
             "entity_id": entity_id,
@@ -110,22 +126,58 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             "amount": amount,
             "currency": currency,
             "decision_no": clean_text(root.get("decisionNo")),
-            "decision_date": parse_date(root.get("decisionDate")),
+            "decision_date": dec_date,
             "prov_code": clean_pipe_code(root.get("provCode")),
             "district_code": clean_pipe_code(root.get("districtCode")),
-            "public_date": parse_date(root.get("publicDate")),
+            "public_date": pub_date,
             "public_date_raw": clean_text(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
             "root_json": canonical_json(root),
         }
+
+    def transform(self, envelope: RawRecordEnvelope) -> TransformedRecord:
+        """Override transform to provide explicit source_version fallback from projectDTO."""
+        from dataclasses import replace
+
+        pdto = lookup_path(envelope.payload, "projectDTO")
+        version = None
+        if isinstance(pdto, dict):
+            version = clean_text(pdto.get("version"))
+        if not version and isinstance(envelope.payload, dict):
+            version = clean_text(envelope.payload.get("pversion") or envelope.payload.get("version"))
+
+        target_envelope = envelope
+        if envelope.source_version is None and version:
+            target_envelope = replace(envelope, source_version=version)
+
+        result = super().transform(target_envelope)
+        result.observation = self.build_observation(envelope)[1]
+        return result
 
     def extract_references(
         self,
         root: dict[str, Any],
         revision_id: str,
     ) -> list[ExtractedReference]:
-        """Projects are root-level entities and typically do not point to parent entities."""
-        return []
+        """Extract foreign key references to linked procurement plans (KHLCNT)."""
+        refs: list[ExtractedReference] = []
+        plan_list = root.get("bidpProjectProjectPlanList") or root.get("projectPlanList")
+        if isinstance(plan_list, list):
+            for ordinal, item in enumerate(plan_list):
+                if isinstance(item, dict):
+                    plan_no = clean_text(item.get("planNo") or item.get("no"))
+                    if plan_no:
+                        refs.append(
+                            ExtractedReference(
+                                relationship_id=digest([revision_id, "plan", "number", plan_no, ordinal]),
+                                from_revision_id=revision_id,
+                                target_type="plan",
+                                id_scheme="number",
+                                target_identity=plan_no,
+                                field_name="bidpProjectProjectPlanList.planNo",
+                            )
+                        )
+        return refs
 
     def extract_children(
         self,

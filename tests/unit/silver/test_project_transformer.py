@@ -250,3 +250,63 @@ def test_project_resource_catalog_and_contract():
         assert contract.mapping_version == PROJECT_MAPPING_VERSION
         assert contract.output_tables == PROJECT_OUTPUT_TABLES
         assert contract.select_tables() == ("project_detail",)
+
+
+def test_project_version_fallback_from_dto():
+    from dataclasses import replace
+
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-V1",
+            "no": "NO-V1",
+            "name": "Dự án test version",
+            "version": "02",
+        }
+    }
+    # Envelope without source_version
+    envelope = replace(make_envelope(payload, source_id="PRJ-V1"), source_version=None)
+    result = transformer.transform(envelope)
+
+    assert result.revision.source_version == "02"
+    assert result.observation["source_version"] is None  # Preserves raw envelope
+
+
+def test_project_extract_plan_references():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-REF-1",
+            "no": "NO-REF-1",
+            "name": "Dự án có KHLCNT",
+        },
+        "bidpProjectProjectPlanList": [
+            {"id": "PLAN-ID-1", "planNo": "PL20240001", "name": "KHLCNT Giai đoạn 1"},
+            {"id": "PLAN-ID-2", "planNo": "PL20240002", "name": "KHLCNT Giai đoạn 2"},
+        ],
+    }
+    envelope = make_envelope(payload, source_id="PRJ-REF-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.references) == 2
+    assert result.references[0].target_type == "plan"
+    assert result.references[0].target_identity == "PL20240001"
+    assert result.references[1].target_identity == "PL20240002"
+
+
+def test_project_temporal_inversion_detected():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-TEMP-1",
+            "no": "NO-TEMP-1",
+            "name": "Dự án sai ngày",
+            "decisionDate": "2026-03-10",
+            "publicDate": "2026-03-01",  # Published before decided!
+        }
+    }
+    envelope = make_envelope(payload, source_id="PRJ-TEMP-1")
+    result = transformer.transform(envelope)
+
+    assert any(i.code == "invalid_date_order" for i in result.issues)
+
