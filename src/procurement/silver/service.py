@@ -10,7 +10,15 @@ from datetime import date
 from procurement.silver.adapters.driven.bronze.arrow_adapter import ArrowBronzeRepositoryAdapter
 from procurement.silver.adapters.driven.storage.s3_candidate_adapter import S3SilverCandidateAdapter
 from procurement.silver.application.process_notice_service import ProcessNoticeService
-from procurement.silver.domain.selection import freeze, records
+from procurement.silver.domain.selection import (
+    freeze as default_freeze,
+)
+from procurement.silver.domain.selection import (
+    records as default_records,
+)
+
+freeze = default_freeze
+records = default_records
 
 
 def date_range(day: str | None, start: str | None, end: str | None) -> tuple[date, date]:
@@ -40,13 +48,13 @@ def run_resource(
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]
-    active_freeze = getattr(current_module, "freeze", freeze)
-    active_records = getattr(current_module, "records", records)
+    active_freeze = getattr(current_module, "freeze", default_freeze)
+    active_records = getattr(current_module, "records", default_records)
 
     bronze_repo = ArrowBronzeRepositoryAdapter(
         fs=fs,
-        freeze_fn=active_freeze,
-        records_fn=active_records,
+        freeze_fn=active_freeze if active_freeze is not default_freeze else None,
+        records_fn=active_records if active_records is not default_records else None,
     )
     silver_repo = S3SilverCandidateAdapter(fs=fs)
     use_case = ProcessNoticeService(

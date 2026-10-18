@@ -21,20 +21,32 @@ class CommittedDay:
 
 
 def select_committed_days(
-    fs, definition: ResourceDefinition, start: date, end: date, *, dataset: str = "muasamcong",
-    workers: int = 1,
+    fs,
+    definition: ResourceDefinition,
+    start: date,
+    end: date,
+    *,
+    dataset: str = "muasamcong",
+    workers: int = 16,
+    runs=None,
 ) -> tuple[CommittedDay, ...]:
     selected = []
-    for day in read_coverage(fs, definition.identity, start, end, workers=workers):
+    for day in read_coverage(fs, definition.identity, start, end, workers=workers, runs=runs):
         if day.effective is None:
-            raise ValueError(f"No committed attempt: {definition.identity.resource}/{day.source_date}")
+            raise ValueError(
+                f"No committed attempt: {definition.identity.resource}/{day.source_date}"
+            )
         attempt = day.effective
         files = []
         for table in definition.tables:
-            prefix = (f"{settings.OBJECT_STORAGE_BUCKET}/bronze/{dataset}/{table}/"
-                      f"source_date={day.source_date}/run_id={attempt.run_id}")
+            prefix = (
+                f"{settings.OBJECT_STORAGE_BUCKET}/bronze/{dataset}/{table}/"
+                f"source_date={day.source_date}/run_id={attempt.run_id}"
+            )
             files.extend((table, key) for key in sorted(fs.glob(f"{prefix}/*.parquet")))
-        selected.append(CommittedDay(day.source_date, attempt.run_id, attempt.bronze_records, tuple(files)))
+        selected.append(
+            CommittedDay(day.source_date, attempt.run_id, attempt.bronze_records, tuple(files))
+        )
     return tuple(selected)
 
 
@@ -47,8 +59,10 @@ def iter_committed_records(fs, selection: tuple[CommittedDay, ...], *, verify_ha
                 parquet = pq.ParquetFile(file)
                 for batch in parquet.iter_batches(batch_size=1024):
                     for record in batch.to_pylist():
-                        if (record["run_id"] != day.run_id
-                                or str(record["source_date"])[:10] != day.source_date.isoformat()):
+                        if (
+                            record["run_id"] != day.run_id
+                            or str(record["source_date"])[:10] != day.source_date.isoformat()
+                        ):
                             raise ValueError(f"Bronze lineage mismatch in {key}")
                         if verify_hash:
                             payload = record["payload"]
@@ -67,5 +81,8 @@ def iter_committed_records(fs, selection: tuple[CommittedDay, ...], *, verify_ha
 
 def verify_committed(fs, selection: tuple[CommittedDay, ...]) -> dict[str, int]:
     records = sum(1 for _ in iter_committed_records(fs, selection, verify_hash=True))
-    return {"days": len(selection), "files": sum(len(day.files) for day in selection),
-            "records": records}
+    return {
+        "days": len(selection),
+        "files": sum(len(day.files) for day in selection),
+        "records": records,
+    }

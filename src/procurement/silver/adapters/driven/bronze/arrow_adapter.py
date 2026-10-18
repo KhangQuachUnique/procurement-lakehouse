@@ -20,7 +20,7 @@ from procurement.silver.ports.outbound.bronze_repository import (
     CommittedBronzePartition,
 )
 from procurement.storage.committed import select_committed_days
-from procurement.storage.control import read_day_manifest
+from procurement.storage.control import list_run_manifests, read_day_manifest
 
 
 def file_sha256(fs: Any, key: str) -> str:
@@ -40,10 +40,20 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         fs: Any,
         freeze_fn: Callable[..., Any] | None = None,
         records_fn: Callable[..., Any] | None = None,
+        workers: int = 16,
     ) -> None:
         self.fs = fs
         self._freeze_fn = freeze_fn
         self._records_fn = records_fn
+        self.workers = workers
+        self._runs_cache: dict[str, list[Any]] = {}
+
+    def clear_runs_cache(self, resource: str | None = None) -> None:
+        """Clear cached run manifests for a resource or all resources."""
+        if resource is not None:
+            self._runs_cache.pop(resource, None)
+        else:
+            self._runs_cache.clear()
 
     def select_committed_partitions(
         self,
@@ -82,7 +92,14 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         partitions = []
         for resource in sorted(resources):
             definition = get_resource(resource)
-            for day in select_committed_days(self.fs, definition, start, end):
+            if resource not in self._runs_cache:
+                self._runs_cache[resource] = list_run_manifests(
+                    self.fs, definition.identity, workers=self.workers
+                )
+            cached_runs = self._runs_cache[resource]
+            for day in select_committed_days(
+                self.fs, definition, start, end, workers=self.workers, runs=cached_runs
+            ):
                 manifest = read_day_manifest(
                     self.fs, definition.identity, day.run_id, day.source_date
                 )
