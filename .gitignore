@@ -64,7 +64,8 @@ temp/
 # Local Data
 # =========================
 data/
-exports/
+exports/*
+!exports/profiling/
 imports/
 
 # =========================
