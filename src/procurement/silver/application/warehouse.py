@@ -10,17 +10,36 @@ from procurement.storage.iceberg import identifier
 SCHEMAS = get_silver_schemas()
 
 
+_DUCKDB_CONN = None
+
+
+def _get_duckdb_conn():
+    global _DUCKDB_CONN
+    if _DUCKDB_CONN is None:
+        import duckdb
+
+        _DUCKDB_CONN = duckdb.connect(
+            ":memory:",
+            config={"max_memory": "512MB", "threads": "2"},
+        )
+    return _DUCKDB_CONN
+
+
 def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
     """Validate and cast rows against the SQL contract before writing local Parquet."""
-    import duckdb
-
     clean_name = identifier(name)
-    with duckdb.connect(":memory:") as db:
-        db.execute(f"CREATE TABLE typed_rows ({SCHEMAS[clean_name]})")
+    db = _get_duckdb_conn()
+    db.execute(f"CREATE OR REPLACE TEMP TABLE typed_rows ({SCHEMAS[clean_name]})")
+    try:
         if rows:
             db.register("input_rows", pa.Table.from_pylist(rows))
-            db.execute("INSERT INTO typed_rows BY NAME SELECT * FROM input_rows")
+            try:
+                db.execute("INSERT INTO typed_rows BY NAME SELECT * FROM input_rows")
+            finally:
+                db.unregister("input_rows")
         return db.execute("SELECT * FROM typed_rows").to_arrow_table()
+    finally:
+        db.execute("DROP TABLE IF EXISTS typed_rows")
 
 
 def stage(db, catalog, namespace, tables, release_id, schemas=None):

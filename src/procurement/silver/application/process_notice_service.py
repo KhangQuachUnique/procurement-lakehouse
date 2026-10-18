@@ -156,6 +156,18 @@ class ProcessNoticeService(ProcessNoticeUseCase):
             if on_progress:
                 on_progress(entry)
 
+            # Release unneeded memory buffers from PyArrow pool and Python runtime
+            try:
+                import gc
+
+                import pyarrow as pa
+
+                pa.default_memory_pool().release_unused()
+                if len(report["days"]) % 10 == 0:
+                    gc.collect()
+            except Exception:  # noqa: BLE001, S110
+                pass
+
             if entry["status"] == "failed" and not continue_on_error:
                 break
 
