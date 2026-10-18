@@ -29,12 +29,21 @@ def lookup_path(value: Any, path: str) -> Any:
     return value
 
 
-def clean_text(value: Any) -> str | None:
-    """Normalize text: strip whitespace, convert empty to None, keep leading zeros."""
+SENTINEL_VALUES = {
+    "n/a", "na", "null", "none", "unknown", "undefined", "-", "--", "chưa có", "không có", "không"
+}
+
+
+def clean_text(value: Any, *, filter_sentinels: bool = True) -> str | None:
+    """Normalize text: strip whitespace, convert empty/sentinels to None, keep leading zeros."""
     if value is None or isinstance(value, (dict, list, bool)):
         return None
     val_str = str(value).strip()
-    return val_str if val_str else None
+    if not val_str:
+        return None
+    if filter_sentinels and val_str.lower() in SENTINEL_VALUES:
+        return None
+    return val_str
 
 
 def parse_money(value: Any) -> str | None:

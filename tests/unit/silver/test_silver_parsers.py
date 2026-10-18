@@ -21,6 +21,14 @@ def test_clean_text():
     assert clean_text(["item"]) is None
     assert clean_text({"key": "val"}) is None
     assert clean_text(True) is None
+    # Sentinel values that represent missing data in raw Bronze
+    assert clean_text("N/A") is None
+    assert clean_text("n/a") is None
+    assert clean_text("NA") is None
+    assert clean_text("-") is None
+    assert clean_text("--") is None
+    assert clean_text("none") is None
+    assert clean_text("null") is None
 
 
 def test_parse_money_valid():

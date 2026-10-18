@@ -289,3 +289,30 @@ def test_notice_mapping_version_is_part_of_revision_identity():
         current.transform(envelope()).revision.revision_id
         != newer.transform(envelope()).revision.revision_id
     )
+
+
+def test_notice_fallback_extractions_from_plan_detail():
+    p = {
+        "bidoNotifyContractorM": root(),
+        "bidpPlanDetail": {
+            "id": "pkg-001",
+            "isMultiLot": 1,
+            "bidField": "XL",
+            "cperiod": "180",
+        },
+    }
+    result = run(envelope(data=p))
+    attrs = result.typed_attributes
+    assert attrs["is_multi_lot"] is True
+    assert attrs["bid_field"] == "XL"
+    assert attrs["contract_duration_raw"] == "180"
+
+
+def test_notice_temporal_inversion_detected():
+    r = root()
+    r["bidCloseDate"] = "2025-01-10T10:00:00"
+    r["bidOpenDate"] = "2025-01-05T10:00:00"  # Opens before it closes
+    p = {"bidoNotifyContractorM": r}
+    result = run(envelope(data=p))
+    assert any(i.code == "invalid_date_order" for i in result.issues)
+

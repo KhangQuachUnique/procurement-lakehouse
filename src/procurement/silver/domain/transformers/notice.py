@@ -131,6 +131,37 @@ class NoticeTransformer(BaseResourceTransformer):
                         "unverified_embedded_package",
                         prefix + ".id",
                     )
+                # Fallback for fields residing in embedded plan detail
+                if attrs.get("is_multi_lot") is None and "isMultiLot" in context:
+                    attrs["is_multi_lot"] = parse_boolean(context.get("isMultiLot"))
+                if attrs.get("bid_field") is None and "bidField" in context:
+                    attrs["bid_field"] = clean_text(context.get("bidField"))
+                if attrs.get("contract_duration_raw") is None and "cperiod" in context:
+                    attrs["contract_duration_raw"] = clean_text(context.get("cperiod"))
+                    attrs["contract_duration_unit"] = clean_text(context.get("cperiodUnit"))
+
+            if attrs.get("is_multi_lot") is None and isinstance(envelope.payload.get("bidoBidStatus"), dict):
+                attrs["is_multi_lot"] = parse_boolean(envelope.payload["bidoBidStatus"].get("isMultiLot"))
+
+            # Temporal cross-field validation
+            close_dt = attrs.get("bid_close_date")
+            open_dt = attrs.get("bid_open_date")
+            pub_dt = attrs.get("published_at")
+            if close_dt and open_dt and close_dt > open_dt:
+                self.issue(
+                    result.issues,
+                    result.observation["observation_id"],
+                    "invalid_date_order",
+                    "bidCloseDate > bidOpenDate",
+                )
+            if pub_dt and close_dt and pub_dt > close_dt:
+                self.issue(
+                    result.issues,
+                    result.observation["observation_id"],
+                    "invalid_date_order",
+                    "publishedAt > bidCloseDate",
+                )
+
             attrs["field_sources_json"] = canonical_json(sources)
         return result
 
