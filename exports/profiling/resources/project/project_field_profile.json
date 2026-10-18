@@ -186,10 +186,12 @@
     }
   ],
   "drift_analysis": {
-    "window_2022_vs_2024": {
-      "plocation": "Tăng từ 0.0% (2022) lên 100.0% (2024+). Do hệ thống e-GP nâng cấp bắt buộc nhập địa điểm chi tiết.",
-      "provName_districtName": "Tăng từ 0.0% lên 75.6% (provName) và 68.6% (districtName).",
-      "decisionAgency": "Chuyển dịch từ 98.9% giá trị sentinel 'N/A' (2022) sang 100% tên cơ quan thực tế (2024+)."
+    "golive_milestone_2022_09_16": {
+      "milestone_description": "Ngày 16/09/2022: Bộ Kế hoạch và Đầu tư chính thức vận hành Hệ thống Mạng Đấu thầu Quốc gia mới (e-GP mới) theo Thông tư 08/2022/TT-BKHĐT.",
+      "before_2022_09_16": "plocation đạt 0.0%, provName/districtName là null (100%), provCode/districtCode chứa '||'. Đây là dữ liệu lịch sử chuyển đổi từ hệ thống e-GP cũ.",
+      "from_2022_09_16_onwards": "plocation nhảy vọt lên 100.0% ngay từ ngày 16/09/2022 và duy trì ổn định 100% trong toàn bộ các năm 2023, 2024, 2025, 2026.",
+      "provName_districtName": "Tăng từ 0.0% lên 75-85% ngay từ tháng 10/2022 trở đi.",
+      "decisionAgency": "Chuyển dịch từ 98.9% giá trị sentinel 'N/A' (trước 16/09/2022) sang 100% tên cơ quan phê duyệt thực tế."
     }
   },
   "improvements_applied": [
