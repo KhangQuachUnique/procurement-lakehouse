@@ -14,6 +14,8 @@ from procurement.silver.domain.protocols import (
     ExtractedChild,
     ExtractedReference,
     QualityIssue,
+    RawRecordEnvelope,
+    TransformedRecord,
 )
 from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
@@ -83,9 +85,22 @@ class ContractorResultTransformer(BaseResourceTransformer):
                                     price = Decimal(str(raw_win))
                                     total_winning = (total_winning or Decimal(0)) + price
 
-        # Estimate currency
-        currency = clean_text(root.get("bidEstimatePriceUnit")) or "VND"
+        # Currency fallback
+        currency = clean_text(root.get("bidPriceUnit") or root.get("bidEstimatePriceUnit")) or "VND"
         total_winning_str = f"{total_winning:.6f}" if total_winning is not None else None
+
+        dec_date = parse_date(root.get("decisionDate"))
+        pub_date = parse_date(root.get("publicDate"))
+        if dec_date and pub_date and dec_date > pub_date:
+            issues.append(
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date_order", "decisionDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date_order",
+                    path="bideContractorInputResultDTO.decisionDate",
+                    severity="warn",
+                )
+            )
 
         return {
             "revision_id": revision_id,
@@ -106,23 +121,40 @@ class ContractorResultTransformer(BaseResourceTransformer):
             "investor_code": clean_text(root.get("investorCode")),
             "investor_name": clean_text(root.get("investorName")),
             "decision_no": clean_text(root.get("decisionNo")),
-            "decision_date": parse_date(root.get("decisionDate")),
+            "decision_date": dec_date,
             "decision_agency": clean_text(root.get("decisionAgency")),
             "total_winning_price": total_winning_str,
             "amount": total_winning_str,
             "currency": currency,
-            "public_date": parse_date(root.get("publicDate")),
+            "public_date": pub_date,
             "public_date_raw": clean_text(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
             "root_json": canonical_json(root),
         }
+
+    def transform(self, envelope: RawRecordEnvelope) -> TransformedRecord:
+        """Override transform to provide explicit source_version fallback from resultVersion."""
+        from dataclasses import replace
+
+        root = self.extract_root(envelope.payload)
+        version = None
+        if isinstance(root, dict):
+            version = clean_text(root.get("resultVersion"))
+
+        target_envelope = envelope
+        if envelope.source_version is None and version:
+            target_envelope = replace(envelope, source_version=version)
+
+        result = super().transform(target_envelope)
+        result.observation = self.build_observation(envelope)[1]
+        return result
 
     def extract_references(
         self,
         root: dict[str, Any],
         revision_id: str,
     ) -> list[ExtractedReference]:
-        """Extract links to notice (via notifyNo) and plan/package (via bidId)."""
+        """Extract links to notice (via notifyNo), package (via bidId), and plan (via planNo)."""
         refs = []
         notify_no = clean_text(root.get("notifyNo"))
         if notify_no:
@@ -146,6 +178,18 @@ class ContractorResultTransformer(BaseResourceTransformer):
                     "uuid",
                     bid_id,
                     "bidId",
+                )
+            )
+        plan_no = clean_text(root.get("planNo"))
+        if plan_no:
+            refs.append(
+                ExtractedReference(
+                    digest([revision_id, "plan", plan_no]),
+                    revision_id,
+                    "plan",
+                    "number",
+                    plan_no,
+                    "planNo",
                 )
             )
         return refs

@@ -243,3 +243,53 @@ def test_result_resource_contract():
         assert contract.mapping_version == RESULT_MAPPING_VERSION
         assert contract.output_tables == RESULT_OUTPUT_TABLES
         assert contract.select_tables() == ("contractor_result_detail",)
+
+
+def test_result_plan_reference_extraction():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "RES-PLAN-1",
+            "notifyNo": "IB2200000001",
+            "bidId": "PKG-001",
+            "planNo": "PL2200001197",
+        }
+    }
+    envelope = make_envelope(payload, source_id="RES-PLAN-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.references) == 3
+    assert any(r.target_type == "plan" and r.target_identity == "PL2200001197" for r in result.references)
+
+
+def test_result_version_fallback_from_dto():
+    from dataclasses import replace
+
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "RES-VER-1",
+            "resultVersion": "02",
+        }
+    }
+    envelope = replace(make_envelope(payload, source_id="RES-VER-1"), source_version=None)
+    result = transformer.transform(envelope)
+
+    assert result.revision.source_version == "02"
+    assert result.observation["source_version"] is None
+
+
+def test_result_temporal_inversion_detected():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "RES-TEMP-1",
+            "decisionDate": "2024-09-20T10:00:00",
+            "publicDate": "2024-09-10T10:00:00",  # Published before decided!
+        }
+    }
+    envelope = make_envelope(payload, source_id="RES-TEMP-1")
+    result = transformer.transform(envelope)
+
+    assert any(i.code == "invalid_date_order" for i in result.issues)
+

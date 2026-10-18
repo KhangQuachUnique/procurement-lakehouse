@@ -11,7 +11,9 @@ exports/profiling/
 │   ├── tbmt_analysis_report.md                # Báo cáo phân tích sâu & bảng ánh xạ TBMT (Standard, ADB, Reoffer)
 │   ├── tbmt_field_profile.json                # Metrics chi tiết cho TBMT
 │   ├── project_analysis_report.md             # Báo cáo phân tích sâu & bảng ánh xạ Dự án (16/09/2022 golive)
-│   └── project_field_profile.json             # Metrics chi tiết cho Dự án
+│   ├── project_field_profile.json             # Metrics chi tiết cho Dự án
+│   ├── kqlcnt_analysis_report.md              # Báo cáo phân tích sâu & bảng ánh xạ KQLCNT (1.57M records)
+│   └── kqlcnt_field_profile.json              # Metrics chi tiết cho KQLCNT
 ├── history/                                   # Lưu trữ các mốc thời gian profiling (Snapshot / Baseline)
 │   └── 20261018_bronze_baseline/             # Baseline khảo sát ngày 2026-10-18 (5.82 triệu bản ghi)
 │       ├── profile.json
@@ -23,7 +25,9 @@ exports/profiling/
     ├── project/                               # Dự án đầu tư & Kế hoạch LCNT
     │   ├── project_analysis_report.md         # Báo cáo phân tích 4 blocks, mốc 16/09/2022, plocation JSON array
     │   └── project_field_profile.json         # Metrics chi tiết dạng JSON
-    └── contractor/                            # Nhà thầu & bên mời thầu
+    └── contractor_result/                     # Kết quả lựa chọn nhà thầu (KQLCNT)
+        ├── kqlcnt_analysis_report.md          # Báo cáo phân tích cấu trúc 3 tầng, liên danh & mapping Silver
+        └── kqlcnt_field_profile.json          # Metrics chi tiết dạng JSON
 ```
 
 ---

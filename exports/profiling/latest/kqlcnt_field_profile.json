@@ -1,0 +1,234 @@
+{
+  "resource": "contractor_result",
+  "evaluated_at": "2026-10-18T15:20:00Z",
+  "bronze_tables": [
+    "contractor_result_detail"
+  ],
+  "total_bronze_records": 1572263,
+  "date_range": {
+    "min_date": "2022-09-16",
+    "max_date": "2026-03-06"
+  },
+  "raw_root_blocks": {
+    "count": 2,
+    "blocks": [
+      {
+        "name": "bideContractorInputResultDTO",
+        "type": "OBJECT",
+        "description": "Block chính chứa toàn bộ siêu dữ liệu phê duyệt kết quả lựa chọn nhà thầu (mã KQLCNT, mã TBMT, mã gói thầu, mã KHLCNT, giá gói thầu, quyết định phê duyệt, cơ quan phê duyệt, ngày công khai, trạng thái).",
+        "occurrence_rate_percent": 100.0,
+        "fields_count": 92,
+        "key_fields": [
+          "id", "notifyNo", "notifyVersion", "bidId", "bidNo", "bidName",
+          "planNo", "procuringEntityCode", "procuringEntityName",
+          "investorCode", "investorName", "decisionNo", "decisionDate",
+          "decisionAgency", "bidPrice", "bidPriceUnit", "publicDate",
+          "status", "resultVersion", "isMultiLot", "isDomestic", "isInternet"
+        ]
+      },
+      {
+        "name": "bidpPlanDetailDTO",
+        "type": "OBJECT",
+        "description": "Block chi tiết thông tin gói thầu trích từ KHLCNT phản chiếu kèm theo kết quả.",
+        "occurrence_rate_percent": 100.0
+      }
+    ]
+  },
+  "child_entities": [
+    {
+      "name": "award_lot",
+      "raw_path": "bideContractorInputResultDTO.lotResultDTO[]",
+      "description": "Danh sách các phần/lô được phê duyệt kết quả trúng thầu hoặc hủy thầu theo từng lô.",
+      "key_fields": ["id", "bidNo", "bidName", "lotPrice", "lotPriceUnit", "winningCode", "status", "contractorList"]
+    },
+    {
+      "name": "award_contractor",
+      "raw_path": "bideContractorInputResultDTO.lotResultDTO[].contractorList[]",
+      "description": "Danh sách nhà thầu trúng thầu và tham dự theo từng lô, bao gồm cả nhà thầu độc lập và liên danh.",
+      "key_fields": [
+        "id", "orgCode", "orgFullname", "taxCode", "taxNation",
+        "bidResult", "bidWiningPrice", "ventureCode", "ventureName", "role"
+      ]
+    }
+  ],
+  "field_mappings": [
+    {
+      "silver_field": "result_id / source_id",
+      "raw_path": "bideContractorInputResultDTO.id",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "UUID định danh duy nhất của quyết định KQLCNT (VD: 'facd9c87-86ef-4406-a6fe-1b8ca4fe8f1'). Khóa chính tin cậy tuyệt đối."
+    },
+    {
+      "silver_field": "notify_no",
+      "raw_path": "bideContractorInputResultDTO.notifyNo",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã số thông báo mời thầu (TBMT) tương ứng (VD: 'IB2200000001'). Khóa ngoại liên kết kết quả thầu với TBMT."
+    },
+    {
+      "silver_field": "notify_version",
+      "raw_path": "bideContractorInputResultDTO.notifyVersion",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Phiên bản TBMT được trao thầu ('00', '01'...). Phục vụ theo dõi chính xác thời điểm đóng thầu tương ứng."
+    },
+    {
+      "silver_field": "package_no",
+      "raw_path": "bideContractorInputResultDTO.bidNo",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã số gói thầu trong KHLCNT (VD: 'BP2200001318')."
+    },
+    {
+      "silver_field": "bid_id",
+      "raw_path": "bideContractorInputResultDTO.bidId",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "UUID của gói thầu (Khóa ngoại tham chiếu thực thể package)."
+    },
+    {
+      "silver_field": "plan_no",
+      "raw_path": "bideContractorInputResultDTO.planNo",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã Kế hoạch lựa chọn nhà thầu (VD: 'PL2200001197'). Đã thêm ExtractedReference trỏ tới thực thể plan."
+    },
+    {
+      "silver_field": "title",
+      "raw_path": "bideContractorInputResultDTO.bidName",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Tên gói thầu."
+    },
+    {
+      "silver_field": "procuring_entity_code",
+      "raw_path": "bideContractorInputResultDTO.procuringEntityCode",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã định danh Bên mời thầu (VD: 'vn0200288138')."
+    },
+    {
+      "silver_field": "procuring_entity_name",
+      "raw_path": "bideContractorInputResultDTO.procuringEntityName",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Tên pháp nhân Bên mời thầu."
+    },
+    {
+      "silver_field": "investor_code",
+      "raw_path": "bideContractorInputResultDTO.investorCode",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã định danh Chủ đầu tư."
+    },
+    {
+      "silver_field": "investor_name",
+      "raw_path": "bideContractorInputResultDTO.investorName",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Tên pháp nhân Chủ đầu tư."
+    },
+    {
+      "silver_field": "decision_no",
+      "raw_path": "bideContractorInputResultDTO.decisionNo",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Số quyết định phê duyệt kết quả lựa chọn nhà thầu (VD: '1056/QĐ-KTHT')."
+    },
+    {
+      "silver_field": "decision_date",
+      "raw_path": "bideContractorInputResultDTO.decisionDate",
+      "silver_type": "DATE",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Ngày ban hành quyết định phê duyệt KQLCNT."
+    },
+    {
+      "silver_field": "decision_agency",
+      "raw_path": "bideContractorInputResultDTO.decisionAgency",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Cơ quan phê duyệt KQLCNT (VD: 'Trường Cao đẳng Hàng hải I')."
+    },
+    {
+      "silver_field": "total_winning_price",
+      "raw_path": "Calculated sum of bidWiningPrice from winner contractors",
+      "silver_type": "DECIMAL(38,6)",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Tổng giá trúng thầu của gói thầu (tổng hợp từ các lô)."
+    },
+    {
+      "silver_field": "currency",
+      "raw_path": "bideContractorInputResultDTO.bidPriceUnit",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Đơn vị tiền tệ, 100% bản ghi là 'VND'."
+    },
+    {
+      "silver_field": "public_date",
+      "raw_path": "bideContractorInputResultDTO.publicDate",
+      "silver_type": "DATE",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Thời điểm công khai KQLCNT trên cổng e-GP."
+    },
+    {
+      "silver_field": "status_raw",
+      "raw_path": "bideContractorInputResultDTO.status",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Mã trạng thái kết quả (VD: 'IS_PUBLISH')."
+    },
+    {
+      "silver_field": "result_version",
+      "raw_path": "bideContractorInputResultDTO.resultVersion",
+      "silver_type": "VARCHAR",
+      "null_rate_percent": 0.0,
+      "blank_rate_percent": 0.0,
+      "data_quality_assessment": "EXCELLENT",
+      "notes": "Phiên bản KQLCNT ('00', '01'...). Dùng làm source_version fallback cho revision."
+    }
+  ],
+  "improvements_applied": [
+    "Added source_version fallback from resultVersion when envelope source_version is absent.",
+    "Integrated planNo foreign key reference extraction linking Result to Plan.",
+    "Added temporal validation checking decision_date <= public_date to detect publishing date anomalies.",
+    "Switched currency resolution priority to bidPriceUnit first (100% populated in Bronze).",
+    "Preserved raw envelope observation during transform flow."
+  ]
+}
