@@ -186,13 +186,79 @@ class ProjectDetailTransformer(BaseResourceTransformer):
         issues: list[QualityIssue],
         obs_id: str,
     ) -> list[ExtractedChild]:
-        """Extract location components if available."""
+        """Extract location components. Supports parsed JSON array in plocation and root fallback."""
         children: list[ExtractedChild] = []
         root = payload.get("projectDTO")
         if not isinstance(root, dict):
             root = {}
 
-        # Extract primary location as a child component
+        raw_ploc = payload.get("plocation") or root.get("plocation")
+        parsed_locs = None
+        if isinstance(raw_ploc, str) and raw_ploc.strip().startswith("["):
+            import json
+            try:
+                parsed = json.loads(raw_ploc)
+                if isinstance(parsed, list) and len(parsed) > 0:
+                    parsed_locs = parsed
+            except Exception:
+                pass
+        elif isinstance(raw_ploc, list):
+            parsed_locs = raw_ploc
+
+        if parsed_locs:
+            for ordinal, item in enumerate(parsed_locs):
+                if not isinstance(item, dict):
+                    continue
+                p_code = clean_pipe_code(item.get("provCode"))
+                p_name = clean_text(item.get("provName"))
+                d_code = clean_pipe_code(item.get("districtCode"))
+                d_name = clean_text(item.get("districtName"))
+                w_code = clean_pipe_code(item.get("wardCode"))
+                w_name = clean_text(item.get("wardName"))
+
+                parts = [p for p in (w_name, d_name, p_name) if p]
+                loc_name = ", ".join(parts) if parts else None
+
+                if p_code or d_code or loc_name or p_name or d_name:
+                    loc_data = {
+                        "prov_code": p_code,
+                        "prov_name": p_name,
+                        "district_code": d_code,
+                        "district_name": d_name,
+                        "ward_code": w_code,
+                        "ward_name": w_name,
+                        "location_name": loc_name,
+                    }
+                    child_id = digest([revision_id, "location", ordinal, loc_data])
+                    typed_attributes = {
+                        "location_id": child_id,
+                        "revision_id": revision_id,
+                        "province_code": p_code,
+                        "province_name": p_name,
+                        "district_code": d_code,
+                        "district_name": d_name,
+                        "ward_code": w_code,
+                        "ward_name": w_name,
+                        "location_name": loc_name,
+                    }
+                    children.append(
+                        ExtractedChild(
+                            child_id=child_id,
+                            revision_id=revision_id,
+                            kind="location",
+                            role=f"location_{ordinal}",
+                            path="plocation",
+                            ordinal=ordinal,
+                            source_id=p_code,
+                            payload_json=canonical_json(loc_data),
+                            typed_table="project_location",
+                            typed_attributes=typed_attributes,
+                        )
+                    )
+            if children:
+                return children
+
+        # Fallback to flat root metadata if plocation wasn't a parsed JSON list
         prov_code = clean_pipe_code(payload.get("provCode") or root.get("provCode"))
         prov_name = clean_text(payload.get("provName") or root.get("provName"))
         district_code = clean_pipe_code(payload.get("districtCode") or root.get("districtCode"))

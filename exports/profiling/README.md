@@ -8,15 +8,21 @@ exports/profiling/
 ├── latest/                                    # Kết quả khảo sát toàn diện mới nhất
 │   ├── profile.json                           # Metrics thống kê đệ quy JSON của tất cả các bảng Bronze
 │   ├── profiling-report.md                    # Báo cáo đánh giá chất lượng chi tiết bằng tiếng Việt
-│   └── tbmt_field_profile.json                # Đánh giá & mapping thực nghiệm chi tiết cho TBMT
+│   ├── tbmt_analysis_report.md                # Báo cáo phân tích sâu & bảng ánh xạ TBMT (Standard, ADB, Reoffer)
+│   ├── tbmt_field_profile.json                # Metrics chi tiết cho TBMT
+│   ├── project_analysis_report.md             # Báo cáo phân tích sâu & bảng ánh xạ Dự án (16/09/2022 golive)
+│   └── project_field_profile.json             # Metrics chi tiết cho Dự án
 ├── history/                                   # Lưu trữ các mốc thời gian profiling (Snapshot / Baseline)
 │   └── 20261018_bronze_baseline/             # Baseline khảo sát ngày 2026-10-18 (5.82 triệu bản ghi)
 │       ├── profile.json
 │       └── profiling-report.md
 └── resources/                                 # Hồ sơ profiling chuyên sâu theo từng Resource
     ├── notify_contractor/                     # Thông báo mời thầu (TBMT)
-    │   └── tbmt_field_profile.json            # Chi tiết cấu trúc 18 blocks JSON & mapping Silver
+    │   ├── tbmt_analysis_report.md            # Báo cáo phân tích 18 blocks JSON & mapping Silver
+    │   └── tbmt_field_profile.json            # Metrics chi tiết dạng JSON
     ├── project/                               # Dự án đầu tư & Kế hoạch LCNT
+    │   ├── project_analysis_report.md         # Báo cáo phân tích 4 blocks, mốc 16/09/2022, plocation JSON array
+    │   └── project_field_profile.json         # Metrics chi tiết dạng JSON
     └── contractor/                            # Nhà thầu & bên mời thầu
 ```
 

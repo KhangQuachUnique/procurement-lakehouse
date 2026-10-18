@@ -310,3 +310,54 @@ def test_project_temporal_inversion_detected():
 
     assert any(i.code == "invalid_date_order" for i in result.issues)
 
+
+def test_project_parsed_json_plocation():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {"id": "PRJ-LOC-1", "name": "Dự án tại Nghệ An"},
+        "plocation": '[{"districtCode":"40331","districtName":"Huyện Thanh Chương","provCode":"403","provName":"Tỉnh Nghệ An"}]',
+    }
+    envelope = make_envelope(payload, source_id="PRJ-LOC-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.children) == 1
+    child = result.children[0]
+    assert child.typed_attributes["province_name"] == "Tỉnh Nghệ An"
+    assert child.typed_attributes["district_name"] == "Huyện Thanh Chương"
+    assert child.typed_attributes["location_name"] == "Huyện Thanh Chương, Tỉnh Nghệ An"
+
+
+def test_project_multi_location_array():
+    import json
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {"id": "PRJ-MULTI-1", "name": "Đường dây tải điện liên tỉnh"},
+        "plocation": json.dumps([
+            {"districtCode": "40331", "districtName": "Huyện Thanh Chương", "provCode": "403", "provName": "Tỉnh Nghệ An"},
+            {"districtCode": "40501", "districtName": "Huyện Hương Sơn", "provCode": "405", "provName": "Tỉnh Hà Tĩnh"},
+        ]),
+    }
+    envelope = make_envelope(payload, source_id="PRJ-MULTI-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.children) == 2
+    assert result.children[0].typed_attributes["province_name"] == "Tỉnh Nghệ An"
+    assert result.children[1].typed_attributes["province_name"] == "Tỉnh Hà Tĩnh"
+
+
+def test_project_pre_golive_empty_location():
+    transformer = ProjectDetailTransformer()
+    # Emulate pre-2022-09-16 legacy records
+    payload = {
+        "projectDTO": {"id": "PRJ-OLD-1", "name": "Dự án năm 2022 cũ"},
+        "provCode": "||",
+        "districtCode": "||",
+        "plocation": None,
+    }
+    envelope = make_envelope(payload, source_id="PRJ-OLD-1")
+    result = transformer.transform(envelope)
+
+    # Should not produce dummy empty location children
+    assert len(result.children) == 0
+
+
