@@ -18,7 +18,12 @@ from dotenv import load_dotenv
 
 import procurement.processing.silver.transformers  # noqa: F401 (Triggers auto-registration)
 from procurement.processing.silver.protocols import RawRecordEnvelope
-from procurement.processing.silver.registry import get_transformer, list_registered_tables
+from procurement.processing.silver.registry import (
+    get_transformer,
+    list_registered_tables,
+)
+
+from procurement.processing.silver.json_numbers import loads_bronze_payload
 
 # Ensure Vietnamese utf-8 display in Windows terminal
 if sys.platform == "win32":
@@ -31,7 +36,9 @@ def get_s3_fs() -> tuple[s3fs.S3FileSystem, str]:
     key = os.getenv("OBJECT_STORAGE_ACCESS_KEY", "muasamcong")
     secret = os.getenv("OBJECT_STORAGE_SECRET_KEY", "muasamcong123")
     bucket = os.getenv("OBJECT_STORAGE_BUCKET", "procurement-lakehouse")
-    fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": endpoint}, key=key, secret=secret)
+    fs = s3fs.S3FileSystem(
+        client_kwargs={"endpoint_url": endpoint}, key=key, secret=secret
+    )
     return fs, bucket
 
 
@@ -69,7 +76,9 @@ def cmd_inspect(args: argparse.Namespace) -> None:
         row_dict = table.to_pylist()[row_idx]
 
     payload: dict[str, Any] = (
-        json.loads(row_dict["payload"]) if isinstance(row_dict["payload"], str) else row_dict["payload"]
+        loads_bronze_payload(row_dict["payload"])
+        if isinstance(row_dict["payload"], (str, bytes, bytearray))
+        else row_dict["payload"]
     )
 
     envelope = RawRecordEnvelope(
@@ -113,14 +122,18 @@ def cmd_inspect(args: argparse.Namespace) -> None:
         print("\n--- QUAN HỆ NGOẠI (REFERENCES) ---")
         if result.references:
             for ref in result.references:
-                print(f"  -> Trỏ tới {ref.target_type} ({ref.id_scheme}={ref.target_identity}) qua trường {ref.field_name}")
+                print(
+                    f"  -> Trỏ tới {ref.target_type} ({ref.id_scheme}={ref.target_identity}) qua trường {ref.field_name}"
+                )
         else:
             print("  (Không có quan hệ cha)")
 
         print("\n--- CÁC THÀNH PHẦN CON (CHILDREN) ---")
         print(f"  Tổng số thành phần con: {len(result.children)}")
         for ch in result.children[:3]:
-            print(f"  - [{ch.kind}] role={ch.role}, path={ch.path}, source_id={ch.source_id}")
+            print(
+                f"  - [{ch.kind}] role={ch.role}, path={ch.path}, source_id={ch.source_id}"
+            )
         if len(result.children) > 3:
             print(f"  ... và {len(result.children) - 3} thành phần khác.")
 
@@ -170,7 +183,11 @@ def cmd_run(args: argparse.Namespace) -> None:
 
             for ord_idx, row_dict in enumerate(records):
                 raw = row_dict["payload"]
-                payload = json.loads(raw) if isinstance(raw, str) else raw
+                payload = (
+                    loads_bronze_payload(raw)
+                    if isinstance(raw, (str, bytes, bytearray))
+                    else raw
+                )
 
                 envelope = RawRecordEnvelope(
                     namespace="muasamcong",
@@ -226,7 +243,9 @@ def cmd_list(args: argparse.Namespace) -> None:
     print("\nRegistered Silver Transformers:")
     for tbl in registered:
         trans = get_transformer(tbl)
-        print(f"  - Table: {tbl:<35} -> Entity: {trans.entity_type} (Scheme: {trans.id_scheme})")
+        print(
+            f"  - Table: {tbl:<35} -> Entity: {trans.entity_type} (Scheme: {trans.id_scheme})"
+        )
     print(f"\nTotal: {len(registered)} registered transformer(s).\n")
 
 
@@ -251,8 +270,7 @@ def cmd_query(args: argparse.Namespace) -> None:
             con.install_extension("httpfs")
             con.load_extension("httpfs")
 
-        con.execute(
-            f"""
+        con.execute(f"""
             CREATE SECRET silver_s3 (
                 TYPE s3,
                 KEY_ID '{key}',
@@ -263,8 +281,7 @@ def cmd_query(args: argparse.Namespace) -> None:
                 USE_SSL {str(use_ssl).lower()},
                 SCOPE 's3://{bucket}'
             )
-            """
-        )
+            """)
         con.execute("CREATE SCHEMA IF NOT EXISTS silver")
 
         # Discover and create views for all silver tables
@@ -273,21 +290,26 @@ def cmd_query(args: argparse.Namespace) -> None:
             for root in fs.ls(silver_prefix, detail=False):
                 table_name = root.rstrip("/").rsplit("/", 1)[-1]
                 sub = fs.ls(root, detail=False)
-                has_sub = any(not s.rstrip("/").rsplit("/", 1)[-1].startswith("source_date=") for s in sub)
-                tables_to_view = [s.rstrip("/").rsplit("/", 1)[-1] for s in sub] if has_sub else [table_name]
+                has_sub = any(
+                    not s.rstrip("/").rsplit("/", 1)[-1].startswith("source_date=")
+                    for s in sub
+                )
+                tables_to_view = (
+                    [s.rstrip("/").rsplit("/", 1)[-1] for s in sub]
+                    if has_sub
+                    else [table_name]
+                )
                 for tbl in tables_to_view:
                     pattern = f"s3://{bucket}/silver/*/{tbl}/**/*.parquet"
                     try:
-                        con.execute(
-                            f"""
+                        con.execute(f"""
                             CREATE OR REPLACE VIEW silver.{tbl} AS
                             SELECT * FROM read_parquet(
                                 '{pattern}',
                                 hive_partitioning = true,
                                 union_by_name = true
                             )
-                            """
-                        )
+                            """)
                     except duckdb.Error:
                         pass
 
@@ -313,7 +335,9 @@ def cmd_query(args: argparse.Namespace) -> None:
             return
 
         # Format column widths for neat tabular display
-        str_rows = [[str(val) if val is not None else "NULL" for val in row] for row in rows]
+        str_rows = [
+            [str(val) if val is not None else "NULL" for val in row] for row in rows
+        ]
         col_widths = [len(h) for h in desc]
         for row in str_rows:
             for i, val in enumerate(row):
@@ -324,7 +348,12 @@ def cmd_query(args: argparse.Namespace) -> None:
         print(header_str)
         print(sep_str)
         for row in str_rows:
-            print(" | ".join((v[:37] + "..." if len(v) > 40 else v).ljust(col_widths[i]) for i, v in enumerate(row)))
+            print(
+                " | ".join(
+                    (v[:37] + "..." if len(v) > 40 else v).ljust(col_widths[i])
+                    for i, v in enumerate(row)
+                )
+            )
         print(f"\nTotal: {len(rows)} row(s).\n")
     except Exception as exc:
         print(f"[ERROR] Query failed: {exc}")
@@ -337,15 +366,25 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
     # inspect command (dry-run inspection)
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect and transform a Bronze record (dry-run)")
-    inspect_parser.add_argument("--resource", default="project", help="Resource name (project, plan, package, etc.)")
+    inspect_parser = subparsers.add_parser(
+        "inspect", help="Inspect and transform a Bronze record (dry-run)"
+    )
+    inspect_parser.add_argument(
+        "--resource",
+        default="project",
+        help="Resource name (project, plan, package, etc.)",
+    )
     inspect_parser.add_argument("--table", default=None, help="Exact Bronze table name")
-    inspect_parser.add_argument("--date", default="2022-01-01", help="Source date YYYY-MM-DD")
+    inspect_parser.add_argument(
+        "--date", default="2022-01-01", help="Source date YYYY-MM-DD"
+    )
     inspect_parser.add_argument("--row", type=int, default=0, help="Row index in file")
     inspect_parser.set_defaults(func=cmd_inspect)
 
     # run command (materialize to S3)
-    run_parser = subparsers.add_parser("run", help="Run transformation and write Silver Parquet to S3")
+    run_parser = subparsers.add_parser(
+        "run", help="Run transformation and write Silver Parquet to S3"
+    )
     run_parser.add_argument("--resource", default="project", help="Resource name")
     run_parser.add_argument("--table", default=None, help="Exact Bronze table name")
     run_parser.add_argument("--date", required=True, help="Partition date YYYY-MM-DD")
@@ -356,11 +395,23 @@ def main() -> None:
     list_parser.set_defaults(func=cmd_list)
 
     # query command (query Silver via DuckDB)
-    query_parser = subparsers.add_parser("query", help="Query Silver Parquet tables via DuckDB SQL")
-    query_parser.add_argument("--table", default=None, help="Silver table name (e.g. project_revision, current_entity)")
-    query_parser.add_argument("--columns", default=None, help="Columns to select (comma separated)")
-    query_parser.add_argument("--date", default=None, help="Filter by source_date YYYY-MM-DD")
-    query_parser.add_argument("--limit", type=int, default=10, help="Row limit (default: 10)")
+    query_parser = subparsers.add_parser(
+        "query", help="Query Silver Parquet tables via DuckDB SQL"
+    )
+    query_parser.add_argument(
+        "--table",
+        default=None,
+        help="Silver table name (e.g. project_revision, current_entity)",
+    )
+    query_parser.add_argument(
+        "--columns", default=None, help="Columns to select (comma separated)"
+    )
+    query_parser.add_argument(
+        "--date", default=None, help="Filter by source_date YYYY-MM-DD"
+    )
+    query_parser.add_argument(
+        "--limit", type=int, default=10, help="Row limit (default: 10)"
+    )
     query_parser.add_argument("--sql", default=None, help="Direct SQL query to execute")
     query_parser.set_defaults(func=cmd_query)
 

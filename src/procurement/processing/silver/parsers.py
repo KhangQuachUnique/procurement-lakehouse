@@ -8,6 +8,7 @@ Rules enforced:
 - Booleans must not treat truthy strings like "0" as True.
 """
 
+from procurement.processing.silver.json_numbers import JsonFloatLexeme
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any
@@ -44,8 +45,10 @@ def parse_money(value: Any) -> str | None:
     """
     if value is None or value == "":
         return None
-    if isinstance(value, (bool, float)):
-        raise ValueError(  # noqa: TRY004
+    if isinstance(value, JsonFloatLexeme):
+        value = value.json_lexeme
+    elif isinstance(value, (bool, float)):
+        raise ValueError(
             f"Money must be parsed from exact string or integer decimals, got {type(value).__name__}"
         )
     try:
@@ -62,7 +65,9 @@ def parse_money(value: Any) -> str | None:
         raise ValueError(f"Invalid monetary format: {value}") from exc
 
 
-def parse_iso_datetime(value: Any, default_tz: ZoneInfo = VIETNAM_TZ) -> datetime | None:
+def parse_iso_datetime(
+    value: Any, default_tz: ZoneInfo = VIETNAM_TZ
+) -> datetime | None:
     """Parse ISO datetime string, attaching default timezone if naive."""
     text_val = clean_text(value)
     if not text_val:
