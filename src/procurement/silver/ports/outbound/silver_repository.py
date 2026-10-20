@@ -3,6 +3,7 @@
 Defines the interface for persisting candidate Silver Parquet tables and run reports.
 """
 
+from collections.abc import Sequence
 from datetime import date
 from typing import Any, Protocol
 
@@ -22,6 +23,15 @@ class SilverCandidateRepositoryPort(Protocol):
 
         Returns mapping of table_name -> storage_path.
         """
+        ...
+
+    def partition_exists(
+        self,
+        output_prefix: str,
+        target_date: date,
+        tables: Sequence[str],
+    ) -> bool:
+        """Check if candidate Parquet tables exist for a given date."""
         ...
 
     def save_run_report(

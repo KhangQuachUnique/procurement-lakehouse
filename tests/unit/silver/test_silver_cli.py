@@ -35,6 +35,39 @@ def test_resource_command_defaults_to_all_families(monkeypatch, command):
     assert "report.json" in result.output
 
 
+@pytest.mark.parametrize("command", ["khlcnt", "plan", "package"])
+def test_khlcnt_command_defaults_to_all_families(monkeypatch, command):
+    calls = []
+    monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"status": "completed", "output_prefix": "bucket/candidate"}
+
+    monkeypatch.setattr(silver, "run_resource", run)
+    result = runner.invoke(silver.app, [command, "--date", "2025-01-01"])
+    assert result.exit_code == 0, result.output
+    assert calls[0][0] == ("fs", "bucket", "khlcnt", date(2025, 1, 1), date(2025, 1, 1))
+    assert calls[0][1]["family"] is None
+    assert "report.json" in result.output
+
+
+def test_khlcnt_family_selection(monkeypatch):
+    calls = []
+    monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"status": "completed", "output_prefix": "bucket/candidate"}
+
+    monkeypatch.setattr(silver, "run_resource", run)
+    result = runner.invoke(
+        silver.app, ["khlcnt", "--date", "2025-01-01", "--family", "package"]
+    )
+    assert result.exit_code == 0, result.output
+    assert calls[0][1]["family"] == "package"
+
+
 def test_range_family_and_failure_exit(monkeypatch):
     monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
 
@@ -161,8 +194,9 @@ def test_service_runs_days_in_order_and_writes_all_families(bronze):
 
 
 def test_family_filter_keeps_full_input_reconciliation(bronze):
+    fs, bucket = bronze
     report = service.run_resource(
-        *bronze, "notice", date(2025, 1, 1), date(2025, 1, 1), family="reoffer"
+        fs, bucket, "notice", date(2025, 1, 1), date(2025, 1, 1), family="reoffer"
     )
     assert report["days"][0]["quality"]["accepted"] == 1
     assert sum(report["days"][0]["input_counts"].values()) == 3
@@ -176,9 +210,90 @@ def test_missing_commit_is_failure_not_empty_success(
         raise ValueError("No committed attempt")
 
     monkeypatch.setattr(service, "freeze", missing)
+    fs, bucket = bronze
     report = service.run_resource(
-        *bronze, "notice", date(2025, 1, 1), date(2025, 1, 2), continue_on_error=keep_going
+        fs, bucket, "notice", date(2025, 1, 1), date(2025, 1, 2), continue_on_error=keep_going
     )
     assert report["status"] == "failed"
     assert len(report["days"]) == expected_days
     assert all("files" not in entry for entry in report["days"])
+
+
+def test_skip_existing_skips_already_processed_days(bronze):
+    fs, bucket = bronze
+    # First run: processes normally
+    first_report = service.run_resource(
+        fs, bucket, "notice", date(2025, 1, 1), date(2025, 1, 1), skip_existing=False
+    )
+    assert first_report["status"] == "completed"
+    assert first_report["days"][0]["status"] == "completed"
+
+    # Second run with skip_existing=True: skips execution
+    skip_report = service.run_resource(
+        fs, bucket, "notice", date(2025, 1, 1), date(2025, 1, 1), skip_existing=True
+    )
+    assert skip_report["status"] == "completed"
+    assert skip_report["days"][0]["status"] == "skipped"
+    assert "Skipped" in skip_report["days"][0]["message"]
+
+
+def test_cli_skip_existing_flag_passed(monkeypatch):
+    calls = []
+    monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {
+            "status": "completed",
+            "output_prefix": "bucket/candidate",
+            "days": [{"date": "2025-01-01", "status": "skipped", "quality": {}}],
+        }
+
+    monkeypatch.setattr(silver, "run_resource", run)
+    result = runner.invoke(
+        silver.app, ["notice", "--date", "2025-01-01", "--skip-existing"]
+    )
+    assert result.exit_code == 0, result.output
+    assert calls[0][1]["skip_existing"] is True
+
+
+def test_cli_reset_aborts_on_no(monkeypatch):
+    mock_fs = fsspec.filesystem("memory")
+    mock_fs.store.clear()
+    mock_fs.makedirs("bucket/silver", exist_ok=True)
+    mock_fs.touch("bucket/silver/sample.parquet")
+    monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+
+    result = runner.invoke(silver.app, ["reset"], input="n\n")
+    assert result.exit_code == 0
+    assert "Huề cả làng" in result.output
+    assert mock_fs.exists("bucket/silver/sample.parquet")
+
+
+def test_cli_reset_proceeds_on_yes(monkeypatch):
+    mock_fs = fsspec.filesystem("memory")
+    mock_fs.store.clear()
+    mock_fs.makedirs("bucket/silver", exist_ok=True)
+    mock_fs.touch("bucket/silver/sample.parquet")
+    monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+
+    result = runner.invoke(silver.app, ["reset"], input="y\n")
+    assert result.exit_code == 0
+    assert "thanh tẩy thành công" in result.output
+    assert not mock_fs.exists("bucket/silver/sample.parquet")
+
+
+def test_cli_reset_force_flag_bypasses_prompt(monkeypatch):
+    mock_fs = fsspec.filesystem("memory")
+    mock_fs.store.clear()
+    mock_fs.makedirs("bucket/silver", exist_ok=True)
+    mock_fs.touch("bucket/silver/sample.parquet")
+    monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+
+    result = runner.invoke(silver.app, ["reset", "--force"])
+    assert result.exit_code == 0
+    assert "CẢNH BÁO NGUY CẤP" not in result.output
+    assert "thanh tẩy thành công" in result.output
+    assert not mock_fs.exists("bucket/silver/sample.parquet")
+
+

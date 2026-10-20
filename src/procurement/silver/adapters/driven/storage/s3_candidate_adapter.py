@@ -4,6 +4,7 @@ Persists Silver candidate Parquet tables and run reports to Object Storage (S3 /
 """
 
 import json
+from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
@@ -36,6 +37,20 @@ class S3SilverCandidateAdapter(SilverCandidateRepositoryPort):
                 pq.write_table(table, stream)
             paths[name] = path
         return paths
+
+    def partition_exists(
+        self,
+        output_prefix: str,
+        target_date: date,
+        tables: Sequence[str],
+    ) -> bool:
+        """Check if candidate Parquet tables exist for a given date."""
+        if not tables:
+            return False
+        return all(
+            self.fs.exists(f"{output_prefix}/{table}/source_date={target_date}/data.parquet")
+            for table in tables
+        )
 
     def save_run_report(
         self,
