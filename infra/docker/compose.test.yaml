@@ -17,6 +17,7 @@ services:
   object-storage:
     ports: !override
       - "127.0.0.1:18333:8333"
+      - "127.0.0.1:18181:8181"
   dagster-code-location:
     environment:
       MUASAMCONG_BASE_URL: http://fixture-source:8077

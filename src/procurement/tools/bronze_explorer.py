@@ -618,6 +618,25 @@ def open_bronze_explorer(
                 fs=fs,
                 schema=SILVER_SCHEMA,
             )
+            try:
+                from procurement.silver.application.warehouse import ensure_views
+                from procurement.storage.iceberg import literal
+
+                iceberg_cfg = settings.iceberg_config()
+                _load_extension(con, "iceberg")
+                con.execute(
+                    f"""CREATE SECRET IF NOT EXISTS lake_catalog (TYPE ICEBERG,
+                    CLIENT_ID {literal(iceberg_cfg.access_key)}, CLIENT_SECRET {literal(iceberg_cfg.secret_key)},
+                    OAUTH2_SERVER_URI {literal(iceberg_cfg.catalog_uri.rstrip('/') + '/v1/oauth/tokens')})"""
+                )
+                con.execute(
+                    f"""ATTACH IF NOT EXISTS {literal(iceberg_cfg.warehouse)} AS lake (TYPE ICEBERG,
+                    ENDPOINT {literal(iceberg_cfg.catalog_uri)}, SECRET lake_catalog, READ_ONLY false)"""
+                )
+                latest_views = ensure_views(con, namespace="silver")
+                silver_created.extend(latest_views)
+            except Exception:
+                pass
 
         _load_extension(con, "ui")
         con.execute(f"SET ui_local_port = {port}")

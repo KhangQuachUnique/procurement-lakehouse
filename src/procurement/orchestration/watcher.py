@@ -69,19 +69,19 @@ def check_bid_opening(context):
 
 @job(tags={"dagster/max_retries": "0"})
 def bid_opening_seed_job():
-    seed_bid_opening()
+    seed_bid_opening()  # type: ignore[call-arg]
 
 
 @job(tags={"dagster/max_retries": "0"})
 def bid_opening_watch_job():
-    check_bid_opening()
+    check_bid_opening()  # type: ignore[call-arg]
 
 
 @sensor(job=bid_opening_watch_job, minimum_interval_seconds=60,
         default_status=DefaultSensorStatus.STOPPED)
 def bid_opening_due_sensor(context):
     if context.instance.get_runs(
-        filters=RunsFilter(job_name=bid_opening_watch_job.name, statuses=ACTIVE), limit=1,
+        filters=RunsFilter(job_name=getattr(bid_opening_watch_job, "name", "bid_opening_watch_job"), statuses=ACTIVE), limit=1,
     ):
         return SkipReason("A watcher run is already queued or running")
     rows = due_days()

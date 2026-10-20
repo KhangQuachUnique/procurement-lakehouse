@@ -357,12 +357,11 @@ def check(
                         from procurement.metadata.models import PartitionIdentity
 
                         meta_svc = get_metadata_service()
-                        snapshot = meta_svc.get_snapshot(
+                        snapshots = meta_svc.get_snapshot(
                             [PartitionIdentity(source=identity.source, resource=identity.resource, source_date=day)]
                         )
-                        part_commit = snapshot.partitions.get((identity.source, identity.resource, day))
-                        if part_commit and part_commit.commit:
-                            c = part_commit.commit
+                        if snapshots and snapshots[0].commit:
+                            c = snapshots[0].commit
                             manifest = SimpleNamespace(
                                 run_id=str(c.id),
                                 source_date=day,

@@ -96,7 +96,7 @@ def runner(fs, directory, job_id):
     def run_day(resource, source_date, *, page_size, request_budget, **_):
         if resource != "contractor_result" or source_date not in DAYS:
             raise ValueError("Recovery is restricted to contractor_result on three fixed dates")
-        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN,
+        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN or "",
                              max_attempts=settings.MUASAMCONG_MAX_ATTEMPTS,
                              max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
                              request_budget=request_budget) as client:
@@ -154,7 +154,9 @@ def main(argv=None):
                             prefix = quality_prefix(get_resource("contractor_result").identity,
                                                     entry["effective_run_id"], entry["date"])
                             for key in sorted(fs.glob(f"{prefix}/recovery-*.json")):
-                                entry["recorded_exclusions"].extend(read_storage_json(fs, key)["excluded"])
+                                data = read_storage_json(fs, str(key))
+                                if data and "excluded" in data:
+                                    entry["recorded_exclusions"].extend(data["excluded"])
                 write_json(directory / "report.json", report)
                 if code and (not args.continue_on_error or not result["execution_errors"]
                              or any(e.get("reason") != "source_failure" for e in result["execution_errors"])):

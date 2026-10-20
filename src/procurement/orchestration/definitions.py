@@ -45,7 +45,7 @@ def bronze_daily_schedule(context: ScheduleEvaluationContext):
             continue
         yield RunRequest(
             run_key=f"bronze:{tick.date()}:{key}", partition_key=key,
-            run_config={"ops": {asset.key.to_user_string(): {"config": {"refresh": True}}
+            run_config={"ops": {getattr(asset, "key").to_user_string(): {"config": {"refresh": True}}
                                 for asset in bronze_assets}},
         )
 

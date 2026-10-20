@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -30,7 +31,7 @@ MAX_DATE_WINDOW_DAYS = 366
 
 class OpsService:
     def __init__(
-        self, control: ControlRepository, errors: ErrorRepository, *,
+        self, control: Any, errors: Any, *,
         sync_status: dict | None = None, stale_after_seconds: float = 600,
     ) -> None:
         self._control = control
@@ -125,7 +126,8 @@ class OpsService:
         if latest is None:
             return DateIngestionStatus.NO_ATTEMPT
         if latest.status is DayStatus.RUNNING:
-            return DateIngestionStatus(self._execution_state(latest).value)
+            state = self._execution_state(latest)
+            return DateIngestionStatus(state.value) if state is not None else DateIngestionStatus.UNKNOWN
         return DateIngestionStatus.FAILED
 
     @staticmethod
@@ -236,8 +238,8 @@ class OpsService:
             1
             for items in by_date.values()
             if self._effective_attempt(items) is None
-            and self._latest_attempt(items) is not None
-            and self._latest_attempt(items).status is DayStatus.FAILED
+            and (latest := self._latest_attempt(items)) is not None
+            and latest.status is DayStatus.FAILED
         )
         freshness_days = (
             None

@@ -52,7 +52,7 @@ def main(argv=None):
         print(f"Exported {len(result.routes)} exact rules to {args.output}")
         return
     if args.mode == "snapshot":
-        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN) as client:
+        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN or "") as client:
             snapshot(NotifyContractorApi(client), args.year, args.output, resume=args.resume)
         return
     if args.max_requests < 1:
@@ -73,7 +73,7 @@ def main(argv=None):
         report["requests"] = used
         write_json(args.output, report)
     budget = ProbeBudget(args.max_requests, used=report["requests"], checkpoint=checkpoint)
-    with MuasamcongClient(token=settings.MUASAMCONG_TOKEN, request_budget=budget) as client:
+    with MuasamcongClient(token=settings.MUASAMCONG_TOKEN or "", request_budget=budget) as client:
         probe(client, groups, config, args.output, report)
 
 

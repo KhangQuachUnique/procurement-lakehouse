@@ -226,7 +226,7 @@ def main(argv=None):
             parser.error(str(exc))
     save_report(path, report)
     try:
-        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN) as client:
+        with MuasamcongClient(token=settings.MUASAMCONG_TOKEN or "") as client:
             api = NotifyContractorApi(client)
             while current <= end:
                 result = scan_day(api, current, args.page_size)

@@ -21,7 +21,7 @@ def repair_client(args):
     print(f"Fetch: {args.detail_workers} worker(s), start interval {args.request_interval}s, "
           f"up to {args.max_attempts} attempts", flush=True)
     return MuasamcongClient(
-        token=settings.MUASAMCONG_TOKEN, max_attempts=args.max_attempts,
+        token=settings.MUASAMCONG_TOKEN or "", max_attempts=args.max_attempts,
         max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
         request_budget=RequestBudget(min(args.detail_workers, settings.MUASAMCONG_MAX_INFLIGHT),
                                      min_interval=args.request_interval),
