@@ -1,0 +1,379 @@
+{
+  "resource": "khlcnt",
+  "evaluated_at": "2026-10-19T18:05:00Z",
+  "bronze_tables": [
+    "khlcnt_plan_detail",
+    "khlcnt_bid_package_detail"
+  ],
+  "total_bronze_records": 3438353,
+  "date_range": {
+    "min_date": "2022-01-01",
+    "max_date": "2026-03-05"
+  },
+  "tables_breakdown": {
+    "khlcnt_plan_detail": {
+      "total_records": 1070653,
+      "root_block": "bidPoBidpPlanProjectDetailView",
+      "grain": "1 record = 1 Kế hoạch LCNT (Procurement Plan revision)",
+      "identity_field": "bidPoBidpPlanProjectDetailView.id",
+      "key_fields": [
+        "id", "planNo", "name", "investorName", "pid", "pno",
+        "planType", "investTotal", "investTotalUnit", "decisionNo",
+        "decisionDate", "decisionAgency", "bidPack", "location",
+        "publicDate", "status"
+      ]
+    },
+    "khlcnt_bid_package_detail": {
+      "total_records": 2367700,
+      "root_block": "Top-level JSON payload",
+      "grain": "1 record = 1 Gói thầu thuộc KHLCNT (Bid Package revision)",
+      "identity_field": "id",
+      "key_fields": [
+        "id", "bidNo", "bidName", "planNo", "planId", "planVersion",
+        "bidPrice", "bidPriceUnit", "processApply", "bidField", "bidForm",
+        "bidMode", "capitalDetail", "ctype", "cperiod", "cperiodUnit",
+        "isDomestic", "isInternet", "bidStartUnit", "bidStartYear",
+        "bidStartQuarter", "bidStartMonth", "createdDate"
+      ]
+    }
+  },
+  "child_entities": [
+    {
+      "name": "package_lot",
+      "parent_table": "package_revision",
+      "raw_path": "bidpBidLotList[]",
+      "description": "Danh sách các phần/lô thầu chi tiết cấu thành gói thầu theo kế hoạch lựa chọn nhà thầu.",
+      "key_fields": [
+        "id", "bidNo", "lotNo", "bidName", "lotName", "lotPrice", "lotPriceUnit",
+        "quantity", "pricePlan", "medicineCode", "uom", "cperiod", "cperiodUnit"
+      ]
+    },
+    {
+      "name": "package_location",
+      "parent_table": "package_revision",
+      "raw_path": "bidLocation[]",
+      "description": "Địa bàn thực hiện gói thầu theo cấp tỉnh, huyện, xã đã chuẩn hóa dấu phân cách pipe.",
+      "key_fields": [
+        "id", "bidDetailId", "provCode", "provName", "districtCode", "districtName", "wardCode", "wardName"
+      ]
+    }
+  ],
+  "field_mappings": {
+    "plan_revision": [
+      {
+        "silver_field": "revision_id",
+        "raw_path": "Derived: sha256(entity_id + root_json)",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "entity_id",
+        "raw_path": "Derived: sha256('plan' + uuid + bidPoBidpPlanProjectDetailView.id)",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "plan_no",
+        "raw_path": "bidPoBidpPlanProjectDetailView.planNo",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "title",
+        "raw_path": "bidPoBidpPlanProjectDetailView.name",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "investor_name",
+        "raw_path": "bidPoBidpPlanProjectDetailView.investorName",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "project_no",
+        "raw_path": "bidPoBidpPlanProjectDetailView.pno",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.9,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "TỐT",
+        "note": "Đã lọc các giá trị sentinel: N/A, NA, NULL, NONE"
+      },
+      {
+        "silver_field": "plan_type",
+        "raw_path": "bidPoBidpPlanProjectDetailView.planType",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "total_investment",
+        "raw_path": "bidPoBidpPlanProjectDetailView.investTotal",
+        "silver_type": "DECIMAL(38,6)",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC",
+        "note": "Xử lý qua JsonFloatLexeme chống mất chính xác"
+      },
+      {
+        "silver_field": "currency",
+        "raw_path": "bidPoBidpPlanProjectDetailView.investTotalUnit",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "decision_date",
+        "raw_path": "bidPoBidpPlanProjectDetailView.decisionDate",
+        "silver_type": "DATE",
+        "null_rate_percent": 0.2,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "decision_no",
+        "raw_path": "bidPoBidpPlanProjectDetailView.decisionNo",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "decision_agency",
+        "raw_path": "bidPoBidpPlanProjectDetailView.decisionAgency",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_pack",
+        "raw_path": "bidPoBidpPlanProjectDetailView.bidPack",
+        "silver_type": "INTEGER",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "location",
+        "raw_path": "bidPoBidpPlanProjectDetailView.location",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 98.5,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "CHẤP NHẬN ĐƯỢC",
+        "note": "KHLCNT cấp cha hiếm khi điền location, địa bàn nằm ở từng gói thầu"
+      },
+      {
+        "silver_field": "public_date",
+        "raw_path": "bidPoBidpPlanProjectDetailView.publicDate",
+        "silver_type": "DATE",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC",
+        "note": "Khóa phân vùng chính cho Iceberg Format v2"
+      },
+      {
+        "silver_field": "status_raw",
+        "raw_path": "bidPoBidpPlanProjectDetailView.status",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      }
+    ],
+    "package_revision": [
+      {
+        "silver_field": "revision_id",
+        "raw_path": "Derived: sha256(entity_id + root_json)",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "entity_id",
+        "raw_path": "Derived: sha256('package' + uuid + id)",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "package_no",
+        "raw_path": "bidNo",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "title",
+        "raw_path": "bidName",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "plan_no",
+        "raw_path": "planNo",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_price",
+        "raw_path": "bidPrice",
+        "silver_type": "DECIMAL(38,6)",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC",
+        "note": "Xử lý qua JsonFloatLexeme chống mất chính xác"
+      },
+      {
+        "silver_field": "currency",
+        "raw_path": "bidPriceUnit",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "process_apply",
+        "raw_path": "processApply",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_field",
+        "raw_path": "bidField",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_form",
+        "raw_path": "bidForm",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_mode",
+        "raw_path": "bidMode",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "capital_detail",
+        "raw_path": "capitalDetail",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "contract_type",
+        "raw_path": "ctype",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "execution_period",
+        "raw_path": "cperiod",
+        "silver_type": "INTEGER",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "execution_period_unit",
+        "raw_path": "cperiodUnit",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "is_domestic",
+        "raw_path": "isDomestic",
+        "silver_type": "BOOLEAN",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "is_internet",
+        "raw_path": "isInternet",
+        "silver_type": "BOOLEAN",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_start_unit",
+        "raw_path": "bidStartUnit",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_start_year",
+        "raw_path": "bidStartYear",
+        "silver_type": "INTEGER",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC"
+      },
+      {
+        "silver_field": "bid_start_quarter",
+        "raw_path": "bidStartQuarter",
+        "silver_type": "VARCHAR",
+        "null_rate_percent": 13.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "TỐT",
+        "note": "Xử lý sentinel '0' thành null khi đấu thầu theo tháng"
+      },
+      {
+        "silver_field": "bid_start_month",
+        "raw_path": "bidStartMonth",
+        "silver_type": "INTEGER",
+        "null_rate_percent": 87.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "TỐT",
+        "note": "Xử lý sentinel 0 thành null khi đấu thầu theo quý"
+      },
+      {
+        "silver_field": "public_date",
+        "raw_path": "Fallback: createdDate.date() -> source_date",
+        "silver_type": "DATE",
+        "null_rate_percent": 0.0,
+        "blank_rate_percent": 0.0,
+        "dq_assessment": "XUẤT SẮC",
+        "note": "Bổ sung kỹ thuật cho Iceberg Format v2 Partition Spec"
+      }
+    ]
+  }
+}
