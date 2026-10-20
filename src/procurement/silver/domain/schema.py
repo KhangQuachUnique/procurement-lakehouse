@@ -94,21 +94,19 @@ plan_revision_table = sa.Table(
     sa.Column("observation_id", sa.String, nullable=True),
     sa.Column("is_current", sa.Boolean, nullable=True),
     sa.Column("plan_no", sa.String, nullable=True),
-    sa.Column("plan_version", sa.String, nullable=True),
-    sa.Column("business_number", sa.String, nullable=True),
     sa.Column("title", sa.String, nullable=True),
-    sa.Column("invest_target", sa.String, nullable=True),
-    sa.Column("invest_scale", sa.String, nullable=True),
     sa.Column("investor_name", sa.String, nullable=True),
-    sa.Column("buyer_id", sa.String, nullable=True),
-    sa.Column("buyer_name", sa.String, nullable=True),
     sa.Column("project_id", sa.String, nullable=True),
     sa.Column("project_no", sa.String, nullable=True),
+    sa.Column("plan_type", sa.String, nullable=True),
     sa.Column("total_investment", sa.Numeric(38, 6), nullable=True),
-    sa.Column("amount", sa.Numeric(38, 6), nullable=True),
     sa.Column("currency", sa.String, nullable=True),
+    sa.Column("decision_date", sa.Date, nullable=True),
+    sa.Column("decision_no", sa.String, nullable=True),
+    sa.Column("decision_agency", sa.String, nullable=True),
+    sa.Column("bid_pack", sa.BigInteger, nullable=True),
+    sa.Column("location", sa.String, nullable=True),
     sa.Column("public_date", sa.Date, nullable=True),
-    sa.Column("public_date_raw", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
     sa.Column("root_json", sa.Text, nullable=False),
     comment="Procurement plan (KHLCNT) revision",
@@ -123,24 +121,26 @@ package_revision_table = sa.Table(
     sa.Column("observation_id", sa.String, nullable=True),
     sa.Column("is_current", sa.Boolean, nullable=True),
     sa.Column("package_no", sa.String, nullable=True),
-    sa.Column("business_number", sa.String, nullable=True),
     sa.Column("title", sa.String, nullable=True),
     sa.Column("plan_no", sa.String, nullable=True),
     sa.Column("plan_id", sa.String, nullable=True),
     sa.Column("bid_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("estimate_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("amount", sa.Numeric(38, 6), nullable=True),
     sa.Column("currency", sa.String, nullable=True),
+    sa.Column("process_apply", sa.String, nullable=True),
     sa.Column("bid_field", sa.String, nullable=True),
     sa.Column("bid_form", sa.String, nullable=True),
     sa.Column("bid_mode", sa.String, nullable=True),
+    sa.Column("capital_detail", sa.String, nullable=True),
     sa.Column("contract_type", sa.String, nullable=True),
-    sa.Column("execution_period", sa.String, nullable=True),
+    sa.Column("execution_period", sa.BigInteger, nullable=True),
+    sa.Column("execution_period_unit", sa.String, nullable=True),
     sa.Column("is_domestic", sa.Boolean, nullable=True),
     sa.Column("is_internet", sa.Boolean, nullable=True),
+    sa.Column("bid_start_unit", sa.String, nullable=True),
+    sa.Column("bid_start_year", sa.BigInteger, nullable=True),
+    sa.Column("bid_start_quarter", sa.String, nullable=True),
+    sa.Column("bid_start_month", sa.BigInteger, nullable=True),
     sa.Column("public_date", sa.Date, nullable=True),
-    sa.Column("public_date_raw", sa.String, nullable=True),
-    sa.Column("status_raw", sa.String, nullable=True),
     sa.Column("root_json", sa.Text, nullable=False),
     comment="Package in procurement plan revision",
 )
@@ -430,13 +430,33 @@ package_lot_table = sa.Table(
     "package_lot",
     metadata,
     sa.Column("lot_id", sa.String, primary_key=True),
-    sa.Column("package_revision_id", sa.String, nullable=False),
-    sa.Column("ordinal", sa.BigInteger, nullable=False),
-    sa.Column("lot_no", sa.String, nullable=False),
+    sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("source_lot_id", sa.String, nullable=True),
+    sa.Column("lot_ordinal", sa.BigInteger, nullable=False),
+    sa.Column("lot_no", sa.String, nullable=True),
     sa.Column("lot_name", sa.String, nullable=True),
-    sa.Column("budget_amount", sa.Numeric(38, 6), nullable=True),
+    sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
     sa.Column("currency", sa.String, nullable=True),
-    comment="Package lot specification in plan",
+    sa.Column("medicine_code", sa.String, nullable=True),
+    sa.Column("quantity", sa.Numeric(38, 6), nullable=True),
+    sa.Column("uom", sa.String, nullable=True),
+    sa.Column("planned_unit_price", sa.Numeric(38, 6), nullable=True),
+    comment="Procurement plan package lot specification",
+)
+
+package_location_table = sa.Table(
+    "package_location",
+    metadata,
+    sa.Column("location_id", sa.String, primary_key=True),
+    sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("location_ordinal", sa.BigInteger, nullable=False),
+    sa.Column("province_code", sa.String, nullable=True),
+    sa.Column("province_name", sa.String, nullable=True),
+    sa.Column("district_code", sa.String, nullable=True),
+    sa.Column("district_name", sa.String, nullable=True),
+    sa.Column("ward_code", sa.String, nullable=True),
+    sa.Column("ward_name", sa.String, nullable=True),
+    comment="Procurement plan package location breakdown",
 )
 
 notice_amendment_table = sa.Table(
@@ -482,8 +502,6 @@ award_lot_table = sa.Table(
     sa.Column("lot_name", sa.String, nullable=True),
     sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
     sa.Column("winning_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("saving_amount", sa.Numeric(38, 6), nullable=True),
-    sa.Column("saving_rate", sa.Numeric(10, 4), nullable=True),
     sa.Column("currency", sa.String, nullable=True),
     sa.Column("winning_code", sa.String, nullable=True),
     sa.Column("status", sa.String, nullable=True),
@@ -588,6 +606,7 @@ def get_child_schemas() -> dict[str, str]:
         "notice_reoffer_submission",
         "project_location",
         "package_lot",
+        "package_location",
         "notice_amendment",
         "opening_submission",
         "award_lot",
@@ -595,3 +614,67 @@ def get_child_schemas() -> dict[str, str]:
     }
     schemas = get_silver_schemas()
     return {k: schemas[k] for k in child_table_names if k in schemas}
+
+
+# ---------------------------------------------------------------------------
+# ICEBERG PARTITION SPECIFICATIONS (FORMAT V2)
+# ---------------------------------------------------------------------------
+
+SILVER_PARTITION_SPECS: dict[str, str] = {
+    # Tier 1: Governance
+    "observation": "source_date",
+    # Tier 2: Core Revisions (partitioned by public_date)
+    "notice_revision": "public_date",
+    "project_revision": "public_date",
+    "plan_revision": "public_date",
+    "result_revision": "public_date",
+    "opening_revision": "public_date",
+    "package_revision": "public_date",
+}
+
+
+def get_partition_spec(table_name: str) -> str | None:
+    """Return the Iceberg partition specification for a Silver table if configured."""
+    clean_name = table_name.split(".")[-1]
+    return SILVER_PARTITION_SPECS.get(clean_name)
+
+
+def to_iceberg_ddl(
+    table_name: str,
+    table_schema: str | None = None,
+    namespace: str = "silver",
+) -> str:
+    """Generate DuckDB SQL to create an Iceberg Format v2 table with partition spec.
+
+    Args:
+        table_name: Table identifier (e.g. 'notice_revision').
+        table_schema: Column definitions string. If None, derived from SQLAlchemy metadata.
+        namespace: Target Iceberg catalog namespace (defaults to 'silver').
+
+    Returns:
+        Complete CREATE TABLE IF NOT EXISTS DDL statement.
+    """
+    clean_name = table_name.split(".")[-1]
+    clean_ns = namespace.strip().split(".")[-1]
+    if table_schema is None:
+        table_schema = get_silver_schemas().get(clean_name)
+        if not table_schema:
+            raise ValueError(f"Unknown silver table schema: {clean_name}")
+
+    spec = get_partition_spec(clean_name)
+    partition_clause = f" PARTITIONED BY ({spec})" if spec else ""
+    return (
+        f"CREATE TABLE IF NOT EXISTS lake.{clean_ns}.{clean_name} "
+        f"({table_schema}){partition_clause}"
+    )
+
+
+def get_primary_key(table_name: str) -> str | None:
+    """Return the primary key column name for a Silver table if defined in metadata."""
+    clean_name = table_name.split(".")[-1]
+    sa_table = metadata.tables.get(f"silver.{clean_name}")
+    if sa_table is None:
+        sa_table = metadata.tables.get(clean_name)
+    if sa_table is not None and len(sa_table.primary_key.columns) > 0:
+        return list(sa_table.primary_key.columns)[0].name
+    return None

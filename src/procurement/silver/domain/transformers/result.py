@@ -225,7 +225,32 @@ class ContractorResultTransformer(BaseResourceTransformer):
             raw_lot_price = lot.get("lotPrice")
             if raw_lot_price is not None and raw_lot_price != "":
                 try:
-                    lot_price_str = parse_money(raw_lot_price)
+                    parsed_lot_p = parse_money(raw_lot_price)
+                    if parsed_lot_p is not None:
+                        dec_lot_p = Decimal(parsed_lot_p)
+                        # Strict validation: filter out <= 0 and dummy placeholder <= 10 VND
+                        if dec_lot_p <= Decimal(0):
+                            issues.append(
+                                QualityIssue(
+                                    issue_id=digest([obs_id, "invalid_zero_price", f"lot[{ordinal}].lotPrice"]),
+                                    observation_id=obs_id,
+                                    code="invalid_zero_price",
+                                    path=f"bideContractorInputResultDTO.lotResultDTO[{ordinal}].lotPrice",
+                                    severity="warn",
+                                )
+                            )
+                        elif dec_lot_p <= Decimal(10) and currency in ("VND", None):
+                            issues.append(
+                                QualityIssue(
+                                    issue_id=digest([obs_id, "dummy_placeholder_price", f"lot[{ordinal}].lotPrice"]),
+                                    observation_id=obs_id,
+                                    code="dummy_placeholder_price",
+                                    path=f"bideContractorInputResultDTO.lotResultDTO[{ordinal}].lotPrice",
+                                    severity="warn",
+                                )
+                            )
+                        else:
+                            lot_price_str = parsed_lot_p
                 except ValueError:
                     issues.append(
                         QualityIssue(
@@ -320,18 +345,20 @@ class ContractorResultTransformer(BaseResourceTransformer):
                         )
                     )
 
-            # Calculate savings
             winning_price_str = (
                 f"{lot_winning_price_dec:.6f}" if lot_winning_price_dec is not None else None
             )
-            saving_amount_str = None
-            saving_rate = None
             if lot_price_str is not None and lot_winning_price_dec is not None:
-                lot_p_dec = Decimal(lot_price_str)
-                saving_dec = lot_p_dec - lot_winning_price_dec
-                saving_amount_str = f"{saving_dec:.6f}"
-                if lot_p_dec > Decimal(0):
-                    saving_rate = round(saving_dec / lot_p_dec, 4)
+                if Decimal(lot_price_str) * Decimal(100) < lot_winning_price_dec:
+                    issues.append(
+                        QualityIssue(
+                            issue_id=digest([obs_id, "price_scale_anomaly", f"lot[{ordinal}].lotPrice"]),
+                            observation_id=obs_id,
+                            code="price_scale_anomaly",
+                            path=f"bideContractorInputResultDTO.lotResultDTO[{ordinal}].lotPrice",
+                            severity="warn",
+                        )
+                    )
 
             lot_attrs = {
                 "award_lot_id": award_lot_child_id,
@@ -340,8 +367,6 @@ class ContractorResultTransformer(BaseResourceTransformer):
                 "lot_name": lot_name,
                 "lot_price": lot_price_str,
                 "winning_price": winning_price_str,
-                "saving_amount": saving_amount_str,
-                "saving_rate": saving_rate,
                 "currency": currency,
                 "winning_code": lot_winning_code,
                 "status": lot_status,

@@ -3,7 +3,7 @@
 import json
 import re
 from dataclasses import replace
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from procurement.silver.domain.contracts import VERSION
 from procurement.silver.domain.parsers import (
@@ -32,12 +32,21 @@ NOTICE_MAPPING_VERSION = "notice-2"
 class NoticeTransformer(BaseResourceTransformer):
     """Explicit family mappings; no implicit price/currency or winner inference."""
 
-    entity_type = "notice"
-    id_scheme = "notify_no"
+    @property
+    def entity_type(self) -> str:
+        return "notice"
+
+    @property
+    def id_scheme(self) -> str:
+        return "notify_no"
+
     mapping_version = NOTICE_MAPPING_VERSION
     revision_contracts: ClassVar[dict] = {**VERSION, "notice": NOTICE_MAPPING_VERSION}
     family = "standard"
-    table_name = "notify_contractor_standard_detail"
+
+    @property
+    def table_name(self) -> str:
+        return "notify_contractor_standard_detail"
     roots = ("bidoNotifyContractorM", "bidNoContractorResponse.bidNotification")
 
     def root_path(self, payload):
@@ -300,6 +309,14 @@ class NoticeTransformer(BaseResourceTransformer):
             buyer_name=attrs["procuring_entity_name"],
             amount=attrs["bid_price"],
         )
+        # For standard domestic notices, guarantee and estimate prices share the tender's currency
+        if self.family == "standard":
+            primary_currency = attrs.get("currency") or "VND"
+            if attrs.get("estimate_currency") is None and attrs.get("estimate_price") is not None:
+                attrs["estimate_currency"] = primary_currency
+            if attrs.get("guarantee_currency") is None and attrs.get("guarantee_amount") is not None:
+                attrs["guarantee_currency"] = primary_currency
+
         for amount, currency in (
             ("bid_price", "currency"),
             ("estimate_price", "estimate_currency"),
@@ -344,7 +361,7 @@ class NoticeTransformer(BaseResourceTransformer):
                 table, attributes = self.child_projection(
                     value, lot_path, ordinal, lot_path, issues, obs_id
                 )
-                if attributes is not None:
+                if attributes is not None and table is not None:
                     child_id = digest([revision_id, lot_path, ordinal, value])
                     source_id = clean_text(value.get("id")) if isinstance(value, dict) else None
                     raw = canonical_json(value)
@@ -379,7 +396,7 @@ class NoticeTransformer(BaseResourceTransformer):
                     table, attributes = self.child_projection(
                         value, loc_path, ordinal, lot_path, issues, obs_id
                     )
-                    if attributes is not None:
+                    if attributes is not None and table is not None:
                         child_id = digest([revision_id, loc_path, ordinal, value])
                         source_id = clean_text(value.get("id")) if isinstance(value, dict) else None
                         raw = canonical_json(value)
@@ -415,7 +432,7 @@ class NoticeTransformer(BaseResourceTransformer):
                         table, attributes = self.child_projection(
                             value, sub_path, ordinal, lot_path, issues, obs_id
                         )
-                        if attributes is not None:
+                        if attributes is not None and table is not None:
                             child_id = digest([revision_id, sub_path, ordinal, value])
                             source_id = (
                                 clean_text(value.get("id")) if isinstance(value, dict) else None
@@ -446,7 +463,9 @@ class NoticeTransformer(BaseResourceTransformer):
 
         return children
 
-    def child_projection(self, value, path, ordinal, lot_path, issues, obs_id):
+    def child_projection(
+        self, value, path, ordinal, lot_path, issues, obs_id
+    ) -> tuple[str | None, dict[str, Any] | None]:
         """Only reviewed paths receive typed projections; all others remain raw."""
         if not isinstance(value, dict):
             return None, None
@@ -516,14 +535,23 @@ class StandardNoticeTransformer(NoticeTransformer):
 
 @register_transformer("notify_contractor_vk_adb_detail")
 class VkAdbNoticeTransformer(NoticeTransformer):
-    table_name = "notify_contractor_vk_adb_detail"
+    @property
+    def table_name(self) -> str:
+        return "notify_contractor_vk_adb_detail"
+
     family = "vk_adb"
     roots = ("bidoNotifyContractorP",)
 
 
 @register_transformer("notify_contractor_reoffer_detail")
 class ReofferNoticeTransformer(NoticeTransformer):
-    table_name = "notify_contractor_reoffer_detail"
+    @property
+    def table_name(self) -> str:
+        return "notify_contractor_reoffer_detail"
+
     family = "reoffer"
     roots = ("",)
-    id_scheme = "reoffer_no"
+
+    @property
+    def id_scheme(self) -> str:
+        return "reoffer_no"

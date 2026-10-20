@@ -1,6 +1,6 @@
 """Unit tests for ContractorResultTransformer (contractor selection results)."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from procurement.silver.application.resources import (
@@ -123,10 +123,11 @@ def test_transform_valid_contractor_result():
     assert len(result.children) == 2
     lot_child = next(c for c in result.children if c.kind == "award_lot")
     assert lot_child.typed_table == "award_lot"
+    assert lot_child.typed_attributes is not None
     assert lot_child.typed_attributes["lot_price"] == "8000000.000000"
     assert lot_child.typed_attributes["winning_price"] == "7448857.000000"
-    assert lot_child.typed_attributes["saving_amount"] == "551143.000000"
-    assert lot_child.typed_attributes["saving_rate"] == Decimal("0.0689")
+    assert "saving_amount" not in lot_child.typed_attributes
+    assert "saving_rate" not in lot_child.typed_attributes
 
     contractor_child = next(c for c in result.children if c.kind == "award_contractor")
     assert contractor_child.typed_table == "award_contractor"
@@ -219,8 +220,8 @@ def test_result_full_assembly_and_validation():
     lots = tables["award_lot"]
     assert len(lots) == 1
     assert lots[0]["lot_no"] == "1"
-    assert lots[0]["saving_amount"] == "50000000.000000"
-    assert lots[0]["saving_rate"] == Decimal("0.0500")
+    assert "saving_amount" not in lots[0]
+    assert "saving_rate" not in lots[0]
 
     contractors = tables["award_contractor"]
     assert len(contractors) == 1
@@ -293,3 +294,34 @@ def test_result_temporal_inversion_detected():
 
     assert any(i.code == "invalid_date_order" for i in result.issues)
 
+
+
+def test_result_transformer_dummy_placeholder_price():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-dummy-1",
+            "notifyNo": "IB9999",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPrice": "1",  # dummy placeholder
+                    "contractorList": [
+                        {
+                            "id": "c-1",
+                            "orgCode": "vn123",
+                            "bidResult": 1,
+                            "bidWiningPrice": "500000000",
+                        }
+                    ],
+                }
+            ],
+        }
+    }
+    env = make_envelope(payload, source_id="res-dummy-1")
+    result = transformer.transform(env)
+    lot_child = next(c for c in result.children if c.kind == "award_lot")
+    assert lot_child.typed_attributes["lot_price"] is None
+    assert any(i.code == "dummy_placeholder_price" for i in result.issues)
