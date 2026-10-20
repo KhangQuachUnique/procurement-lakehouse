@@ -20,7 +20,12 @@ def transform(
     """Build RawRecordEnvelope and transform via registered transformer."""
     transformer = require_transformer(file["table"])
     raw = record["payload"]
-    payload = json.loads(raw, parse_float=Decimal) if isinstance(raw, str) else raw
+    if isinstance(raw, (str, bytes, bytearray)):
+        from procurement.silver.domain.json_numbers import loads_bronze_payload
+
+        payload = loads_bronze_payload(raw)
+    else:
+        payload = raw
     observed_at = record["ingested_at"]
     if isinstance(observed_at, str):
         observed_at = datetime.fromisoformat(observed_at)

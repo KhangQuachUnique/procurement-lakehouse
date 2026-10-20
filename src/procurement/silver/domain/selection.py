@@ -76,9 +76,11 @@ def records(fs: Any, partition: dict[str, Any]):
                         or str(row["source_date"])[:10] != partition["source_date"]
                     ):
                         raise ValueError("Bronze lineage mismatch")
+                    from procurement.silver.domain.json_numbers import loads_bronze_payload
+
                     payload = (
-                        json.loads(row["payload"])
-                        if isinstance(row["payload"], str)
+                        loads_bronze_payload(row["payload"])
+                        if isinstance(row["payload"], (str, bytes, bytearray))
                         else row["payload"]
                     )
                     if calculate_content_hash(payload) != row["content_hash"]:

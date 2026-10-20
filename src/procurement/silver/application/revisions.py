@@ -58,6 +58,7 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
                 typed_child.get(f"{target}_id")
                 or typed_child.get("child_id")
                 or typed_child.get("location_id")
+                or typed_child.get("lot_id")
                 if isinstance(typed_child, dict)
                 else None
             )

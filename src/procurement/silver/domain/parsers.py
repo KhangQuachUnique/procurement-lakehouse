@@ -13,6 +13,8 @@ from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from procurement.silver.domain.json_numbers import JsonFloatLexeme
+
 VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 MAX_MONEY = Decimal(10) ** 32
 MONEY_QUANTIZE = Decimal("0.000001")
@@ -32,6 +34,15 @@ def lookup_path(value: Any, path: str) -> Any:
 SENTINEL_VALUES = {
     "n/a", "na", "null", "none", "unknown", "undefined", "-", "--", "chưa có", "không có", "không"
 }
+PROJECT_REFERENCE_PLACEHOLDERS = frozenset({"N/A", "NA", "NULL", "NONE"})
+
+
+def clean_project_reference(value: Any) -> str | None:
+    """Clean a Project identifier/number, preserving zeroes and ID format."""
+    result = clean_text(value)
+    if result is None or result.upper() in PROJECT_REFERENCE_PLACEHOLDERS:
+        return None
+    return result
 
 
 def clean_text(value: Any, *, filter_sentinels: bool = True) -> str | None:
@@ -53,8 +64,10 @@ def parse_money(value: Any) -> str | None:
     """
     if value is None or value == "":
         return None
-    if isinstance(value, (bool, float)):
-        raise ValueError(  # noqa: TRY004
+    if isinstance(value, JsonFloatLexeme):
+        value = value.json_lexeme
+    elif isinstance(value, (bool, float)):
+        raise ValueError(
             f"Money must be parsed from exact string or integer decimals, got {type(value).__name__}"
         )
     try:
@@ -137,6 +150,7 @@ def clean_pipe_code(value: Any) -> str | None:
 __all__ = [
     "VIETNAM_TZ",
     "clean_pipe_code",
+    "clean_project_reference",
     "clean_text",
     "lookup_path",
     "parse_boolean",

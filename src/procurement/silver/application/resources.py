@@ -41,6 +41,21 @@ RESULT_OUTPUT_TABLES = (
 )
 RESULT_TABLES = ("contractor_result_detail",)
 
+KHLCNT_MAPPING_VERSION = "khlcnt-1"
+KHLCNT_OUTPUT_TABLES = (
+    "observation",
+    "plan_revision",
+    "package_revision",
+    "package_location",
+    "package_lot",
+    "quality_issue",
+    "quarantine",
+)
+KHLCNT_TABLES = (
+    "khlcnt_plan_detail",
+    "khlcnt_bid_package_detail",
+)
+
 
 @dataclass(frozen=True)
 class SilverResource:
@@ -81,10 +96,21 @@ def get_silver_resource(name: str) -> SilverResource:
         return SilverResource(
             definition.identity.resource, families, RESULT_OUTPUT_TABLES, RESULT_MAPPING_VERSION
         )
+    if name in {"khlcnt", "plan", "package"}:
+        definition = get_resource("khlcnt")
+        families = (
+            ("plan", "khlcnt_plan_detail"),
+            ("package", "khlcnt_bid_package_detail"),
+        )
+        return SilverResource(
+            definition.identity.resource, families, KHLCNT_OUTPUT_TABLES, KHLCNT_MAPPING_VERSION
+        )
     raise ValueError(f"Silver resource not implemented: {name}")
 
 
 __all__ = [
+    "KHLCNT_MAPPING_VERSION",
+    "KHLCNT_OUTPUT_TABLES",
     "NOTICE_MAPPING_VERSION",
     "NOTICE_OUTPUT_TABLES",
     "PROJECT_MAPPING_VERSION",
