@@ -15,6 +15,7 @@ from dagster import (
 
 from procurement.common.dates import VIETNAM_TZ
 from procurement.orchestration.bronze import BRONZE_PARTITIONS, bronze_assets
+from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
 from procurement.orchestration.silver import silver_assets, silver_sync_iceberg_job
 from procurement.orchestration.watcher import (
@@ -99,6 +100,7 @@ defs = Definitions(
         silver_job,
         lakehouse_job,
         silver_sync_iceberg_job,
+        reconcile_lakehouse_job,
         bid_opening_seed_job,
         bid_opening_watch_job,
         quality_audit_job,
