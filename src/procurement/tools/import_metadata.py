@@ -6,6 +6,7 @@ import json
 import logging
 import sys
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -30,6 +31,11 @@ from procurement.metadata.postgres.schema import (
 from procurement.models.control import DayManifest, DayStatus
 from procurement.storage.control import list_day_manifests
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import (
+    create_progress_display,
+    is_rich_enabled,
+    render_metadata_summary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +130,7 @@ def import_resource_manifests(
     source: str = DEFAULT_SOURCE,
     bucket: str = settings.OBJECT_STORAGE_BUCKET,
     dry_run: bool = False,
+    on_progress: Any = None,
 ) -> dict[str, Any]:
     """Find effective DayManifests on S3 and import into PostgreSQL."""
     definition = next((d for d in RESOURCE_CATALOG if d.identity.resource == resource), None)
@@ -151,8 +158,13 @@ def import_resource_manifests(
         "errors": [],
     }
 
+    if on_progress:
+        on_progress("start", total=len(effective_days), resource=resource)
+
     if dry_run:
         stats["dry_run"] = True
+        if on_progress:
+            on_progress("done", resource=resource, stats=stats)
         return stats
 
     with engine.begin() as conn:
@@ -174,6 +186,8 @@ def import_resource_manifests(
             if part_row and part_row["current_commit_id"] is not None:
                 # Already committed
                 stats["skipped"] += 1
+                if on_progress:
+                    on_progress("day", resource=resource, day=day_str, imported=stats["imported"], skipped=stats["skipped"], files=0)
                 continue
 
             # Deterministic IDs for reproducible migration
@@ -292,13 +306,22 @@ def import_resource_manifests(
             )
 
             stats["imported"] += 1
+            if on_progress:
+                on_progress("day", resource=resource, day=day_str, imported=stats["imported"], skipped=stats["skipped"], files=len(files_data))
 
+    if on_progress:
+        on_progress("done", resource=resource, stats=stats)
     return stats
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Migrate historical S3 Bronze manifests to PostgreSQL metadata."
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output raw JSON instead of interactive Rich UI",
     )
     parser.add_argument(
         "--resource",
@@ -327,37 +350,139 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Inspect S3 manifests without writing to PostgreSQL.",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Number of concurrent worker threads.",
+    )
     return parser
+
+
+def _make_meta_callback(resource: str, progress: Any):
+    task_id = progress.add_task(
+        f"[bold magenta]{resource}[/bold magenta]",
+        label=resource,
+        sublabel="PostgreSQL Sync",
+        total=100,
+        status="[dim]Scanning S3 manifests...[/dim]",
+    )
+
+    def callback(event: str, **kwargs: Any):
+        if event == "start":
+            total = kwargs.get("total", 0)
+            progress.update(task_id, total=max(total, 1), status=f"Found {total} manifests")
+            if total == 0:
+                progress.update(task_id, completed=1, status="[dim]No manifests on S3[/dim]")
+        elif event == "day":
+            imported = kwargs.get("imported", 0)
+            skipped = kwargs.get("skipped", 0)
+            day = kwargs.get("day", "")
+            files = kwargs.get("files", 0)
+            progress.update(task_id, completed=imported + skipped, status=f"{day} [dim]({files} files)[/dim]")
+        elif event == "done":
+            progress.update(task_id, status="[bold green]Done ✔[/bold green]")
+
+    return callback
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    use_rich = is_rich_enabled(args)
 
     fs = create_s3_filesystem()
     engine = create_application_engine(args.db_url)
 
-    target_resources = SUPPORTED_RESOURCES if args.resource == "all" else [args.resource]
+    target_resources = list(SUPPORTED_RESOURCES if args.resource == "all" else [args.resource])
 
     reports = []
     overall_ok = True
 
-    for res in target_resources:
-        try:
-            report = import_resource_manifests(
-                engine,
-                fs,
-                res,
-                source=args.source,
-                bucket=args.bucket,
-                dry_run=args.dry_run,
-            )
-            reports.append(report)
-        except Exception as exc:  # noqa: BLE001
-            reports.append({"resource": res, "error": str(exc)})
-            overall_ok = False
+    if not use_rich:
+        if len(target_resources) > 1 and getattr(args, "workers", 1) > 1:
+            with ThreadPoolExecutor(max_workers=min(len(target_resources), args.workers)) as pool:
+                futures = {
+                    pool.submit(
+                        import_resource_manifests,
+                        engine,
+                        create_s3_filesystem(),
+                        res,
+                        source=args.source,
+                        bucket=args.bucket,
+                        dry_run=args.dry_run,
+                    ): res
+                    for res in target_resources
+                }
+                for fut in as_completed(futures):
+                    res = futures[fut]
+                    try:
+                        report = fut.result()
+                        reports.append(report)
+                    except Exception as exc:  # noqa: BLE001
+                        reports.append({"resource": res, "error": str(exc)})
+                        overall_ok = False
+        else:
+            for res in target_resources:
+                try:
+                    report = import_resource_manifests(
+                        engine,
+                        fs,
+                        res,
+                        source=args.source,
+                        bucket=args.bucket,
+                        dry_run=args.dry_run,
+                    )
+                    reports.append(report)
+                except Exception as exc:  # noqa: BLE001
+                    reports.append({"resource": res, "error": str(exc)})
+                    overall_ok = False
+        print(json.dumps(reports, indent=2))
+    else:
+        progress = create_progress_display()
+        with progress:
+            callbacks = {res: _make_meta_callback(res, progress) for res in target_resources}
+            if len(target_resources) > 1 and getattr(args, "workers", 1) > 1:
+                with ThreadPoolExecutor(max_workers=min(len(target_resources), args.workers)) as pool:
+                    futures = {
+                        pool.submit(
+                            import_resource_manifests,
+                            engine,
+                            create_s3_filesystem(),
+                            res,
+                            source=args.source,
+                            bucket=args.bucket,
+                            dry_run=args.dry_run,
+                            on_progress=callbacks[res],
+                        ): res
+                        for res in target_resources
+                    }
+                    for fut in as_completed(futures):
+                        res = futures[fut]
+                        try:
+                            report = fut.result()
+                            reports.append(report)
+                        except Exception as exc:  # noqa: BLE001
+                            reports.append({"resource": res, "error": str(exc)})
+                            overall_ok = False
+            else:
+                for res in target_resources:
+                    try:
+                        report = import_resource_manifests(
+                            engine,
+                            fs,
+                            res,
+                            source=args.source,
+                            bucket=args.bucket,
+                            dry_run=args.dry_run,
+                            on_progress=callbacks[res],
+                        )
+                        reports.append(report)
+                    except Exception as exc:  # noqa: BLE001
+                        reports.append({"resource": res, "error": str(exc)})
+                        overall_ok = False
+        render_metadata_summary(reports)
 
-    print(json.dumps(reports, indent=2))
     return 0 if overall_ok else 1
 
 
