@@ -156,7 +156,7 @@ services:
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
       OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
       OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change_this_to_a_long_random_password}
-      ICEBERG_CATALOG_URI: ${ICEBERG_CATALOG_URI:-http://object-storage:8181}
+      ICEBERG_CATALOG_URI: ${CONTAINER_ICEBERG_CATALOG_URI:-http://object-storage:8181}
       ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE:-s3://warehouse}
       MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mpi.gov.vn}
       MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN}

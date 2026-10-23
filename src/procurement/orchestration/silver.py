@@ -238,7 +238,7 @@ def build_silver_multi_asset(group: SilverResourceGroup):
         )
 
         # 3. iceberg_publication check
-        iceberg_staged = entry.get("iceberg", {})
+        iceberg_staged = entry.get("iceberg") or {}
         iceberg_passed = len(iceberg_staged) > 0 if config.publish_iceberg and acc > 0 else True
         yield AssetCheckResult(
             check_name="iceberg_publication",
@@ -251,7 +251,7 @@ def build_silver_multi_asset(group: SilverResourceGroup):
             },
         )
 
-        files = entry.get("files", {})
+        files = entry.get("files") or {}
 
         # 4. MaterializeResult for each individual table in the group
         for t in group.tables:
