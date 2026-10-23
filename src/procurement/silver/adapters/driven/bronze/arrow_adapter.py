@@ -71,13 +71,14 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
                 SELECT 
                     p.resource,
                     p.source_date,
-                    COALESCE(a.dagster_run_id, a.id::text) as run_id,
+                    a.id::text as run_id,
                     c.record_count,
                     c.verification,
                     cf.table_name,
                     cf.bucket,
                     cf.object_key,
-                    cf.sha256
+                    cf.sha256,
+                    a.dagster_run_id
                 FROM bronze_meta.partitions p
                 JOIN bronze_meta.commits c ON p.current_commit_id = c.id
                 JOIN bronze_meta.attempts a ON c.attempt_id = a.id
@@ -95,13 +96,16 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
             res_name = r[0]
             day_str = r[1].isoformat()
             key = (res_name, day_str)
+            manifest = dict(r[4]) if isinstance(r[4], dict) else {}
+            if len(r) > 9 and r[9]:
+                manifest["dagster_run_id"] = str(r[9])
             if key not in by_key:
                 by_key[key] = {
                     "resource": res_name,
                     "source_date": day_str,
                     "run_id": r[2],
                     "expected_records": r[3],
-                    "manifest": r[4] or {},
+                    "manifest": manifest,
                     "files": [],
                 }
             if r[5] and r[7]:
@@ -238,11 +242,14 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         for file in partition.files:
             file_dict = {"table": file.table, "key": file.key, "sha256": file.sha256}
             with self.fs.open(file.key, "rb") as stream:
+                valid_run_ids = {partition.run_id}
+                if isinstance(partition.manifest, dict) and partition.manifest.get("dagster_run_id"):
+                    valid_run_ids.add(str(partition.manifest["dagster_run_id"]))
                 ordinal = 0
                 for batch in pq.ParquetFile(stream).iter_batches(batch_size=1024):
                     for row in batch.to_pylist():
                         if (
-                            row["run_id"] != partition.run_id
+                            row["run_id"] not in valid_run_ids
                             or str(row["source_date"])[:10] != partition.source_date
                         ):
                             raise ValueError("Bronze lineage mismatch")
