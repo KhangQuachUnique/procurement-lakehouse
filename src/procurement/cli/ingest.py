@@ -9,11 +9,21 @@ from uuid import UUID, uuid4
 from procurement.bootstrap import get_ingestion_service
 from procurement.common.catalog import DEFAULT_SOURCE, SUPPORTED_RESOURCES
 from procurement.ingestion.contracts import MaterializeDayRequest
+from procurement.tools.ui import (
+    create_progress_display,
+    is_rich_enabled,
+    render_ingestion_summary,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Materialize partition day(s) for a given resource using IngestionService."
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output raw JSON instead of interactive UI",
     )
     parser.add_argument(
         "--resource",
@@ -115,33 +125,76 @@ def run_ingest(args: argparse.Namespace) -> dict:
     dates = resolve_dates(args)
     service = get_ingestion_service()
     reports = []
+    use_rich = is_rich_enabled(args)
 
-    for day in dates:
-        req = MaterializeDayRequest(
-            source_date=day,
-            source=args.source,
-            resource=args.resource,
-            refresh=args.refresh,
-            request_id=args.request_id or uuid4(),
-            owner_id=args.owner_id or uuid4(),
-            dagster_run_id=args.dagster_run_id,
-        )
-        result = service.materialize_day(req)
-        rep = {
-            "source": result.source,
-            "resource": result.resource,
-            "source_date": str(result.source_date),
-            "status": result.status,
-            "reused": result.reused,
-            "commit_id": str(result.commit_id) if result.commit_id else None,
-            "attempt_id": str(result.attempt_id) if result.attempt_id else None,
-            "record_count": result.record_count,
-            "file_count": result.file_count,
-            "metrics": result.metrics,
-        }
-        reports.append(rep)
-        if result.status != "success" and not args.continue_on_error and len(dates) > 1:
-            break
+    if use_rich and len(dates) > 1:
+        progress = create_progress_display()
+        with progress:
+            task = progress.add_task(
+                f"[bold magenta]{args.resource}[/bold magenta]",
+                label=args.resource,
+                sublabel="Ingesting",
+                total=len(dates),
+                status="Starting...",
+            )
+            for idx, day in enumerate(dates, start=1):
+                req = MaterializeDayRequest(
+                    source_date=day,
+                    source=args.source,
+                    resource=args.resource,
+                    refresh=args.refresh,
+                    request_id=args.request_id or uuid4(),
+                    owner_id=args.owner_id or uuid4(),
+                    dagster_run_id=args.dagster_run_id,
+                )
+                result = service.materialize_day(req)
+                rep = {
+                    "source": result.source,
+                    "resource": result.resource,
+                    "source_date": str(result.source_date),
+                    "status": result.status,
+                    "reused": result.reused,
+                    "commit_id": str(result.commit_id) if result.commit_id else None,
+                    "attempt_id": str(result.attempt_id) if result.attempt_id else None,
+                    "record_count": result.record_count,
+                    "file_count": result.file_count,
+                    "metrics": result.metrics,
+                }
+                reports.append(rep)
+                progress.update(
+                    task,
+                    completed=idx,
+                    status=f"{day} ({result.record_count} records)",
+                )
+                if result.status != "success" and not args.continue_on_error and len(dates) > 1:
+                    break
+    else:
+        for day in dates:
+            req = MaterializeDayRequest(
+                source_date=day,
+                source=args.source,
+                resource=args.resource,
+                refresh=args.refresh,
+                request_id=args.request_id or uuid4(),
+                owner_id=args.owner_id or uuid4(),
+                dagster_run_id=args.dagster_run_id,
+            )
+            result = service.materialize_day(req)
+            rep = {
+                "source": result.source,
+                "resource": result.resource,
+                "source_date": str(result.source_date),
+                "status": result.status,
+                "reused": result.reused,
+                "commit_id": str(result.commit_id) if result.commit_id else None,
+                "attempt_id": str(result.attempt_id) if result.attempt_id else None,
+                "record_count": result.record_count,
+                "file_count": result.file_count,
+                "metrics": result.metrics,
+            }
+            reports.append(rep)
+            if result.status != "success" and not args.continue_on_error and len(dates) > 1:
+                break
 
     if len(dates) == 1 and args.source_date is not None:
         return reports[0]
@@ -163,7 +216,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         report = run_ingest(args)
-        print(json.dumps(report, indent=2))
+        if is_rich_enabled(args):
+            render_ingestion_summary(report)
+        else:
+            print(json.dumps(report, indent=2))
         return 0 if report["status"] == "success" else 1
     except Exception as exc:  # noqa: BLE001
         err_report = {

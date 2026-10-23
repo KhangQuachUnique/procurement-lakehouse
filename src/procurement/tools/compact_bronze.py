@@ -12,10 +12,16 @@ from procurement.common.settings import settings
 from procurement.compaction import create_plan, run_plan, validate_plan
 from procurement.quality.files import cli, read_json, write_json
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import (
+    is_rich_enabled,
+    render_compaction_plan,
+    render_compaction_run,
+)
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="Output raw JSON instead of interactive UI")
     commands = parser.add_subparsers(dest="command", required=True)
     plan = commands.add_parser(
         "plan", help="Inspect committed days and save a frozen compaction plan"
@@ -59,17 +65,20 @@ def main(argv=None):
         )
         path = args.output_dir / result["plan_id"] / "plan.json"
         write_json(path, result)
-        print(
-            json.dumps(
-                {
-                    "plan": str(path),
-                    "candidate_days": len(result["days"]),
-                    "skipped_days": len(result["skipped"]),
-                    "input_files": sum(len(d["files"]) for d in result["days"]),
-                    "input_bytes": sum(d["input_bytes"] for d in result["days"]),
-                }
+        if is_rich_enabled(args):
+            render_compaction_plan(result, path)
+        else:
+            print(
+                json.dumps(
+                    {
+                        "plan": str(path),
+                        "candidate_days": len(result["days"]),
+                        "skipped_days": len(result["skipped"]),
+                        "input_files": sum(len(d["files"]) for d in result["days"]),
+                        "input_bytes": sum(d["input_bytes"] for d in result["days"]),
+                    }
+                )
             )
-        )
     else:
         result = read_json(args.plan)
         validate_plan(result)  # Reject modified/foreign plans before connecting to storage.
@@ -80,15 +89,19 @@ def main(argv=None):
             continue_on_error=args.continue_on_error,
             lock_dir=args.lock_dir,
         )
-        print(
-            json.dumps(
-                {
-                    "complete": report["complete"],
-                    "days": len(report["days"]),
-                    "report": str(args.plan.parent / "report.json"),
-                }
+        report_path = args.plan.parent / "report.json"
+        if is_rich_enabled(args):
+            render_compaction_run(report, report_path)
+        else:
+            print(
+                json.dumps(
+                    {
+                        "complete": report["complete"],
+                        "days": len(report["days"]),
+                        "report": str(report_path),
+                    }
+                )
             )
-        )
         return 0 if report["complete"] else 1
 
 

@@ -22,6 +22,7 @@ from procurement.models.control import DayManifest
 from procurement.storage.control import read_run_manifest
 from procurement.storage.io import read_json
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import is_rich_enabled, render_explorer_startup
 
 BRONZE_SCHEMA = "bronze_raw"
 SILVER_SCHEMA = "silver"
@@ -642,29 +643,38 @@ def open_bronze_explorer(
         con.execute(f"SET ui_local_port = {port}")
         con.execute("CALL start_ui()")
 
-        schemas_active = [BRONZE_SCHEMA]
-        if silver_created:
-            schemas_active.append(SILVER_SCHEMA)
-
-        print(f"Lakehouse explorer is running ({time.perf_counter() - started:.2f}s startup).", flush=True)
-        print(f"UI: http://localhost:{port}", flush=True)
-        print(f"Schemas: {', '.join(schemas_active)}", flush=True)
-        print("Views use a fixed committed snapshot. Restart after repair to refresh.", flush=True)
-        if issues:
-            print(
-                f"INCOMPLETE: {len(issues)} day(s) missing files. "
-                "See SELECT * FROM bronze_meta.selection_issues;",
-                flush=True,
+        if is_rich_enabled():
+            render_explorer_startup(
+                port,
+                time.perf_counter() - started,
+                created,
+                silver_created,
+                issues,
             )
-        print("Use --union-by-name if legacy Parquet files have different schemas.", flush=True)
-        print("Bronze Views:", flush=True)
-        for table in created:
-            print(f"  - {BRONZE_SCHEMA}.{table}", flush=True)
-        if silver_created:
-            print("Silver Views:", flush=True)
-            for table in silver_created:
-                print(f"  - {SILVER_SCHEMA}.{table}", flush=True)
-        print("Press Ctrl+C to stop.", flush=True)
+        else:
+            schemas_active = [BRONZE_SCHEMA]
+            if silver_created:
+                schemas_active.append(SILVER_SCHEMA)
+
+            print(f"Lakehouse explorer is running ({time.perf_counter() - started:.2f}s startup).", flush=True)
+            print(f"UI: http://localhost:{port}", flush=True)
+            print(f"Schemas: {', '.join(schemas_active)}", flush=True)
+            print("Views use a fixed committed snapshot. Restart after repair to refresh.", flush=True)
+            if issues:
+                print(
+                    f"INCOMPLETE: {len(issues)} day(s) missing files. "
+                    "See SELECT * FROM bronze_meta.selection_issues;",
+                    flush=True,
+                )
+            print("Use --union-by-name if legacy Parquet files have different schemas.", flush=True)
+            print("Bronze Views:", flush=True)
+            for table in created:
+                print(f"  - {BRONZE_SCHEMA}.{table}", flush=True)
+            if silver_created:
+                print("Silver Views:", flush=True)
+                for table in silver_created:
+                    print(f"  - {SILVER_SCHEMA}.{table}", flush=True)
+            print("Press Ctrl+C to stop.", flush=True)
 
         while True:
             time.sleep(3600)
