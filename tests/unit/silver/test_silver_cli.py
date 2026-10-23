@@ -297,3 +297,94 @@ def test_cli_reset_force_flag_bypasses_prompt(monkeypatch):
     assert not mock_fs.exists("bucket/silver/sample.parquet")
 
 
+def test_split_date_range_by_year():
+    assert service.split_date_range_by_year(date(2022, 1, 1), date(2022, 12, 31)) == [
+        (date(2022, 1, 1), date(2022, 12, 31))
+    ]
+    chunks = service.split_date_range_by_year(date(2022, 3, 15), date(2024, 7, 20))
+    assert chunks == [
+        (date(2022, 3, 15), date(2022, 12, 31)),
+        (date(2023, 1, 1), date(2023, 12, 31)),
+        (date(2024, 1, 1), date(2024, 7, 20)),
+    ]
+
+
+def test_merge_run_reports():
+    rep1 = {
+        "run_id": "r1",
+        "resource": "notice",
+        "start_date": "2022-01-01",
+        "end_date": "2022-12-31",
+        "status": "completed",
+        "days": [{"date": "2022-01-01", "status": "completed"}],
+        "output_prefix": "bucket/silver/_reports/notice/r1",
+    }
+    rep2 = {
+        "run_id": "r2",
+        "resource": "notice",
+        "start_date": "2023-01-01",
+        "end_date": "2023-12-31",
+        "status": "completed",
+        "days": [{"date": "2023-01-01", "status": "completed"}],
+        "output_prefix": "bucket/silver/_reports/notice/r2",
+    }
+    merged = service.merge_run_reports([rep1, rep2])
+    assert merged["status"] == "completed"
+    assert merged["start_date"] == "2022-01-01"
+    assert merged["end_date"] == "2023-12-31"
+    assert len(merged["days"]) == 2
+
+
+def test_cli_multi_year_parallel_execution(monkeypatch):
+    calls = []
+    monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        start_d = args[3]
+        return {
+            "run_id": f"r_{start_d.year}",
+            "resource": args[2],
+            "start_date": str(start_d),
+            "end_date": str(args[4]),
+            "status": "completed",
+            "output_prefix": f"bucket/reports/{start_d.year}",
+            "days": [{"date": str(start_d), "status": "completed", "quality": {"accepted": 10}}],
+        }
+
+    monkeypatch.setattr(silver, "run_resource", run)
+    result = runner.invoke(
+        silver.app,
+        ["notice", "--start-date", "2022-01-01", "--end-date", "2024-12-31"],
+    )
+    assert result.exit_code == 0, result.output
+    # Expect 3 calls corresponding to 2022, 2023, 2024
+    called_years = {c[0][3].year for c in calls}
+    assert called_years == {2022, 2023, 2024}
+
+
+def test_cli_multi_year_no_parallel_flag(monkeypatch):
+    calls = []
+    monkeypatch.setattr(silver, "get_storage", lambda: ("fs", "bucket"))
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {
+            "status": "completed",
+            "output_prefix": "bucket/reports",
+            "days": [],
+        }
+
+    monkeypatch.setattr(silver, "run_resource", run)
+    result = runner.invoke(
+        silver.app,
+        ["notice", "--start-date", "2022-01-01", "--end-date", "2024-12-31", "--no-parallel"],
+    )
+    assert result.exit_code == 0, result.output
+    # When --no-parallel is set, it executes a single run with the full range
+    assert len(calls) == 1
+    assert calls[0][0][3] == date(2022, 1, 1)
+    assert calls[0][0][4] == date(2024, 12, 31)
+
+
+

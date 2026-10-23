@@ -1,3 +1,4 @@
+import threading
 from datetime import date
 from typing import Any
 
@@ -13,20 +14,19 @@ from procurement.storage.iceberg import identifier
 
 SCHEMAS = get_silver_schemas()
 
-
-_DUCKDB_CONN = None
+_local_duckdb = threading.local()
+_ICEBERG_COMMIT_LOCK = threading.Lock()
 
 
 def _get_duckdb_conn():
-    global _DUCKDB_CONN
-    if _DUCKDB_CONN is None:
+    if not hasattr(_local_duckdb, "conn") or _local_duckdb.conn is None:
         import duckdb
 
-        _DUCKDB_CONN = duckdb.connect(
+        _local_duckdb.conn = duckdb.connect(
             ":memory:",
             config={"max_memory": "512MB", "threads": "2"},
         )
-    return _DUCKDB_CONN
+    return _local_duckdb.conn
 
 
 def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
@@ -104,39 +104,51 @@ def stage_partition(
         spec = get_partition_spec(clean_name)
         pk = get_primary_key(clean_name)
 
-        db.execute("BEGIN")
-        try:
-            # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
-            if pk and arrow_table is not None and len(arrow_table) > 0:
-                db.register("_incoming_cand", arrow_table)
+        max_retries = 3
+        for attempt in range(max_retries):
+            with _ICEBERG_COMMIT_LOCK:
+                db.execute("BEGIN")
                 try:
-                    db.execute(
-                        f"DELETE FROM {table} WHERE {pk} IN (SELECT {pk} FROM _incoming_cand)"
-                    )
-                finally:
-                    db.unregister("_incoming_cand")
-            elif spec and partition_date is not None and (arrow_table is None or len(arrow_table) == 0):
-                if isinstance(partition_date, date):
-                    p_str = partition_date.isoformat()
-                else:
-                    p_str = str(partition_date)
-                db.execute(f"DELETE FROM {table} WHERE {spec} = '{p_str}'")
+                    # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
+                    if pk and arrow_table is not None and len(arrow_table) > 0:
+                        db.register("_incoming_cand", arrow_table)
+                        try:
+                            db.execute(
+                                f"DELETE FROM {table} WHERE {pk} IN (SELECT {pk} FROM _incoming_cand)"
+                            )
+                        finally:
+                            db.unregister("_incoming_cand")
+                    elif spec and partition_date is not None and (arrow_table is None or len(arrow_table) == 0):
+                        if isinstance(partition_date, date):
+                            p_str = partition_date.isoformat()
+                        else:
+                            p_str = str(partition_date)
+                        db.execute(f"DELETE FROM {table} WHERE {spec} = '{p_str}'")
 
-            # 2. Atomic Insert
-            if arrow_table is not None and len(arrow_table) > 0:
-                db.register("candidate_rows", arrow_table)
-                try:
-                    db.execute(f"INSERT INTO {table} BY NAME SELECT * FROM candidate_rows")
-                finally:
-                    db.unregister("candidate_rows")
+                    # 2. Atomic Insert
+                    if arrow_table is not None and len(arrow_table) > 0:
+                        db.register("candidate_rows", arrow_table)
+                        try:
+                            db.execute(f"INSERT INTO {table} BY NAME SELECT * FROM candidate_rows")
+                        finally:
+                            db.unregister("candidate_rows")
 
-            db.execute("COMMIT")
-        except BaseException:
-            import contextlib
+                    db.execute("COMMIT")
+                    break
+                except BaseException as exc:
+                    import contextlib
 
-            with contextlib.suppress(Exception):
-                db.execute("ROLLBACK")
-            raise
+                    with contextlib.suppress(Exception):
+                        db.execute("ROLLBACK")
+                    # On OCC conflict (e.g. HTTP 409 Conflict / CommitFailedException), retry with backoff
+                    if attempt < max_retries - 1 and (
+                        "Conflict" in str(exc) or "CommitFailed" in str(exc)
+                    ):
+                        import time
+
+                        time.sleep(0.1 * (2**attempt))
+                        continue
+                    raise
 
         # 3. Snapshot verification & release pinning
         metadata = catalog.table(clean_ns, clean_name)["metadata"]

@@ -1,6 +1,7 @@
 """Resource-oriented Silver CLI. Processing lives in the Silver service."""
 
 import sys
+from datetime import date
 from enum import StrEnum
 from typing import Annotated
 
@@ -19,7 +20,12 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
 import typer
 from dotenv import load_dotenv
 
-from procurement.silver.service import date_range, run_resource
+from procurement.silver.service import (
+    date_range,
+    merge_run_reports,
+    run_resource,
+    split_date_range_by_year,
+)
 
 load_dotenv()
 
@@ -151,6 +157,120 @@ def display_run_summary(report: dict, resource: str, iceberg: bool) -> None:
     )
 
 
+def execute_resource(
+    fs,
+    bucket: str,
+    resource: str,
+    start: date,
+    end: date,
+    *,
+    family: str | None = None,
+    continue_on_error: bool = False,
+    skip_existing: bool = False,
+    iceberg: bool = True,
+    parallel: bool = True,
+    workers: int | None = None,
+) -> dict:
+    year_chunks = split_date_range_by_year(start, end)
+
+    if len(year_chunks) <= 1 or not parallel:
+        return run_resource(
+            fs,
+            bucket,
+            resource,
+            start,
+            end,
+            family=family,
+            continue_on_error=continue_on_error,
+            skip_existing=skip_existing,
+            on_progress=progress,
+            iceberg=iceberg,
+        )
+
+    import os
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TaskProgressColumn,
+        TextColumn,
+        TimeElapsedColumn,
+    )
+
+    max_workers = workers or min(len(year_chunks), os.cpu_count() or 4)
+    console.print(
+        f"[bold cyan]⚡ Multi-year detected:[/] Running [bold green]{len(year_chunks)} years[/] in parallel "
+        f"across [bold green]{max_workers}[/] workers "
+        f"({', '.join(str(s.year) for s, _ in year_chunks)})"
+    )
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold cyan]{task.fields[name]}[/]"),
+        BarColumn(bar_width=25),
+        TaskProgressColumn(),
+        TextColumn("[white]{task.completed}/{task.total} days[/]"),
+        TextColumn("• [dim]acc=[/][bold green]{task.fields[acc]:,}[/]"),
+        TextColumn("[dim]quar=[/][bold yellow]{task.fields[quar]:,}[/]"),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress_ui:
+        task_ids = {}
+        for s, e in year_chunks:
+            total_days = (e - s).days + 1
+            t_id = progress_ui.add_task(
+                f"{s.year}",
+                total=total_days,
+                name=f"[{s.year}]",
+                acc=0,
+                quar=0,
+            )
+            task_ids[s.year] = t_id
+
+        def make_worker_progress(y: int):
+            t_id = task_ids[y]
+            acc_total = 0
+            quar_total = 0
+
+            def on_chunk_day(entry: dict) -> None:
+                nonlocal acc_total, quar_total
+                q = entry.get("quality", {})
+                acc_total += q.get("accepted", 0)
+                quar_total += q.get("quarantined", 0)
+                progress_ui.update(t_id, advance=1, acc=acc_total, quar=quar_total)
+                if entry.get("status") == "failed":
+                    progress_ui.console.print(
+                        f"  [bold red]✘ [{y}] {entry.get('date')}: {entry.get('error')}[/]"
+                    )
+
+            return on_chunk_day
+
+        def run_chunk(chunk_start: date, chunk_end: date) -> dict:
+            return run_resource(
+                fs,
+                bucket,
+                resource,
+                chunk_start,
+                chunk_end,
+                family=family,
+                continue_on_error=continue_on_error,
+                skip_existing=skip_existing,
+                on_progress=make_worker_progress(chunk_start.year),
+                iceberg=iceberg,
+            )
+
+        chunk_reports = []
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {pool.submit(run_chunk, s, e): (s, e) for s, e in year_chunks}
+            for fut in as_completed(futures):
+                rep = fut.result()
+                chunk_reports.append(rep)
+
+    return merge_run_reports(sorted(chunk_reports, key=lambda r: r.get("start_date", "")))
+
+
 @app.command("notice")
 @app.command("tbmt", hidden=True)
 def notice(
@@ -177,6 +297,21 @@ def notice(
             help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
         ),
     ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
 ):
     """Process standard, VK/ADB and reoffer automatically for each day."""
     try:
@@ -185,7 +320,7 @@ def notice(
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
     typer.echo(f"notice | {first} .. {last} | family={family.value if family else 'all'}")
-    report = run_resource(
+    report = execute_resource(
         fs,
         bucket,
         "notice",
@@ -194,8 +329,9 @@ def notice(
         family=family.value if family else None,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
-        on_progress=progress,
         iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
     )
     typer.echo(f"Status: {report['status']}")
     typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
@@ -234,6 +370,21 @@ def project(
             help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
         ),
     ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
 ):
     """Process investment project (du_an) automatically for each day."""
     try:
@@ -242,7 +393,7 @@ def project(
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
     typer.echo(f"project | {first} .. {last}")
-    report = run_resource(
+    report = execute_resource(
         fs,
         bucket,
         "project",
@@ -251,8 +402,9 @@ def project(
         family=None,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
-        on_progress=progress,
         iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
     )
     typer.echo(f"Status: {report['status']}")
     typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
@@ -293,6 +445,21 @@ def result(
             help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
         ),
     ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
 ):
     """Process contractor selection result (kq_lcnt) automatically for each day."""
     try:
@@ -301,7 +468,7 @@ def result(
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
     typer.echo(f"contractor_result | {first} .. {last}")
-    report = run_resource(
+    report = execute_resource(
         fs,
         bucket,
         "contractor_result",
@@ -310,8 +477,9 @@ def result(
         family=None,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
-        on_progress=progress,
         iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
     )
     typer.echo(f"Status: {report['status']}")
     typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
@@ -360,6 +528,21 @@ def khlcnt(
             help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
         ),
     ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
 ):
     """Process procurement plan & package (KHLCNT) automatically for each day."""
     try:
@@ -368,7 +551,7 @@ def khlcnt(
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
     typer.echo(f"khlcnt | {first} .. {last} | family={family.value if family else 'all'}")
-    report = run_resource(
+    report = execute_resource(
         fs,
         bucket,
         "khlcnt",
@@ -377,8 +560,9 @@ def khlcnt(
         family=family.value if family else None,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
-        on_progress=progress,
         iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
     )
     typer.echo(f"Status: {report['status']}")
     typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
@@ -418,6 +602,21 @@ def all_resources(
             help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
         ),
     ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
 ):
     """Run Silver candidate & Iceberg pipeline across ALL resources (khlcnt, notice, project, result)."""
     try:
@@ -427,13 +626,17 @@ def all_resources(
 
     fs, bucket = get_storage()
     resources = ["khlcnt", "notice", "project", "contractor_result"]
+    year_chunks = split_date_range_by_year(first, last)
+    is_multi_year = len(year_chunks) > 1 and parallel
 
     console.print(
         Panel(
             f"[bold]Batch Silver Pipeline Execution[/]\n"
             f"Resources: [bold cyan]{', '.join(resources)}[/]\n"
             f"Date Range: [bold yellow]{first}[/] ➔ [bold yellow]{last}[/]\n"
+            f"Execution Mode: [bold green]{'Multi-Year Parallel (' + str(len(year_chunks)) + ' years)' if is_multi_year else 'Sequential'}[/]\n"
             f"Iceberg: [bold sky_blue2]{'Enabled (Format v2)' if iceberg else 'Disabled'}[/]\n"
+            f"Skip existing: [white]{skip_existing}[/]\n"
             f"Continue on error: [white]{continue_on_error}[/]",
             title="[bold cyan]Procurement Lakehouse[/]",
             border_style="cyan",
@@ -444,7 +647,7 @@ def all_resources(
     for res in resources:
         display_name = "result" if res == "contractor_result" else res
         console.rule(f"[bold cyan]▶ Starting {display_name.upper()} ({first} ➔ {last})[/]")
-        report = run_resource(
+        report = execute_resource(
             fs,
             bucket,
             res,
@@ -452,8 +655,9 @@ def all_resources(
             last,
             continue_on_error=continue_on_error,
             skip_existing=skip_existing,
-            on_progress=progress,
             iceberg=iceberg,
+            parallel=parallel,
+            workers=workers,
         )
         display_run_summary(report, display_name, iceberg)
         if report.get("status") == "failed":
@@ -647,87 +851,128 @@ def sync_iceberg(
     synced_tables = []
     total_synced_rows = 0
 
-    for tbl_name in target_tables:
-        clean_schema = all_schemas.get(tbl_name)
-        if not clean_schema:
-            console.print(f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]")
-            continue
-
-        if year:
-            s3_pattern = f"s3://{bucket}/silver/{tbl_name}/source_date={year}-*/*.parquet"
-            fs_pattern = f"{bucket}/silver/{tbl_name}/source_date={year}-*/*.parquet"
-        else:
-            s3_pattern = f"s3://{bucket}/silver/{tbl_name}/*/*.parquet"
-            fs_pattern = f"{bucket}/silver/{tbl_name}/*/*.parquet"
-
-        files = fs.glob(fs_pattern)
-        if not files:
-            console.print(
-                f"  [dim]- {tbl_name:25}: Không tìm thấy file Parquet nào trên S3, bỏ qua.[/]"
-            )
-            continue
-
-        # 1. Ensure Iceberg table exists
-        ddl = to_iceberg_ddl(tbl_name, clean_schema, "silver")
-        db.execute(ddl)
-
-        # 2. Query incoming parquet row count
-        try:
-            db.execute(
-                f"CREATE OR REPLACE TEMP VIEW _cand AS SELECT * FROM read_parquet('{s3_pattern}')"
-            )
-            cand_res = db.execute("SELECT count(*) FROM _cand").fetchone()
-            row_count = cand_res[0] if cand_res else 0
-        except Exception as e:
-            console.print(f"  [yellow]⚠ {tbl_name:25}: Lỗi đọc Parquet từ S3 ({e}), bỏ qua.[/]")
-            continue
-
-        if row_count == 0:
-            console.print(f"  [dim]- {tbl_name:25}: 0 bản ghi, bỏ qua.[/]")
-            continue
-
-        # 3. Select only exact table columns (exclude Hive partition source_date if not in schema)
-        sa_table = metadata.tables.get(f"silver.{tbl_name}")
-        if sa_table is not None:
-            col_names = [c.name for c in sa_table.columns]
-        else:
-            col_names = [col.split()[0].strip('", ') for col in clean_schema.split(",")]
-        cols_sql = ", ".join(f'"{c}"' for c in col_names)
-
-        pk = get_primary_key(tbl_name)
-        db.execute("BEGIN TRANSACTION")
-        try:
-            exist_res = db.execute(f"SELECT count(*) FROM lake.silver.{tbl_name}").fetchone()
-            has_existing = (exist_res[0] if exist_res else 0) > 0
-            if has_existing and pk:
-                db.execute(
-                    f"DELETE FROM lake.silver.{tbl_name} WHERE {pk} IN (SELECT {pk} FROM _cand)"
-                )
-            db.execute(
-                f"INSERT INTO lake.silver.{tbl_name} ({cols_sql}) SELECT {cols_sql} FROM _cand"
-            )
-            db.execute("COMMIT")
-        except Exception as exc:
-            db.execute("ROLLBACK")
-            console.print(f"  [bold red]✘ {tbl_name:25}: Lỗi khi commit vào Iceberg: {exc}[/]")
-            continue
-
-        console.print(
-            f"  [bold green]✔[/] [bold white]{tbl_name:25}[/]: [bold cyan]{row_count:,}[/] dòng ({len(files)} phân vùng) ➔ Iceberg"
-        )
-        synced_tables.append(tbl_name)
-        total_synced_rows += row_count
-
-    # 4. Refresh deduplication views
-    console.print(
-        "\n[bold sky_blue2]Đang cập nhật các Views SIMD khử trùng (silver.v_latest_*)...[/]"
-    )
     try:
-        created_views = ensure_views(db, "silver")
-        for v in created_views:
-            console.print(f"  [bold green]✔[/] [dim]View:[/] [bold cyan]{v}[/]")
-    except Exception as exc:
-        console.print(f"  [yellow]⚠ Lỗi tạo view: {exc}[/]")
+        for tbl_name in target_tables:
+            clean_schema = all_schemas.get(tbl_name)
+            if not clean_schema:
+                console.print(f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]")
+                continue
+
+            partition_paths = fs.glob(f"{bucket}/silver/{tbl_name}/source_date=*-*")
+            discovered_months = set()
+            for p in partition_paths:
+                base = p.rsplit("/", 1)[-1]
+                if base.startswith("source_date="):
+                    ym_str = base[len("source_date=") : len("source_date=") + 7]
+                    if len(ym_str) == 7 and ym_str[:4].isdigit() and ym_str[5:].isdigit():
+                        if not year or ym_str.startswith(f"{year}-"):
+                            discovered_months.add(ym_str)
+            months_to_sync = sorted(discovered_months)
+
+            if not months_to_sync:
+                console.print(
+                    f"  [dim]- {tbl_name:25}: Không tìm thấy phân vùng nào trên S3, bỏ qua.[/]"
+                )
+                continue
+
+            # 1. Clean sync preparation
+            if not year:
+                # Full sync: recreate clean Iceberg table directly from S3 Parquet source of truth
+                db.execute(f"DROP TABLE IF EXISTS lake.silver.{tbl_name}")
+                db.execute(to_iceberg_ddl(tbl_name, clean_schema, "silver"))
+            else:
+                db.execute(to_iceberg_ddl(tbl_name, clean_schema, "silver"))
+                spec = get_partition_spec(tbl_name)
+                if spec:
+                    import contextlib
+
+                    with contextlib.suppress(Exception):
+                        db.execute(
+                            f"DELETE FROM lake.silver.{tbl_name} WHERE {spec} >= '{year}-01-01' AND {spec} <= '{year}-12-31'"
+                        )
+
+            # 2. Select only exact table columns (exclude Hive partition source_date if not in schema)
+            sa_table = metadata.tables.get(f"silver.{tbl_name}")
+            if sa_table is not None:
+                col_names = [c.name for c in sa_table.columns]
+            else:
+                col_names = [col.split()[0].strip('", ') for col in clean_schema.split(",")]
+            cols_sql = ", ".join(f'"{c}"' for c in col_names)
+
+            tbl_total_rows = 0
+            tbl_total_partitions = 0
+
+            # 3. Stream ingest in bounded monthly chunks (~30k - 70k rows per chunk)
+            for m in months_to_sync:
+                s3_pattern = f"s3://{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
+                fs_pattern = f"{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
+                files = fs.glob(fs_pattern)
+                if not files:
+                    continue
+
+                try:
+                    db.execute(
+                        f"CREATE OR REPLACE TEMP VIEW _cand AS SELECT * FROM read_parquet('{s3_pattern}')"
+                    )
+                    cand_res = db.execute("SELECT count(*) FROM _cand").fetchone()
+                    row_count = cand_res[0] if cand_res else 0
+                except Exception as e:
+                    console.print(
+                        f"  [yellow]⚠ {tbl_name:25} ({m}): Lỗi đọc Parquet từ S3 ({e}), bỏ qua.[/]"
+                    )
+                    continue
+
+                if row_count == 0:
+                    db.execute("DROP VIEW IF EXISTS _cand")
+                    continue
+
+                db.execute("BEGIN TRANSACTION")
+                try:
+                    db.execute(
+                        f"INSERT INTO lake.silver.{tbl_name} ({cols_sql}) SELECT {cols_sql} FROM _cand"
+                    )
+                    db.execute("COMMIT")
+                except Exception as exc:
+                    db.execute("ROLLBACK")
+                    console.print(
+                        f"  [bold red]✘ {tbl_name:25} ({m}): Lỗi khi commit vào Iceberg: {exc}[/]"
+                    )
+                    continue
+                finally:
+                    db.execute("DROP VIEW IF EXISTS _cand")
+                    import contextlib
+                    import ctypes
+
+                    with contextlib.suppress(Exception):
+                        ctypes.CDLL("libc.so.6").malloc_trim(0)
+
+                tbl_total_rows += row_count
+                tbl_total_partitions += len(files)
+
+            if tbl_total_rows > 0:
+                console.print(
+                    f"  [bold green]✔[/] [bold white]{tbl_name:25}[/]: [bold cyan]{tbl_total_rows:,}[/] dòng ({tbl_total_partitions} phân vùng) ➔ Iceberg"
+                )
+                synced_tables.append(tbl_name)
+                total_synced_rows += tbl_total_rows
+
+        # 4. Refresh deduplication views
+        console.print(
+            "\n[bold sky_blue2]Đang cập nhật các Views SIMD khử trùng (silver.v_latest_*)...[/]"
+        )
+        try:
+            created_views = ensure_views(db, "silver")
+            for v in created_views:
+                console.print(f"  [bold green]✔[/] [dim]View:[/] [bold cyan]{v}[/]")
+        except Exception as exc:
+            console.print(f"  [yellow]⚠ Lỗi tạo view: {exc}[/]")
+    finally:
+        db.close()
+        import contextlib
+        import ctypes
+
+        with contextlib.suppress(Exception):
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
 
     console.print(
         Panel(
@@ -845,6 +1090,7 @@ def ui(
 ):
     """Launch local DuckDB Web SQL UI with Iceberg tables & latest views attached."""
     import time
+
     from procurement.common.settings import settings
     from procurement.silver.application.warehouse import ensure_views
     from procurement.storage.iceberg import connect

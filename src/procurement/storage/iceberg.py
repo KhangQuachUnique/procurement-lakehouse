@@ -102,8 +102,18 @@ class RestCatalog:
         })
 
 
-def connect(config: IcebergConfig, *, install=False):
-    db = duckdb.connect()
+def connect(
+    config: IcebergConfig,
+    *,
+    install: bool = False,
+    max_memory: str = "4GB",
+    threads: int = 4,
+):
+    db = duckdb.connect(config={"max_memory": max_memory, "threads": str(threads)})
+    try:
+        db.execute("SET preserve_insertion_order = false")
+    except Exception:
+        pass
     try:
         for extension in ("httpfs", "iceberg"):
             if install:
