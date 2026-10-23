@@ -1,6 +1,5 @@
-"""Daily Silver standardization assets, dependent on committed Bronze assets."""
+"""Daily Silver standardization assets with table-level Dagster representations."""
 
-import os
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -10,14 +9,15 @@ from dagster import (
     AssetCheckSpec,
     AssetExecutionContext,
     AssetKey,
+    AssetSpec,
     BackfillPolicy,
     Config,
     Failure,
     MaterializeResult,
     OpExecutionContext,
     RetryPolicy,
-    asset,
     job,
+    multi_asset,
     op,
 )
 from pydantic import Field
@@ -36,39 +36,64 @@ from procurement.silver.service import run_resource
 
 
 @dataclass(frozen=True)
-class SilverAssetSpec:
-    """Specification mapping a Silver asset to its upstream Bronze dependency."""
+class SilverTableSpec:
+    """Specification of an individual Silver domain table."""
 
-    name: str
-    resource_name: str
-    upstream_bronze_name: str
+    table: str
     description: str
 
 
-SILVER_SPECS: tuple[SilverAssetSpec, ...] = (
-    SilverAssetSpec(
-        name="silver_project",
+@dataclass(frozen=True)
+class SilverResourceGroup:
+    """Specification of a Silver resource generating multiple physical tables."""
+
+    resource_name: str
+    upstream_bronze_name: str
+    primary_revision_table: str
+    tables: tuple[SilverTableSpec, ...]
+
+
+SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
+    SilverResourceGroup(
         resource_name="project",
         upstream_bronze_name="bronze_project",
-        description="Standardized procurement project revisions and locations",
+        primary_revision_table="project_revision",
+        tables=(
+            SilverTableSpec("project_revision", "Standardized procurement project revisions and metadata"),
+            SilverTableSpec("project_location", "Geographical execution locations of projects"),
+        ),
     ),
-    SilverAssetSpec(
-        name="silver_khlcnt",
+    SilverResourceGroup(
         resource_name="khlcnt",
         upstream_bronze_name="bronze_khlcnt",
-        description="Standardized procurement plans, bid packages, lots and locations",
+        primary_revision_table="plan_revision",
+        tables=(
+            SilverTableSpec("plan_revision", "Procurement plan revisions and estimated budgets"),
+            SilverTableSpec("package_revision", "Bid package revisions, procurement methods and timelines"),
+            SilverTableSpec("package_lot", "Procurement bid package lots and price items"),
+            SilverTableSpec("package_location", "Geographical execution locations of bid packages"),
+        ),
     ),
-    SilverAssetSpec(
-        name="silver_notice",
+    SilverResourceGroup(
         resource_name="notice",
         upstream_bronze_name="bronze_notify_contractor",
-        description="Standardized tender notices (TBMT), lots, locations and reoffers",
+        primary_revision_table="notice_revision",
+        tables=(
+            SilverTableSpec("notice_revision", "Tender notice (TBMT) revisions, deadlines and requirements"),
+            SilverTableSpec("notice_lot", "Tender notice bidding lots and itemized prices"),
+            SilverTableSpec("notice_location", "Geographical execution locations of tender notices"),
+            SilverTableSpec("notice_reoffer_submission", "Tender reoffer submissions and price quotes"),
+        ),
     ),
-    SilverAssetSpec(
-        name="silver_contractor_result",
+    SilverResourceGroup(
         resource_name="contractor_result",
         upstream_bronze_name="bronze_contractor_result",
-        description="Standardized contractor selection results (KQLCNT) and award details",
+        primary_revision_table="result_revision",
+        tables=(
+            SilverTableSpec("result_revision", "Contractor selection result (KQLCNT) decisions"),
+            SilverTableSpec("award_lot", "Winning bid lots, awarded prices and contract durations"),
+            SilverTableSpec("award_contractor", "Winning contractors, consortium details and tax codes"),
+        ),
     ),
 )
 
@@ -90,42 +115,51 @@ class SilverConfig(Config):
     )
 
 
-def build_silver_asset(spec: SilverAssetSpec):
-    """Build a partitioned Dagster asset for a Silver resource contract."""
+def build_silver_multi_asset(group: SilverResourceGroup):
+    """Build a partitioned multi-asset representing all physical tables for a Silver resource."""
+    specs = [
+        AssetSpec(
+            key=f"silver_{t.table}",
+            group_name="silver",
+            deps=[AssetKey(group.upstream_bronze_name)],
+            description=t.description,
+            automation_condition=EAGER_AUTOMATION,
+        )
+        for t in group.tables
+    ]
+
+    primary_key = f"silver_{group.primary_revision_table}"
     checks = [
         AssetCheckSpec(
             "execution_status",
-            asset=spec.name,
+            asset=primary_key,
             blocking=True,
             description="Verify successful execution without unhandled errors",
         ),
         AssetCheckSpec(
             "quarantine_threshold",
-            asset=spec.name,
+            asset=primary_key,
             blocking=False,
             description="Warning if quarantine rate exceeds 20% of processed records",
         ),
         AssetCheckSpec(
             "iceberg_publication",
-            asset=spec.name,
+            asset=primary_key,
             blocking=False,
             description="Verify table partitions were staged/committed into Iceberg catalog",
         ),
     ]
 
-    @asset(
-        name=spec.name,
-        group_name="silver",
+    @multi_asset(
+        name=f"silver_{group.resource_name}",
+        specs=specs,
+        check_specs=checks,
         partitions_def=BRONZE_PARTITIONS,
-        deps=[AssetKey(spec.upstream_bronze_name)],
         required_resource_keys={"object_storage"},
         backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
         retry_policy=RetryPolicy(max_retries=0),
-        check_specs=checks,
-        automation_condition=EAGER_AUTOMATION,
-        description=spec.description,
     )
-    def silver_asset(context: AssetExecutionContext, config: SilverConfig):
+    def silver_multi_asset(context: AssetExecutionContext, config: SilverConfig):
         source_date = date.fromisoformat(context.partition_key)
         validate_closed_range(source_date, source_date, today=today_vn())
 
@@ -135,7 +169,7 @@ def build_silver_asset(spec: SilverAssetSpec):
         report = run_resource(
             fs=fs,
             bucket=bucket,
-            resource=spec.resource_name,
+            resource=group.resource_name,
             start=source_date,
             end=source_date,
             family=config.family,
@@ -147,11 +181,12 @@ def build_silver_asset(spec: SilverAssetSpec):
         if not days:
             yield AssetCheckResult(
                 check_name="execution_status",
+                asset_key=AssetKey(primary_key),
                 passed=False,
                 metadata={"error": "Empty execution report returned"},
             )
             raise Failure(
-                f"Silver materialization failed: no report for {spec.name}/{source_date}",
+                f"Silver materialization failed: no report for {group.resource_name}/{source_date}",
                 allow_retries=False,
             )
 
@@ -162,17 +197,19 @@ def build_silver_asset(spec: SilverAssetSpec):
             error_msg = entry.get("error", "Unknown processing error")
             yield AssetCheckResult(
                 check_name="execution_status",
+                asset_key=AssetKey(primary_key),
                 passed=False,
                 metadata={"error": error_msg, "error_type": entry.get("error_type", "")},
             )
             raise Failure(
-                f"Silver materialization failed for {spec.name}/{source_date}: {error_msg}",
+                f"Silver materialization failed for {group.resource_name}/{source_date}: {error_msg}",
                 allow_retries=False,
             )
 
         # 1. execution_status check
         yield AssetCheckResult(
             check_name="execution_status",
+            asset_key=AssetKey(primary_key),
             passed=True,
             metadata={"status": status},
         )
@@ -189,6 +226,7 @@ def build_silver_asset(spec: SilverAssetSpec):
 
         yield AssetCheckResult(
             check_name="quarantine_threshold",
+            asset_key=AssetKey(primary_key),
             passed=quar_passed,
             metadata={
                 "accepted": acc,
@@ -200,10 +238,11 @@ def build_silver_asset(spec: SilverAssetSpec):
         )
 
         # 3. iceberg_publication check
-        iceberg_staged = entry.get("iceberg", [])
+        iceberg_staged = entry.get("iceberg", {})
         iceberg_passed = len(iceberg_staged) > 0 if config.publish_iceberg and acc > 0 else True
         yield AssetCheckResult(
             check_name="iceberg_publication",
+            asset_key=AssetKey(primary_key),
             passed=iceberg_passed,
             metadata={
                 "enabled": config.publish_iceberg,
@@ -212,26 +251,42 @@ def build_silver_asset(spec: SilverAssetSpec):
             },
         )
 
-        # 4. MaterializeResult
-        yield MaterializeResult(
-            metadata={
-                "resource": spec.resource_name,
+        files = entry.get("files", {})
+
+        # 4. MaterializeResult for each individual table in the group
+        for t in group.tables:
+            tbl_name = t.table
+            tbl_key = f"silver_{tbl_name}"
+            tbl_iceberg = iceberg_staged.get(tbl_name, {}) if isinstance(iceberg_staged, dict) else {}
+            parquet_file = files.get(tbl_name, "") if isinstance(files, dict) else ""
+
+            meta: dict[str, Any] = {
+                "table": tbl_name,
+                "resource": group.resource_name,
                 "source_date": source_date.isoformat(),
                 "status": status,
-                "run_id": report.get("run_id", ""),
-                "accepted": acc,
-                "quarantined": quar,
-                "issues": issues,
-                "blocking_issues": blocking_issues,
-                "output_files": len(entry.get("files", [])),
-                "iceberg_tables_staged": len(iceberg_staged),
+                "parquet_path": parquet_file,
             }
-        )
+            if tbl_name == group.primary_revision_table:
+                meta.update({
+                    "run_id": report.get("run_id", ""),
+                    "accepted": acc,
+                    "quarantined": quar,
+                    "issues": issues,
+                })
+            if tbl_iceberg:
+                meta["iceberg_snapshot_id"] = tbl_iceberg.get("snapshot_id")
+                meta["iceberg_total_rows"] = tbl_iceberg.get("row_count")
 
-    return silver_asset
+            yield MaterializeResult(
+                asset_key=AssetKey(tbl_key),
+                metadata=meta,
+            )
+
+    return silver_multi_asset
 
 
-silver_assets = [build_silver_asset(spec) for spec in SILVER_SPECS]
+silver_assets = [build_silver_multi_asset(group) for group in SILVER_GROUPS]
 
 
 class IcebergSyncConfig(Config):
@@ -255,7 +310,6 @@ def sync_silver_iceberg_op(context: OpExecutionContext, config: IcebergSyncConfi
     """Execute streaming chunked sync into Iceberg tables and refresh SIMD latest views."""
     from procurement.cli.silver import sync_iceberg
 
-    # Execute sync_iceberg with clean streaming bounds
     sync_iceberg(table=config.table, resource=None, year=config.year)
     return {"status": "completed", "table": config.table or "all", "year": config.year or "all"}
 
@@ -269,10 +323,11 @@ def silver_sync_iceberg_job():
 
 
 __all__ = [
-    "SILVER_SPECS",
-    "SilverAssetSpec",
+    "SILVER_GROUPS",
     "SilverConfig",
-    "build_silver_asset",
+    "SilverResourceGroup",
+    "SilverTableSpec",
+    "build_silver_multi_asset",
     "silver_assets",
     "silver_sync_iceberg_job",
     "sync_silver_iceberg_op",

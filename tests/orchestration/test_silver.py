@@ -28,20 +28,23 @@ def storage(tmp_path, monkeypatch):
 
 
 def test_definitions_cover_silver_assets_and_policies():
-    """Ensure defs is loadable and all silver assets are properly wired."""
+    """Ensure defs is loadable and all silver table assets are properly wired."""
     Definitions.validate_loadable(defs)
-    silver_asset_names = {a.key.to_user_string() for a in silver.silver_assets}
-    expected_names = {s.name for s in silver.SILVER_SPECS}
-    assert silver_asset_names == expected_names
+
+    all_table_keys = {k.to_user_string() for a in silver.silver_assets for k in a.keys}
+    expected_tables = {f"silver_{t.table}" for g in silver.SILVER_GROUPS for t in g.tables}
+    assert all_table_keys == expected_tables
 
     for asset in silver.silver_assets:
-        assert asset.group_names_by_key[asset.key] == "silver"
+        for k in asset.keys:
+            assert asset.group_names_by_key[k] == "silver"
         assert asset.op.retry_policy.max_retries == 0
         assert asset.backfill_policy.max_partitions_per_run == 1
-        spec = next(s for s in silver.SILVER_SPECS if s.name == asset.key.to_user_string())
+        group = next(g for g in silver.SILVER_GROUPS if f"silver_{g.primary_revision_table}" in {k.to_user_string() for k in asset.keys})
         # Check upstream bronze dependency
-        dep_keys = {d.to_user_string() for d in asset.asset_deps[asset.key]}
-        assert spec.upstream_bronze_name in dep_keys
+        for k in asset.keys:
+            dep_keys = {d.to_user_string() for d in asset.asset_deps[k]}
+            assert group.upstream_bronze_name in dep_keys
 
     assert silver_daily_schedule.default_status is DefaultScheduleStatus.STOPPED
 
@@ -54,9 +57,9 @@ def test_silver_schedule_three_closed_dates():
     assert len({r.run_key for r in requests}) == 3
 
 
-@pytest.mark.parametrize("spec", silver.SILVER_SPECS)
-def test_silver_asset_materialize_success(storage, monkeypatch, spec):
-    """Verify successful execution produces correct metadata and passing checks."""
+@pytest.mark.parametrize("group", silver.SILVER_GROUPS)
+def test_silver_asset_materialize_success(storage, monkeypatch, group):
+    """Verify successful execution produces correct metadata and passing checks for each table."""
     mock_run_resource = MagicMock()
     mock_run_resource.return_value = {
         "status": "completed",
@@ -71,14 +74,14 @@ def test_silver_asset_materialize_success(storage, monkeypatch, spec):
                     "issues": 1,
                     "blocking_issues": 0,
                 },
-                "files": ["s3://procurement-lakehouse/silver/tbl/data.parquet"],
-                "iceberg": [{"table": "tbl", "rows": 100, "snapshot_id": 12345}],
+                "files": {t.table: f"procurement-lakehouse/silver/{t.table}/source_date=2025-01-01/data.parquet" for t in group.tables},
+                "iceberg": {t.table: {"snapshot_id": 12345, "row_count": 100} for t in group.tables},
             }
         ],
     }
     monkeypatch.setattr(silver, "run_resource", mock_run_resource)
 
-    target_asset = next(a for a in silver.silver_assets if a.key.to_user_string() == spec.name)
+    target_asset = next(a for a in silver.silver_assets if f"silver_{group.primary_revision_table}" in {k.to_user_string() for k in a.keys})
 
     result = materialize(
         [target_asset],
@@ -86,7 +89,7 @@ def test_silver_asset_materialize_success(storage, monkeypatch, spec):
         partition_key=str(DAY),
         run_config={
             "ops": {
-                spec.name: {
+                f"silver_{group.resource_name}": {
                     "config": {
                         "publish_iceberg": True,
                         "skip_existing": False,
@@ -100,8 +103,8 @@ def test_silver_asset_materialize_success(storage, monkeypatch, spec):
     assert result.success
     mock_run_resource.assert_called_once_with(
         fs=storage,
-        bucket=str(DAY).join("") if False else storage.fs.root_marker if False else settings.OBJECT_STORAGE_BUCKET,
-        resource=spec.resource_name,
+        bucket=settings.OBJECT_STORAGE_BUCKET,
+        resource=group.resource_name,
         start=DAY,
         end=DAY,
         family=None,
@@ -109,15 +112,21 @@ def test_silver_asset_materialize_success(storage, monkeypatch, spec):
         iceberg=True,
     )
 
-    # Check asset check evaluations
+    # Check asset check evaluations (3 checks on primary table)
     check_evals = result.get_asset_check_evaluations()
     assert len(check_evals) == 3
     assert all(chk.passed for chk in check_evals)
+
+    # Check that each table in the group was materialized
+    materialized_keys = {e.asset_key.to_user_string() for e in result.all_events if e.is_step_materialization}
+    expected_keys = {f"silver_{t.table}" for t in group.tables}
+    assert materialized_keys == expected_keys
 
 
 def test_silver_asset_materialize_high_quarantine_rate(storage, monkeypatch):
     """Verify quarantine_threshold check fails when quarantine rate > 20%."""
     mock_run_resource = MagicMock()
+    group = next(g for g in silver.SILVER_GROUPS if g.resource_name == "notice")
     mock_run_resource.return_value = {
         "status": "needs_review",
         "run_id": "test-run-456",
@@ -131,14 +140,14 @@ def test_silver_asset_materialize_high_quarantine_rate(storage, monkeypatch):
                     "issues": 5,
                     "blocking_issues": 0,
                 },
-                "files": ["s3://procurement-lakehouse/silver/tbl/data.parquet"],
-                "iceberg": [],
+                "files": {t.table: f"path/{t.table}" for t in group.tables},
+                "iceberg": {},
             }
         ],
     }
     monkeypatch.setattr(silver, "run_resource", mock_run_resource)
 
-    target_asset = next(a for a in silver.silver_assets if a.key.to_user_string() == "silver_notice")
+    target_asset = next(a for a in silver.silver_assets if "silver_notice_revision" in {k.to_user_string() for k in a.keys})
 
     result = materialize(
         [target_asset],
@@ -170,7 +179,7 @@ def test_silver_asset_materialize_failure(storage, monkeypatch):
     }
     monkeypatch.setattr(silver, "run_resource", mock_run_resource)
 
-    target_asset = next(a for a in silver.silver_assets if a.key.to_user_string() == "silver_project")
+    target_asset = next(a for a in silver.silver_assets if "silver_project_revision" in {k.to_user_string() for k in a.keys})
 
     result = materialize(
         [target_asset],
