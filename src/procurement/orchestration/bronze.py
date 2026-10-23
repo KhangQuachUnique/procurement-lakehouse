@@ -96,9 +96,8 @@ def build_bronze_asset(definition):
             retry_policy=RetryPolicy(max_retries=0),
             check_specs=checks,
             description=f"Committed {definition.identity.resource} resource/day; immutable attempts",
-            config_schema=cfg_cls,
         )
-        def bronze_asset(context: AssetExecutionContext, config: Any):
+        def bronze_asset(context: AssetExecutionContext, config: cfg_cls):
             source_date = date.fromisoformat(context.partition_key)
             validate_closed_range(source_date, source_date, today=today_vn())
 

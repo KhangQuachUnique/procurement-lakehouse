@@ -40,7 +40,7 @@ uv run --locked pytest -m 'integration or not integration'
 ## Build application image
 
 ```powershell
-docker build -f infra/docker/Dockerfile -t procurement-lakehouse:local .
+docker build -t procurement-lakehouse:local .
 docker run --rm procurement-lakehouse:local python -m procurement.jobs.ingest --help
 ```
 

@@ -1,0 +1,236 @@
+name: procurement-lakehouse
+
+# ==============================================================================
+# PROCUREMENT LAKEHOUSE - UNIFIED DOCKER COMPOSE CONFIGURATION
+#
+# Khởi chạy toàn bộ hệ sinh thái:
+#   docker compose up -d
+#
+# Dừng toàn bộ hệ sinh thái:
+#   docker compose down
+# ==============================================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-dagster: &dagster
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      UV_EXTRA: orchestration
+  environment: &dagster-env
+    DAGSTER_HOME: /var/lib/procurement/dagster
+    DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
+  volumes:
+    - dagster-state:/var/lib/procurement/dagster
+    - ./infra/dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 60s
+  logging: *default-logging
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. HẠ TẦNG LƯU TRỮ (SeaweedFS S3 + Apache Iceberg REST Catalog)
+  # ----------------------------------------------------------------------------
+  object-storage:
+    image: ${OBJECT_STORAGE_IMAGE:-chrislusf/seaweedfs:4.46}
+    restart: unless-stopped
+    logging: *default-logging
+    command:
+      - mini
+      - -dir=/data
+      - -tableBucket=warehouse
+    environment:
+      AWS_ACCESS_KEY_ID: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
+      AWS_SECRET_ACCESS_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change_this_to_a_long_random_password}
+      S3_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
+    ports:
+      - "${OBJECT_STORAGE_BIND_ADDRESS:-127.0.0.1}:${OBJECT_STORAGE_API_PORT:-8333}:8333"
+      - "${ICEBERG_CATALOG_BIND_ADDRESS:-127.0.0.1}:${ICEBERG_CATALOG_PORT:-8181}:8181"
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:9333:9333"
+      - "127.0.0.1:23646:23646"
+    volumes:
+      - object-storage-data:/data
+
+  # ----------------------------------------------------------------------------
+  # 2. CƠ SỞ DỮ LIỆU METADATA ỨNG DỤNG (PostgreSQL 17)
+  # ----------------------------------------------------------------------------
+  app-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: ${APP_POSTGRES_USER:-procurement}
+      POSTGRES_DB: ${APP_POSTGRES_DB:-procurement}
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:-password}
+    ports:
+      - "${APP_POSTGRES_PORT:-25432}:5432"
+    volumes:
+      - app-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ${APP_POSTGRES_USER:-procurement} -d ${APP_POSTGRES_DB:-procurement}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 3. OPS DASHBOARD & GIÁM SÁT TIẾN ĐỘ THẦU (FastAPI + Web UI)
+  # ----------------------------------------------------------------------------
+  ops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    logging: *default-logging
+    command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
+    environment:
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change_this_to_a_long_random_password}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      OPS_INDEX_PATH: /var/lib/procurement/ops/index.sqlite3
+      BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
+      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
+      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
+      OPS_SYNC_INTERVAL_SECONDS: ${OPS_SYNC_INTERVAL_SECONDS:-5}
+      OPS_RECONCILE_INTERVAL_SECONDS: ${OPS_RECONCILE_INTERVAL_SECONDS:-300}
+      OPS_SYNC_WORKERS: ${OPS_SYNC_WORKERS:-8}
+      OPS_STALE_AFTER_SECONDS: ${OPS_STALE_AFTER_SECONDS:-600}
+      APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
+      ORCHESTRATION_ENABLED: "true"
+    volumes:
+      - ops-state:/var/lib/procurement/ops
+      - watch-state:/var/lib/procurement/watch:ro
+      - ingestion-state:/var/lib/procurement
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      object-storage:
+        condition: service_started
+      app-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ----------------------------------------------------------------------------
+  # 4. DATABASE QUẢN LÝ RUNS/EVENTS CỦA DAGSTER (PostgreSQL 17)
+  # ----------------------------------------------------------------------------
+  dagster-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_DB: dagster
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
+    volumes:
+      - dagster-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U dagster -d dagster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 5. DAGSTER CODE LOCATION (gRPC Server thực thi Asset/Pipeline)
+  # ----------------------------------------------------------------------------
+  dagster-code-location:
+    <<: *dagster
+    command: [dagster, api, grpc, --host, 0.0.0.0, --port, "4000", --module-name, procurement.orchestration.definitions]
+    environment:
+      <<: *dagster-env
+      ORCHESTRATION_ENABLED: "true"
+      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
+      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change_this_to_a_long_random_password}
+      ICEBERG_CATALOG_URI: ${ICEBERG_CATALOG_URI:-http://object-storage:8181}
+      ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE:-s3://warehouse}
+      MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mpi.gov.vn}
+      MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN}
+      MUASAMCONG_TIMEOUT_SECONDS: ${MUASAMCONG_TIMEOUT_SECONDS:-30}
+      MUASAMCONG_MAX_ATTEMPTS: ${MUASAMCONG_MAX_ATTEMPTS:-3}
+      MUASAMCONG_MAX_RETRY_DELAY_SECONDS: ${MUASAMCONG_MAX_RETRY_DELAY_SECONDS:-30}
+      MUASAMCONG_MAX_INFLIGHT: ${MUASAMCONG_MAX_INFLIGHT:-3}
+      MUASAMCONG_REQUEST_INTERVAL_SECONDS: ${MUASAMCONG_REQUEST_INTERVAL_SECONDS:-0}
+      KHLCNT_PACKAGE_WORKERS: ${KHLCNT_PACKAGE_WORKERS:-3}
+      BID_OPENING_DETAIL_WORKERS: ${BID_OPENING_DETAIL_WORKERS:-4}
+      BID_OPENING_MAX_INFLIGHT: ${BID_OPENING_MAX_INFLIGHT:-4}
+      BID_OPENING_REQUEST_INTERVAL_SECONDS: ${BID_OPENING_REQUEST_INTERVAL_SECONDS:-0.1}
+      BRONZE_BATCH_BYTES: ${BRONZE_BATCH_BYTES:-67108864}
+      BRONZE_BATCH_RECORDS: ${BRONZE_BATCH_RECORDS:-5000}
+      BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
+      BID_OPENING_WATCH_MAX_DAYS: ${BID_OPENING_WATCH_MAX_DAYS:-31}
+      DAGSTER_BRONZE_START_DATE: ${DAGSTER_BRONZE_START_DATE:-2000-01-01}
+      APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
+    volumes:
+      - dagster-state:/var/lib/procurement/dagster
+      - ./infra/dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
+      - ingestion-state:/var/lib/procurement
+      - watch-state:/var/lib/procurement/watch
+    depends_on:
+      dagster-postgres:
+        condition: service_healthy
+      app-postgres:
+        condition: service_healthy
+      object-storage:
+        condition: service_started
+    healthcheck:
+      test: [CMD, dagster, api, grpc-health-check, --port, "4000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 6. DAGSTER WEBSERVER (Giao diện trực quan Dashboard)
+  # ----------------------------------------------------------------------------
+  dagster-webserver:
+    <<: *dagster
+    command: [dagster-webserver, --host, 0.0.0.0, --port, "3000", --workspace, /opt/dagster/workspace.yaml]
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:3000/server_info', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 7. DAGSTER DAEMON (Bộ điều phối Lịch trình & Sensor chạy nền)
+  # ----------------------------------------------------------------------------
+  dagster-daemon:
+    <<: *dagster
+    command: [dagster-daemon, run, --workspace, /opt/dagster/workspace.yaml]
+    depends_on:
+      dagster-code-location:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, dagster-daemon, liveness-check]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  object-storage-data:
+  app-postgres-data:
+  ops-state:
+  watch-state:
+  ingestion-state:
+  dagster-postgres-data:
+  dagster-state:
