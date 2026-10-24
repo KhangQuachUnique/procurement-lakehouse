@@ -60,9 +60,9 @@ jobs:
           docker logs ingestion-ci
           exit 1
       - run: uv run --locked --no-sync pytest -m integration -o faulthandler_timeout=60
-      - run: docker build -f infra/docker/Dockerfile -t procurement-ci .
+      - run: docker build -f Dockerfile -t procurement-ci .
       - run: docker run --rm procurement-ci python -m procurement.jobs.ingest --help
-      - run: docker build --build-arg UV_EXTRA=orchestration -f infra/docker/Dockerfile -t procurement-dagster-ci .
+      - run: docker build --build-arg UV_EXTRA=orchestration -f Dockerfile -t procurement-dagster-ci .
       - run: docker run --rm procurement-dagster-ci python -c "from dagster import Definitions; from procurement.orchestration.definitions import defs; Definitions.validate_loadable(defs)"
       - name: Storage logs
         if: failure()
@@ -76,7 +76,7 @@ jobs:
     timeout-minutes: 15
     env:
       COMPOSE_PROJECT_NAME: procurement-orchestration-ci
-      COMPOSE_FILE: infra/docker/compose.yaml:infra/docker/compose.dagster.yaml:infra/docker/compose.test.yaml
+      COMPOSE_FILE: compose.yaml:infra/docker/compose.test.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

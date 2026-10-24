@@ -18,7 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class IndexSynchronizer:
-    def __init__(self, index, fs, *, bucket, interval=5, reconcile_interval=300, workers=8):
+    def __init__(
+        self,
+        index,
+        fs,
+        *,
+        bucket: str,
+        interval: float = 5.0,
+        reconcile_interval: float = 300.0,
+        workers: int = 8,
+    ):
         self.index, self.fs = index, fs
         self.bucket = bucket.replace("\\", "/").rstrip("/")
         self.interval, self.reconcile_interval, self.workers = interval, reconcile_interval, workers

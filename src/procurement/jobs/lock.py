@@ -9,8 +9,10 @@ from procurement.common.settings import settings
 
 
 @contextmanager
-def execution_lock(directory: Path):
+def execution_lock(directory: Path, tag: str | None = None):
     namespace = f"{settings.OBJECT_STORAGE_ENDPOINT}/{settings.OBJECT_STORAGE_BUCKET}"
+    if tag:
+        namespace += f"/{tag}"
     name = hashlib.sha256(namespace.encode()).hexdigest()[:20]
     try:
         with exclusive_file_lock(directory / f"ingestion-{name}.lock"):

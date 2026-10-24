@@ -22,5 +22,6 @@ def read_quality_contexts(fs, identity, run_id, source_date):
     prefix = quality_prefix(identity, run_id, source_date)
     for key in sorted(fs.glob(f"{prefix}/page-*.json")):
         page = read_json(fs, key)
-        result.extend(item["context"] for item in page["observations"] if "context" in item)
+        if page and "observations" in page:
+            result.extend(item["context"] for item in page["observations"] if "context" in item)
     return result

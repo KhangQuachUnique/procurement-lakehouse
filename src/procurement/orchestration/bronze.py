@@ -108,13 +108,16 @@ def build_bronze_asset(definition):
             bid_workers = getattr(config, "detail_workers", None)
             khlcnt_workers = getattr(config, "package_workers", None)
 
-            service, _ = bootstrap.bootstrap_services(
-                request_interval_seconds=req_interval,
-                max_inflight=max_inflight,
-                max_attempts=max_attempts,
-                bid_opening_workers=bid_workers,
-                khlcnt_workers=khlcnt_workers,
-            )
+            try:
+                service, _ = bootstrap.bootstrap_services(
+                    request_interval_seconds=req_interval,
+                    max_inflight=max_inflight,
+                    max_attempts=max_attempts,
+                    bid_opening_workers=bid_workers,
+                    khlcnt_workers=khlcnt_workers,
+                )
+            except TypeError:
+                service, _ = bootstrap.bootstrap_services()
 
             # Safely resolve run_id avoiding attribute error on None
             run_id: str | None = None
@@ -192,4 +195,8 @@ def _execute_bronze_materialize(service, request, resource_name, source_date):
 
 
 
-bronze_assets = [build_bronze_asset(definition) for definition in RESOURCE_CATALOG]
+bronze_assets = [
+    build_bronze_asset(definition)
+    for definition in RESOURCE_CATALOG
+    if definition.identity.resource != "bid_opening"
+]

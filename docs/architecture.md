@@ -2,10 +2,10 @@
 
 [README](../README.md) · [Vận hành](operations.md) · [Phát triển](development.md)
 
-**Đã triển khai:** ingestion Bronze, manifests, Ops, quality audit/repair, profile,
-query và transfer. **Silver/Gold bên dưới là thiết kế mục tiêu, chưa có jobs hoặc
-bảng được triển khai.** Code và config là nguồn chuẩn cho hành vi hiện tại;
-báo cáo từng lần khảo sát nằm ngoài docs.
+**Đã triển khai:** Ingestion Bronze, manifests, PostgreSQL metadata core, Ops, quality audit/repair, profile,
+query, transfer và **Silver Lakehouse (kiến trúc Pure Relational 1-Hop, 15 bảng chuẩn)**. Code tại `src/procurement/silver` và
+đặc tả tại [Cẩm nang Silver Lakehouse](silver_development_guide.md) là nguồn chuẩn cho hành vi hiện tại.
+**Gold** là tầng phân tích tiếp theo đang trong lộ trình thiết kế.
 
 ## Bronze hiện tại
 
@@ -101,33 +101,38 @@ HTTP 200 chưa chứng minh detail hợp lệ. Validator hiện chưa bắt bu�
 `bidName` hoặc `publicDate`; profile theo năm giúp review thêm rule, không tự đổi
 contract. Xem [quality và profiling](operations.md#kiểm-tra-và-sửa-chất-lượng-thông-báo).
 
-## Silver Lakehouse (15 bảng chuẩn)
+## Silver Lakehouse (Kiến Trúc Quan Hệ Thuần Túy 15 Bảng Chuẩn)
 
-Xem chi tiết hướng dẫn và schema tại [Cẩm nang Silver](silver_development_guide.md).
+Xem chi tiết đặc tả kỹ thuật, mô hình quan hệ và hướng dẫn phát triển tại [Cẩm nang Silver Lakehouse](silver_development_guide.md).
 
-Luồng: **Bronze đã verify → observations/lineage → typed revisions → relationships
-và children/participants → current entity → Gold**. 
-Dữ liệu lưu trữ vật lý dưới dạng Parquet trên S3/SeaweedFS và quản lý bằng **Apache Iceberg Format v2** qua REST Catalog (`lake.muasamcong`). Trạng thái điều phối và kiểm soát chạy lưu tại PostgreSQL (`silver_meta`).
+Hệ thống đã **bãi bỏ hoàn toàn các bảng RDF/Graph cũ** (`entity`, `entity_revision`, `revision_observation`, `relationship`, `child`, `entity_release`), chuyển sang **mô hình quan hệ thuần túy 1-hop (Pure Relational 1-Hop Model)**.
+Luồng: **Bronze đã verify → observation/lineage → typed revisions & typed 1-hop child tables → Gold**. 
+Dữ liệu lưu trữ vật lý dưới dạng Parquet trên S3 theo cấu trúc Hive-partitioning (`source_date=YYYY-MM-DD`) và quản lý qua **Apache Iceberg Format v2** (`lake.muasamcong`, phân vùng `public_date`).
 
-### Identity, lịch sử và 15 bảng chuẩn mực
+### 15 Bảng Chuẩn Mực Trong Mô Hình 3 Tầng (Tiers)
 
-| Nhóm | Bảng Silver (Parquet / Iceberg) | Vai trò nghiệp vụ |
+| Phân tầng | Bảng Silver (Parquet / Iceberg) | Vai trò nghiệp vụ |
 | --- | --- | --- |
-| **Lineage & Identity** | `observation` | Traceability vật lý: source/table/run/ngày/file key/checksum/row ordinal |
-| | `entity` | Canonical ID: namespace + entity type + ID scheme + source ID |
-| | `entity_revision` | Lịch sử snapshot bất biến: entity + source version + semantic hash |
-| | `current_entity` | Snapshot trạng thái mới nhất có hiệu lực (`selected` vs `ambiguous`) |
-| **Typed Revisions** | `project_revision` | Dự án đầu tư: tổng mức đầu tư Decimal, chủ đầu tư, số quyết định, địa bàn |
-| | `plan_revision` | Kế hoạch LCNT: mục tiêu, quy mô, mã DA liên kết (`project_id`) |
-| | `package_revision` | Gói thầu: giá gói, giá dự toán, lĩnh vực, hình thức, phương thức, loại HĐ |
-| | `notice_revision` | Thông báo mời thầu: ngày đóng/mở thầu, giá gói thầu, bên mời thầu |
+| **Tier 1: Audit & Lineage** | `observation` | Traceability vật lý 1-hop: source/table/run/ngày/file key/checksum/row ordinal |
+| | `quarantine` | Cách ly bản ghi lỗi nhận diện (thiếu ID, rỗng root) - bảo vệ an toàn kho |
+| | `quality_issue` | Sổ nhật ký ghi nhận cảnh báo chất lượng dữ liệu: lỗi parse tiền tệ, ngày, schema |
+| **Tier 2: Core Revisions** | `project_revision` | Dự án đầu tư: tổng mức đầu tư Decimal, chủ đầu tư, số quyết định, địa bàn |
+| | `plan_revision` | Kế hoạch LCNT (KHLCNT cha): mục tiêu, quy mô, mã DA liên kết (`project_id`), cơ quan duyệt |
+| | `package_revision` | Gói thầu trong KHLCNT: giá gói, giá dự toán, lĩnh vực, hình thức, phương thức, loại HĐ |
+| | `notice_revision` | Thông báo mời thầu (TBMT): hợp nhất Standard, VK/ADB, Reoffer (hợp đồng `notice-2`) |
 | | `result_revision` | Kết quả LCNT: quyết định trúng thầu, ngày ký, tổng giá trúng |
 | | `opening_revision` | Biên bản mở thầu: thời điểm mở thầu, số lượng nhà thầu nộp HSDT |
-| **Sub-entities & FK** | `lot` | Chi tiết từng lô thầu trong gói thầu / kết quả thầu |
-| | `bid_participation` | Danh sách nhà thầu dự thầu: Thắng/Thua, MST, giá dự thầu, liên danh |
-| | `relationship` | Khóa ngoại động: trạng thái `resolved`, `unresolved`, `ambiguous` |
-| **Governance** | `quarantine` | Cách ly bản ghi lỗi (thiếu ID, rỗng root) - không drop data |
-| | `quality_issue` | Cảnh báo chất lượng dữ liệu: lỗi parse tiền tệ, ngày, schema |
+| **Tier 3: Typed 1-Hop Child** | `project_location` | Bảng con địa bàn thực hiện dự án (bóc tách từ mảng JSON `plocation`) |
+| | `package_lot` | Bảng con danh sách phân/lô thầu chi tiết thuộc gói thầu (từ `bidpBidLotList`) |
+| | `package_location` | Bảng con địa bàn thực hiện gói thầu (từ mảng `bidLocation`) |
+| | `notice_lot` | Bảng con danh sách lô/phần mời thầu của TBMT |
+| | `notice_location` | Bảng con địa bàn thực hiện TBMT |
+| | `notice_reoffer_submission` | Bảng con danh sách lượt nộp chào giá trực tuyến rút gọn |
+| | `award_lot` | Bảng con kết quả phê duyệt theo từng lô thầu |
+| | `award_contractor` | Bảng con danh sách nhà thầu dự thầu & trúng thầu (MST, quốc gia, liên danh) |
+| | `opening_submission` | Bảng con danh sách hồ sơ dự thầu nộp tại lễ mở thầu |
+
+> **Quy tắc chuyển đổi tài nguyên KHLCNT:** 2 bảng Bronze (`khlcnt_plan_detail` và `khlcnt_bid_package_detail`) được chuẩn hóa thành **đúng 4 bảng Silver**: `plan_revision`, `package_revision`, `package_lot`, `package_location`.
 
 Project/plan/package dựa trên detail UUID có namespace; notice dùng số thông báo
 và giữ document UUID ở revision; result dùng DTO.id. Package không lấy

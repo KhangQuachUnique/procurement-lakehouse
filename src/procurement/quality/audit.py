@@ -89,7 +89,7 @@ def assess_record(table, record, context, config, *, context_error=None):
         result["issues"].append(issue(route_error, "unresolved"))
     if context_error:
         result["issues"].append(issue(context_error, "unresolved"))
-    if route and TABLES[kind] != table:
+    if route and kind is not None and TABLES[kind] != table:
         result["issues"].append(issue("wrong_detail_table", "fail", expected=TABLES[kind],
                                        actual=table))
     if calculate_content_hash(payload) != record["content_hash"]:

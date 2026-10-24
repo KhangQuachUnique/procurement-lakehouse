@@ -2,9 +2,9 @@
 
 from datetime import UTC, datetime
 
-from procurement.processing.silver.protocols import RawRecordEnvelope, SilverTransformerProtocol
-from procurement.processing.silver.registry import get_transformer
-from procurement.processing.silver.transformers.project import ProjectDetailTransformer
+from procurement.silver.domain.protocols import RawRecordEnvelope, SilverTransformerProtocol
+from procurement.silver.domain.registry import get_transformer
+from procurement.silver.domain.transformers.project import ProjectDetailTransformer
 
 
 def make_envelope(payload: dict, source_id: str = "proj-123") -> RawRecordEnvelope:
@@ -138,7 +138,7 @@ def test_transform_invalid_money_records_issue():
 
 
 def test_clean_pipe_code():
-    from procurement.processing.silver.parsers import clean_pipe_code
+    from procurement.silver.domain.parsers import clean_pipe_code
 
     assert clean_pipe_code("|115|") == "115"
     assert clean_pipe_code("|11509|") == "11509"
@@ -182,3 +182,182 @@ def test_transform_project_with_pipe_codes_and_toplevel_metadata():
     assert loc_child.source_id == "115"
     assert '"prov_code":"115"' in loc_child.payload_json
     assert '"district_code":"11509"' in loc_child.payload_json
+
+
+def test_project_full_assembly_and_validation():
+    from procurement.silver.application.resources import get_silver_resource
+    from procurement.silver.application.revisions import assemble, validate
+    from procurement.silver.application.warehouse import typed_arrow_rows
+
+    contract = get_silver_resource("project")
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "provCode": "|115|",
+        "districtCode": "|11509|",
+        "plocation": "Huyện Đông Hưng, Tỉnh Thái Bình",
+        "investTotalUnit": "VND",
+        "projectDTO": {
+            "id": "PRJ-REAL-123",
+            "no": "PR2400000017",
+            "name": "Kiên cố hóa kênh cấp I",
+            "investorCode": "vnz000031466",
+            "investorName": "UBND xã Liên Giang",
+            "investTotal": "1143267000",
+            "publicDate": "2024-01-01",
+        },
+    }
+    envelope = make_envelope(payload, source_id="PRJ-REAL-123")
+    result = transformer.transform(envelope)
+    tables = assemble([result.to_dict()])
+    quality = validate(tables)
+
+    assert quality["accepted"] == 1
+    assert quality["quarantined"] == 0
+    assert quality["blocking_issues"] == 0
+
+    revisions = tables["project_revision"]
+    assert len(revisions) == 1
+    rev = revisions[0]
+    assert rev["is_current"] is True
+    assert rev["observation_id"] is not None
+    assert rev["project_no"] == "PR2400000017"
+
+    locations = tables["project_location"]
+    assert len(locations) == 1
+    loc = locations[0]
+    assert loc["province_code"] == "115"
+    assert loc["district_code"] == "11509"
+    assert loc["location_name"] == "Huyện Đông Hưng, Tỉnh Thái Bình"
+
+    # Verify PyArrow / DuckDB typed schema casting
+    for name in contract.output_tables:
+        arrow_table = typed_arrow_rows(name, tables[name])
+        assert arrow_table is not None
+        if name in {"project_revision", "project_location", "observation"}:
+            assert arrow_table.num_rows == 1
+
+
+def test_project_resource_catalog_and_contract():
+    from procurement.silver.application.resources import (
+        PROJECT_MAPPING_VERSION,
+        PROJECT_OUTPUT_TABLES,
+        get_silver_resource,
+    )
+
+    for alias in ("project", "du_an"):
+        contract = get_silver_resource(alias)
+        assert contract.resource == "project"
+        assert contract.mapping_version == PROJECT_MAPPING_VERSION
+        assert contract.output_tables == PROJECT_OUTPUT_TABLES
+        assert contract.select_tables() == ("project_detail",)
+
+
+def test_project_version_fallback_from_dto():
+    from dataclasses import replace
+
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-V1",
+            "no": "NO-V1",
+            "name": "Dự án test version",
+            "version": "02",
+        }
+    }
+    # Envelope without source_version
+    envelope = replace(make_envelope(payload, source_id="PRJ-V1"), source_version=None)
+    result = transformer.transform(envelope)
+
+    assert result.revision.source_version == "02"
+    assert result.observation["source_version"] is None  # Preserves raw envelope
+
+
+def test_project_extract_plan_references():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-REF-1",
+            "no": "NO-REF-1",
+            "name": "Dự án có KHLCNT",
+        },
+        "bidpProjectProjectPlanList": [
+            {"id": "PLAN-ID-1", "planNo": "PL20240001", "name": "KHLCNT Giai đoạn 1"},
+            {"id": "PLAN-ID-2", "planNo": "PL20240002", "name": "KHLCNT Giai đoạn 2"},
+        ],
+    }
+    envelope = make_envelope(payload, source_id="PRJ-REF-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.references) == 2
+    assert result.references[0].target_type == "plan"
+    assert result.references[0].target_identity == "PL20240001"
+    assert result.references[1].target_identity == "PL20240002"
+
+
+def test_project_temporal_inversion_detected():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-TEMP-1",
+            "no": "NO-TEMP-1",
+            "name": "Dự án sai ngày",
+            "decisionDate": "2026-03-10",
+            "publicDate": "2026-03-01",  # Published before decided!
+        }
+    }
+    envelope = make_envelope(payload, source_id="PRJ-TEMP-1")
+    result = transformer.transform(envelope)
+
+    assert any(i.code == "invalid_date_order" for i in result.issues)
+
+
+def test_project_parsed_json_plocation():
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {"id": "PRJ-LOC-1", "name": "Dự án tại Nghệ An"},
+        "plocation": '[{"districtCode":"40331","districtName":"Huyện Thanh Chương","provCode":"403","provName":"Tỉnh Nghệ An"}]',
+    }
+    envelope = make_envelope(payload, source_id="PRJ-LOC-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.children) == 1
+    child = result.children[0]
+    assert child.typed_attributes["province_name"] == "Tỉnh Nghệ An"
+    assert child.typed_attributes["district_name"] == "Huyện Thanh Chương"
+    assert child.typed_attributes["location_name"] == "Huyện Thanh Chương, Tỉnh Nghệ An"
+
+
+def test_project_multi_location_array():
+    import json
+    transformer = ProjectDetailTransformer()
+    payload = {
+        "projectDTO": {"id": "PRJ-MULTI-1", "name": "Đường dây tải điện liên tỉnh"},
+        "plocation": json.dumps([
+            {"districtCode": "40331", "districtName": "Huyện Thanh Chương", "provCode": "403", "provName": "Tỉnh Nghệ An"},
+            {"districtCode": "40501", "districtName": "Huyện Hương Sơn", "provCode": "405", "provName": "Tỉnh Hà Tĩnh"},
+        ]),
+    }
+    envelope = make_envelope(payload, source_id="PRJ-MULTI-1")
+    result = transformer.transform(envelope)
+
+    assert len(result.children) == 2
+    assert result.children[0].typed_attributes["province_name"] == "Tỉnh Nghệ An"
+    assert result.children[1].typed_attributes["province_name"] == "Tỉnh Hà Tĩnh"
+
+
+def test_project_pre_golive_empty_location():
+    transformer = ProjectDetailTransformer()
+    # Emulate pre-2022-09-16 legacy records
+    payload = {
+        "projectDTO": {"id": "PRJ-OLD-1", "name": "Dự án năm 2022 cũ"},
+        "provCode": "||",
+        "districtCode": "||",
+        "plocation": None,
+    }
+    envelope = make_envelope(payload, source_id="PRJ-OLD-1")
+    result = transformer.transform(envelope)
+
+    # Should not produce dummy empty location children
+    assert len(result.children) == 0
+
+

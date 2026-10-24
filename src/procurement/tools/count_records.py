@@ -1,4 +1,4 @@
-﻿"""Count current Bronze rows using cached, parallel Parquet footer reads."""
+"""Count current Bronze rows using cached, parallel Parquet footer reads."""
 
 import argparse
 import hashlib
@@ -18,6 +18,11 @@ from procurement.common.catalog import RESOURCE_CATALOG, SUPPORTED_RESOURCES
 from procurement.common.settings import settings
 from procurement.storage.object_store import create_s3_filesystem
 from procurement.tools.bronze_explorer import BronzeTable, _select_current_files
+from procurement.tools.ui import (
+    create_progress_display,
+    is_rich_enabled,
+    render_record_counts,
+)
 
 LABELS = {"project_detail": "project", "khlcnt_plan_detail": "khlcnt",
           "khlcnt_bid_package_detail": "packagebid", "contractor_result_detail": "result", "bid_opening_detail": "opening"}
@@ -67,15 +72,43 @@ def count_files(fs, files, metadata, database, *, namespace, workers=16):
             uri, sig = item
             return uri, sig, footer_count(fs, uri, metadata[uri]["size"])
 
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            for index, (uri, sig, count) in enumerate(pool.map(read, pending), 1):
-                counts[uri] = count
-                if sig is not None:
-                    con.execute("INSERT OR REPLACE INTO file_counts VALUES (?, ?, ?, ?)",
-                                (namespace, uri, sig, count))
-                if index % 500 == 0:
-                    con.commit()
-                    print(f"Footers: {index}/{len(pending)}", flush=True)
+        if is_rich_enabled() and pending:
+            progress = create_progress_display()
+            with progress:
+                task = progress.add_task(
+                    "Parquet Footers",
+                    label="Parquet Footers",
+                    sublabel=namespace[:8],
+                    total=len(pending),
+                    status="Reading metadata...",
+                )
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    for index, (uri, sig, count) in enumerate(pool.map(read, pending), 1):
+                        counts[uri] = count
+                        if sig is not None:
+                            con.execute(
+                                "INSERT OR REPLACE INTO file_counts VALUES (?, ?, ?, ?)",
+                                (namespace, uri, sig, count),
+                            )
+                        progress.update(
+                            task,
+                            completed=index,
+                            status=f"[dim]{uri.rsplit('/', 1)[-1]}[/dim]",
+                        )
+                        if index % 500 == 0:
+                            con.commit()
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                for index, (uri, sig, count) in enumerate(pool.map(read, pending), 1):
+                    counts[uri] = count
+                    if sig is not None:
+                        con.execute(
+                            "INSERT OR REPLACE INTO file_counts VALUES (?, ?, ?, ?)",
+                            (namespace, uri, sig, count),
+                        )
+                    if index % 500 == 0:
+                        con.commit()
+                        print(f"Footers: {index}/{len(pending)}", flush=True)
         con.commit()
     return counts
 
@@ -109,18 +142,22 @@ def build_report(selected, counts, committed, issues, start, end):
             "complete": not issues and not any(missing_days.values())}
 
 
-def show(report, path, *, cached=False):
-    print(f"{'CACHED SNAPSHOT' if cached else 'COUNTED'} at {report['counted_at']}")
-    for label in ("project", "khlcnt", "packagebid", "noti", "result"):
-        if label in report["totals"]:
-            print(f"{label:<14} {report['totals'][label]:>15,}")
-    if not report["complete"]:
-        print(f"INCOMPLETE: issues={len(report['issues'])}; missing committed days={report['missing_days']}")
-    print(f"Report: {path}")
+def show(report, path, *, cached=False, args=None):
+    if is_rich_enabled(args):
+        render_record_counts(report, path, cached=cached)
+    else:
+        print(f"{'CACHED SNAPSHOT' if cached else 'COUNTED'} at {report['counted_at']}")
+        for label in ("project", "khlcnt", "packagebid", "noti", "result"):
+            if label in report["totals"]:
+                print(f"{label:<14} {report['totals'][label]:>15,}")
+        if not report["complete"]:
+            print(f"INCOMPLETE: issues={len(report['issues'])}; missing committed days={report['missing_days']}")
+        print(f"Report: {path}")
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="Output raw JSON instead of interactive UI")
     parser.add_argument("--year", type=int)
     parser.add_argument("--start-year", type=int)
     parser.add_argument("--end-year", type=int)
@@ -148,7 +185,7 @@ def main(argv=None):
         if not path.exists():
             parser.error("No cached report for this scope. Run once without --cached.")
         report = json.loads(path.read_text(encoding="utf-8"))
-        show(report, path, cached=True)
+        show(report, path, cached=True, args=args)
         return 0 if report["complete"] else 2
     started = time.perf_counter()
     fs = create_s3_filesystem()
@@ -166,8 +203,9 @@ def main(argv=None):
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(report, indent=2), encoding="utf-8")
     temporary.replace(path)
-    show(report, path)
-    print(f"Elapsed: {report['elapsed_seconds']}s")
+    show(report, path, args=args)
+    if not is_rich_enabled(args):
+        print(f"Elapsed: {report['elapsed_seconds']}s")
     return 0 if report["complete"] else 2
 
 

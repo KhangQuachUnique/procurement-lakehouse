@@ -96,12 +96,12 @@ def benchmark(context, config: BenchmarkJobConfig):
 
 @job(tags={"dagster/max_retries": "0"})
 def quality_audit_job():
-    quality_audit()
+    quality_audit()  # type: ignore[call-arg]
 
 
 @job(tags={"dagster/max_retries": "0"})
 def quality_repair_job():
-    quality_repair()
+    quality_repair()  # type: ignore[call-arg]
 
 
 @job(
@@ -110,7 +110,7 @@ def quality_repair_job():
     tags={"dagster/max_retries": "0"},
 )
 def api_rate_limit_probe_job():
-    benchmark()
+    benchmark()  # type: ignore[call-arg]
 
 
 # Maintain backwards compatibility

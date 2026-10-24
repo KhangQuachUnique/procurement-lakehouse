@@ -1,6 +1,7 @@
 """PostgreSQL implementation of atomic commits, commit files, and snapshot views."""
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, tuple_

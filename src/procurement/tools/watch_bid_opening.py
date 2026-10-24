@@ -9,11 +9,13 @@ from procurement.common.settings import settings
 from procurement.jobs.lock import execution_lock
 from procurement.quality.files import cli
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import is_rich_enabled, render_watcher_summary
 from procurement.watcher import run_watch
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="Output raw JSON instead of interactive UI")
     parser.add_argument("mode", choices=("seed", "check", "status"))
     parser.add_argument("--start-date", type=date.fromisoformat)
     parser.add_argument("--end-date", type=date.fromisoformat)
@@ -39,7 +41,10 @@ def main(argv=None):
             dry_run=args.dry_run,
             detail_workers=args.bid_opening_detail_workers,
         )
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if is_rich_enabled(args):
+        render_watcher_summary(args.mode, result)
+    else:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

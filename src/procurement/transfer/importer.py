@@ -1,7 +1,10 @@
 """Import verified Bronze bundles into destination object store."""
 
 import logging
+import os
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import date
@@ -32,6 +35,7 @@ from procurement.transfer.archive import (
 )
 
 logger = logging.getLogger(__name__)
+_report_lock = threading.Lock()
 
 
 class TransferError(RuntimeError):
@@ -62,8 +66,8 @@ def _relative(key: str) -> str:
     return key.removeprefix(prefix)
 
 
-def _lock(lock_dir: Path | str | None) -> Any:
-    return execution_lock(Path(lock_dir or settings.INGESTION_LOCK_DIR))
+def _lock(lock_dir: Path | str | None, tag: str | None = None) -> Any:
+    return execution_lock(Path(lock_dir or settings.INGESTION_LOCK_DIR), tag=tag)
 
 
 def _get_commit_day_manifest():
@@ -98,9 +102,9 @@ def _get_read_coverage():
     return read_coverage
 
 
-def inspect_bundle(path: Path | str) -> dict[str, Any]:
+def inspect_bundle(path: Path | str, *, workers: int | None = None) -> dict[str, Any]:
     with ZipFile(path) as archive:
-        return {"mode": "inspect", **ValidatedArchive(archive).report()}
+        return {"mode": "inspect", **ValidatedArchive(archive, workers=workers).report()}
 
 
 def _preflight(
@@ -208,7 +212,8 @@ def _put_missing(fs: Any, bundle: ValidatedArchive, key: str, report: dict[str, 
         with fs.open(_key(key), "rb") as source:
             if digest_fn(source) != bundle.index.objects[key]:
                 raise ValueError(f"Object changed since preflight: {key}")
-        report["reused_objects"] += 1
+        with _report_lock:
+            report["reused_objects"] += 1
         return
     # Do not publish a short object when interruption closes a partially written stream.
     target = fs.open(_key(key), "wb", autocommit=False)
@@ -228,16 +233,25 @@ def _put_missing(fs: Any, bundle: ValidatedArchive, key: str, report: dict[str, 
         except Exception:  # noqa: BLE001 -- preserve the original upload/interruption error
             logger.warning("Could not discard unpublished upload")
         raise
-    report["uploaded_objects"] += 1
-    report["uploaded_bytes"] += digest.size
+    with _report_lock:
+        report["uploaded_objects"] += 1
+        report["uploaded_bytes"] += digest.size
 
 
 def _check_objects(fs: Any, bundle: ValidatedArchive, keys: list[str]) -> None:
     digest_fn = _get_copy_digest()
-    for key in keys:
+
+    def _verify(key: str) -> None:
         with fs.open(_key(key), "rb") as source:
             if digest_fn(source) != bundle.index.objects[key]:
                 raise ValueError(f"Destination checksum mismatch: {key}")
+
+    if len(keys) > 1:
+        with ThreadPoolExecutor(max_workers=min(8, len(keys))) as pool:
+            list(pool.map(_verify, keys))
+    else:
+        for key in keys:
+            _verify(key)
 
 
 def _confirm_coverage(fs: Any, planned: list[BundleDay], year: int) -> None:
@@ -257,11 +271,18 @@ def _confirm_coverage(fs: Any, planned: list[BundleDay], year: int) -> None:
 
 
 def import_bundle(
-    fs: Any, path: Path | str, *, dry_run: bool = False, lock_dir: Path | str | None = None
+    fs: Any,
+    path: Path | str,
+    *,
+    dry_run: bool = False,
+    lock_dir: Path | str | None = None,
+    workers: int | None = None,
+    on_progress: Any = None,
 ) -> dict[str, Any]:
     """Import missing committed days from a validated ZIP bundle."""
+    worker_count = workers or min(8, (os.cpu_count() or 4))
     with ZipFile(path) as archive:
-        bundle = ValidatedArchive(archive)  # Validate all days, including ones later skipped.
+        bundle = ValidatedArchive(archive, workers=worker_count)
         report: dict[str, Any] = {
             "mode": "import",
             "dry_run": dry_run,
@@ -278,17 +299,41 @@ def import_bundle(
         }
         put_missing_fn = _get_put_missing()
         commit_day_fn = _get_commit_day_manifest()
+        lock_ctx = nullcontext() if dry_run else _lock(lock_dir)
+
+        def _notify(event: str, **kwargs: Any) -> None:
+            if not on_progress:
+                return
+            try:
+                on_progress(event=event, **kwargs)
+            except TypeError:
+                if event == "day_imported":
+                    on_progress(kwargs.get("entry"), kwargs.get("index"), kwargs.get("total"), kwargs.get("report"))
+
         try:
-            with nullcontext() if dry_run else _lock(lock_dir):
+            with lock_ctx:
                 planned, runs = _preflight(fs, bundle, report)
+                _notify(
+                    "start",
+                    planned=len(planned),
+                    skipped=len(report["skipped_days"]),
+                    resources=bundle.index.resources,
+                    year=bundle.index.year,
+                )
                 if dry_run:
+                    _notify("done", report=report)
                     return report
-                for entry in planned:
-                    logger.info("import resource=%s date=%s", entry.resource, entry.source_date)
+                total_days = len(planned)
+                for idx, entry in enumerate(planned, start=1):
+                    logger.debug("import resource=%s date=%s", entry.resource, entry.source_date)
                     day = bundle.day_manifests[entry.day_key]
                     parquet_keys = [key for _, key in entry.parquet_files()]
-                    for key in parquet_keys:
-                        put_missing_fn(fs, bundle, key, report)
+                    if worker_count > 1 and len(parquet_keys) > 1:
+                        with ThreadPoolExecutor(max_workers=min(worker_count, len(parquet_keys))) as pool:
+                            list(pool.map(lambda k: put_missing_fn(fs, bundle, k, report), parquet_keys))
+                    else:
+                        for key in parquet_keys:
+                            put_missing_fn(fs, bundle, key, report)
                     _check_objects(fs, bundle, parquet_keys)
                     verify_committed(fs, selection_for(entry, day, prefix=_bucket() + "/"))
                     metadata = [
@@ -312,7 +357,9 @@ def import_bundle(
                     report["imported_days"].append(
                         {"resource": entry.resource, "date": str(entry.source_date), "run_id": entry.run_id}
                     )
+                    _notify("day_imported", entry=entry, index=idx, total=total_days, report=report)
                 _confirm_coverage(fs, planned, bundle.index.year)
+                _notify("done", report=report)
                 return report
         except TransferError:
             raise

@@ -22,6 +22,7 @@ from procurement.models.control import DayManifest
 from procurement.storage.control import read_run_manifest
 from procurement.storage.io import read_json
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import is_rich_enabled, render_explorer_startup
 
 BRONZE_SCHEMA = "bronze_raw"
 SILVER_SCHEMA = "silver"
@@ -618,34 +619,62 @@ def open_bronze_explorer(
                 fs=fs,
                 schema=SILVER_SCHEMA,
             )
+            try:
+                from procurement.silver.application.warehouse import ensure_views
+                from procurement.storage.iceberg import literal
+
+                iceberg_cfg = settings.iceberg_config()
+                _load_extension(con, "iceberg")
+                con.execute(
+                    f"""CREATE SECRET IF NOT EXISTS lake_catalog (TYPE ICEBERG,
+                    CLIENT_ID {literal(iceberg_cfg.access_key)}, CLIENT_SECRET {literal(iceberg_cfg.secret_key)},
+                    OAUTH2_SERVER_URI {literal(iceberg_cfg.catalog_uri.rstrip('/') + '/v1/oauth/tokens')})"""
+                )
+                con.execute(
+                    f"""ATTACH IF NOT EXISTS {literal(iceberg_cfg.warehouse)} AS lake (TYPE ICEBERG,
+                    ENDPOINT {literal(iceberg_cfg.catalog_uri)}, SECRET lake_catalog, READ_ONLY false)"""
+                )
+                latest_views = ensure_views(con, namespace="silver")
+                silver_created.extend(latest_views)
+            except Exception:
+                pass
 
         _load_extension(con, "ui")
         con.execute(f"SET ui_local_port = {port}")
         con.execute("CALL start_ui()")
 
-        schemas_active = [BRONZE_SCHEMA]
-        if silver_created:
-            schemas_active.append(SILVER_SCHEMA)
-
-        print(f"Lakehouse explorer is running ({time.perf_counter() - started:.2f}s startup).", flush=True)
-        print(f"UI: http://localhost:{port}", flush=True)
-        print(f"Schemas: {', '.join(schemas_active)}", flush=True)
-        print("Views use a fixed committed snapshot. Restart after repair to refresh.", flush=True)
-        if issues:
-            print(
-                f"INCOMPLETE: {len(issues)} day(s) missing files. "
-                "See SELECT * FROM bronze_meta.selection_issues;",
-                flush=True,
+        if is_rich_enabled():
+            render_explorer_startup(
+                port,
+                time.perf_counter() - started,
+                created,
+                silver_created,
+                issues,
             )
-        print("Use --union-by-name if legacy Parquet files have different schemas.", flush=True)
-        print("Bronze Views:", flush=True)
-        for table in created:
-            print(f"  - {BRONZE_SCHEMA}.{table}", flush=True)
-        if silver_created:
-            print("Silver Views:", flush=True)
-            for table in silver_created:
-                print(f"  - {SILVER_SCHEMA}.{table}", flush=True)
-        print("Press Ctrl+C to stop.", flush=True)
+        else:
+            schemas_active = [BRONZE_SCHEMA]
+            if silver_created:
+                schemas_active.append(SILVER_SCHEMA)
+
+            print(f"Lakehouse explorer is running ({time.perf_counter() - started:.2f}s startup).", flush=True)
+            print(f"UI: http://localhost:{port}", flush=True)
+            print(f"Schemas: {', '.join(schemas_active)}", flush=True)
+            print("Views use a fixed committed snapshot. Restart after repair to refresh.", flush=True)
+            if issues:
+                print(
+                    f"INCOMPLETE: {len(issues)} day(s) missing files. "
+                    "See SELECT * FROM bronze_meta.selection_issues;",
+                    flush=True,
+                )
+            print("Use --union-by-name if legacy Parquet files have different schemas.", flush=True)
+            print("Bronze Views:", flush=True)
+            for table in created:
+                print(f"  - {BRONZE_SCHEMA}.{table}", flush=True)
+            if silver_created:
+                print("Silver Views:", flush=True)
+                for table in silver_created:
+                    print(f"  - {SILVER_SCHEMA}.{table}", flush=True)
+            print("Press Ctrl+C to stop.", flush=True)
 
         while True:
             time.sleep(3600)

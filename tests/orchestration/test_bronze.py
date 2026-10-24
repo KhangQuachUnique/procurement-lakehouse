@@ -53,10 +53,13 @@ def execute(fs, resource="project", *, refresh=False, reconciled_run_ids=None):
     )
 
 
+ACTIVE_RESOURCES = [d for d in RESOURCE_CATALOG if d.identity.resource != "bid_opening"]
+
+
 def test_definitions_cover_catalog_and_safe_execution_policy():
     Definitions.validate_loadable(defs)
     assert {a.key.to_user_string() for a in bronze.bronze_assets} == {
-        f"bronze_{d.identity.resource}" for d in RESOURCE_CATALOG
+        f"bronze_{d.identity.resource}" for d in ACTIVE_RESOURCES
     }
     for asset in bronze.bronze_assets:
         assert asset.op.pool == bronze.INGESTION_POOL
@@ -73,7 +76,7 @@ def test_schedule_refreshes_three_closed_vietnam_dates_at_year_boundary():
     assert all(op["config"]["refresh"] for r in requests for op in r.run_config["ops"].values())
 
 
-@pytest.mark.parametrize("resource", [d.identity.resource for d in RESOURCE_CATALOG])
+@pytest.mark.parametrize("resource", [d.identity.resource for d in ACTIVE_RESOURCES])
 def test_committed_empty_day_is_reused_without_new_writes(storage, monkeypatch, resource):
     cid = uuid4()
     aid = uuid4()

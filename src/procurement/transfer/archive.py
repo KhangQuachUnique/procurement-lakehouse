@@ -3,8 +3,10 @@
 import hashlib
 import json
 import logging
+import os
 import re
 import stat
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from tempfile import TemporaryFile
@@ -258,7 +260,7 @@ def project_import_run(source: RunManifest, days: list[DayManifest]) -> RunManif
 class ValidatedArchive:
     """Validation uses the same open ZIP handle later consumed by import."""
 
-    def __init__(self, archive: ZipFile) -> None:
+    def __init__(self, archive: ZipFile, *, workers: int | None = None) -> None:
         self.archive = archive
         names = [info.filename for info in archive.infolist()]
         if len(names) != len(set(names)) or "transfer.json" not in names:
@@ -275,20 +277,25 @@ class ValidatedArchive:
         if set(names) != expected:
             raise ValueError("Missing or extra ZIP entries")
         logger.info("validate archive objects=%s", len(self.index.objects))
-        for number, (key, expected_digest) in enumerate(self.index.objects.items(), start=1):
+
+        def _verify_object(item: tuple[str, Any]) -> None:
+            key, expected_digest = item
             name = f"objects/{key}"
             if archive.getinfo(name).file_size != expected_digest.size:
                 raise ValueError(f"Object size mismatch: {key}")
             with archive.open(name) as source:
                 if copy_digest(source) != expected_digest:
                     raise ValueError(f"Object checksum mismatch: {key}")
-            if number % 100 == 0:
-                logger.info("checksum objects=%s/%s", number, len(self.index.objects))
+
+        worker_count = workers or min(16, (os.cpu_count() or 4) * 2)
+        with ThreadPoolExecutor(max_workers=worker_count) as pool:
+            list(pool.map(_verify_object, self.index.objects.items(), chunksize=50))
+
         self.day_manifests: dict[str, DayManifest] = {}
         self.run_manifests: dict[str, RunManifest] = {}
         self.verified: dict[str, int] = {"days": 0, "files": 0, "records": 0}
         for entry in self.index.days:
-            logger.info("verify resource=%s date=%s", entry.resource, entry.source_date)
+            logger.debug("verify resource=%s date=%s", entry.resource, entry.source_date)
             day = self._validate_day(entry)
             self.day_manifests[entry.day_key] = day
             verified = verify_committed(ArchiveFilesystem(archive), selection_for(entry, day))

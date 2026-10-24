@@ -1,6 +1,6 @@
 """PostgreSQL read repositories for Ops monitoring."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 import sqlalchemy as sa
@@ -298,7 +298,8 @@ class PostgresOpsControlRepository:
     def get_execution(self, identity: ResourceIdentity, run_id: str) -> dict[str, Any] | None:
         """Inspect active lease or last status to report execution liveness."""
         with self._engine.begin() as conn:
-            db_now: datetime = conn.execute(select(func.now())).scalar()
+            now_val = conn.execute(select(func.now())).scalar()
+            db_now: datetime = now_val if isinstance(now_val, datetime) else datetime.now(UTC)
             stmt = (
                 select(
                     partition_leases.c.heartbeat_at,

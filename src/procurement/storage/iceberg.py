@@ -32,28 +32,63 @@ class RestCatalog:
 
     def __init__(self, config: IcebergConfig):
         self.config = config
+        self._client: httpx.Client | None = None
+        self._prefix: str | None = None
+
+    def _ensure_client(self) -> httpx.Client:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(base_url=self.config.catalog_uri, timeout=60)
+            response = self._client.post(
+                "/v1/oauth/tokens",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.config.access_key,
+                    "client_secret": self.config.secret_key,
+                },
+            )
+            response.raise_for_status()
+            self._client.headers["Authorization"] = "Bearer " + response.json()["access_token"]
+            configuration = self._client.get(
+                "/v1/config", params={"warehouse": self.config.warehouse}
+            )
+            configuration.raise_for_status()
+            self._prefix = configuration.json().get("overrides", {}).get("prefix", "")
+        return self._client
 
     def request(self, method, path, **kwargs):
-        with httpx.Client(base_url=self.config.catalog_uri, timeout=60) as client:
-            response = client.post("/v1/oauth/tokens", data={
-                "grant_type": "client_credentials", "client_id": self.config.access_key,
-                "client_secret": self.config.secret_key,
-            })
-            response.raise_for_status()
-            client.headers["Authorization"] = "Bearer " + response.json()["access_token"]
-            configuration = client.get("/v1/config", params={"warehouse": self.config.warehouse})
-            configuration.raise_for_status()
-            prefix = configuration.json().get("overrides", {}).get("prefix", "")
-            response = client.request(method, f"/v1/{prefix}/{path}", **kwargs)
-            response.raise_for_status()
-            return response.json() if response.content else None
+        client = self._ensure_client()
+        clean_path = path.lstrip("/")
+        full_path = f"/v1/{self._prefix}/{clean_path}" if self._prefix else f"/v1/{clean_path}"
+        response = client.request(method, full_path, **kwargs)
+        if response.status_code == 401:
+            self.close()
+            client = self._ensure_client()
+            full_path = f"/v1/{self._prefix}/{clean_path}" if self._prefix else f"/v1/{clean_path}"
+            response = client.request(method, full_path, **kwargs)
+        response.raise_for_status()
+        return response.json() if response.content else None
+
+    def close(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            self._client.close()
+            self._client = None
+            self._prefix = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def table(self, namespace, table):
         return self.request("GET", f"namespaces/{identifier(namespace)}/tables/{identifier(table)}")
 
     def pin(self, namespace, table, snapshot_id, release_id):
         name = "release_" + identifier(release_id)
-        metadata = self.table(namespace, table)["metadata"]
+        table_info = self.table(namespace, table)
+        if not table_info:
+            raise ValueError(f"Table not found: {namespace}.{table}")
+        metadata = table_info["metadata"]
         if snapshot_id not in {s["snapshot-id"] for s in metadata["snapshots"]}:
             raise ValueError("Release snapshot is missing")
         existing = metadata.get("refs", {}).get(name)
@@ -67,13 +102,29 @@ class RestCatalog:
         })
 
 
-def connect(config: IcebergConfig, *, install=False):
-    db = duckdb.connect()
+def connect(
+    config: IcebergConfig,
+    *,
+    install: bool = False,
+    max_memory: str = "4GB",
+    threads: int = 4,
+):
+    db = duckdb.connect(config={"max_memory": max_memory, "threads": str(threads)})
+    try:
+        db.execute("SET preserve_insertion_order = false")
+    except Exception:
+        pass
     try:
         for extension in ("httpfs", "iceberg"):
             if install:
                 db.execute(f"INSTALL {extension}")
-            db.execute(f"LOAD {extension}")
+                db.execute(f"LOAD {extension}")
+            else:
+                try:
+                    db.execute(f"LOAD {extension}")
+                except Exception:
+                    db.execute(f"INSTALL {extension}")
+                    db.execute(f"LOAD {extension}")
         endpoint = urlsplit(config.s3_endpoint)
         if endpoint.scheme not in ("http", "https") or not endpoint.netloc:
             raise ValueError("S3 endpoint must be an HTTP(S) URL")

@@ -15,13 +15,14 @@ from procurement.quality.files import cli, read_json
 from procurement.quality.repair import apply_plan, create_plan
 from procurement.quality.workflow import run_workflow
 from procurement.storage.object_store import create_s3_filesystem
+from procurement.tools.ui import is_rich_enabled, render_repair_summary
 
 
 def repair_client(args):
     print(f"Fetch: {args.detail_workers} worker(s), start interval {args.request_interval}s, "
           f"up to {args.max_attempts} attempts", flush=True)
     return MuasamcongClient(
-        token=settings.MUASAMCONG_TOKEN, max_attempts=args.max_attempts,
+        token=settings.MUASAMCONG_TOKEN or "", max_attempts=args.max_attempts,
         max_retry_delay=settings.MUASAMCONG_MAX_RETRY_DELAY_SECONDS,
         request_budget=RequestBudget(min(args.detail_workers, settings.MUASAMCONG_MAX_INFLIGHT),
                                      min_interval=args.request_interval),
@@ -77,18 +78,31 @@ def main(argv=None):
         with repair_client(args) as client:
             result = run_workflow(create_s3_filesystem(), client, year=args.year, directory=directory,
                                   config_path=args.config, detail_workers=args.detail_workers, resource=args.resource)
-        print(f"Job: {result['status']}; {result['counts']}")
+        if is_rich_enabled(args):
+            render_repair_summary("run", {"status": result["status"], **result.get("counts", {})})
+        else:
+            print(f"Job: {result['status']}; {result['counts']}")
         return 0 if result["status"] == "complete" else 2
     if args.mode == "report":
         result = compare_audits(args.before, args.after, read_json(args.plan),
                                 args.work_dir, args.output)
-        print(f"Repair: {result['counts']}; fully verified: {result['fully_verified']}")
+        if is_rich_enabled(args):
+            render_repair_summary("report", {"fully_verified": result["fully_verified"], **result.get("counts", {})})
+        else:
+            print(f"Repair: {result['counts']}; fully verified: {result['fully_verified']}")
         return 0 if result["fully_verified"] else 2
     config = load_config(args.config, resource=args.resource)
     if args.mode == "plan":
         result = create_plan(args.audit, config, args.output)
-        print(f"Days: {len(result['days'])}; detail requests: {result['estimated_detail_requests']}; "
-              f"blocked days: {len(result['blocked'])}")
+        if is_rich_enabled(args):
+            render_repair_summary("plan", {
+                "days": len(result["days"]),
+                "estimated_detail_requests": result["estimated_detail_requests"],
+                "blocked_days": len(result["blocked"]),
+            })
+        else:
+            print(f"Days: {len(result['days'])}; detail requests: {result['estimated_detail_requests']}; "
+                  f"blocked days: {len(result['blocked'])}")
         return
     if args.limit_days is not None and args.limit_days < 1:
         parser.error("--limit-days must be positive")
@@ -97,7 +111,14 @@ def main(argv=None):
                              args.work_dir, limit=args.limit_days, detail_workers=args.detail_workers,
                              dates=args.dates, continue_on_error=args.continue_on_error)
     successful = sum(result["status"] == "success" for result in results)
-    print(f"Verified repaired days: {successful}; blocked: {len(results) - successful}")
+    if is_rich_enabled(args):
+        render_repair_summary("apply", {
+            "verified_repaired_days": successful,
+            "blocked_days": len(results) - successful,
+            "total_days": len(results),
+        })
+    else:
+        print(f"Verified repaired days: {successful}; blocked: {len(results) - successful}")
     return 0 if successful == len(results) else 2
 
 

@@ -28,6 +28,9 @@ def test_settings_validate_environment_without_dotenv(monkeypatch):
         ("OPS_SYNC_WORKERS", 0),
         ("OPS_STALE_AFTER_SECONDS", 0),
         ("OBJECT_STORAGE_ENDPOINT", "localhost:8333"),
+        ("ICEBERG_CATALOG_URI", "localhost:8181"),
+        ("ICEBERG_CATALOG_PORT", 0),
+        ("ICEBERG_CATALOG_PORT", 70000),
         ("LOG_LEVEL", "bad"),
     ],
 )
@@ -40,3 +43,34 @@ def test_settings_repr_excludes_secrets():
     settings = Settings(MUASAMCONG_TOKEN="token-value", OBJECT_STORAGE_SECRET_KEY="secret-value")
     assert "token-value" not in repr(settings)
     assert "secret-value" not in repr(settings)
+
+
+def test_settings_iceberg_config():
+    settings = Settings(
+        ICEBERG_CATALOG_URI="http://localhost:8181",
+        ICEBERG_WAREHOUSE="s3://warehouse",
+        OBJECT_STORAGE_ENDPOINT="http://localhost:8333",
+        OBJECT_STORAGE_ACCESS_KEY="my_ak",
+        OBJECT_STORAGE_SECRET_KEY="my_sk",
+    )
+    cfg = settings.iceberg_config()
+    assert cfg.catalog_uri == "http://localhost:8181"
+    assert cfg.warehouse == "s3://warehouse"
+    assert cfg.s3_endpoint == "http://localhost:8333"
+    assert cfg.access_key == "my_ak"
+    assert cfg.secret_key == "my_sk"
+
+    # Test overrides
+    overridden = settings.iceberg_config(
+        catalog_uri="http://custom:18181",
+        warehouse="s3://custom",
+        s3_endpoint="http://custom:18333",
+        access_key="new_ak",
+        secret_key="new_sk",
+    )
+    assert overridden.catalog_uri == "http://custom:18181"
+    assert overridden.warehouse == "s3://custom"
+    assert overridden.s3_endpoint == "http://custom:18333"
+    assert overridden.access_key == "new_ak"
+    assert overridden.secret_key == "new_sk"
+
