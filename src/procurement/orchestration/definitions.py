@@ -18,13 +18,6 @@ from procurement.orchestration.bronze import BRONZE_PARTITIONS, bronze_assets
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
 from procurement.orchestration.silver import silver_assets, silver_sync_iceberg_job
-from procurement.orchestration.watcher import (
-    bid_opening_due_sensor,
-    bid_opening_seed_job,
-    bid_opening_seed_schedule,
-    bid_opening_seed_sensor,
-    bid_opening_watch_job,
-)
 from procurement.orchestration.workflows import benchmark_job, quality_audit_job, quality_repair_job
 
 bronze_job = define_asset_job(
@@ -67,7 +60,7 @@ def bronze_daily_schedule(context: ScheduleEvaluationContext):
             partition_key=key,
             run_config={
                 "ops": {
-                    getattr(asset, "key").to_user_string(): {"config": {"refresh": True}}
+                    asset.key.to_user_string(): {"config": {"refresh": True}}
                     for asset in bronze_assets
                 }
             },
@@ -101,13 +94,10 @@ defs = Definitions(
         lakehouse_job,
         silver_sync_iceberg_job,
         reconcile_lakehouse_job,
-        bid_opening_seed_job,
-        bid_opening_watch_job,
         quality_audit_job,
         quality_repair_job,
         benchmark_job,
     ],
-    schedules=[bronze_daily_schedule, silver_daily_schedule, bid_opening_seed_schedule],
-    sensors=[bid_opening_due_sensor, bid_opening_seed_sensor],
+    schedules=[bronze_daily_schedule, silver_daily_schedule],
     resources={"object_storage": object_storage},
 )

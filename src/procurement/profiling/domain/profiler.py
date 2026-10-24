@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from datetime import date
 from typing import Any
 
 from procurement.profiling.domain.models import (
@@ -296,7 +295,7 @@ class TableProfilerEngine:
         """Feed a single decoded record into the engine."""
         self.total_profiled += 1
 
-        if "source_date" in record and record["source_date"]:
+        if record.get("source_date"):
             self.dates_seen.add(str(record["source_date"]))
 
         flattened = NestedJsonWalker.flatten_record(record)

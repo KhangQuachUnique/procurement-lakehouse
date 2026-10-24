@@ -23,7 +23,6 @@ BRONZE_FOLDER_MAP: dict[str, str] = {
     "bronze_khlcnt": "khlcnt_plan_detail",
     "bronze_notify_contractor": "notify_contractor_standard_detail",
     "bronze_contractor_result": "contractor_result_detail",
-    "bronze_bid_opening": "bid_opening_detail",
 }
 
 
@@ -148,7 +147,6 @@ def reconcile_lakehouse_job():
 
 
 if __name__ == "__main__":
-    import sys
 
     print("Scanning S3 Lakehouse and synchronizing Dagster state...")
     res = reconcile_lakehouse_to_dagster()

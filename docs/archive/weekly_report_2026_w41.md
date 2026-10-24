@@ -1,4 +1,8 @@
 # BÁO CÁO TIẾN ĐỘ DỰ ÁN (WEEKLY REPORT - TUẦN 41/2026)
+
+> [!NOTE]
+> **TÀI LIỆU LỊCH SỬ (HISTORICAL ARCHIVE):** Báo cáo này phản ánh tiến độ và thiết kế sơ khởi của Tuần 41 (kỳ 04/10/2026 - 11/10/2026). Kiến trúc Silver hiện tại đã được nâng cấp lên mô hình **Pure Relational 1-Hop** và cập nhật toàn diện tại [Báo cáo Tuần 42](weekly_report_2026_w42_silver_lakehouse.md) cùng [Đặc Tả Schema Silver](file:///home/soul/Dự%20án/procurement/procurement-lakehouse/docs/silver_schema_specification.md).
+
 **Dự án:** Vietnam Public Procurement Lakehouse (`procurement_lakehouse`)  
 **Ngày báo cáo:** 11/10/2026  
 **Kỳ báo cáo:** 04/10/2026 – 11/10/2026  

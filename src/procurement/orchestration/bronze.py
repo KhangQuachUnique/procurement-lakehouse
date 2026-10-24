@@ -2,7 +2,6 @@
 
 import os
 from datetime import date
-from typing import Any
 
 from dagster import (
     AssetCheckResult,
@@ -196,4 +195,8 @@ def _execute_bronze_materialize(service, request, resource_name, source_date):
 
 
 
-bronze_assets = [build_bronze_asset(definition) for definition in RESOURCE_CATALOG]
+bronze_assets = [
+    build_bronze_asset(definition)
+    for definition in RESOURCE_CATALOG
+    if definition.identity.resource != "bid_opening"
+]

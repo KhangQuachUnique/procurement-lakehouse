@@ -17,11 +17,11 @@ from procurement.profiling.domain.walker import (
 )
 
 __all__ = [
+    "SENTINEL_VALUES",
     "FieldAccumulator",
     "FieldMetrics",
     "NestedJsonWalker",
     "NumericStats",
-    "SENTINEL_VALUES",
     "TableProfile",
     "TableProfilerEngine",
     "TextStats",
