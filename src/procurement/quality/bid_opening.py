@@ -709,6 +709,246 @@ def validate_adb_assembly(payload, context, contract, *, thresholds=None):
     return result
 
 
+def _no_qualified_technical_bidders(payload, context):
+    """Verify a multi-lot LDT opening with no qualified technical bidders."""
+
+    if context.get("processApply") != "LDT" or context.get("bidMode") != "1_HTHS":
+        return False
+
+    notice = lookup(
+        payload,
+        "notify.bidNoContractorResponse.bidNotification",
+    )
+    round_info = lookup(
+        payload,
+        "roundmng.bidoBidroundMngViewDTO",
+    )
+    technical = lookup(
+        payload,
+        "bid_open_technical."
+        "bidSubmissionByContractorViewResponse."
+        "bidSubmissionDTOList",
+    )
+    technical_lots = payload.get("lot_open_detail_technical")
+    financial = payload.get("bid_open_financial")
+    financial_lots = payload.get("lot_open_detail_financial")
+    detail = payload.get("cancellation_notice")
+
+    if not all(
+        isinstance(value, dict) for value in (notice, round_info, financial, detail)
+    ):
+        return False
+
+    for part_name in (
+        "notify",
+        "roundmng",
+        "bid_open_technical",
+    ):
+        part = payload.get(part_name)
+
+        if (
+            not isinstance(part, dict)
+            or part.get("error")
+            or part.get("success") is False
+        ):
+            return False
+
+    if any(
+        part.get("error") or part.get("success") is False
+        for part in (financial, detail)
+    ):
+        return False
+
+    # Verify the notice and round identities.
+    for root in (notice, round_info):
+        if any(
+            root.get(key) != context.get(key)
+            for key in ("id", "notifyNo", "notifyVersion")
+        ):
+            return False
+
+        if root.get("processApply") != "LDT" or root.get("bidMode") != "1_HTHS":
+            return False
+
+    if (
+        not notice.get("bidNo")
+        or round_info.get("bidNo") != notice.get("bidNo")
+        or round_info.get("isMultiLot") not in (True, 1)
+    ):
+        return False
+
+    # Financial phase must have a valid publication marker.
+    if _event_time(round_info.get("successBidOpenDateTc")) is None:
+        return False
+
+    # The financial API must explicitly return null roots.
+    financial_roots = (
+        "bidNoContractorResponse",
+        "bidoBidroundMngViewDTO",
+        "bidSubmissionByContractorViewResponse",
+    )
+
+    if any(
+        key not in financial or financial[key] is not None for key in financial_roots
+    ):
+        return False
+
+    if financial_lots != []:
+        return False
+
+    # Verify technical submissions and contractor count.
+    if not isinstance(technical, list) or not technical:
+        return False
+
+    if any(not isinstance(row, dict) for row in technical):
+        return False
+
+    count = round_info.get("countContractor")
+
+    if (
+        not isinstance(count, int)
+        or isinstance(count, bool)
+        or count <= 0
+        or count != len(technical)
+    ):
+        return False
+
+    contractor_codes = [row.get("contractorCode") for row in technical]
+
+    if (
+        any(not isinstance(code, str) or not code for code in contractor_codes)
+        or len(set(contractor_codes)) != len(contractor_codes)
+        or any(not row.get("id") for row in technical)
+    ):
+        return False
+
+    # Verify every returned contractor-lot evaluation.
+    if not isinstance(technical_lots, list) or not technical_lots:
+        return False
+
+    pairs = set()
+    evaluated_contractors = set()
+    evaluated_lots = set()
+
+    for row in technical_lots:
+        if not isinstance(row, dict):
+            return False
+
+        code = row.get("contractorCode")
+        lot_no = row.get("lotNo")
+
+        if (
+            row.get("notifyId") != context.get("id")
+            or code not in contractor_codes
+            or not isinstance(lot_no, str)
+            or not lot_no
+            or row.get("passedYn") != "N"
+        ):
+            return False
+
+        pair = (code, lot_no)
+
+        if pair in pairs:
+            return False
+
+        pairs.add(pair)
+        evaluated_contractors.add(code)
+        evaluated_lots.add(lot_no)
+
+    # Every technical bidder must occur in the evaluations.
+    if evaluated_contractors != set(contractor_codes):
+        return False
+
+    # Initially support only verified multi-lot structures.
+    if len(evaluated_lots) < 2:
+        return False
+
+    # Cross-check declared bidder-lot participation when present.
+    declared_pairs = set()
+    declared_count = 0
+
+    for bidder in technical:
+        code = bidder["contractorCode"]
+        declared = bidder.get("lotNoValueDTOList")
+
+        if declared is None or declared == []:
+            continue
+
+        if not isinstance(declared, list):
+            return False
+
+        declared_count += 1
+
+        for lot in declared:
+            if not isinstance(lot, dict) or not lot.get("lotNo"):
+                return False
+
+            declared_pairs.add((code, lot["lotNo"]))
+
+    # Reject partially declared participation.
+    if declared_count not in (0, len(technical)):
+        return False
+
+    if declared_count and declared_pairs != pairs:
+        return False
+
+    # Check that this is not a verified cancellation.
+    cancellation = detail.get("bidCancelingResponse")
+    detail_notice = lookup(
+        detail,
+        "bidNoContractorResponse.bidNotification",
+    )
+    plan = detail.get("bidpPlanDetail")
+
+    if not all(
+        isinstance(value, dict) for value in (cancellation, detail_notice, plan)
+    ):
+        return False
+
+    if any(
+        detail_notice.get(key) != context.get(key)
+        for key in ("id", "notifyNo", "notifyVersion")
+    ):
+        return False
+
+    if (
+        cancellation.get("id") != context.get("id")
+        or cancellation.get("notifyNo") != context.get("notifyNo")
+        or cancellation.get("bidNo") != notice.get("bidNo")
+    ):
+        return False
+
+    # Require explicit null cancellation fields.
+    if (
+        "cancelDate" not in cancellation
+        or "cancelDecisionNo" not in cancellation
+        or cancellation["cancelDate"] is not None
+        or cancellation["cancelDecisionNo"] is not None
+    ):
+        return False
+
+    # The plan must still point to the original notice.
+    if not notice.get("bidId") or plan.get("id") != notice["bidId"]:
+        return False
+
+    try:
+        linked = json.loads(plan["linkNotifyInfo"])
+    except (KeyError, TypeError, ValueError):
+        return False
+
+    if not isinstance(linked, dict):
+        return False
+
+    if (
+        linked.get("notifyId") != context.get("id")
+        or linked.get("notifyNo") != context.get("notifyNo")
+        or linked.get("bidId") != notice.get("bidId")
+    ):
+        return False
+
+    return True
+
+
 def validate_assembly(payload, context, contract, *, thresholds=None):
 
     if context.get("processApply") == "ADB":
@@ -788,18 +1028,26 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
         return finish(result)
     cancelled = _cancelled_after_technical(payload, context)
 
+    no_qualified = _no_qualified_technical_bidders(
+        payload,
+        context,
+    )
+
     if cancelled_single:
         result["collection_status"] = "cancelled_after_opening"
 
     elif cancelled:
         result["collection_status"] = "cancelled_after_technical"
 
+    elif no_qualified:
+        result["collection_status"] = "no_qualified_technical_bidders"
+
     else:
         result["collection_status"] = "awaiting_financial" if pending else "complete"
 
     expected = {"notify", "roundmng"} | {name for pair in parts for name in pair}
 
-    if cancelled or cancelled_single:
+    if cancelled or cancelled_single or no_qualified:
         expected.add("cancellation_notice")
 
     if set(payload) != expected:
@@ -822,7 +1070,11 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
 
             # Financial root is genuinely null for a verified
             # cancelled-after-technical notice.
-            if cancelled and name == "bid_open_financial" and rows is None:
+            if (
+                (cancelled or no_qualified)
+                and name == "bid_open_financial"
+                and rows is None
+            ):
                 continue
 
             if not isinstance(rows, list) or any(

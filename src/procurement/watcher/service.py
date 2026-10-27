@@ -250,6 +250,7 @@ def seed(
                 "complete",
                 "cancelled_after_technical",
                 "cancelled_after_opening",
+                "no_qualified_technical_bidders",
             }
         }
         evidence = read_quality_contexts(
@@ -502,9 +503,17 @@ def check(
                 states = opening_states(fs, manifest)
                 if not found <= states.keys():
                     raise ValueError("Committed refresh is missing searched identities")
-                if any(states[key] != "complete" for key in available_financial):
+                if any(
+                    states[key]
+                    not in {
+                        "complete",
+                        "no_qualified_technical_bidders",
+                    }
+                    for key in available_financial
+                ):
                     raise ValueError(
-                        "Committed refresh is missing published financial openings"
+                        "Committed refresh is missing a verified "
+                        "financial-phase outcome"
                     )
             captured = {
                 key
@@ -514,6 +523,7 @@ def check(
                     "complete",
                     "cancelled_after_technical",
                     "cancelled_after_opening",
+                    "no_qualified_technical_bidders",
                 }
             }
             with store.db:

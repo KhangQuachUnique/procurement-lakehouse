@@ -1,4 +1,4 @@
-version = "bid-opening-7-adb-single"
+version = "bid-opening-8-no-qualified-technical"
 resource = "bid_opening"
 
 [contracts.bid_opening]
