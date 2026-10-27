@@ -1,4 +1,5 @@
 """Watcher service orchestrating late bid opening checks and seeds."""
+
 import json
 from collections.abc import Callable
 from contextlib import nullcontext
@@ -50,9 +51,14 @@ __all__ = [
 def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
     """Build CommittedDay partition selection for given resource and manifest."""
     if hasattr(manifest, "files") and manifest.files:
-        files = tuple((getattr(f, "table_name", f[0]), getattr(f, "object_key", f[1])) for f in manifest.files)
+        files = tuple(
+            (getattr(f, "table_name", f[0]), getattr(f, "object_key", f[1]))
+            for f in manifest.files
+        )
         run_id = getattr(manifest, "run_id", str(getattr(manifest, "id", "")))
-        records = getattr(manifest, "bronze_records", getattr(manifest, "record_count", 0))
+        records = getattr(
+            manifest, "bronze_records", getattr(manifest, "record_count", 0)
+        )
         return CommittedDay(manifest.source_date, run_id, records, files)
     definition = get_resource(resource)
     files = []
@@ -62,7 +68,9 @@ def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
             f"source_date={manifest.source_date}/run_id={manifest.run_id}"
         )
         files.extend((table, key) for key in sorted(fs.glob(f"{prefix}/*.parquet")))
-    return CommittedDay(manifest.source_date, manifest.run_id, manifest.bronze_records, tuple(files))
+    return CommittedDay(
+        manifest.source_date, manifest.run_id, manifest.bronze_records, tuple(files)
+    )
 
 
 def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
@@ -72,16 +80,41 @@ def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
     config = load_config(resource="bid_opening")
     states: dict[tuple[Any, Any, Any], str] = {}
     for _, record in iter_committed_records(
-        fs, (selection_for(fs, "bid_opening", manifest),), verify_hash=True,
+        fs,
+        (selection_for(fs, "bid_opening", manifest),),
+        verify_hash=True,
     ):
         payload = record["payload"]
         if isinstance(payload, str):
             payload = json.loads(payload)
-        root = lookup(payload, "notify.bidNoContractorResponse.bidNotification") or {}
+        root = (
+            lookup(
+                payload,
+                "opening_adb_wb." "bidNoContractorResponse.bidNotification",
+            )
+            or lookup(
+                payload,
+                "opening_out.bidoNotifyContractorP",
+            )
+            or lookup(
+                payload,
+                "opening_out_technical.bidoNotifyContractorP",
+            )
+            or lookup(
+                payload,
+                "notify.bidNoContractorResponse.bidNotification",
+            )
+        )
+
+        if not isinstance(root, dict) or not root:
+            raise ValueError("Missing committed bid opening root")
+
         context = {
             "id": root.get("id"),
             "notifyNo": record["source_id"],
             "notifyVersion": record.get("source_version"),
+            "processApply": root.get("processApply"),
+            "bidMode": root.get("bidMode"),
         }
         result = validate_detail(payload, context, config.contracts["bid_opening"])
         if result["status"] not in {"pass", "warn"}:
@@ -93,7 +126,9 @@ def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
     return states
 
 
-def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, Any]]) -> dict[str, Any]:
+def notice_context(
+    table: str, record: dict[str, Any], evidence: list[dict[str, Any]]
+) -> dict[str, Any]:
     """Extract and validate normalized contractor notice context from record and evidence."""
     payload = record["payload"]
     if isinstance(payload, str):
@@ -101,12 +136,24 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
     roots = [lookup(payload, p) for p in NOTICE_ROOTS[table]]
     roots = [r for r in roots if isinstance(r, dict) and r]
     matches = [
-        c for c in evidence
-        if c.get("notifyNo") == record["source_id"] and c.get("notifyVersion") == record.get("source_version")
+        c
+        for c in evidence
+        if c.get("notifyNo") == record["source_id"]
+        and c.get("notifyVersion") == record.get("source_version")
     ]
     candidates = roots + matches
     context: dict[str, Any] = {}
-    for field in ("id", "notifyNo", "notifyVersion", "publicDate", "isInternet", "bidOpenDate", "bidCloseDate"):
+    for field in (
+        "id",
+        "notifyNo",
+        "notifyVersion",
+        "publicDate",
+        "isInternet",
+        "bidOpenDate",
+        "bidCloseDate",
+        "processApply",
+        "bidMode",
+    ):
         aliases = (field,)
         if table == "notify_contractor_reoffer_detail":
             alias = {
@@ -117,9 +164,17 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
             }.get(field)
             if alias:
                 aliases += (alias,)
-        values = {str(c[name]) for c in candidates for name in aliases if c.get(name) is not None}
+        values = {
+            str(c[name])
+            for c in candidates
+            for name in aliases
+            if c.get(name) is not None
+        }
         if field == "isInternet":
-            values = {"1" if v in {"True", "1"} else "0" if v in {"False", "0"} else v for v in values}
+            values = {
+                "1" if v in {"True", "1"} else "0" if v in {"False", "0"} else v
+                for v in values
+            }
         if len(values) > 1:
             raise ValueError(f"Conflicting notice {field}")
         context[field] = next(iter(values), None)
@@ -131,7 +186,9 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
         or context["isInternet"] not in {"0", "1"}
     ):
         raise ValueError("Missing notice identity/date/type")
-    if context["notifyNo"] != record["source_id"] or context["notifyVersion"] != record.get("source_version"):
+    if context["notifyNo"] != record["source_id"] or context[
+        "notifyVersion"
+    ] != record.get("source_version"):
         raise ValueError("Notice identity differs from Bronze envelope")
     if date.fromisoformat(context["publicDate"][:10]) != record["source_date"]:
         raise ValueError("Notice publicDate differs from source_date")
@@ -156,11 +213,17 @@ def seed(
     end = min(end or max(r.end_date for r in runs), today_vn() - timedelta(days=1))
     if start > end:
         raise ValueError("No closed dates in watch range")
-    notices = read_coverage(fs, identity, start, end, runs=runs, workers=settings.OPS_SYNC_WORKERS)
+    notices = read_coverage(
+        fs, identity, start, end, runs=runs, workers=settings.OPS_SYNC_WORKERS
+    )
     openings = {
         c.source_date: c.effective
         for c in read_coverage(
-            fs, get_resource("bid_opening").identity, start, end, workers=settings.OPS_SYNC_WORKERS
+            fs,
+            get_resource("bid_opening").identity,
+            start,
+            end,
+            workers=settings.OPS_SYNC_WORKERS,
         )
     }
     seeded = 0
@@ -168,34 +231,63 @@ def seed(
         key = str(day.source_date)
         if day.effective is None:
             with store.db:
-                store.db.execute("INSERT OR REPLACE INTO gaps VALUES (?, ?)", (key, day.status))
+                store.db.execute(
+                    "INSERT OR REPLACE INTO gaps VALUES (?, ?)", (key, day.status)
+                )
             continue
         opening = openings[day.source_date]
         opening_run = opening.run_id if opening else None
-        old = store.db.execute("SELECT run_id, opening_run FROM seeds WHERE day=?", (key,)).fetchone()
+        old = store.db.execute(
+            "SELECT run_id, opening_run FROM seeds WHERE day=?", (key,)
+        ).fetchone()
         if old and tuple(old) == (day.effective.run_id, opening_run):
             continue
-        captured = {key for key, status in opening_states(fs, opening).items() if status == "complete"}
-        evidence = read_quality_contexts(fs, identity, day.effective.run_id, day.source_date)
+        captured = {
+            key
+            for key, status in opening_states(fs, opening).items()
+            if status
+            in {
+                "complete",
+                "cancelled_after_technical",
+                "cancelled_after_opening",
+            }
+        }
+        evidence = read_quality_contexts(
+            fs, identity, day.effective.run_id, day.source_date
+        )
         staged = []
         for table, record in iter_committed_records(
-            fs, (selection_for(fs, "notify_contractor", day.effective),), verify_hash=True,
+            fs,
+            (selection_for(fs, "notify_contractor", day.effective),),
+            verify_hash=True,
         ):
             record["source_date"] = date.fromisoformat(str(record["source_date"])[:10])
-            context = {"notifyNo": record["source_id"], "notifyVersion": record.get("source_version")}
+            context = {
+                "notifyNo": record["source_id"],
+                "notifyVersion": record.get("source_version"),
+            }
             status, error, due = "pending", None, now
             try:
                 context = notice_context(table, record, evidence)
                 if context["isInternet"] == "0":
                     continue
-                identity_key = (context["id"], context["notifyNo"], context["notifyVersion"])
+                identity_key = (
+                    context["id"],
+                    context["notifyNo"],
+                    context["notifyVersion"],
+                )
                 if identity_key in captured:
                     status = "captured"
                 due = calculate_due_date(context, now)
             except (KeyError, ValueError, TypeError) as exc:
                 status, error = "unresolved", str(exc)
             row_key = calculate_content_hash(
-                [key, context.get("id"), record["source_id"], record.get("source_version")]
+                [
+                    key,
+                    context.get("id"),
+                    record["source_id"],
+                    record.get("source_version"),
+                ]
             )
             staged.append(
                 (
@@ -210,7 +302,9 @@ def seed(
         # Publish this seed only after the iterator's final count/hash checks succeeded.
         with store.db:
             staged_keys = {r[0] for r in staged}
-            for old_row in store.db.execute("SELECT key FROM notices WHERE day=?", (key,)).fetchall():
+            for old_row in store.db.execute(
+                "SELECT key FROM notices WHERE day=?", (key,)
+            ).fetchall():
                 if old_row[0] not in staged_keys:
                     store.db.execute(
                         "UPDATE notices SET status='unresolved',next_check=NULL,error='absent_from_current_tbmt' WHERE key=?",
@@ -227,7 +321,10 @@ def seed(
                                    ELSE excluded.next_check END,error=excluded.error""",
                     row,
                 )
-            store.db.execute("INSERT OR REPLACE INTO seeds VALUES (?,?,?)", (key, day.effective.run_id, opening_run))
+            store.db.execute(
+                "INSERT OR REPLACE INTO seeds VALUES (?,?,?)",
+                (key, day.effective.run_id, opening_run),
+            )
             store.db.execute("DELETE FROM gaps WHERE day=?", (key,))
         seeded += 1
     return {"seeded_days": seeded, **store.status(now, start=start, end=end)}
@@ -250,6 +347,7 @@ def check(
 ) -> dict[str, Any]:
     """Check due closed dates for late bid opening publications and refresh if found."""
     if run_day is None:
+
         def _default_run_day(
             resource: str,
             source_date: date,
@@ -270,14 +368,19 @@ def check(
                 )
             )
             if result.status != "success":
-                raise ValueError(f"Bid opening refresh did not commit SUCCESS: status={result.status}")
+                raise ValueError(
+                    f"Bid opening refresh did not commit SUCCESS: status={result.status}"
+                )
             return str(result.commit_id or result.attempt_id or "success")
 
         run_day = _default_run_day
     now = now or datetime.now(UTC)
     rows = store.due_days(now=now, start=start, end=end, limit=max_days)
     if dry_run:
-        return {"planned_days": [r["day"] for r in rows], **store.status(now, start=start, end=end)}
+        return {
+            "planned_days": [r["day"] for r in rows],
+            **store.status(now, start=start, end=end),
+        }
     results = []
     identity = get_resource("bid_opening").identity
     coverage_by_day = (
@@ -312,7 +415,11 @@ def check(
                 )
             )
             found = {
-                (i.get("notifyId") or i.get("id"), i.get("notifyNo"), i.get("notifyVersion"))
+                (
+                    i.get("notifyId") or i.get("id"),
+                    i.get("notifyNo"),
+                    i.get("notifyVersion"),
+                )
                 for _, response in pages
                 for i in response["page"]["content"]
             }
@@ -328,7 +435,11 @@ def check(
             ]
             available_financial = set()
             for context in due_contexts:
-                key = (context.get("id"), context.get("notifyNo"), context.get("notifyVersion"))
+                key = (
+                    context.get("id"),
+                    context.get("notifyNo"),
+                    context.get("notifyVersion"),
+                )
                 if (
                     key in found
                     and states.get(key) == "awaiting_financial"
@@ -347,7 +458,9 @@ def check(
                 )
                 try:
                     manifest = read_day_manifest(fs, identity, run, day)
-                except Exception:  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
+                except (
+                    Exception
+                ):  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
                     manifest = None
                 if manifest is None:
                     try:
@@ -358,9 +471,17 @@ def check(
 
                         meta_svc = get_metadata_service()
                         snapshot = meta_svc.get_snapshot(
-                            [PartitionIdentity(source=identity.source, resource=identity.resource, source_date=day)]
+                            [
+                                PartitionIdentity(
+                                    source=identity.source,
+                                    resource=identity.resource,
+                                    source_date=day,
+                                )
+                            ]
                         )
-                        part_commit = snapshot.partitions.get((identity.source, identity.resource, day))
+                        part_commit = snapshot.partitions.get(
+                            (identity.source, identity.resource, day)
+                        )
                         if part_commit and part_commit.commit:
                             c = part_commit.commit
                             manifest = SimpleNamespace(
@@ -370,33 +491,61 @@ def check(
                                 status=SimpleNamespace(value="success"),
                                 files=c.files,
                             )
-                    except Exception:  # noqa: BLE001, S110 -- best-effort metadata service lookup
+                    except (
+                        Exception
+                    ):  # noqa: BLE001, S110 -- best-effort metadata service lookup
                         pass
-                if manifest is None or (hasattr(manifest, "status") and manifest.status.value != "success"):
+                if manifest is None or (
+                    hasattr(manifest, "status") and manifest.status.value != "success"
+                ):
                     raise ValueError("Bid opening refresh did not commit SUCCESS")
                 states = opening_states(fs, manifest)
                 if not found <= states.keys():
                     raise ValueError("Committed refresh is missing searched identities")
                 if any(states[key] != "complete" for key in available_financial):
-                    raise ValueError("Committed refresh is missing published financial openings")
-            captured = {key for key, status in states.items() if status == "complete"}
+                    raise ValueError(
+                        "Committed refresh is missing published financial openings"
+                    )
+            captured = {
+                key
+                for key, status in states.items()
+                if status
+                in {
+                    "complete",
+                    "cancelled_after_technical",
+                    "cancelled_after_opening",
+                }
+            }
             with store.db:
                 for item in store.db.execute(
-                    "SELECT * FROM notices WHERE day=? AND status='pending'", (str(day),)
+                    "SELECT * FROM notices WHERE day=? AND status='pending'",
+                    (str(day),),
                 ).fetchall():
                     context = json.loads(item["context"])
-                    key = (context.get("id"), context.get("notifyNo"), context.get("notifyVersion"))
+                    key = (
+                        context.get("id"),
+                        context.get("notifyNo"),
+                        context.get("notifyVersion"),
+                    )
                     if key not in captured and item["next_check"] > now.isoformat():
                         continue
                     first = item["first_checked"] or now.isoformat()
-                    interval = 7 if now - datetime.fromisoformat(first) >= timedelta(days=30) else 1
+                    interval = (
+                        7
+                        if now - datetime.fromisoformat(first) >= timedelta(days=30)
+                        else 1
+                    )
                     status = "captured" if key in captured else "pending"
                     store.db.execute(
                         "UPDATE notices SET status=?,first_checked=?,next_check=?,error=NULL WHERE key=?",
                         (
                             status,
                             first,
-                            (now + timedelta(days=interval)).isoformat() if status == "pending" else None,
+                            (
+                                (now + timedelta(days=interval)).isoformat()
+                                if status == "pending"
+                                else None
+                            ),
                             item["key"],
                         ),
                     )
@@ -406,7 +555,12 @@ def check(
             with store.db:
                 store.db.execute(
                     "UPDATE notices SET error=?,next_check=? WHERE day=? AND status='pending' AND next_check<=?",
-                    (error, (now + timedelta(days=1)).isoformat(), str(day), now.isoformat()),
+                    (
+                        error,
+                        (now + timedelta(days=1)).isoformat(),
+                        str(day),
+                        now.isoformat(),
+                    ),
                 )
             results.append({"day": str(day), "status": "error", "error": error})
             # Auth/storage/uncertain commits must stop this scheduler too.
@@ -424,7 +578,9 @@ def read_status(path: Path | str | None = None) -> dict[str, Any]:
         store.close()
 
 
-def due_days(path: Path | str | None = None, limit: int | None = None) -> list[dict[str, Any]]:
+def due_days(
+    path: Path | str | None = None, limit: int | None = None
+) -> list[dict[str, Any]]:
     """Read due closed dates from watch store."""
     path = Path(path or settings.BID_OPENING_WATCH_PATH)
     store = WatchStore(path, read_only=True)
@@ -448,7 +604,11 @@ def run_watch(
     seed_before_check: bool = True,
 ) -> dict[str, Any]:
     """Execute watch operation with file lock and client lifecycle."""
-    workers = settings.BID_OPENING_DETAIL_WORKERS if detail_workers is None else detail_workers
+    workers = (
+        settings.BID_OPENING_DETAIL_WORKERS
+        if detail_workers is None
+        else detail_workers
+    )
     if not 1 <= workers <= 32:
         raise ValueError("bid opening detail_workers must be between 1 and 32")
     path = Path(path or settings.BID_OPENING_WATCH_PATH)
@@ -541,7 +701,11 @@ class WatcherService:
         detail_workers: int | None = None,
     ) -> dict[str, Any]:
         readonly = dry_run
-        lock = nullcontext() if readonly else exclusive_file_lock(self.path.with_suffix(".lock"))
+        lock = (
+            nullcontext()
+            if readonly
+            else exclusive_file_lock(self.path.with_suffix(".lock"))
+        )
         with lock:
             store = WatchStore(self.path, dry_run=readonly)
             try:

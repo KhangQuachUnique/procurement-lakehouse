@@ -1,4 +1,5 @@
 """Policy and extraction rules for late bid opening watch."""
+
 import json
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -11,7 +12,10 @@ from procurement.quality.contracts import load_config, lookup, validate_detail
 from procurement.storage.committed import CommittedDay, iter_committed_records
 
 NOTICE_ROOTS = {
-    "notify_contractor_standard_detail": ("bidoNotifyContractorM", "bidNoContractorResponse.bidNotification"),
+    "notify_contractor_standard_detail": (
+        "bidoNotifyContractorM",
+        "bidNoContractorResponse.bidNotification",
+    ),
     "notify_contractor_vk_adb_detail": ("bidoNotifyContractorP",),
     "notify_contractor_reoffer_detail": ("",),
 }
@@ -19,7 +23,9 @@ NOTICE_ROOTS = {
 
 def namespace() -> str:
     """Namespace hash derived from current object storage endpoint and bucket."""
-    return calculate_content_hash([settings.OBJECT_STORAGE_ENDPOINT, settings.OBJECT_STORAGE_BUCKET])
+    return calculate_content_hash(
+        [settings.OBJECT_STORAGE_ENDPOINT, settings.OBJECT_STORAGE_BUCKET]
+    )
 
 
 def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
@@ -32,7 +38,9 @@ def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
             f"source_date={manifest.source_date}/run_id={manifest.run_id}"
         )
         files.extend((table, key) for key in sorted(fs.glob(f"{prefix}/*.parquet")))
-    return CommittedDay(manifest.source_date, manifest.run_id, manifest.bronze_records, tuple(files))
+    return CommittedDay(
+        manifest.source_date, manifest.run_id, manifest.bronze_records, tuple(files)
+    )
 
 
 def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
@@ -42,16 +50,41 @@ def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
     config = load_config(resource="bid_opening")
     states: dict[tuple[Any, Any, Any], str] = {}
     for _, record in iter_committed_records(
-        fs, (selection_for(fs, "bid_opening", manifest),), verify_hash=True,
+        fs,
+        (selection_for(fs, "bid_opening", manifest),),
+        verify_hash=True,
     ):
         payload = record["payload"]
         if isinstance(payload, str):
             payload = json.loads(payload)
-        root = lookup(payload, "notify.bidNoContractorResponse.bidNotification") or {}
+        root = (
+            lookup(
+                payload,
+                "opening_adb_wb." "bidNoContractorResponse.bidNotification",
+            )
+            or lookup(
+                payload,
+                "opening_out.bidoNotifyContractorP",
+            )
+            or lookup(
+                payload,
+                "opening_out_technical.bidoNotifyContractorP",
+            )
+            or lookup(
+                payload,
+                "notify.bidNoContractorResponse.bidNotification",
+            )
+        )
+
+        if not isinstance(root, dict) or not root:
+            raise ValueError("Missing committed bid opening root")
+
         context = {
             "id": root.get("id"),
             "notifyNo": record["source_id"],
             "notifyVersion": record.get("source_version"),
+            "processApply": root.get("processApply"),
+            "bidMode": root.get("bidMode"),
         }
         result = validate_detail(payload, context, config.contracts["bid_opening"])
         if result["status"] not in {"pass", "warn"}:
@@ -63,7 +96,9 @@ def opening_states(fs: Any, manifest: Any) -> dict[tuple[Any, Any, Any], str]:
     return states
 
 
-def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, Any]]) -> dict[str, Any]:
+def notice_context(
+    table: str, record: dict[str, Any], evidence: list[dict[str, Any]]
+) -> dict[str, Any]:
     """Extract and validate normalized contractor notice context from record and evidence."""
     payload = record["payload"]
     if isinstance(payload, str):
@@ -71,12 +106,24 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
     roots = [lookup(payload, p) for p in NOTICE_ROOTS[table]]
     roots = [r for r in roots if isinstance(r, dict) and r]
     matches = [
-        c for c in evidence
-        if c.get("notifyNo") == record["source_id"] and c.get("notifyVersion") == record.get("source_version")
+        c
+        for c in evidence
+        if c.get("notifyNo") == record["source_id"]
+        and c.get("notifyVersion") == record.get("source_version")
     ]
     candidates = roots + matches
     context: dict[str, Any] = {}
-    for field in ("id", "notifyNo", "notifyVersion", "publicDate", "isInternet", "bidOpenDate", "bidCloseDate"):
+    for field in (
+        "id",
+        "notifyNo",
+        "notifyVersion",
+        "publicDate",
+        "isInternet",
+        "bidOpenDate",
+        "bidCloseDate",
+        "processApply",
+        "bidMode",
+    ):
         aliases = (field,)
         if table == "notify_contractor_reoffer_detail":
             alias = {
@@ -87,9 +134,17 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
             }.get(field)
             if alias:
                 aliases += (alias,)
-        values = {str(c[name]) for c in candidates for name in aliases if c.get(name) is not None}
+        values = {
+            str(c[name])
+            for c in candidates
+            for name in aliases
+            if c.get(name) is not None
+        }
         if field == "isInternet":
-            values = {"1" if v in {"True", "1"} else "0" if v in {"False", "0"} else v for v in values}
+            values = {
+                "1" if v in {"True", "1"} else "0" if v in {"False", "0"} else v
+                for v in values
+            }
         if len(values) > 1:
             raise ValueError(f"Conflicting notice {field}")
         context[field] = next(iter(values), None)
@@ -101,7 +156,9 @@ def notice_context(table: str, record: dict[str, Any], evidence: list[dict[str, 
         or context["isInternet"] not in {"0", "1"}
     ):
         raise ValueError("Missing notice identity/date/type")
-    if context["notifyNo"] != record["source_id"] or context["notifyVersion"] != record.get("source_version"):
+    if context["notifyNo"] != record["source_id"] or context[
+        "notifyVersion"
+    ] != record.get("source_version"):
         raise ValueError("Notice identity differs from Bronze envelope")
     if date.fromisoformat(context["publicDate"][:10]) != record["source_date"]:
         raise ValueError("Notice publicDate differs from source_date")

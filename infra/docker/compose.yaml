@@ -22,8 +22,8 @@ services:
     ports:
       - "${OBJECT_STORAGE_BIND_ADDRESS:-127.0.0.1}:${OBJECT_STORAGE_API_PORT}:8333"
       - "127.0.0.1:8888:8888"
-      - "127.0.0.1:9333:9333"
-      - "127.0.0.1:23646:23646"
+      - "127.0.0.1:19333:9333"
+      - "127.0.0.1:33646:23646"
 
     volumes:
       - object-storage-data:/data
@@ -48,7 +48,8 @@ services:
       OPS_SYNC_WORKERS: ${OPS_SYNC_WORKERS:-8}
       OPS_STALE_AFTER_SECONDS: ${OPS_STALE_AFTER_SECONDS:-600}
       APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
-    command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
+    command:
+      [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
     volumes:
       - ops-state:/var/lib/procurement/ops
       - watch-state:/var/lib/procurement/watch:ro
@@ -61,7 +62,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -128,7 +135,11 @@ services:
     volumes:
       - app-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -U ${APP_POSTGRES_USER:-procurement} -d ${APP_POSTGRES_DB:-procurement}"]
+      test:
+        [
+          CMD-SHELL,
+          "pg_isready -U ${APP_POSTGRES_USER:-procurement} -d ${APP_POSTGRES_DB:-procurement}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
