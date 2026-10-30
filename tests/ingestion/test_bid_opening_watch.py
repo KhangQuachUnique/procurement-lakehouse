@@ -235,6 +235,7 @@ def test_check_keeps_future_notice_schedule_when_same_day_is_due(monkeypatch, st
     [
         "complete",
         "no_qualified_technical_bidders",
+        "cancelled_without_verified_evaluation",
     ],
 )
 def test_seed_existing_opening_is_captured_without_network(

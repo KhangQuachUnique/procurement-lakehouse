@@ -1349,3 +1349,558 @@ def test_no_qualified_fetch_preserves_source(
 
     assert result["status"] == "pass"
     assert result["collection_status"] == "no_qualified_technical_bidders"
+
+
+def cancelled_with_qualified_lots(dual_payload):
+    ctx, data = cancelled_dual_example(dual_payload)
+
+    notice = data["notify"]["bidNoContractorResponse"]["bidNotification"]
+
+    submission = data["bid_open_technical"]["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ][0]
+
+    common = {
+        "notifyId": ctx["id"],
+        "bidNo": notice["bidNo"],
+        "bidId": notice["bidId"],
+        "contractorCode": submission["contractorCode"],
+        "lotPrice": 0,
+        "lotFinalPrice": 0,
+        "evalPrice": None,
+        "ranking": None,
+        "succBidderPrice": None,
+        "succBidderYn": None,
+    }
+
+    qualified = {
+        **common,
+        "lotNo": "PP_TEST_1",
+        "passedYn": "Y",
+    }
+
+    rejected = {
+        **common,
+        "lotNo": "PP_TEST_2",
+        "passedYn": "N",
+    }
+
+    data["lot_open_detail_technical"] = [
+        qualified,
+        rejected,
+    ]
+
+    data["lot_open_detail_financial"] = [
+        copy.deepcopy(qualified),
+    ]
+
+    data["bid_open_financial"] = {
+        "bidNoContractorResponse": None,
+        "bidoBidroundMngViewDTO": None,
+        "bidSubmissionByContractorViewResponse": None,
+    }
+
+    return ctx, data
+
+
+def test_cancelled_qualified_lots_accepted(dual_payload):
+    ctx, data = cancelled_with_qualified_lots(dual_payload)
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "pass"
+    assert result["collection_status"] == "cancelled_after_technical"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "wrong_pair",
+        "positive_financial_price",
+        "financial_ranking",
+        "missing_qualified_row",
+    ],
+)
+def test_cancelled_qualified_lots_reject_invalid(
+    dual_payload,
+    change,
+):
+    ctx, data = cancelled_with_qualified_lots(dual_payload)
+
+    rows = data["lot_open_detail_financial"]
+
+    if change == "wrong_pair":
+        rows[0]["contractorCode"] = "vn_UNKNOWN"
+
+    elif change == "positive_financial_price":
+        rows[0]["lotPrice"] = 1000000
+
+    elif change == "financial_ranking":
+        rows[0]["ranking"] = 1
+
+    elif change == "missing_qualified_row":
+        rows.clear()
+        rows.append(
+            {
+                "notifyId": ctx["id"],
+                "lotNo": "PP_UNKNOWN",
+                "contractorCode": "vn_UNKNOWN",
+            }
+        )
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail"
+
+
+def wb_single_example():
+    ctx, response = adb_single_example()
+
+    ctx.update(
+        {
+            "id": "6594be36-9c69-44a6-bae9-492a5862bf21",
+            "notifyId": "6594be36-9c69-44a6-bae9-492a5862bf21",
+            "notifyNo": "IB2300185981",
+            "notifyVersion": "00",
+            "processApply": "WB",
+            "bidMode": "1_MTHS",
+        }
+    )
+
+    notice = response["bidNoContractorResponse"]["bidNotification"]
+    round_info = response["bidoBidroundMngViewDTO"]
+
+    for root in (notice, round_info):
+        for key in ("id", "notifyNo", "notifyVersion", "processApply"):
+            root[key] = ctx[key]
+        root["bidNo"] = "BP2300363974"
+
+    notice["bidOpenDate"] = "2023-09-11T16:05:00"
+    round_info["successBidOpenDate"] = "2023-09-11T16:19:59"
+    round_info["countContractor"] = 1
+
+    submissions = response["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ]
+    del submissions[1:]
+
+    return ctx, response
+
+
+def test_wb_single_fetch_and_validation():
+    ctx, response = wb_single_example()
+    calls = []
+
+    class Client:
+        def post(self, path, body):
+            calls.append((path, dict(body)))
+            return copy.deepcopy(response)
+
+    payload = BidOpeningApi(Client()).fetch(ctx, {})
+
+    assert calls == [
+        (
+            ADB_WB_OPENING_PATH,
+            {
+                "notifyNo": ctx["notifyNo"],
+                "type": "TBMT",
+                "packType": 0,
+            },
+        )
+    ]
+
+    assert payload == {"opening_adb_wb": response}
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "pass"
+    assert result["collection_status"] == "complete"
+    assert result["identity"]["notifyNo"] == ctx["notifyNo"]
+    assert result["identity"]["notifyVersion"] == "00"
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "wrong_process",
+        "wrong_identity",
+        "wrong_version",
+        "missing_round",
+        "missing_submissions",
+        "count_mismatch",
+    ],
+)
+def test_invalid_wb_opening_rejected(problem):
+    ctx, response = wb_single_example()
+
+    notice = response["bidNoContractorResponse"]["bidNotification"]
+    round_info = response["bidoBidroundMngViewDTO"]
+    submissions = response["bidSubmissionByContractorViewResponse"]
+
+    if problem == "wrong_process":
+        round_info["processApply"] = "ADB"
+    elif problem == "wrong_identity":
+        notice["notifyNo"] = "IB_WRONG"
+    elif problem == "wrong_version":
+        round_info["notifyVersion"] = "01"
+    elif problem == "missing_round":
+        response["bidoBidroundMngViewDTO"] = None
+    elif problem == "missing_submissions":
+        submissions["bidSubmissionDTOList"] = None
+    elif problem == "count_mismatch":
+        round_info["countContractor"] = 2
+
+    result = validate_detail(
+        {"opening_adb_wb": response},
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail"
+
+
+def cancelled_self_link_ungraded_example(dual_payload):
+    ctx, data = cancelled_dual_example(dual_payload)
+
+    notice = data["notify"]["bidNoContractorResponse"]["bidNotification"]
+
+    plan = data["cancellation_notice"]["bidpPlanDetail"]
+
+    # The cancelled notice links back to itself.
+    plan["linkNotifyInfo"] = json.dumps(
+        {
+            "notifyId": ctx["id"],
+            "notifyNo": ctx["notifyNo"],
+            "bidId": notice["bidId"],
+        }
+    )
+
+    # The source has no valid financial opening.
+    financial = data["bid_open_financial"]
+
+    financial["bidNoContractorResponse"] = None
+    financial["bidoBidroundMngViewDTO"] = None
+    financial["bidSubmissionByContractorViewResponse"] = None
+
+    data["lot_open_detail_financial"] = []
+
+    technical = data["bid_open_technical"]["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ]
+
+    assert len(technical) == 1
+    bidder = technical[0]
+    bidder["techResult"] = None
+    bidder["techScore"] = None
+    # One technical lot exists, but it has not been evaluated.
+    data["lot_open_detail_technical"] = [
+        {
+            "notifyId": ctx["id"],
+            "bidNo": notice["bidNo"],
+            "bidId": notice["bidId"],
+            "lotNo": notice["bidNo"],
+            "contractorCode": bidder["contractorCode"],
+            "passedYn": None,
+            "lotPrice": 0,
+            "lotFinalPrice": 0,
+            "evalPrice": None,
+            "ranking": None,
+            "succBidderPrice": None,
+            "succBidderYn": None,
+        }
+    ]
+
+    return ctx, data
+
+
+def test_cancelled_self_link_ungraded_accepted(dual_payload):
+    ctx, data = cancelled_self_link_ungraded_example(dual_payload)
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "pass"
+    assert result["collection_status"] == "cancelled_after_technical"
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "evaluation_present",
+        "financial_price",
+        "financial_root_present",
+        "wrong_lot_identity",
+        "wrong_lot_bid_no",
+        "missing_cancellation",
+    ],
+)
+def test_cancelled_self_link_invalid_rejected(dual_payload, problem):
+    ctx, data = cancelled_self_link_ungraded_example(dual_payload)
+
+    lot = data["lot_open_detail_technical"][0]
+
+    if problem == "evaluation_present":
+        lot["passedYn"] = "Y"
+
+    elif problem == "financial_price":
+        lot["lotPrice"] = 1000000
+
+    elif problem == "financial_root_present":
+        data["bid_open_financial"]["bidoBidroundMngViewDTO"] = {"countContractor": 1}
+
+    elif problem == "wrong_lot_identity":
+        lot["notifyId"] = "wrong-uuid"
+    elif problem == "wrong_lot_bid_no":
+        lot["bidNo"] = "BP_WRONG"
+    elif problem == "missing_cancellation":
+        data["cancellation_notice"]["bidCancelingResponse"]["cancelDate"] = None
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail"
+
+
+def khac_cancelled_unevaluated_example():
+    ctx, technical, financial = khac_dual_example()
+
+    ctx.update(
+        {
+            "id": "9d520bca-d622-4c8a-b377-79a4b8188df7",
+            "notifyId": "9d520bca-d622-4c8a-b377-79a4b8188df7",
+            "notifyNo": "IB2400390456",
+            "notifyVersion": "00",
+            "processApply": "KHAC",
+            "bidMode": "1_HTHS",
+        }
+    )
+
+    bid_no = "BP2400455910"
+    contractor = "vn0300449815"
+
+    for part in (technical, financial):
+        notice = part["bidoNotifyContractorP"]
+        round_info = part["bidoBidroundOutMngViewDTO"]
+
+        for root in (notice, round_info):
+            root.update(
+                {
+                    "id": ctx["id"],
+                    "notifyNo": ctx["notifyNo"],
+                    "notifyVersion": "00",
+                    "bidNo": bid_no,
+                    "processApply": "KHAC",
+                    "bidMode": "1_HTHS",
+                }
+            )
+
+        notice.update(
+            {
+                "status": "03",
+                "bidOpenDate": "2024-10-24T10:00:00",
+                "cancelDate": "2024-11-05T09:34:40",
+                "cancelDecisionDate": "2024-11-05T00:00:00",
+                "cancelDecisionNo": "971/QD-TEST",
+                "cancelReason": "THK",
+                "cancelFileAttachName": "cancellation.pdf",
+            }
+        )
+
+        round_info.update(
+            {
+                "countContractor": 1,
+                "successBidOpenDate": "2024-11-26T14:15:20",
+                "successBidOpenDateTc": "2024-12-10T10:04:34",
+            }
+        )
+
+    technical["bidSubmissionByContractorViewResponse"] = {
+        "bidSubmissionDTOList": [
+            {
+                "id": "technical-submission",
+                "contractorCode": contractor,
+                "techResult": None,
+                "techScore": None,
+                "createdDateBidOpen": None,
+                "bidPrice": 0,
+                "bidFinalPrice": 0,
+                "lotNoValueDTOList": [
+                    {
+                        # Actual IB2400390456 API shape: duplicate
+                        # identifiers are explicit null values.
+                        "bidNo": None,
+                        "lotNo": bid_no,
+                        "contractorCode": None,
+                        "passedYn": None,
+                        "techResult": None,
+                        "techScore": None,
+                        "lotPrice": 0,
+                        "lotFinalPrice": 0,
+                        "evalPrice": None,
+                        "ranking": None,
+                        "succBidderYn": None,
+                    }
+                ],
+            }
+        ],
+        "bidoLotOpenDetailDTOS": None,
+        "bidOpenAdditionList": None,
+    }
+
+    financial["bidSubmissionByContractorViewResponse"] = {
+        "bidSubmissionDTOList": None,
+        "bidoLotOpenDetailDTOS": None,
+        "bidOpenAdditionList": None,
+    }
+
+    return ctx, {
+        "opening_out_technical": technical,
+        "opening_out_financial": financial,
+    }
+
+
+def test_khac_cancelled_unevaluated_accepted():
+    ctx, payload = khac_cancelled_unevaluated_example()
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "cancelled_without_verified_evaluation"
+
+    assert any(
+        issue["code"] == "opening_dates_after_cancellation"
+        for issue in result["issues"]
+    )
+
+    # The API's null financial data must remain unchanged.
+    assert (
+        payload["opening_out_financial"]["bidSubmissionByContractorViewResponse"][
+            "bidSubmissionDTOList"
+        ]
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "missing_decision",
+        "wrong_financial_identity",
+        "technical_evaluated",
+        "positive_bid_price",
+        "positive_lot_price",
+        "wrong_lot_no",
+        "wrong_lot_bid_no",
+        "wrong_lot_contractor",
+        "missing_lot_bid_no",
+        "missing_lot_contractor",
+        "financial_submissions_present",
+        "financial_empty_with_mismatched_cancellation",
+        "financial_key_missing",
+        "invalid_chronology",
+    ],
+)
+def test_khac_cancelled_unevaluated_invalid(problem):
+    ctx, payload = khac_cancelled_unevaluated_example()
+
+    technical = payload["opening_out_technical"]
+    financial = payload["opening_out_financial"]
+
+    notice = technical["bidoNotifyContractorP"]
+
+    bidder = technical["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"][
+        0
+    ]
+
+    lot = bidder["lotNoValueDTOList"][0]
+
+    financial_container = financial["bidSubmissionByContractorViewResponse"]
+
+    if problem == "missing_decision":
+        notice["cancelDecisionNo"] = None
+
+    elif problem == "wrong_financial_identity":
+        financial["bidoBidroundOutMngViewDTO"]["notifyNo"] = "IB_WRONG"
+
+    elif problem == "technical_evaluated":
+        bidder["techResult"] = "Y"
+
+    elif problem == "positive_bid_price":
+        bidder["bidPrice"] = 1000000
+
+    elif problem == "positive_lot_price":
+        lot["lotPrice"] = 1000000
+
+    elif problem == "wrong_lot_no":
+        lot["lotNo"] = "BP_OTHER"
+
+    elif problem == "wrong_lot_bid_no":
+        lot["bidNo"] = "BP_OTHER"
+
+    elif problem == "wrong_lot_contractor":
+        lot["contractorCode"] = "vn_OTHER"
+
+    elif problem == "missing_lot_bid_no":
+        del lot["bidNo"]
+
+    elif problem == "missing_lot_contractor":
+        del lot["contractorCode"]
+
+    elif problem == "financial_submissions_present":
+        financial_container["bidSubmissionDTOList"] = []
+    elif problem == "financial_empty_with_mismatched_cancellation":
+        financial_container["bidSubmissionDTOList"] = []
+        financial["bidoNotifyContractorP"]["cancelDecisionNo"] = "DIFFERENT-DECISION"
+    elif problem == "financial_key_missing":
+        del financial_container["bidSubmissionDTOList"]
+
+    elif problem == "invalid_chronology":
+        technical["bidoBidroundOutMngViewDTO"][
+            "successBidOpenDate"
+        ] = "2024-10-30T10:00:00"
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail"
+
+
+def test_khac_regular_financial_empty_list_is_not_a_cancellation():
+    ctx, technical, financial = khac_dual_example()
+    financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"] = []
+    payload = {
+        "opening_out_technical": technical,
+        "opening_out_financial": financial,
+    }
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+    assert result["status"] == "pass"
+    assert result["collection_status"] == "complete"

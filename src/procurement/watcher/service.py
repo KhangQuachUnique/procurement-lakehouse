@@ -251,6 +251,7 @@ def seed(
                 "cancelled_after_technical",
                 "cancelled_after_opening",
                 "no_qualified_technical_bidders",
+                "cancelled_without_verified_evaluation",
             }
         }
         evidence = read_quality_contexts(
@@ -524,6 +525,7 @@ def check(
                     "cancelled_after_technical",
                     "cancelled_after_opening",
                     "no_qualified_technical_bidders",
+                    "cancelled_without_verified_evaluation",
                 }
             }
             with store.db:

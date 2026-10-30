@@ -101,9 +101,13 @@ class BidOpeningApi:
     def fetch(self, context, evidence):
         body = request_body(context)
 
-        if context.get("processApply") == "ADB":
+        if context.get("processApply") in ("ADB", "WB"):
             if context.get("bidMode") != "1_MTHS":
-                raise DetailValidationError("unsupported_adb_opening_mode")
+                raise DetailValidationError(
+                    "unsupported_adb_opening_mode"
+                    if context["processApply"] == "ADB"
+                    else "unsupported_wb_opening_mode"
+                )
 
             request = {
                 "notifyNo": body["notifyNo"],
