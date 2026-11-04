@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from procurement.common.dates import VIETNAM_TZ
 
 from collections import Counter
+from decimal import Decimal, InvalidOperation
 
 KHAC_ROOTS = [
     "opening_out.bidoNotifyContractorP",
@@ -22,8 +23,161 @@ KHAC_SUBMISSIONS = (
 )
 
 
-def _khac_cancelled_without_verified_evaluation(payload, context):
-    """Verify a cancelled KHAC dual-envelope opening without evaluation."""
+def _khac_cancelled_multilot_technical_verified(details, submissions, notice, context):
+    """Verify unevaluated technical lot rows against bidder-level views."""
+    if not isinstance(details, list) or not details:
+        return False
+
+    expected_pairs = set()
+    bidder_codes = {}
+
+    for bidder in submissions:
+        if not isinstance(bidder, dict):
+            return False
+
+        bid_open_id = bidder.get("id")
+        code = bidder.get("contractorCode")
+
+        if (
+            not isinstance(bid_open_id, str)
+            or not bid_open_id
+            or not isinstance(code, str)
+            or not code
+            or bid_open_id in bidder_codes
+        ):
+            return False
+
+        bidder_codes[bid_open_id] = code
+
+        package_lots = bidder.get("lotNoValueDTOList")
+        if not isinstance(package_lots, list) or len(package_lots) != 1:
+            return False
+
+        package_lot = package_lots[0]
+        if not isinstance(package_lot, dict):
+            return False
+
+        views = package_lot.get("bidOpenView")
+        if not isinstance(views, list) or not views:
+            return False
+
+        for view in views:
+            if not isinstance(view, dict):
+                return False
+
+            lot_no = view.get("lotNo")
+
+            if (
+                not isinstance(lot_no, str)
+                or not lot_no
+                or view.get("bidOpenId") != bid_open_id
+                or view.get("bidNo") != notice["bidNo"]
+                or view.get("contractorCode") != code
+                or view.get("lotPriceUnit") != bidder.get("bidPriceUnit")
+            ):
+                return False
+
+            # The nested lot must not contain evaluated outcomes.
+            if any(
+                view.get(field) is not None
+                for field in (
+                    "passedYn",
+                    "techScore",
+                    "status",
+                    "result",
+                    "evalType",
+                    "bidLotDetail",
+                )
+            ):
+                return False
+
+            if any(
+                isinstance(view.get(field), bool) or view.get(field) not in (None, 0)
+                for field in (
+                    "lotPrice",
+                    "lotFinalPrice",
+                    "discountPercent",
+                )
+            ):
+                return False
+
+            pair = (bid_open_id, lot_no, code)
+            if pair in expected_pairs:
+                return False
+
+            expected_pairs.add(pair)
+
+    # Only accept the verified multi-lot shape.
+    if len({lot_no for _, lot_no, _ in expected_pairs}) < 2:
+        return False
+
+    actual_pairs = set()
+    detail_ids = set()
+
+    for row in details:
+        if not isinstance(row, dict):
+            return False
+
+        row_id = row.get("id")
+        bid_open_id = row.get("bidOpenId")
+        lot_no = row.get("lotNo")
+        code = row.get("contractorCode")
+
+        if (
+            not isinstance(row_id, str)
+            or not row_id
+            or row_id in detail_ids
+            or bid_open_id not in bidder_codes
+            or bidder_codes[bid_open_id] != code
+            or not isinstance(lot_no, str)
+            or not lot_no
+            or row.get("notifyId") != context.get("id")
+            or row.get("bidNo") != notice["bidNo"]
+        ):
+            return False
+
+        if any(
+            row.get(field) is not None
+            for field in (
+                "eligibilityYn",
+                "experienceYn",
+                "passedYn",
+                "evalPrice",
+                "ranking",
+                "succBidderYn",
+                "succBidderPrice",
+                "techScore",
+                "noPassedRson",
+                "noSuccBidderRson",
+            )
+        ):
+            return False
+
+        if any(
+            isinstance(row.get(field), bool) or row.get(field) not in (None, 0)
+            for field in (
+                "lotPrice",
+                "lotFinalPrice",
+                "discountPercent",
+            )
+        ):
+            return False
+
+        detail_ids.add(row_id)
+        pair = (bid_open_id, lot_no, code)
+
+        if pair in actual_pairs:
+            return False
+
+        actual_pairs.add(pair)
+
+    # Both representations must contain exactly the same
+    # bidder-lot relationships.
+    return actual_pairs == expected_pairs
+
+
+def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False):
+    """Verify a narrow, source-backed KHAC cancellation pattern in both phases."""
 
     if (
         context.get("processApply") != "KHAC"
@@ -104,15 +258,12 @@ def _khac_cancelled_without_verified_evaluation(payload, context):
     opened_technical = _event_time(technical_round.get("successBidOpenDate"))
     opened_financial = _event_time(technical_round.get("successBidOpenDateTc"))
 
-    if any(
-        value is None
-        for value in (
-            scheduled,
-            cancelled,
-            decision,
-            opened_technical,
-            opened_financial,
-        )
+    if (
+        scheduled is None
+        or cancelled is None
+        or decision is None
+        or opened_technical is None
+        or opened_financial is None
     ):
         return False
 
@@ -130,104 +281,240 @@ def _khac_cancelled_without_verified_evaluation(payload, context):
         if technical_round.get(field) != financial_round.get(field):
             return False
 
-    # Only the verified one-bidder shape is supported initially.
-    if (
-        technical_round.get("countContractor") != 1
-        or financial_round.get("countContractor") != 1
-    ):
-        return False
-
     technical_container = technical.get("bidSubmissionByContractorViewResponse")
     financial_container = financial.get("bidSubmissionByContractorViewResponse")
 
-    if not all(
-        isinstance(value, dict) for value in (technical_container, financial_container)
+    if not isinstance(technical_container, dict) or not isinstance(
+        financial_container, dict
     ):
         return False
 
-    # Missing financial information must be explicitly null,
-    # not absent and not silently converted into empty lists.
-    for field in (
-        "bidSubmissionDTOList",
-        "bidoLotOpenDetailDTOS",
-        "bidOpenAdditionList",
-    ):
+    # Auxiliary evaluation collections must be explicitly null, not absent.
+    for field in ("bidoLotOpenDetailDTOS", "bidOpenAdditionList"):
         if field not in financial_container or financial_container[field] is not None:
             return False
 
-    # No separately evaluated technical lot data.
-    for field in ("bidoLotOpenDetailDTOS", "bidOpenAdditionList"):
-        if field not in technical_container or technical_container[field] is not None:
+    if "bidSubmissionDTOList" not in financial_container:
+        return False
+    financial_submissions = financial_container["bidSubmissionDTOList"]
+    if priced_financial:
+        # Keep the existing narrowly verified one-bidder priced-financial case.
+        if (
+            not isinstance(financial_submissions, list)
+            or len(financial_submissions) != 1
+        ):
             return False
-
-    submissions = technical_container.get("bidSubmissionDTOList")
-
-    if not isinstance(submissions, list) or len(submissions) != 1:
+    elif financial_submissions is not None:
+        # A cancelled unevaluated financial phase must explicitly be null.
         return False
 
-    bidder = submissions[0]
-
+    # Additional technical results must not exist.
     if (
-        not isinstance(bidder, dict)
-        or not bidder.get("id")
-        or not bidder.get("contractorCode")
+        "bidOpenAdditionList" not in technical_container
+        or technical_container["bidOpenAdditionList"] is not None
+        or "bidoLotOpenDetailDTOS" not in technical_container
     ):
         return False
 
-    if any(
-        bidder.get(field) is not None
+    technical_details = technical_container["bidoLotOpenDetailDTOS"]
+
+    # Non-null technical lot details are supported only for
+    # a strictly verified unevaluated multi-lot cancellation.
+    if technical_details is not None:
+        if (
+            priced_financial
+            or not isinstance(technical_details, list)
+            or not technical_details
+        ):
+            return False
+
+    submissions = technical_container.get("bidSubmissionDTOList")
+    if not isinstance(submissions, list) or not submissions:
+        return False
+
+    # For a null financial phase, both endpoints must agree with the complete
+    # technical bidder list. The separately verified priced case stays single.
+    if priced_financial and len(submissions) != 1:
+        return False
+
+    count = len(submissions)
+    for round_info in (technical_round, financial_round):
+        declared = round_info.get("countContractor")
+        if (
+            not isinstance(declared, int)
+            or isinstance(declared, bool)
+            or declared != count
+        ):
+            return False
+
+    seen_submission_ids = set()
+    seen_contractor_codes = set()
+    for bidder in submissions:
+        if not isinstance(bidder, dict):
+            return False
+
+        submission_id = bidder.get("id")
+        contractor_code = bidder.get("contractorCode")
+        if (
+            not isinstance(submission_id, str)
+            or not submission_id
+            or not isinstance(contractor_code, str)
+            or not contractor_code
+            or submission_id in seen_submission_ids
+            or contractor_code in seen_contractor_codes
+        ):
+            return False
+        seen_submission_ids.add(submission_id)
+        seen_contractor_codes.add(contractor_code)
+
+        if any(
+            bidder.get(field) is not None
+            for field in ("techResult", "techScore", "createdDateBidOpen")
+        ):
+            return False
+
+        if any(
+            bidder.get(field) not in (None, 0)
+            for field in ("bidPrice", "bidFinalPrice")
+        ):
+            return False
+
+        lots = bidder.get("lotNoValueDTOList")
+        if not isinstance(lots, list) or len(lots) != 1:
+            return False
+        lot = lots[0]
+        if not isinstance(lot, dict):
+            return False
+
+        # The duplicate identifiers may be explicitly null in source data.
+        # When present, they must agree with the notice / enclosing bidder.
+        if (
+            lot.get("lotNo") != original["bidNo"]
+            or "bidNo" not in lot
+            or "contractorCode" not in lot
+            or lot["bidNo"] not in (None, original["bidNo"])
+            or lot["contractorCode"] not in (None, contractor_code)
+        ):
+            return False
+
+        # No evaluation outcome should be present in the technical lot.
         for field in (
+            "passedYn",
             "techResult",
             "techScore",
-            "createdDateBidOpen",
+            "evalPrice",
+            "ranking",
+            "succBidderYn",
+        ):
+            if lot.get(field) is not None:
+                return False
+
+        if any(
+            lot.get(field) not in (None, 0) for field in ("lotPrice", "lotFinalPrice")
+        ):
+            return False
+
+    if isinstance(technical_details, list):
+        if not _khac_cancelled_multilot_technical_verified(
+            technical_details,
+            submissions,
+            original,
+            context,
+        ):
+            return False
+
+    if not priced_financial:
+        return True
+
+    # There is exactly one technical bidder in the priced-financial case.
+    bidder = submissions[0]
+
+    # Financial submissions must contain exactly one bidder.
+    if not isinstance(financial_submissions, list) or len(financial_submissions) != 1:
+        return False
+
+    # The source may publish a real financial-level bid despite a notice
+    # whose cancellation date predates recorded opening timestamps. This is
+    # NOT an unevaluated/null-financial case: retain the positive bid price.
+    financial_bidder = financial_submissions[0]
+    if (
+        not isinstance(financial_bidder, dict)
+        or not financial_bidder.get("id")
+        or financial_bidder.get("contractorCode") != bidder["contractorCode"]
+        or any(
+            financial_bidder.get(key) is not None
+            for key in ("techResult", "techScore", "createdDateBidOpen")
         )
     ):
         return False
 
-    if any(
-        bidder.get(field) not in (None, 0) for field in ("bidPrice", "bidFinalPrice")
-    ):
-        return False
+    def finite_decimal(value):
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            parsed = Decimal(str(value))
+        except (ValueError, InvalidOperation):
+            return None
+        return parsed if parsed.is_finite() else None
 
-    lots = bidder.get("lotNoValueDTOList")
-
-    if not isinstance(lots, list) or len(lots) != 1:
-        return False
-
-    lot = lots[0]
-
-    if not isinstance(lot, dict):
-        return False
-
-    # In this verified KHAC response, lotNo identifies the package,
-    # while lot.bidNo and lot.contractorCode are explicitly null.
-    # Accept nullable duplicate identifiers only when they do not
-    # contradict the notice and the enclosing technical submission.
+    price = finite_decimal(financial_bidder.get("bidPrice"))
+    final_price = finite_decimal(financial_bidder.get("bidFinalPrice"))
+    discount = finite_decimal(financial_bidder.get("saleNumber"))
+    currency = financial_bidder.get("bidPriceUnit")
     if (
-        lot.get("lotNo") != original["bidNo"]
-        or "bidNo" not in lot
-        or "contractorCode" not in lot
-        or lot["bidNo"] not in (None, original["bidNo"])
-        or lot["contractorCode"] not in (None, bidder["contractorCode"])
+        price is None
+        or price <= 0
+        or final_price != price
+        or discount != 0
+        or not isinstance(currency, str)
+        or not currency.strip()
     ):
         return False
 
-    # No technical or financial evaluation result is available.
-    for field in (
-        "passedYn",
-        "techResult",
-        "techScore",
-        "evalPrice",
-        "ranking",
-        "succBidderYn",
-    ):
-        if lot.get(field) is not None:
-            return False
-
-    if any(lot.get(field) not in (None, 0) for field in ("lotPrice", "lotFinalPrice")):
+    financial_lots = financial_bidder.get("lotNoValueDTOList")
+    if not isinstance(financial_lots, list) or len(financial_lots) != 1:
+        return False
+    financial_lot = financial_lots[0]
+    if not isinstance(financial_lot, dict):
         return False
 
+    if (
+        financial_lot.get("lotNo") != original["bidNo"]
+        or "bidNo" not in financial_lot
+        or "contractorCode" not in financial_lot
+        or financial_lot["bidNo"] not in (None, original["bidNo"])
+        or financial_lot["contractorCode"] not in (None, bidder["contractorCode"])
+        or financial_lot.get("lotPriceUnit") != currency
+        or finite_decimal(financial_lot.get("lotPrice")) != 0
+        or finite_decimal(financial_lot.get("lotFinalPrice")) != 0
+        or finite_decimal(financial_lot.get("saleNumber")) != 0
+    ):
+        return False
+
+    # Do not classify a genuinely evaluated or awarded financial lot as
+    # this limited source anomaly.
+    if any(
+        financial_lot.get(key) is not None
+        for key in (
+            "passedYn",
+            "techResult",
+            "techScore",
+            "evalPrice",
+            "ranking",
+            "succBidderYn",
+            "succBidderPrice",
+        )
+    ):
+        return False
     return True
+
+
+def _khac_cancelled_without_verified_evaluation(payload, context):
+    return _khac_cancelled_verified_pattern(payload, context)
+
+
+def _khac_cancelled_with_priced_financial(payload, context):
+    return _khac_cancelled_verified_pattern(payload, context, priced_financial=True)
 
 
 def validate_khac_assembly(payload, context, contract, *, thresholds=None):
@@ -318,6 +605,11 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
 
     cancelled_no_evaluation = _khac_cancelled_without_verified_evaluation(
         payload, context
+    )
+    cancelled_priced_financial = (
+        mode == "1_HTHS"
+        and not cancelled_no_evaluation
+        and _khac_cancelled_with_priced_financial(payload, context)
     )
 
     # 4. Validate each component independently
@@ -463,7 +755,7 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
     # strictly verified exception, even if the financial submission list
     # is syntactically valid (for example, []). Check each source response
     # independently so a mismatched cancellation cannot silently pass.
-    if mode == "1_HTHS" and not cancelled_no_evaluation:
+    if mode == "1_HTHS" and not (cancelled_no_evaluation or cancelled_priced_financial):
         technical_round = lookup(
             payload,
             "opening_out_technical.bidoBidroundOutMngViewDTO",
@@ -499,12 +791,29 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
                 "opening_out_technical.bidoBidroundOutMngViewDTO",
             )
         )
+    elif cancelled_priced_financial:
+        problems.append(
+            issue(
+                "cancelled_khac_priced_financial_after_cancellation",
+                "warn",
+                "opening_out_technical.bidoNotifyContractorP.cancelDate",
+            )
+        )
+        problems.append(
+            issue(
+                "financial_bid_price_vs_zero_lot_price",
+                "warn",
+                "opening_out_financial.bidSubmissionByContractorViewResponse.bidSubmissionDTOList",
+            )
+        )
 
     result = finish(result)
 
     if result["status"] in {"pass", "warn"}:
         if cancelled_no_evaluation:
             result["collection_status"] = "cancelled_without_verified_evaluation"
+        elif cancelled_priced_financial:
+            result["collection_status"] = "cancelled_priced_financial_timeline_conflict"
         else:
             result["collection_status"] = (
                 "awaiting_financial" if pending else "complete"
@@ -659,15 +968,12 @@ def _cancelled_after_technical(payload, context):
     financial_response = payload.get("bid_open_financial")
     cancellation_response = payload.get("cancellation_notice")
 
-    if not all(
-        isinstance(root, dict)
-        for root in (
-            notice,
-            cancellation,
-            plan,
-            financial_response,
-            cancellation_response,
-        )
+    if (
+        not isinstance(notice, dict)
+        or not isinstance(cancellation, dict)
+        or not isinstance(plan, dict)
+        or not isinstance(financial_response, dict)
+        or not isinstance(cancellation_response, dict)
     ):
         return False
 
@@ -845,8 +1151,11 @@ def _cancelled_after_opening(payload, context):
     lots = payload.get("lot_open_detail")
     detail = payload.get("cancellation_notice")
 
-    if not all(
-        isinstance(part, dict) for part in (notice, round_response, opening, detail)
+    if (
+        not isinstance(notice, dict)
+        or not isinstance(round_response, dict)
+        or not isinstance(opening, dict)
+        or not isinstance(detail, dict)
     ):
         return False
 
@@ -1172,8 +1481,11 @@ def _no_qualified_technical_bidders(payload, context):
     financial_lots = payload.get("lot_open_detail_financial")
     detail = payload.get("cancellation_notice")
 
-    if not all(
-        isinstance(value, dict) for value in (notice, round_info, financial, detail)
+    if (
+        not isinstance(notice, dict)
+        or not isinstance(round_info, dict)
+        or not isinstance(financial, dict)
+        or not isinstance(detail, dict)
     ):
         return False
 
@@ -1338,8 +1650,10 @@ def _no_qualified_technical_bidders(payload, context):
     )
     plan = detail.get("bidpPlanDetail")
 
-    if not all(
-        isinstance(value, dict) for value in (cancellation, detail_notice, plan)
+    if (
+        not isinstance(cancellation, dict)
+        or not isinstance(detail_notice, dict)
+        or not isinstance(plan, dict)
     ):
         return False
 

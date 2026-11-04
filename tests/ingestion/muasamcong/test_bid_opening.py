@@ -1890,6 +1890,160 @@ def test_khac_cancelled_unevaluated_invalid(problem):
     assert result["status"] == "fail"
 
 
+def khac_cancelled_priced_financial_example():
+    """Regression shape for IB2500306320: priced financial bid after cancellation."""
+    ctx, payload = khac_cancelled_unevaluated_example()
+    ctx.update(
+        {
+            "id": "3796107c-de84-48ec-b461-c27f4728386c",
+            "notifyId": "3796107c-de84-48ec-b461-c27f4728386c",
+            "notifyNo": "IB2500306320",
+            "notifyVersion": "00",
+        }
+    )
+    package_no = "BP2500436935"
+    contractor = "vnz000023744"
+
+    for part in payload.values():
+        notice = part["bidoNotifyContractorP"]
+        round_info = part["bidoBidroundOutMngViewDTO"]
+        for root in (notice, round_info):
+            root.update(
+                {
+                    "id": ctx["id"],
+                    "notifyNo": ctx["notifyNo"],
+                    "notifyVersion": ctx["notifyVersion"],
+                    "bidNo": package_no,
+                }
+            )
+        notice.update(
+            {
+                "status": "03",
+                "bidOpenDate": "2025-07-31T09:00:00",
+                "cancelDate": "2025-08-13T15:52:15",
+                "cancelDecisionDate": "2025-08-12T00:00:00",
+                "cancelDecisionNo": "995/NCTK",
+                "cancelReason": "KDUN",
+                "cancelFileAttachName": "Thông báo hủy thầu - 26.NCKH-0042.25.pdf",
+            }
+        )
+        round_info.update(
+            {
+                "countContractor": 1,
+                "successBidOpenDate": "2025-09-03T16:33:11",
+                "successBidOpenDateTc": "2025-09-05T07:16:38",
+            }
+        )
+
+    tech_bidder = payload["opening_out_technical"][
+        "bidSubmissionByContractorViewResponse"
+    ]["bidSubmissionDTOList"][0]
+    tech_bidder["contractorCode"] = contractor
+    tech_bidder["lotNoValueDTOList"][0]["lotNo"] = package_no
+
+    financial = payload["opening_out_financial"][
+        "bidSubmissionByContractorViewResponse"
+    ]
+    financial["bidSubmissionDTOList"] = [
+        {
+            "id": "d2f41723-0cc6-40df-899a-5d667d4727ac",
+            "contractorCode": contractor,
+            "contractorName": "Trường Đại học Dầu khí Việt Nam ",
+            "bidPrice": 470400000,
+            "bidFinalPrice": 470400000,
+            "saleNumber": "0.0",
+            "bidPriceUnit": "VND",
+            "techResult": None,
+            "techScore": None,
+            "createdDateBidOpen": None,
+            "lotNoValueDTOList": [
+                {
+                    "lotNo": package_no,
+                    "bidNo": None,
+                    "contractorCode": None,
+                    "lotPrice": 0,
+                    "lotFinalPrice": 0,
+                    "lotPriceUnit": "VND",
+                    "saleNumber": "0.0",
+                    "passedYn": None,
+                    "evalPrice": None,
+                    "ranking": None,
+                    "succBidderYn": None,
+                }
+            ],
+        }
+    ]
+    return ctx, payload
+
+
+def test_khac_cancelled_priced_financial_warns_and_preserves_bid():
+    ctx, payload = khac_cancelled_priced_financial_example()
+    result = validate_detail(
+        payload, ctx, load_config(resource="bid_opening").contracts["bid_opening"]
+    )
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "cancelled_priced_financial_timeline_conflict"
+    assert {
+        "cancelled_khac_priced_financial_after_cancellation",
+        "financial_bid_price_vs_zero_lot_price",
+    }.issubset({item["code"] for item in result["issues"]})
+    assert (
+        payload["opening_out_financial"]["bidSubmissionByContractorViewResponse"][
+            "bidSubmissionDTOList"
+        ][0]["bidPrice"]
+        == 470400000
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_contractor",
+        "zero_price",
+        "mismatched_final_price",
+        "wrong_lot_no",
+        "positive_lot_price",
+        "evaluated_lot",
+        "lot_discount_present",
+        "cancel_mismatch",
+        "missing_submission_id",
+        "financial_empty_list",
+    ],
+)
+def test_khac_cancelled_priced_financial_invalid_is_rejected(mutation):
+    ctx, payload = khac_cancelled_priced_financial_example()
+    financial = payload["opening_out_financial"]
+    bidder = financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"][
+        0
+    ]
+    lot = bidder["lotNoValueDTOList"][0]
+    if mutation == "wrong_contractor":
+        bidder["contractorCode"] = "vn-WRONG"
+    elif mutation == "zero_price":
+        bidder["bidPrice"] = 0
+        bidder["bidFinalPrice"] = 0
+    elif mutation == "mismatched_final_price":
+        bidder["bidFinalPrice"] = 1
+    elif mutation == "wrong_lot_no":
+        lot["lotNo"] = "BP_WRONG"
+    elif mutation == "positive_lot_price":
+        lot["lotPrice"] = 1
+    elif mutation == "evaluated_lot":
+        lot["ranking"] = 1
+    elif mutation == "lot_discount_present":
+        lot["saleNumber"] = 5
+    elif mutation == "cancel_mismatch":
+        financial["bidoNotifyContractorP"]["cancelDecisionNo"] = "WRONG"
+    elif mutation == "missing_submission_id":
+        bidder.pop("id")
+    elif mutation == "financial_empty_list":
+        financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"] = []
+    result = validate_detail(
+        payload, ctx, load_config(resource="bid_opening").contracts["bid_opening"]
+    )
+    assert result["status"] == "fail", mutation
+
+
 def test_khac_regular_financial_empty_list_is_not_a_cancellation():
     ctx, technical, financial = khac_dual_example()
     financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"] = []
@@ -1904,3 +2058,95 @@ def test_khac_regular_financial_empty_list_is_not_a_cancellation():
     )
     assert result["status"] == "pass"
     assert result["collection_status"] == "complete"
+
+
+# Add at the end of tests/ingestion/muasamcong/test_bid_opening.py.
+# That test module already imports copy and pytest, and defines
+# khac_cancelled_unevaluated_example(), load_config(), validate_detail().
+
+
+def khac_cancelled_two_bidders_unevaluated_example():
+    ctx, payload = khac_cancelled_unevaluated_example()
+
+    technical = payload["opening_out_technical"]
+    submissions = technical["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ]
+    second = copy.deepcopy(submissions[0])
+    second["id"] = "technical-submission-2"
+    second["contractorCode"] = "vn0102560459"
+    submissions.append(second)
+
+    for part in payload.values():
+        part["bidoBidroundOutMngViewDTO"]["countContractor"] = 2
+
+    return ctx, payload
+
+
+def test_khac_cancelled_two_bidders_null_financial_accepted():
+    ctx, payload = khac_cancelled_two_bidders_unevaluated_example()
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "cancelled_without_verified_evaluation"
+    assert {issue["code"] for issue in result["issues"]} >= {
+        "opening_dates_after_cancellation"
+    }
+    assert (
+        payload["opening_out_financial"]["bidSubmissionByContractorViewResponse"][
+            "bidSubmissionDTOList"
+        ]
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_count",
+        "duplicate_contractor_code",
+        "duplicate_submission_id",
+        "evaluated_second_bidder",
+        "nonzero_second_lot_price",
+        "wrong_second_lot_no",
+        "financial_empty_list",
+        "different_cancel_decision",
+    ],
+)
+def test_khac_cancelled_two_bidders_invalid_rejected(mutation):
+    ctx, payload = khac_cancelled_two_bidders_unevaluated_example()
+    technical = payload["opening_out_technical"]
+    financial = payload["opening_out_financial"]
+    submissions = technical["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ]
+    second = submissions[1]
+
+    if mutation == "wrong_count":
+        financial["bidoBidroundOutMngViewDTO"]["countContractor"] = 1
+    elif mutation == "duplicate_contractor_code":
+        second["contractorCode"] = submissions[0]["contractorCode"]
+    elif mutation == "duplicate_submission_id":
+        second["id"] = submissions[0]["id"]
+    elif mutation == "evaluated_second_bidder":
+        second["techResult"] = "Y"
+    elif mutation == "nonzero_second_lot_price":
+        second["lotNoValueDTOList"][0]["lotPrice"] = 1
+    elif mutation == "wrong_second_lot_no":
+        second["lotNoValueDTOList"][0]["lotNo"] = "BP_WRONG"
+    elif mutation == "financial_empty_list":
+        financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"] = []
+    elif mutation == "different_cancel_decision":
+        financial["bidoNotifyContractorP"]["cancelDecisionNo"] = "WRONG"
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+    assert result["status"] == "fail", mutation

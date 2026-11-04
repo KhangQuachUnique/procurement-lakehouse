@@ -552,7 +552,9 @@ def _column_to_duckdb_type(col_type: TypeEngine) -> str:
 
 def to_duckdb_ddl(table: sa.Table) -> str:
     """Generate DuckDB SQL column definition string for a SQLAlchemy Table."""
-    return ", ".join(f"{col.name} {_column_to_duckdb_type(col.type)}" for col in table.columns)
+    return ", ".join(
+        f"{col.name} {_column_to_duckdb_type(col.type)}" for col in table.columns
+    )
 
 
 def _column_to_pyarrow_type(col_type: TypeEngine) -> pa.DataType:
