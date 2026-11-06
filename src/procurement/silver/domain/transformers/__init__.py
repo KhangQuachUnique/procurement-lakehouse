@@ -11,6 +11,10 @@ from procurement.silver.domain.transformers.plan import PlanDetailTransformer
 from procurement.silver.domain.transformers.project import ProjectDetailTransformer
 from procurement.silver.domain.transformers.result import ContractorResultTransformer
 
+from procurement.silver.domain.transformers.bid_opening import (
+    BidOpeningTransformer,
+)
+
 __all__ = [
     "BaseResourceTransformer",
     "ContractorResultTransformer",

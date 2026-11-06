@@ -5,23 +5,48 @@ from dataclasses import replace
 import pytest
 
 from procurement.silver.application.observations import transform
-from procurement.silver.domain.registry import require_transformer, transformer_contracts
+from procurement.silver.domain.registry import (
+    require_transformer,
+    transformer_contracts,
+)
+from procurement.silver.domain.transformers.bid_opening import BidOpeningTransformer
 from tests.unit.silver.test_project_transformer import make_envelope
+
+
+def test_bid_opening_transformer_is_registered():
+    transformer = require_transformer("bid_opening_detail")
+
+    assert isinstance(transformer, BidOpeningTransformer)
+    assert transformer.table_name == "bid_opening_detail"
+    assert transformer.entity_type == "opening"
+    assert transformer.id_scheme == "notify_no"
 
 
 def test_unimplemented_resource_is_explicit():
     with pytest.raises(ValueError, match="not implemented"):
-        require_transformer("bid_opening_detail")
+        require_transformer("unknown_resource_detail")
 
 
 def test_project_build_uses_same_registered_transformer():
     envelope = make_envelope(
-        {"projectDTO": {"id": "p", "name": "Project", "investTotal": 10, "investTotalUnit": "VND"}}
+        {
+            "projectDTO": {
+                "id": "p",
+                "name": "Project",
+                "investTotal": 10,
+                "investTotalUnit": "VND",
+            }
+        }
     )
+
     result = transform(
         envelope.namespace,
         {"resource": envelope.resource, "source_date": envelope.source_date},
-        {"table": envelope.table_name, "key": envelope.file_key, "sha256": envelope.file_sha256},
+        {
+            "table": envelope.table_name,
+            "key": envelope.file_key,
+            "sha256": envelope.file_sha256,
+        },
         0,
         {
             "payload": envelope.payload,
@@ -32,13 +57,16 @@ def test_project_build_uses_same_registered_transformer():
             "content_hash": envelope.content_hash,
         },
     )
+
     expected = require_transformer(envelope.table_name).transform(envelope).to_dict()
+
     assert result == expected
     assert result["typed"]["currency"] == "VND"
 
 
 def test_cache_contract_only_includes_selected_transformers():
     contracts = transformer_contracts({"project_detail"})
+
     assert set(contracts) == {"project_detail"}
     assert "notice" not in contracts["project_detail"]
 
@@ -49,9 +77,14 @@ def test_typed_child_identity_must_match_raw_child():
 
     envelope = make_envelope({"projectDTO": {"id": "p"}})
     result = require_transformer("project_detail").transform(envelope)
+
+    # Ensure the transformer produced a valid revision.
+    revision = result.revision
+    assert revision is not None
+
     child = ExtractedChild(
         "c",
-        result.revision.revision_id,
+        revision.revision_id,
         "location",
         "location",
         "locations",
@@ -59,17 +92,30 @@ def test_typed_child_identity_must_match_raw_child():
         None,
         "{}",
         "notice_location",
-        {"child_id": "wrong", "revision_id": result.revision.revision_id},
+        {
+            "child_id": "wrong",
+            "revision_id": revision.revision_id,
+        },
     )
+
     result.children = [child]
+
+    # Invalid child identity must be rejected.
     with pytest.raises(ValueError, match="identity"):
         assemble([result.to_dict()])
+
+    # Correct child identity must be accepted.
     result.children = [
         replace(
             child,
-            typed_attributes={"child_id": "c", "revision_id": result.revision.revision_id},
+            typed_attributes={
+                "child_id": "c",
+                "revision_id": revision.revision_id,
+            },
         )
     ]
+
     tables = assemble([result.to_dict()])
+
     assert len(tables["notice_location"]) == 1
     assert "child" not in tables

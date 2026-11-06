@@ -10,9 +10,11 @@ from sqlalchemy.sql.type_api import TypeEngine
 
 metadata = sa.MetaData(schema="silver")
 
+
 # ---------------------------------------------------------------------------
 # TIER 1: TRACEABILITY & GOVERNANCE
 # ---------------------------------------------------------------------------
+
 
 observation_table = sa.Table(
     "observation",
@@ -33,6 +35,7 @@ observation_table = sa.Table(
     comment="Physical raw observation record from Bronze Parquet with full lineage",
 )
 
+
 quality_issue_table = sa.Table(
     "quality_issue",
     metadata,
@@ -44,6 +47,7 @@ quality_issue_table = sa.Table(
     comment="Data quality anomalies and rule violations",
 )
 
+
 quarantine_table = sa.Table(
     "quarantine",
     metadata,
@@ -52,9 +56,11 @@ quarantine_table = sa.Table(
     comment="Quarantined occurrences failing basic identity/format constraints",
 )
 
+
 # ---------------------------------------------------------------------------
-# TIER 2: 5 CORE ENTITY REVISIONS
+# TIER 2: 6 CORE ENTITY REVISIONS
 # ---------------------------------------------------------------------------
+
 
 project_revision_table = sa.Table(
     "project_revision",
@@ -85,6 +91,7 @@ project_revision_table = sa.Table(
     comment="Investment project revision",
 )
 
+
 plan_revision_table = sa.Table(
     "plan_revision",
     metadata,
@@ -111,6 +118,7 @@ plan_revision_table = sa.Table(
     sa.Column("root_json", sa.Text, nullable=False),
     comment="Procurement plan (KHLCNT) revision",
 )
+
 
 package_revision_table = sa.Table(
     "package_revision",
@@ -144,6 +152,7 @@ package_revision_table = sa.Table(
     sa.Column("root_json", sa.Text, nullable=False),
     comment="Package in procurement plan revision",
 )
+
 
 notice_revision_table = sa.Table(
     "notice_revision",
@@ -243,6 +252,7 @@ notice_revision_table = sa.Table(
     comment="Tender invitation notice (TBMT) revision",
 )
 
+
 result_revision_table = sa.Table(
     "result_revision",
     metadata,
@@ -278,6 +288,7 @@ result_revision_table = sa.Table(
     comment="Contractor selection result revision",
 )
 
+
 opening_revision_table = sa.Table(
     "opening_revision",
     metadata,
@@ -290,7 +301,21 @@ opening_revision_table = sa.Table(
     sa.Column("notify_version", sa.String, nullable=True),
     sa.Column("business_number", sa.String, nullable=True),
     sa.Column("title", sa.String, nullable=True),
+    sa.Column("process_apply", sa.String, nullable=True),
+    sa.Column("bid_form", sa.String, nullable=True),
     sa.Column("bid_mode", sa.String, nullable=True),
+    sa.Column("package_no", sa.String, nullable=True),
+    sa.Column("package_id", sa.String, nullable=True),
+    sa.Column("opening_shape", sa.String, nullable=True),
+    sa.Column("is_multi_lot", sa.Boolean, nullable=True),
+    sa.Column("scheduled_open_date", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("technical_open_date", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("financial_open_date", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("cancel_date", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("cancel_decision_date", sa.Date, nullable=True),
+    sa.Column("cancel_decision_no", sa.String, nullable=True),
+    sa.Column("cancel_reason", sa.String, nullable=True),
+    sa.Column("collection_status", sa.String, nullable=True),
     sa.Column("actual_open_date", sa.DateTime(timezone=True), nullable=True),
     sa.Column("total_bidders", sa.BigInteger, nullable=True),
     sa.Column("public_date", sa.Date, nullable=True),
@@ -300,46 +325,11 @@ opening_revision_table = sa.Table(
     comment="Bid opening revision",
 )
 
-# Legacy compatibility tables
-lot_table = sa.Table(
-    "lot",
-    metadata,
-    sa.Column("lot_id", sa.String, primary_key=True),
-    sa.Column("revision_id", sa.String, nullable=False),
-    sa.Column("lot_no", sa.String, nullable=True),
-    sa.Column("lot_name", sa.String, nullable=True),
-    sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("estimate_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("currency", sa.String, nullable=True),
-    sa.Column("winning_code", sa.String, nullable=True),
-    sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=False),
-    comment="Legacy generic lot table",
-)
-
-bid_participation_table = sa.Table(
-    "bid_participation",
-    metadata,
-    sa.Column("participation_id", sa.String, primary_key=True),
-    sa.Column("revision_id", sa.String, nullable=False),
-    sa.Column("lot_no", sa.String, nullable=True),
-    sa.Column("contractor_code", sa.String, nullable=True),
-    sa.Column("contractor_name", sa.String, nullable=True),
-    sa.Column("tax_code", sa.String, nullable=True),
-    sa.Column("is_consortium", sa.Boolean, nullable=True),
-    sa.Column("consortium_name", sa.String, nullable=True),
-    sa.Column("bid_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("winning_price", sa.Numeric(38, 6), nullable=True),
-    sa.Column("currency", sa.String, nullable=True),
-    sa.Column("is_winner", sa.Boolean, nullable=True),
-    sa.Column("evaluation_rank", sa.BigInteger, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=False),
-    comment="Legacy generic bid participation table",
-)
 
 # ---------------------------------------------------------------------------
 # TIER 3: TYPED SUB-ENTITIES (CHILD PROJECTIONS)
 # ---------------------------------------------------------------------------
+
 
 notice_lot_table = sa.Table(
     "notice_lot",
@@ -363,6 +353,7 @@ notice_lot_table = sa.Table(
     comment="Tender invitation notice lot item projection",
 )
 
+
 notice_location_table = sa.Table(
     "notice_location",
     metadata,
@@ -380,6 +371,7 @@ notice_location_table = sa.Table(
     sa.Column("ward_name", sa.String, nullable=True),
     comment="Tender invitation notice geographic location projection",
 )
+
 
 notice_reoffer_submission_table = sa.Table(
     "notice_reoffer_submission",
@@ -409,8 +401,9 @@ notice_reoffer_submission_table = sa.Table(
     sa.Column("form_value", sa.String, nullable=True),
     comment="Online reoffer bid submission attempt projection",
 )
-
 # New Domain Extensions
+
+
 project_location_table = sa.Table(
     "project_location",
     metadata,
@@ -425,6 +418,7 @@ project_location_table = sa.Table(
     sa.Column("location_name", sa.String, nullable=True),
     comment="Investment project location breakdown",
 )
+
 
 package_lot_table = sa.Table(
     "package_lot",
@@ -444,6 +438,7 @@ package_lot_table = sa.Table(
     comment="Procurement plan package lot specification",
 )
 
+
 package_location_table = sa.Table(
     "package_location",
     metadata,
@@ -459,29 +454,36 @@ package_location_table = sa.Table(
     comment="Procurement plan package location breakdown",
 )
 
-notice_amendment_table = sa.Table(
-    "notice_amendment",
+
+opening_phase_table = sa.Table(
+    "opening_phase",
     metadata,
-    sa.Column("amendment_id", sa.String, primary_key=True),
+    sa.Column("phase_id", sa.String, primary_key=True),
     sa.Column("revision_id", sa.String, nullable=False),
-    sa.Column("amendment_type", sa.String, nullable=False),
-    sa.Column("old_close_date", sa.DateTime(timezone=True), nullable=True),
-    sa.Column("new_close_date", sa.DateTime(timezone=True), nullable=True),
-    sa.Column("reason", sa.String, nullable=True),
+    sa.Column("phase", sa.String, nullable=False),
+    sa.Column("source_path", sa.String, nullable=False),
+    sa.Column("opened_at", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("reported_contractor_count", sa.BigInteger, nullable=True),
+    sa.Column("submission_shape", sa.String, nullable=False),
+    sa.Column("phase_status_raw", sa.String, nullable=True),
     sa.Column("raw_json", sa.Text, nullable=False),
-    comment="Tender invitation deadline postponement and amendment history",
+    comment="Observed opening phase; null/missing/list kept distinct",
 )
+
 
 opening_submission_table = sa.Table(
     "opening_submission",
     metadata,
     sa.Column("submission_id", sa.String, primary_key=True),
+    sa.Column("revision_id", sa.String, nullable=False),
     sa.Column("opening_revision_id", sa.String, nullable=False),
+    sa.Column("source_submission_id", sa.String, nullable=True),
+    sa.Column("source_path", sa.String, nullable=True),
     sa.Column("phase", sa.String, nullable=False),
     sa.Column("lot_no", sa.String, nullable=True),
     sa.Column("contractor_code", sa.String, nullable=False),
-    sa.Column("contractor_name", sa.String, nullable=False),
-    sa.Column("is_consortium", sa.Boolean, nullable=False),
+    sa.Column("contractor_name", sa.String, nullable=True),
+    sa.Column("is_consortium", sa.Boolean, nullable=True),
     sa.Column("venture_code", sa.String, nullable=True),
     sa.Column("venture_name", sa.String, nullable=True),
     sa.Column("bid_price", sa.Numeric(38, 6), nullable=True),
@@ -489,9 +491,39 @@ opening_submission_table = sa.Table(
     sa.Column("discount_rate", sa.Numeric(10, 4), nullable=True),
     sa.Column("final_bid_price", sa.Numeric(38, 6), nullable=True),
     sa.Column("tech_result", sa.String, nullable=True),
+    sa.Column("tech_score", sa.Numeric(18, 6), nullable=True),
     sa.Column("submission_time", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("raw_json", sa.Text, nullable=False),
     comment="Bid submission at opening ceremony",
 )
+
+
+opening_lot_submission_table = sa.Table(
+    "opening_lot_submission",
+    metadata,
+    sa.Column("lot_submission_id", sa.String, primary_key=True),
+    sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("submission_id", sa.String, nullable=True),
+    sa.Column("phase", sa.String, nullable=False),
+    sa.Column("source_path", sa.String, nullable=False),
+    sa.Column("source_lot_id", sa.String, nullable=True),
+    sa.Column("bid_no", sa.String, nullable=True),
+    sa.Column("lot_no", sa.String, nullable=True),
+    sa.Column("lot_name", sa.String, nullable=True),
+    sa.Column("contractor_code", sa.String, nullable=True),
+    sa.Column("contractor_name", sa.String, nullable=True),
+    sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
+    sa.Column("lot_final_price", sa.Numeric(38, 6), nullable=True),
+    sa.Column("discount_rate", sa.Numeric(10, 4), nullable=True),
+    sa.Column("currency", sa.String, nullable=True),
+    sa.Column("passed_yn", sa.Boolean, nullable=True),
+    sa.Column("tech_score", sa.Numeric(18, 6), nullable=True),
+    sa.Column("evaluation_price", sa.Numeric(38, 6), nullable=True),
+    sa.Column("evaluation_rank", sa.BigInteger, nullable=True),
+    sa.Column("raw_json", sa.Text, nullable=False),
+    comment="Bidder-lot participation per phase, not a winning-contract record",
+)
+
 
 award_lot_table = sa.Table(
     "award_lot",
@@ -507,6 +539,7 @@ award_lot_table = sa.Table(
     sa.Column("status", sa.String, nullable=True),
     comment="Contract award decision per lot",
 )
+
 
 award_contractor_table = sa.Table(
     "award_contractor",
@@ -526,6 +559,7 @@ award_contractor_table = sa.Table(
     sa.Column("evaluation_rank", sa.Integer, nullable=True),
     comment="Awarded contractor and consortium members",
 )
+
 
 # ---------------------------------------------------------------------------
 # AUTOMATED SCHEMA CONVERTERS (DUCKDB DDL & PYARROW SCHEMA)
@@ -609,8 +643,9 @@ def get_child_schemas() -> dict[str, str]:
         "project_location",
         "package_lot",
         "package_location",
-        "notice_amendment",
         "opening_submission",
+        "opening_phase",
+        "opening_lot_submission",
         "award_lot",
         "award_contractor",
     }
@@ -621,6 +656,7 @@ def get_child_schemas() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # ICEBERG PARTITION SPECIFICATIONS (FORMAT V2)
 # ---------------------------------------------------------------------------
+
 
 SILVER_PARTITION_SPECS: dict[str, str] = {
     # Tier 1: Governance
@@ -647,12 +683,10 @@ def to_iceberg_ddl(
     namespace: str = "silver",
 ) -> str:
     """Generate DuckDB SQL to create an Iceberg Format v2 table with partition spec.
-
     Args:
         table_name: Table identifier (e.g. 'notice_revision').
         table_schema: Column definitions string. If None, derived from SQLAlchemy metadata.
         namespace: Target Iceberg catalog namespace (defaults to 'silver').
-
     Returns:
         Complete CREATE TABLE IF NOT EXISTS DDL statement.
     """
@@ -662,7 +696,6 @@ def to_iceberg_ddl(
         table_schema = get_silver_schemas().get(clean_name)
         if not table_schema:
             raise ValueError(f"Unknown silver table schema: {clean_name}")
-
     spec = get_partition_spec(clean_name)
     partition_clause = f" PARTITIONED BY ({spec})" if spec else ""
     return (
@@ -678,5 +711,5 @@ def get_primary_key(table_name: str) -> str | None:
     if sa_table is None:
         sa_table = metadata.tables.get(clean_name)
     if sa_table is not None and len(sa_table.primary_key.columns) > 0:
-        return list(sa_table.primary_key.columns)[0].name
+        return next(iter(sa_table.primary_key.columns)).name
     return None

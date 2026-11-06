@@ -4,7 +4,11 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from procurement.silver.domain.schema import get_child_schemas, get_silver_schemas
+from procurement.silver.domain.schema import (
+    get_child_schemas,
+    get_primary_key,
+    get_silver_schemas,
+)
 from procurement.silver.domain.selection import digest
 
 SCHEMAS = get_silver_schemas()
@@ -54,22 +58,21 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
             if target not in CHILD_SCHEMAS:
                 raise ValueError(f"Unsupported typed child table: {target}")
             typed_child = child.get("typed_attributes")
-            child_id_key = (
-                typed_child.get(f"{target}_id")
-                or typed_child.get("child_id")
-                or typed_child.get("location_id")
-                or typed_child.get("lot_id")
-                if isinstance(typed_child, dict)
-                else None
-            )
-            if not isinstance(typed_child, dict) or (
-                child_id_key != child["child_id"] or typed_child.get("revision_id") != rid
+            primary_key = get_primary_key(target)
+
+            if (
+                not isinstance(typed_child, dict)
+                or primary_key is None
+                or typed_child.get(primary_key) != child["child_id"]
+                or typed_child.get("revision_id") != rid
             ):
                 raise ValueError("Typed child identity must match its source child")
             if target in tables:
                 tables[target][child["child_id"]] = typed_child
 
-        observations[eid].append((datetime.fromisoformat(observation["observed_at"]), rid))
+        observations[eid].append(
+            (datetime.fromisoformat(observation["observed_at"]), rid)
+        )
         version_revisions[(eid, revision["source_version"])].add(rid)
 
     # Determine latest active snapshot (is_current) per entity
@@ -97,7 +100,10 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
                 "severity": "warn",
             }
 
-    return {table: [rows_map[k] for k in sorted(rows_map)] for table, rows_map in tables.items()}
+    return {
+        table: [rows_map[k] for k in sorted(rows_map)]
+        for table, rows_map in tables.items()
+    }
 
 
 def validate(tables: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
@@ -131,7 +137,9 @@ def validate(tables: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
         "accepted": len(accepted),
         "quarantined": len(quarantine),
         "issues": len(tables.get("quality_issue", [])),
-        "blocking_issues": sum(r["severity"] == "error" for r in tables.get("quality_issue", [])),
+        "blocking_issues": sum(
+            r["severity"] == "error" for r in tables.get("quality_issue", [])
+        ),
         "counts": {table: len(rows) for table, rows in tables.items()},
         "semantic_hash": digest(tables),
     }
