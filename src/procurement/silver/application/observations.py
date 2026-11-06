@@ -1,8 +1,6 @@
 """Build a source envelope and dispatch through the registered transformer."""
 
-import json
 from datetime import datetime
-from decimal import Decimal
 from typing import Any
 
 from procurement.silver.domain.protocols import RawRecordEnvelope

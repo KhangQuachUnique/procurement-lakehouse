@@ -56,6 +56,18 @@ KHLCNT_TABLES = (
     "khlcnt_bid_package_detail",
 )
 
+OPENING_MAPPING_VERSION = "opening-1"
+
+OPENING_OUTPUT_TABLES = (
+    "observation",
+    "opening_revision",
+    "opening_phase",
+    "opening_submission",
+    "opening_lot_submission",
+    "quality_issue",
+    "quarantine",
+)
+
 
 @dataclass(frozen=True)
 class SilverResource:
@@ -82,19 +94,32 @@ def get_silver_resource(name: str) -> SilverResource:
             for table in definition.tables
         )
         return SilverResource(
-            definition.identity.resource, families, NOTICE_OUTPUT_TABLES, NOTICE_MAPPING_VERSION
+            definition.identity.resource,
+            families,
+            NOTICE_OUTPUT_TABLES,
+            NOTICE_MAPPING_VERSION,
         )
     if name in {"project", "du_an"}:
         definition = get_resource("project")
-        families = tuple((table.removesuffix("_detail"), table) for table in definition.tables)
+        families = tuple(
+            (table.removesuffix("_detail"), table) for table in definition.tables
+        )
         return SilverResource(
-            definition.identity.resource, families, PROJECT_OUTPUT_TABLES, PROJECT_MAPPING_VERSION
+            definition.identity.resource,
+            families,
+            PROJECT_OUTPUT_TABLES,
+            PROJECT_MAPPING_VERSION,
         )
     if name in {"result", "contractor_result", "kq_lcnt"}:
         definition = get_resource("contractor_result")
-        families = tuple((table.removesuffix("_detail"), table) for table in definition.tables)
+        families = tuple(
+            (table.removesuffix("_detail"), table) for table in definition.tables
+        )
         return SilverResource(
-            definition.identity.resource, families, RESULT_OUTPUT_TABLES, RESULT_MAPPING_VERSION
+            definition.identity.resource,
+            families,
+            RESULT_OUTPUT_TABLES,
+            RESULT_MAPPING_VERSION,
         )
     if name in {"khlcnt", "plan", "package"}:
         definition = get_resource("khlcnt")
@@ -103,7 +128,19 @@ def get_silver_resource(name: str) -> SilverResource:
             ("package", "khlcnt_bid_package_detail"),
         )
         return SilverResource(
-            definition.identity.resource, families, KHLCNT_OUTPUT_TABLES, KHLCNT_MAPPING_VERSION
+            definition.identity.resource,
+            families,
+            KHLCNT_OUTPUT_TABLES,
+            KHLCNT_MAPPING_VERSION,
+        )
+    if name in {"opening", "bid_opening", "bid_opening_detail"}:
+        definition = get_resource("bid_opening")
+
+        return SilverResource(
+            resource=definition.identity.resource,
+            families=(("opening", "bid_opening_detail"),),
+            output_tables=OPENING_OUTPUT_TABLES,
+            mapping_version=OPENING_MAPPING_VERSION,
         )
     raise ValueError(f"Silver resource not implemented: {name}")
 

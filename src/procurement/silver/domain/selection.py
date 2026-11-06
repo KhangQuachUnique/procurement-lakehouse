@@ -57,7 +57,6 @@ def freeze(fs: Any, resources: list[str], start: date, end: date) -> list[dict[s
 
 def records(fs: Any, partition: dict[str, Any]):
     """Stream verified records from committed partition files."""
-    import json
 
     import pyarrow.parquet as pq
 

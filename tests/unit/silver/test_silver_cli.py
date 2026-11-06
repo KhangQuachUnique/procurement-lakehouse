@@ -135,7 +135,11 @@ def bronze(monkeypatch):
             elif family == "vk_adb":
                 payload = {"bidoNotifyContractorP": root}
             else:
-                payload = {**root, "reofferNo": root["notifyNo"], "reofferVersion": "00"}
+                payload = {
+                    **root,
+                    "reofferNo": root["notifyNo"],
+                    "reofferVersion": "00",
+                }
             row = {
                 "payload": json.dumps(payload),
                 "source_id": root["notifyNo"],
@@ -186,7 +190,10 @@ def test_service_runs_days_in_order_and_writes_all_families(bronze):
         with fs.open(entry["files"]["observation"], "rb") as stream:
             observations = pq.ParquetFile(stream).read().to_pylist()
         assert all(len(row["file_sha256"]) == 64 for row in observations)
-        assert all(row["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC) for row in observations)
+        assert all(
+            row["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC)
+            for row in observations
+        )
     with fs.open(report["output_prefix"] + "/report.json") as stream:
         assert json.load(stream)["status"] == "completed"
     again = service.run_resource(fs, bucket, "tbmt", date(2025, 1, 1), date(2025, 1, 1))
@@ -212,7 +219,12 @@ def test_missing_commit_is_failure_not_empty_success(
     monkeypatch.setattr(service, "freeze", missing)
     fs, bucket = bronze
     report = service.run_resource(
-        fs, bucket, "notice", date(2025, 1, 1), date(2025, 1, 2), continue_on_error=keep_going
+        fs,
+        bucket,
+        "notice",
+        date(2025, 1, 1),
+        date(2025, 1, 2),
+        continue_on_error=keep_going,
     )
     assert report["status"] == "failed"
     assert len(report["days"]) == expected_days
@@ -349,7 +361,13 @@ def test_cli_multi_year_parallel_execution(monkeypatch):
             "end_date": str(args[4]),
             "status": "completed",
             "output_prefix": f"bucket/reports/{start_d.year}",
-            "days": [{"date": str(start_d), "status": "completed", "quality": {"accepted": 10}}],
+            "days": [
+                {
+                    "date": str(start_d),
+                    "status": "completed",
+                    "quality": {"accepted": 10},
+                }
+            ],
         }
 
     monkeypatch.setattr(silver, "run_resource", run)
@@ -378,7 +396,14 @@ def test_cli_multi_year_no_parallel_flag(monkeypatch):
     monkeypatch.setattr(silver, "run_resource", run)
     result = runner.invoke(
         silver.app,
-        ["notice", "--start-date", "2022-01-01", "--end-date", "2024-12-31", "--no-parallel"],
+        [
+            "notice",
+            "--start-date",
+            "2022-01-01",
+            "--end-date",
+            "2024-12-31",
+            "--no-parallel",
+        ],
     )
     assert result.exit_code == 0, result.output
     # When --no-parallel is set, it executes a single run with the full range
@@ -387,4 +412,44 @@ def test_cli_multi_year_no_parallel_flag(monkeypatch):
     assert calls[0][0][4] == date(2024, 12, 31)
 
 
+@pytest.mark.parametrize("command", ["opening", "bid_opening"])
+def test_opening_cli_defaults_to_no_iceberg(monkeypatch, command):
+    calls = []
 
+    monkeypatch.setattr(
+        silver,
+        "get_storage",
+        lambda: ("fs", "bucket"),
+    )
+
+    def fake_run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {
+            "status": "completed",
+            "output_prefix": "bucket/silver/_reports/test",
+            "start_date": "2025-01-01",
+            "end_date": "2025-01-01",
+            "days": [],
+        }
+
+    monkeypatch.setattr(silver, "run_resource", fake_run)
+
+    result = runner.invoke(
+        silver.app,
+        [command, "--date", "2025-01-01"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert len(calls) == 1
+
+    args, kwargs = calls[0]
+
+    assert args == (
+        "fs",
+        "bucket",
+        "bid_opening",
+        date(2025, 1, 1),
+        date(2025, 1, 1),
+    )
+    assert kwargs["family"] is None
+    assert kwargs["iceberg"] is False

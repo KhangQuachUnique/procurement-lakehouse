@@ -5,6 +5,7 @@ SilverCandidateRepositoryPort in accordance with Hexagonal Architecture,
 and optionally stages verified Iceberg Format v2 tables.
 """
 
+import logging
 from collections.abc import Callable
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Any
@@ -16,10 +17,14 @@ from procurement.silver.application.revisions import assemble, validate
 from procurement.silver.application.warehouse import typed_arrow_rows
 from procurement.silver.ports.inbound.process_silver import ProcessSilverUseCase
 from procurement.silver.ports.outbound.bronze_repository import BronzeRepositoryPort
-from procurement.silver.ports.outbound.silver_repository import SilverCandidateRepositoryPort
+from procurement.silver.ports.outbound.silver_repository import (
+    SilverCandidateRepositoryPort,
+)
 
 if TYPE_CHECKING:
     from procurement.storage.iceberg import IcebergConfig
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessSilverService(ProcessSilverUseCase):
@@ -57,7 +62,9 @@ class ProcessSilverService(ProcessSilverUseCase):
         selected_tables = self.contract.select_tables(family)
         run_id = "r" + uuid4().hex
         data_prefix = f"{self.bucket}/silver"
-        report_prefix = f"{self.bucket}/silver/_reports/{self.contract.resource}/{run_id}"
+        report_prefix = (
+            f"{self.bucket}/silver/_reports/{self.contract.resource}/{run_id}"
+        )
 
         report: dict[str, Any] = {
             "run_id": run_id,
@@ -95,8 +102,10 @@ class ProcessSilverService(ProcessSilverUseCase):
                 iceberg_db = connect(self.iceberg_config)
                 iceberg_catalog = RestCatalog(self.iceberg_config)
                 ensure_views(iceberg_db, namespace="silver")
-            except Exception:
-                pass
+            except Exception as exc:
+                raise RuntimeError(
+                    "Failed to initialize the requested Iceberg connection"
+                ) from exc
 
         try:
             day = start_date
@@ -137,7 +146,9 @@ class ProcessSilverService(ProcessSilverUseCase):
                             [self.contract.resource], day, day
                         )
                         if len(single_parts) != 1:
-                            raise ValueError(f"Expected exactly one committed day for {day}")
+                            raise ValueError(
+                                f"Expected exactly one committed day for {day}"
+                            )
                         partition = single_parts[0]
                     input_counts = dict.fromkeys(dict(self.contract.families), 0)
                     names = {table: name for name, table in self.contract.families}
@@ -156,49 +167,76 @@ class ProcessSilverService(ProcessSilverUseCase):
                         ],
                     }
 
-                    for file_dict, ordinal, record in self.bronze_repo.stream_partition_records(
+                    for (
+                        file_dict,
+                        ordinal,
+                        record,
+                    ) in self.bronze_repo.stream_partition_records(
                         partition, selected_tables=selected_tables
                     ):
                         input_counts[names[file_dict["table"]]] += 1
                         if file_dict["table"] in selected_tables:
                             transformed.append(
-                                transform("muasamcong", raw_partition_dict, file_dict, ordinal, record)
+                                transform(
+                                    "muasamcong",
+                                    raw_partition_dict,
+                                    file_dict,
+                                    ordinal,
+                                    record,
+                                )
                             )
 
                     tables = assemble(transformed)
                     quality = validate(tables)
 
-                    # Validate and cast typed schemas via SQL contract
-                    output = {
-                        name: typed_arrow_rows(name, tables[name])
-                        for name in self.contract.output_tables
-                    }
+                    # Quality gate: reject unsafe candidates before writing.
+                    blocked = bool(quality["quarantined"] or quality["blocking_issues"])
 
-                    paths = self.silver_repo.write_candidate_tables(data_prefix, day, output)
-
+                    paths = {}
                     iceberg_staged = None
-                    if iceberg_db is not None and iceberg_catalog is not None:
-                        from procurement.silver.application.warehouse import stage_partition
 
-                        tables_with_data = {
-                            name: tbl for name, tbl in output.items() if len(tbl) > 0
+                    if not blocked:
+                        # Cast only quality-approved data.
+                        output = {
+                            name: typed_arrow_rows(name, tables[name])
+                            for name in self.contract.output_tables
                         }
-                        if tables_with_data:
-                            iceberg_staged = stage_partition(
-                                iceberg_db,
-                                iceberg_catalog,
-                                namespace="silver",
-                                tables=tables_with_data,
-                                partition_date=day,
-                                release_id=None,
+
+                        paths = self.silver_repo.write_candidate_tables(
+                            data_prefix,
+                            day,
+                            output,
+                        )
+
+                        if iceberg_db is not None and iceberg_catalog is not None:
+                            from procurement.silver.application.warehouse import (
+                                stage_partition,
                             )
-                        else:
-                            iceberg_staged = {}
+
+                            tables_with_data = {
+                                name: table
+                                for name, table in output.items()
+                                if len(table) > 0
+                            }
+
+                            if tables_with_data:
+                                iceberg_staged = stage_partition(
+                                    iceberg_db,
+                                    iceberg_catalog,
+                                    namespace="silver",
+                                    tables=tables_with_data,
+                                    partition_date=day,
+                                    release_id=None,
+                                )
+                            else:
+                                iceberg_staged = {}
 
                     entry.update(
-                        status="needs_review"
-                        if quality["quarantined"] or quality["blocking_issues"]
-                        else "completed",
+                        status=(
+                            "needs_review"
+                            if quality["quarantined"] or quality["blocking_issues"]
+                            else "completed"
+                        ),
                         input_counts=input_counts,
                         quality=quality,
                         files=paths,
@@ -213,9 +251,11 @@ class ProcessSilverService(ProcessSilverUseCase):
                     entry.update(
                         status="failed",
                         error_type=type(exc).__name__,
-                        error=str(exc)
-                        if isinstance(exc, (ValueError, RuntimeError))
-                        else f"Processing or storage error: {exc}",
+                        error=(
+                            str(exc)
+                            if isinstance(exc, (ValueError, RuntimeError))
+                            else f"Processing or storage error: {exc}"
+                        ),
                     )
 
                 report["days"].append(entry)
@@ -245,9 +285,7 @@ class ProcessSilverService(ProcessSilverUseCase):
             report["status"] = (
                 "failed"
                 if "failed" in statuses
-                else "needs_review"
-                if "needs_review" in statuses
-                else "completed"
+                else "needs_review" if "needs_review" in statuses else "completed"
             )
 
             # Pin final batch snapshot per output table
@@ -259,19 +297,32 @@ class ProcessSilverService(ProcessSilverUseCase):
                     try:
                         table_info = iceberg_catalog.table("silver", clean_name)
                         if table_info:
-                            snap_id = table_info.get("metadata", {}).get("current-snapshot-id")
+                            snap_id = table_info.get("metadata", {}).get(
+                                "current-snapshot-id"
+                            )
                             if snap_id is not None and snap_id >= 0:
-                                iceberg_catalog.pin("silver", clean_name, snap_id, run_id)
-                    except Exception:
-                        pass
+                                iceberg_catalog.pin(
+                                    "silver", clean_name, snap_id, run_id
+                                )
+                    except Exception as exc:
+                        logger.warning(
+                            "Failed to pin Iceberg snapshot for table %s: %s",
+                            clean_name,
+                            exc,
+                            exc_info=True,
+                        )
         finally:
             if iceberg_db is not None:
                 try:
                     from procurement.silver.application.warehouse import ensure_views
 
                     ensure_views(iceberg_db, namespace="silver")
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to refresh Silver Iceberg views: %s",
+                        exc,
+                        exc_info=True,
+                    )
                 iceberg_db.close()
             if iceberg_catalog is not None:
                 iceberg_catalog.close()

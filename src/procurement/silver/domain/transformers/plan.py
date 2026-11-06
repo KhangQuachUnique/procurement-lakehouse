@@ -5,7 +5,8 @@ The shared Silver framework owns entity/revision identifiers, lineage,
 reference resolution, and persistence.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from procurement.silver.domain.parsers import (
     clean_project_reference,

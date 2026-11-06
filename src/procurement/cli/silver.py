@@ -1,21 +1,22 @@
 """Resource-oriented Silver CLI. Processing lives in the Silver service."""
 
 import sys
+from contextlib import suppress
 from datetime import date
 from enum import StrEnum
-from typing import Annotated
 
-# Ensure UTF-8 output on Windows consoles to support Rich colors and Unicode characters
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        getattr(sys.stdout, "reconfigure")(encoding="utf-8")
-    except Exception:
-        pass
-if sys.stderr and hasattr(sys.stderr, "reconfigure"):
-    try:
-        getattr(sys.stderr, "reconfigure")(encoding="utf-8")
-    except Exception:
-        pass
+# Configure UTF-8 for Windows console streams when supported.
+from typing import Annotated, Protocol, cast
+
+
+class _ReconfigurableStream(Protocol):
+    def reconfigure(self, *, encoding: str) -> None: ...
+
+
+for stream in (sys.stdout, sys.stderr):
+    if stream is not None and hasattr(stream, "reconfigure"):
+        with suppress(OSError, ValueError):
+            cast(_ReconfigurableStream, stream).reconfigure(encoding="utf-8")
 
 import typer
 from dotenv import load_dotenv
@@ -28,7 +29,6 @@ from procurement.silver.service import (
 )
 
 load_dotenv()
-
 app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
@@ -67,18 +67,25 @@ def progress(entry: dict) -> None:
     quality = entry.get("quality", {})
     date_str = f"[bold cyan]{entry['date']}[/]"
     if entry["status"] == "failed":
-        console.print(f"  {date_str} [bold red]✘ FAILED[/] | [red]{entry['error_type']}: {entry['error']}[/]")
+        console.print(
+            f"  {date_str} [bold red]✘ FAILED[/] | [red]{entry['error_type']}: {entry['error']}[/]"
+        )
         return
     if entry["status"] == "skipped":
-        console.print(f"  {date_str} [dim cyan]↷ SKIPPED[/] | [dim]Already exists in Silver lakehouse[/]")
+        console.print(
+            f"  {date_str} [dim cyan]↷ SKIPPED[/] | [dim]Already exists in Silver lakehouse[/]"
+        )
         return
-
-    counts = " ".join(f"[dim]{name}=[/][bold white]{count}[/]" for name, count in entry["input_counts"].items())
+    counts = " ".join(
+        f"[dim]{name}=[/][bold white]{count}[/]"
+        for name, count in entry["input_counts"].items()
+    )
     iceberg_part = ""
     if entry.get("iceberg"):
         staged_count = len(entry["iceberg"])
-        iceberg_part = f" | [bold sky_blue2]🧊 Iceberg:[/] [bold cyan]{staged_count} tables[/]"
-
+        iceberg_part = (
+            f" | [bold sky_blue2]🧊 Iceberg:[/] [bold cyan]{staged_count} tables[/]"
+        )
     status_tag = (
         "[bold green]✔ COMPLETED[/]"
         if entry["status"] == "completed"
@@ -95,8 +102,9 @@ def progress(entry: dict) -> None:
         if quality.get("issues")
         else "[dim]issues=0[/]"
     )
-
-    console.print(f"  {date_str} {status_tag} | {counts} | {acc} {quar} {issues}{iceberg_part}")
+    console.print(
+        f"  {date_str} {status_tag} | {counts} | {acc} {quar} {issues}{iceberg_part}"
+    )
 
 
 def display_run_summary(report: dict, resource: str, iceberg: bool) -> None:
@@ -104,12 +112,11 @@ def display_run_summary(report: dict, resource: str, iceberg: bool) -> None:
     status_style = (
         "bold green"
         if status == "completed"
-        else "bold yellow"
-        if status == "needs_review"
-        else "bold red"
+        else "bold yellow" if status == "needs_review" else "bold red"
     )
-    status_icon = "✔" if status == "completed" else "⚠" if status == "needs_review" else "✘"
-
+    status_icon = (
+        "✔" if status == "completed" else "⚠" if status == "needs_review" else "✘"
+    )
     days = report.get("days", [])
     total_days = len(days)
     success_days = sum(1 for d in days if d.get("status") == "completed")
@@ -118,13 +125,13 @@ def display_run_summary(report: dict, resource: str, iceberg: bool) -> None:
     failed_days = sum(1 for d in days if d.get("status") == "failed")
     total_accepted = sum(d.get("quality", {}).get("accepted", 0) for d in days)
     total_quarantined = sum(d.get("quality", {}).get("quarantined", 0) for d in days)
-
     summary_table = Table.grid(padding=(0, 2))
     summary_table.add_column(style="bold white")
     summary_table.add_column()
-
     summary_table.add_row("Resource:", f"[bold cyan]{resource.upper()}[/]")
-    summary_table.add_row("Status:", f"[{status_style}]{status_icon} {status.upper()}[/]")
+    summary_table.add_row(
+        "Status:", f"[{status_style}]{status_icon} {status.upper()}[/]"
+    )
     summary_table.add_row(
         "Date Range:",
         f"{report.get('start_date')} ➔ {report.get('end_date')} ({total_days} days)",
@@ -136,17 +143,19 @@ def display_run_summary(report: dict, resource: str, iceberg: bool) -> None:
     breakdown_parts = [f"[green]{success_days} passed[/]"]
     if skipped_days:
         breakdown_parts.append(f"[dim cyan]{skipped_days} skipped[/]")
-    breakdown_parts.extend([f"[yellow]{review_days} review[/]", f"[red]{failed_days} failed[/]"])
+    breakdown_parts.extend(
+        [f"[yellow]{review_days} review[/]", f"[red]{failed_days} failed[/]"]
+    )
     summary_table.add_row(
         "Days Breakdown:",
         ", ".join(breakdown_parts),
     )
     if iceberg:
         summary_table.add_row(
-            "Iceberg Catalog:", "[bold sky_blue2]lake.silver.*[/] (Format v2 tables & SIMD views)"
+            "Iceberg Catalog:",
+            "[bold sky_blue2]lake.silver.*[/] (Format v2 tables & SIMD views)",
         )
     summary_table.add_row("Report:", f"s3://{report.get('output_prefix')}/report.json")
-
     console.print()
     console.print(
         Panel(
@@ -172,7 +181,6 @@ def execute_resource(
     workers: int | None = None,
 ) -> dict:
     year_chunks = split_date_range_by_year(start, end)
-
     if len(year_chunks) <= 1 or not parallel:
         return run_resource(
             fs,
@@ -186,7 +194,6 @@ def execute_resource(
             on_progress=progress,
             iceberg=iceberg,
         )
-
     import os
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -205,7 +212,6 @@ def execute_resource(
         f"across [bold green]{max_workers}[/] workers "
         f"({', '.join(str(s.year) for s, _ in year_chunks)})"
     )
-
     with Progress(
         SpinnerColumn(),
         TextColumn("[bold cyan]{task.fields[name]}[/]"),
@@ -267,16 +273,23 @@ def execute_resource(
             for fut in as_completed(futures):
                 rep = fut.result()
                 chunk_reports.append(rep)
-
-    return merge_run_reports(sorted(chunk_reports, key=lambda r: r.get("start_date", "")))
+    return merge_run_reports(
+        sorted(chunk_reports, key=lambda r: r.get("start_date", ""))
+    )
 
 
 @app.command("notice")
 @app.command("tbmt", hidden=True)
 def notice(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: Annotated[
+        str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")
+    ] = None,
+    start: Annotated[
+        str | None, typer.Option("--start-date", help="Inclusive first day.")
+    ] = None,
+    end: Annotated[
+        str | None, typer.Option("--end-date", help="Inclusive last day.")
+    ] = None,
     family: Annotated[
         NoticeFamily | None, typer.Option(help="Optional: process one family only.")
     ] = None,
@@ -319,7 +332,9 @@ def notice(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
-    typer.echo(f"notice | {first} .. {last} | family={family.value if family else 'all'}")
+    typer.echo(
+        f"notice | {first} .. {last} | family={family.value if family else 'all'}"
+    )
     report = execute_resource(
         fs,
         bucket,
@@ -350,9 +365,15 @@ def notice(
 @app.command("project")
 @app.command("du_an", hidden=True)
 def project(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: Annotated[
+        str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")
+    ] = None,
+    start: Annotated[
+        str | None, typer.Option("--start-date", help="Inclusive first day.")
+    ] = None,
+    end: Annotated[
+        str | None, typer.Option("--end-date", help="Inclusive last day.")
+    ] = None,
     continue_on_error: Annotated[
         bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
     ] = False,
@@ -421,13 +442,63 @@ def project(
         raise typer.Exit(code=1)
 
 
+@app.command("opening")
+@app.command("bid_opening", hidden=True)
+def opening(
+    day: Annotated[
+        str | None,
+        typer.Option("--date", help="One source day: YYYY-MM-DD."),
+    ] = None,
+    start: Annotated[
+        str | None,
+        typer.Option("--start-date", help="First day (inclusive)."),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end-date", help="Last day (inclusive)."),
+    ] = None,
+    iceberg: Annotated[
+        bool,
+        typer.Option(
+            "--iceberg/--no-iceberg",
+            help="Publish to Iceberg. Disabled by default.",
+        ),
+    ] = False,
+):
+    """Build Silver Candidate for bid opening details."""
+    try:
+        first, last = date_range(day, start, end)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    fs, bucket = get_storage()
+    typer.echo(f"bid_opening | {first} .. {last} | iceberg={iceberg}")
+    report = execute_resource(
+        fs,
+        bucket,
+        "bid_opening",
+        first,
+        last,
+        family=None,
+        iceberg=iceberg,
+    )
+    display_run_summary(report, "bid_opening", iceberg)
+    if report["status"] != "completed":
+        raise typer.Exit(code=1)
+
+
 @app.command("result")
 @app.command("kq_lcnt", hidden=True)
 @app.command("contractor_result", hidden=True)
 def result(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: Annotated[
+        str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")
+    ] = None,
+    start: Annotated[
+        str | None, typer.Option("--start-date", help="Inclusive first day.")
+    ] = None,
+    end: Annotated[
+        str | None, typer.Option("--end-date", help="Inclusive last day.")
+    ] = None,
     continue_on_error: Annotated[
         bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
     ] = False,
@@ -505,11 +576,18 @@ class KHLCNTFamily(StrEnum):
 @app.command("plan", hidden=True)
 @app.command("package", hidden=True)
 def khlcnt(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: Annotated[
+        str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")
+    ] = None,
+    start: Annotated[
+        str | None, typer.Option("--start-date", help="Inclusive first day.")
+    ] = None,
+    end: Annotated[
+        str | None, typer.Option("--end-date", help="Inclusive last day.")
+    ] = None,
     family: Annotated[
-        KHLCNTFamily | None, typer.Option(help="Optional: process plan or package only.")
+        KHLCNTFamily | None,
+        typer.Option(help="Optional: process plan or package only."),
     ] = None,
     continue_on_error: Annotated[
         bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
@@ -550,7 +628,9 @@ def khlcnt(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
-    typer.echo(f"khlcnt | {first} .. {last} | family={family.value if family else 'all'}")
+    typer.echo(
+        f"khlcnt | {first} .. {last} | family={family.value if family else 'all'}"
+    )
     report = execute_resource(
         fs,
         bucket,
@@ -582,11 +662,18 @@ def khlcnt(
 @app.command("all")
 @app.command("run-all", hidden=True)
 def all_resources(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: Annotated[
+        str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")
+    ] = None,
+    start: Annotated[
+        str | None, typer.Option("--start-date", help="Inclusive first day.")
+    ] = None,
+    end: Annotated[
+        str | None, typer.Option("--end-date", help="Inclusive last day.")
+    ] = None,
     continue_on_error: Annotated[
-        bool, typer.Option(help="Continue processing next days and resources on errors.")
+        bool,
+        typer.Option(help="Continue processing next days and resources on errors."),
     ] = True,
     skip_existing: Annotated[
         bool,
@@ -623,12 +710,10 @@ def all_resources(
         first, last = date_range(day, start, end)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-
     fs, bucket = get_storage()
     resources = ["khlcnt", "notice", "project", "contractor_result"]
     year_chunks = split_date_range_by_year(first, last)
     is_multi_year = len(year_chunks) > 1 and parallel
-
     console.print(
         Panel(
             f"[bold]Batch Silver Pipeline Execution[/]\n"
@@ -642,11 +727,12 @@ def all_resources(
             border_style="cyan",
         )
     )
-
     failed_resources = []
     for res in resources:
         display_name = "result" if res == "contractor_result" else res
-        console.rule(f"[bold cyan]▶ Starting {display_name.upper()} ({first} ➔ {last})[/]")
+        console.rule(
+            f"[bold cyan]▶ Starting {display_name.upper()} ({first} ➔ {last})[/]"
+        )
         report = execute_resource(
             fs,
             bucket,
@@ -664,7 +750,6 @@ def all_resources(
             failed_resources.append(display_name)
             if not continue_on_error:
                 break
-
     if failed_resources:
         console.rule("[bold red]✘ Execution finished with errors[/]")
         console.print(f"[bold red]Failed resources: {', '.join(failed_resources)}[/]")
@@ -712,7 +797,7 @@ def reset(
             Panel(
                 f"[bold red]🚨 CẢNH BÁO NGUY CẤP: BẠN ĐANG BẤM NÚT TỰ HỦY! 🚨[/]\n\n"
                 f"Thao tác này sẽ [bold red]XÓA SẠCH SÀNH SANH[/] [bold yellow]{target_desc}[/] trên Object Storage!\n"
-                f"[italic dim]\"Dữ liệu một đi không trở lại, đừng khóc khi thấy S3 trống trơn...\"[/]\n\n"
+                f'[italic dim]"Dữ liệu một đi không trở lại, đừng khóc khi thấy S3 trống trơn..."[/]\n\n'
                 f"[dim]💡 Mẹo nhỏ: Dùng flag [bold cyan]--force[/] hoặc [bold cyan]-f[/] nếu bạn là dân chơi hệ liều![/]",
                 title="[bold yellow]⚠️ XÁC NHẬN 'BÚNG TAY' THANOS ⚠️[/]",
                 border_style="red",
@@ -727,16 +812,14 @@ def reset(
                 "[bold green]Huề cả làng! 😅 Đã phanh xe trong gang tấc. Dữ liệu vẫn an toàn nguyên vẹn nhé![/]\n"
             )
             raise typer.Exit(code=0)
-
-        console.print("[bold red]Đã nhận lệnh tử thủ! Đang 'búng tay' thanh trừng dữ liệu... 🔥[/]\n")
-
+        console.print(
+            "[bold red]Đã nhận lệnh tử thủ! Đang 'búng tay' thanh trừng dữ liệu... 🔥[/]\n"
+        )
     fs, bucket = get_storage()
     cleaned = []
-
     prefixes = [f"{bucket}/silver_candidates"]
     if all_silver:
         prefixes.append(f"{bucket}/silver")
-
     for prefix in prefixes:
         if fs.exists(prefix):
             all_files = fs.find(prefix)
@@ -747,7 +830,6 @@ def reset(
             with contextlib.suppress(Exception):
                 fs.rm(prefix, recursive=True)
             cleaned.append(f"s3://{prefix}")
-
     if cleaned:
         console.print("[bold green]✔ Đã thanh tẩy thành công![/]")
         for item in cleaned:
@@ -796,7 +878,7 @@ def sync_iceberg(
     from procurement.silver.application.resources import get_silver_resource
     from procurement.silver.application.warehouse import ensure_views
     from procurement.silver.domain.schema import (
-        get_primary_key,
+        get_partition_spec,
         get_silver_schemas,
         metadata,
         to_iceberg_ddl,
@@ -805,11 +887,12 @@ def sync_iceberg(
 
     fs, bucket = get_storage()
     all_schemas = get_silver_schemas()
-
     if table:
         target_tables = [table]
     elif resource:
-        res_name = "contractor_result" if resource in ("result", "kq_lcnt") else resource
+        res_name = (
+            "contractor_result" if resource in ("result", "kq_lcnt") else resource
+        )
         contract = get_silver_resource(res_name)
         target_tables = list(contract.output_tables)
     else:
@@ -830,7 +913,6 @@ def sync_iceberg(
             "quarantine",
             "quality_issue",
         ]
-
     console.print(
         Panel(
             f"[bold]Apache Iceberg Batch Sync[/]\n"
@@ -841,40 +923,47 @@ def sync_iceberg(
             border_style="cyan",
         )
     )
-
     try:
         db = connect(settings.iceberg_config())
     except Exception as exc:
         console.print(f"[bold red]✘ Lỗi kết nối Iceberg REST Catalog:[/] {exc}")
         raise typer.Exit(code=1) from exc
-
     synced_tables = []
     total_synced_rows = 0
-
     try:
         for tbl_name in target_tables:
             clean_schema = all_schemas.get(tbl_name)
             if not clean_schema:
-                console.print(f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]")
+                console.print(
+                    f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]"
+                )
                 continue
-
-            partition_paths = fs.glob(f"{bucket}/silver/{tbl_name}/source_date=*-*")
-            discovered_months = set()
+            partition_paths = fs.glob(
+                f"{bucket}/silver/{tbl_name}/source_date=*-*",
+                detail=False,
+            )
+            discovered_months: set[str] = set()
             for p in partition_paths:
+                if not isinstance(p, str):
+                    raise TypeError(
+                        f"Expected partition path string, got {type(p).__name__}"
+                    )
                 base = p.rsplit("/", 1)[-1]
                 if base.startswith("source_date="):
                     ym_str = base[len("source_date=") : len("source_date=") + 7]
-                    if len(ym_str) == 7 and ym_str[:4].isdigit() and ym_str[5:].isdigit():
-                        if not year or ym_str.startswith(f"{year}-"):
-                            discovered_months.add(ym_str)
+                    if (
+                        len(ym_str) == 7
+                        and ym_str[:4].isdigit()
+                        and ym_str[5:].isdigit()
+                        and (year is None or ym_str.startswith(f"{year}-"))
+                    ):
+                        discovered_months.add(ym_str)
             months_to_sync = sorted(discovered_months)
-
             if not months_to_sync:
                 console.print(
                     f"  [dim]- {tbl_name:25}: Không tìm thấy phân vùng nào trên S3, bỏ qua.[/]"
                 )
                 continue
-
             # 1. Clean sync preparation
             if not year:
                 # Full sync: recreate clean Iceberg table directly from S3 Parquet source of truth
@@ -890,49 +979,47 @@ def sync_iceberg(
                         db.execute(
                             f"DELETE FROM lake.silver.{tbl_name} WHERE {spec} >= '{year}-01-01' AND {spec} <= '{year}-12-31'"
                         )
-
             # 2. Select only exact table columns (exclude Hive partition source_date if not in schema)
             sa_table = metadata.tables.get(f"silver.{tbl_name}")
             if sa_table is not None:
                 col_names = [c.name for c in sa_table.columns]
             else:
-                col_names = [col.split()[0].strip('", ') for col in clean_schema.split(",")]
+                col_names = [
+                    col.split()[0].strip('", ') for col in clean_schema.split(",")
+                ]
             cols_sql = ", ".join(f'"{c}"' for c in col_names)
-
             tbl_total_rows = 0
             tbl_total_partitions = 0
-
             # 3. Stream ingest in bounded monthly chunks (~30k - 70k rows per chunk)
             for m in months_to_sync:
-                s3_pattern = f"s3://{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
+                s3_pattern = (
+                    f"s3://{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
+                )
                 fs_pattern = f"{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
                 files = fs.glob(fs_pattern)
                 if not files:
                     continue
-
                 try:
                     db.execute(
                         f"CREATE OR REPLACE TEMP VIEW _cand AS SELECT * FROM read_parquet('{s3_pattern}')"
                     )
                     cand_res = db.execute("SELECT count(*) FROM _cand").fetchone()
                     row_count = cand_res[0] if cand_res else 0
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - S3/Parquet adapter boundary
                     console.print(
                         f"  [yellow]⚠ {tbl_name:25} ({m}): Lỗi đọc Parquet từ S3 ({e}), bỏ qua.[/]"
                     )
                     continue
-
                 if row_count == 0:
                     db.execute("DROP VIEW IF EXISTS _cand")
                     continue
-
                 db.execute("BEGIN TRANSACTION")
                 try:
                     db.execute(
                         f"INSERT INTO lake.silver.{tbl_name} ({cols_sql}) SELECT {cols_sql} FROM _cand"
                     )
                     db.execute("COMMIT")
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     db.execute("ROLLBACK")
                     console.print(
                         f"  [bold red]✘ {tbl_name:25} ({m}): Lỗi khi commit vào Iceberg: {exc}[/]"
@@ -945,17 +1032,14 @@ def sync_iceberg(
 
                     with contextlib.suppress(Exception):
                         ctypes.CDLL("libc.so.6").malloc_trim(0)
-
                 tbl_total_rows += row_count
                 tbl_total_partitions += len(files)
-
             if tbl_total_rows > 0:
                 console.print(
                     f"  [bold green]✔[/] [bold white]{tbl_name:25}[/]: [bold cyan]{tbl_total_rows:,}[/] dòng ({tbl_total_partitions} phân vùng) ➔ Iceberg"
                 )
                 synced_tables.append(tbl_name)
                 total_synced_rows += tbl_total_rows
-
         # 4. Refresh deduplication views
         console.print(
             "\n[bold sky_blue2]Đang cập nhật các Views SIMD khử trùng (silver.v_latest_*)...[/]"
@@ -964,7 +1048,7 @@ def sync_iceberg(
             created_views = ensure_views(db, "silver")
             for v in created_views:
                 console.print(f"  [bold green]✔[/] [dim]View:[/] [bold cyan]{v}[/]")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - best-effort view refresh
             console.print(f"  [yellow]⚠ Lỗi tạo view: {exc}[/]")
     finally:
         db.close()
@@ -973,7 +1057,6 @@ def sync_iceberg(
 
         with contextlib.suppress(Exception):
             ctypes.CDLL("libc.so.6").malloc_trim(0)
-
     console.print(
         Panel(
             f"[bold green]✔ Đồng bộ Iceberg hoàn tất![/]\n"
@@ -986,10 +1069,11 @@ def sync_iceberg(
     )
 
 
-
 @app.command("report")
 def report(
-    resource: Annotated[str, typer.Option(help="Resource to inspect report for.")] = "notice",
+    resource: Annotated[
+        str, typer.Option(help="Resource to inspect report for.")
+    ] = "notice",
 ):
     """Print the latest run report JSON."""
     import json
@@ -1032,40 +1116,41 @@ def inspect(
 
     iceberg_cfg = settings.iceberg_config()
     catalog = RestCatalog(iceberg_cfg)
-
     try:
         db = connect(iceberg_cfg)
     except Exception as exc:
         typer.echo(f"Error connecting to Iceberg catalog: {exc}", err=True)
         raise typer.Exit(code=1) from exc
-
     try:
         ensure_views(db, namespace="silver")
-        typer.echo(f"\nIceberg Catalog: {iceberg_cfg.catalog_uri} | Warehouse: {iceberg_cfg.warehouse}")
+        typer.echo(
+            f"\nIceberg Catalog: {iceberg_cfg.catalog_uri} | Warehouse: {iceberg_cfg.warehouse}"
+        )
         typer.echo(
             f"{'Table / View':<30} | {'Type':<12} | {'Format':<10} | {'Rows':<10} | {'Snapshot ID':<20}"
         )
         typer.echo("-" * 90)
-
         for view_name, cfg in VIEW_DEFINITIONS.items():
             src_table = cfg["source_table"]
             if table and table not in (view_name, src_table):
                 continue
-
             # Check Iceberg base table
             try:
                 table_info = catalog.table("silver", src_table)
                 metadata = table_info.get("metadata", {}) if table_info else {}
                 fmt = f"v{metadata.get('format-version', '?')}"
                 snap_id = str(metadata.get("current-snapshot-id", "none"))
-                row_res = db.sql(f"SELECT count(*) FROM lake.silver.{src_table}").fetchone()
+                row_res = db.sql(
+                    f"SELECT count(*) FROM lake.silver.{src_table}"
+                ).fetchone()
                 row_count = row_res[0] if row_res else 0
                 typer.echo(
                     f"lake.silver.{src_table:<18} | Table (Raw)  | {fmt:<10} | {row_count:<10} | {snap_id:<20}"
                 )
-            except Exception:
-                typer.echo(f"lake.silver.{src_table:<18} | Table (Raw)  | not created| 0          | none")
-
+            except Exception:  # noqa: BLE001 - show unavailable tables as missing
+                typer.echo(
+                    f"lake.silver.{src_table:<18} | Table (Raw)  | not created| 0          | none"
+                )
             # Check vectorized view
             try:
                 view_res = db.sql(f"SELECT count(*) FROM silver.{view_name}").fetchone()
@@ -1073,9 +1158,10 @@ def inspect(
                 typer.echo(
                     f"silver.{view_name:<23} | View(Latest) | SIMD View  | {view_count:<10} | -"
                 )
-            except Exception:
-                typer.echo(f"silver.{view_name:<23} | View(Latest) | -          | 0          | -")
-
+            except Exception:  # noqa: BLE001 - show unavailable views as missing
+                typer.echo(
+                    f"silver.{view_name:<23} | View(Latest) | -          | 0          | -"
+                )
             typer.echo("-" * 90)
     finally:
         db.close()
@@ -1083,7 +1169,9 @@ def inspect(
 
 @app.command("ui")
 def ui(
-    port: Annotated[int, typer.Option("--port", "-p", help="Port to bind DuckDB Web UI.")] = 4213,
+    port: Annotated[
+        int, typer.Option("--port", "-p", help="Port to bind DuckDB Web UI.")
+    ] = 4213,
     browser: Annotated[
         bool, typer.Option("--browser/--no-browser", help="Open browser automatically.")
     ] = True,
@@ -1096,7 +1184,9 @@ def ui(
     from procurement.storage.iceberg import connect
 
     iceberg_cfg = settings.iceberg_config()
-    typer.echo(f"Connecting to Apache Iceberg REST Catalog at {iceberg_cfg.catalog_uri}...")
+    typer.echo(
+        f"Connecting to Apache Iceberg REST Catalog at {iceberg_cfg.catalog_uri}..."
+    )
     try:
         db = connect(iceberg_cfg)
     except Exception as exc:
@@ -1106,28 +1196,28 @@ def ui(
             err=True,
         )
         raise typer.Exit(code=1) from exc
-
     try:
         # 1. Ensure lake.silver schema exists
         db.execute("CREATE SCHEMA IF NOT EXISTS lake.silver")
-
         # 2. Mount vectorized latest views
         views = ensure_views(db, namespace="silver")
-
         # 3. Load DuckDB UI extension
         db.execute("INSTALL ui")
         db.execute("LOAD ui")
         db.execute(f"SET ui_local_port = {port}")
         db.execute("CALL start_ui()")
-
         url = f"http://localhost:{port}"
         typer.echo("=" * 65)
         typer.echo("🦆 DuckDB Web SQL UI is running!")
         typer.echo(f"🌐 URL: {url}")
         typer.echo("")
         typer.echo("📦 Catalogs & Schemas mounted:")
-        typer.echo("  - lake.silver.*          (Historical Apache Iceberg Format v2 tables)")
-        typer.echo(f"  - silver.*               (Vectorized latest views: {', '.join(views)})")
+        typer.echo(
+            "  - lake.silver.*          (Historical Apache Iceberg Format v2 tables)"
+        )
+        typer.echo(
+            f"  - silver.*               (Vectorized latest views: {', '.join(views)})"
+        )
         typer.echo("")
         typer.echo("💡 Tips:")
         typer.echo("  - SELECT * FROM silver.v_latest_notice LIMIT 10;")
@@ -1136,12 +1226,10 @@ def ui(
         typer.echo("")
         typer.echo("Press Ctrl+C to stop.")
         typer.echo("=" * 65)
-
         if browser:
             import webbrowser
 
             webbrowser.open(url)
-
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
@@ -1149,8 +1237,8 @@ def ui(
     finally:
         try:
             db.execute("CALL stop_ui_server()")
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - best-effort UI cleanup
+            typer.echo(f"Could not stop UI server: {exc}", err=True)
         db.close()
 
 
