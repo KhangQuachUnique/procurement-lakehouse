@@ -10,6 +10,9 @@ from procurement.ingestion.sources.muasamcong.bid_opening.resource import (
     create_bid_opening_spec,
 )
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
+from procurement.ingestion.sources.muasamcong.contract_performance.resource import (
+    create_contract_performance_spec,
+)
 from procurement.ingestion.sources.muasamcong.contractor_result.resource import (
     create_contractor_result_spec,
 )
@@ -27,8 +30,19 @@ def create_spec_factory(
     bid_opening_workers: int | None = None,
     khlcnt_workers: int | None = None,
 ) -> Callable[[str], ResourceSpec]:
+    performance_client = None
+
     def factory(resource_name: str) -> ResourceSpec:
+        nonlocal performance_client
         match resource_name:
+            case "contract_performance":
+                if performance_client is None:
+                    performance_client = (
+                        client.contract_performance_reader()
+                        if isinstance(client, MuasamcongClient)
+                        else client
+                    )
+                return create_contract_performance_spec(performance_client)
             case "project":
                 return create_project_spec(client)
             case "bid_opening":
@@ -74,7 +88,9 @@ def bootstrap_services(
         if request_interval_seconds is not None or max_inflight is not None:
             from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
 
-            inflight = max_inflight if max_inflight is not None else settings.MUASAMCONG_MAX_INFLIGHT
+            inflight = (
+                max_inflight if max_inflight is not None else settings.MUASAMCONG_MAX_INFLIGHT
+            )
             interval = (
                 request_interval_seconds
                 if request_interval_seconds is not None
