@@ -41,7 +41,7 @@ uv run --locked pytest -m 'integration or not integration'
 
 ```powershell
 docker build -t procurement-lakehouse:local .
-docker run --rm procurement-lakehouse:local python -m procurement.jobs.ingest --help
+docker run --rm procurement-lakehouse:local python -m procurement.cli.ingest --help
 ```
 
 Image cài theo lockfile, chạy user không phải root và không chứa `.env`. Vận hành với [Compose](operations.md#cấu-hình).

@@ -8,8 +8,11 @@ Hệ thống thu thập, kiểm định và lưu trữ dữ liệu Mua Sắm Cô
 | ---------------------------------------------------------------------- | ------------------------------------------------- |
 | Cấu hình, crawl/recovery, Ops, query, quality, profile, chuyển dữ liệu | [Vận hành](docs/operations.md)                    |
 | Hiểu bảng/identity, validation, mô hình Silver và Gold                 | [Kiến trúc dữ liệu](docs/architecture.md)         |
+| Nhu cầu khách hàng: tiết kiệm, thị trường, cơ hội và tổ chức đấu thầu 2022–2025 | [Phạm vi phân tích](docs/gold-analysis-scope.md) |
+| Thiết kế fact/dim từ nhu cầu phân tích, cấp chi tiết và quy tắc tổng hợp | [Mô hình Gold đề xuất](docs/gold-dimensional-model.md) |
 | Chạy tests, lint, build và thêm resource                               | [Công cụ phát triển](docs/development.md)         |
 | Dagster, partition backfill và chuyển scheduler                        | [Orchestration](docs/orchestration.md)            |
+| Kết quả thực hiện hợp đồng: API, hai bảng Silver và backfill 2025 | [Contract performance](docs/contract-performance.md) |
 | Đánh giá và tiến độ modernization                                      | [Đánh giá kế hoạch](docs/modernization_review.md) |
 
 ---
@@ -74,7 +77,7 @@ uv run alembic upgrade head
 
 Sau khi khởi chạy, các dịch vụ sẵn sàng tại:
 
-- **Dagster Web UI**: [http://localhost:3000](http://localhost:3000) (Điều phối Asset, trigger pipeline, xem log jobs)
+- **Dagster Web UI**: [http://localhost:3002](http://localhost:3002) (Điều phối Asset, trigger pipeline, xem log jobs)
 - **Ops Web UI & REST API**: [http://localhost:8000/ops](http://localhost:8000/ops) (Heatmap giám sát nghiệp vụ thầu)
 - **SeaweedFS S3 Storage**: [http://localhost:8333](http://localhost:8333) (S3-compatible Object Storage chứa Bronze Parquet)
 - **Apache Iceberg REST Catalog**: [http://localhost:8181](http://localhost:8181) (Iceberg REST Catalog quản lý Silver Warehouse)
@@ -84,16 +87,12 @@ Sau khi khởi chạy, các dịch vụ sẵn sàng tại:
 
 ## 📦 Nạp dữ liệu lịch sử (Historical Bronze Data)
 
-Nếu bạn có các file nén dữ liệu lịch sử trong thư mục `exports/` (`bronze-2022.zip`, `bronze-2023.zip`, v.v.):
+CLI transfer dùng S3 manifest cũ đã bị gỡ. Archive lịch sử cần quy trình khôi phục
+và đối soát riêng; không dùng lệnh backfill để nhập archive.
 
-1. **Import Parquet vào S3 Storage**:
-   ```bash
-   uv run python -m procurement.tools.bronze_transfer import --archive exports/bronze-2025.zip
-   ```
-2. **Đồng bộ Metadata vào PostgreSQL**:
-   ```bash
-   uv run python -m procurement.tools.import_metadata --resource all
-   ```
+Nếu Parquet và manifest lịch sử đã có trên S3, công cụ
+`python -m procurement.cli.import_metadata --help` hỗ trợ nhập metadata vào PostgreSQL.
+Xem [hướng dẫn vận hành](docs/operations.md) và [danh sách CLI](docs/cli-inventory.md).
 
 ---
 
@@ -104,3 +103,8 @@ Nếu bạn muốn debug trực tiếp trên máy host thay vì dùng Docker:
 - Yêu cầu Python 3.12+, `uv`.
 - Cài đặt thư viện: `uv sync --locked --extra dev --extra ops --extra metadata`
 - Xem chi tiết tại [Tài liệu Phát triển](docs/development.md) và [Hướng dẫn Vận hành](docs/operations.md).
+
+
+### Gold tổng hợp và cập nhật tăng dần
+
+Gold chính dùng runtime compact duy nhất (7 fact + 9 dimension). Xem [vận hành Gold chính](docs/gold-main-operations.md). `gold schema`, `gold plan` và `gold resume` dùng chung runtime với Dagster; lần nạp lịch sử 2022–2025 dùng `gold materialize-history`. Các lệnh bootstrap/update và runtime Gold cũ đã gỡ; không còn hai hệ Gold chạy song song.

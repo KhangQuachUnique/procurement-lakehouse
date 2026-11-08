@@ -5,7 +5,10 @@
 **Đã triển khai:** Ingestion Bronze, manifests, PostgreSQL metadata core, Ops, quality audit/repair, profile,
 query, transfer và **Silver Lakehouse (kiến trúc Pure Relational 1-Hop, 15 bảng chuẩn)**. Code tại `src/procurement/silver` và
 đặc tả tại [Cẩm nang Silver Lakehouse](silver_development_guide.md) là nguồn chuẩn cho hành vi hiện tại.
-**Gold** là tầng phân tích tiếp theo đang trong lộ trình thiết kế.
+**Gold** có candidate engine đang hoàn thiện; chưa được chứng nhận/publish production.
+Luồng build/validation đã tách `domain` → `ports` ← `application` và adapter DuckDB;
+xem [biên bản refactor](reports/gold-hexagonal-refactor-2026-11-05.md) và
+[quy trình Gold build/validate/publish](gold-operations.md).
 
 ## Bronze hiện tại
 
@@ -227,72 +230,8 @@ Baseline đổi thì không promote; ACK không rõ giữ uncertain để đối
 release và exact file list; rollback trỏ về release đã verify, giữ file cũ.
 Chưa tự bật GC; chỉ một publisher đến khi có cơ chế nhiều writer được kiểm chứng.
 
-## Gold và khai thác đề xuất
+## Gold và khai thác phân tích
 
-| Người dùng | Câu hỏi chính | Nhóm dữ liệu |
-| --- | --- | --- |
-| Cơ quan quản lý | Quy mô, cơ cấu, cạnh tranh, chênh lệch giá, coverage | Package, results, competition, award comparison |
-| Chủ đầu tư/bên mời thầu | Danh mục, lịch đóng thầu, tiến trình, đối sánh giá | Project/plan/package, notice, lifecycle, items |
-| Nhà thầu | Cơ hội còn mở, phân khúc, lịch sử tham gia/thắng | Notice, participation, award, organization |
-| Nghiên cứu | Dữ liệu tái lập, lịch sử, độ phủ và lý do loại mẫu | Pinned release, revisions, coverage, lineage |
+Phạm vi hiện hành được xác định từ [nhu cầu và quyết định của khách hàng](gold-analysis-scope.md): hiệu quả kinh tế, cơ cấu/xu hướng thị trường, cơ hội tham gia và hiệu quả tổ chức đấu thầu. Đầu ra ưu tiên đề xuất là báo cáo tiết kiệm theo ngành, phân khúc, khu vực và thời gian.
 
-Mỗi fact có release ID, grain/key rõ, revision lineage, eligibility và lý do loại.
-Dims dùng chung: date/period, organization theo vai trò, geography theo phiên bản,
-project/plan/package, selection scope, sector, procurement/submission method,
-context/status/contract type, currency, bidder, item/unit và data release. Giữ
-unknown/unresolved/not-applicable riêng; không đếm chúng thành thực thể thật.
-SCD2 quan sát không được gọi là lịch sử hiệu lực pháp lý.
-
-| Fact mục tiêu | Một dòng trong một release |
-| --- | --- |
-| `fact_project_portfolio`, `fact_plan_publication`, `fact_package_plan` | Một entity tại revision được chọn; measures tiền đúng cấp |
-| `fact_tender_notice`, `fact_selection_result` | Một notice/result; số notice không bằng số package |
-| `fact_bid_participation` | Một bidder trong một selection scope; liên danh là một bidder khi có căn cứ |
-| `fact_competition_summary` | Một scope với distinct bidders và trạng thái đầy đủ danh sách |
-| `fact_award` | Một phần trao thầu độc lập, xác minh outcome và price scope |
-| `fact_award_comparison` | Một scope không chồng lấn + cơ sở giá; aggregate awards trước khi so sánh |
-| `fact_award_item` | Một item leaf đã xác minh; không gồm dòng tổng hoặc bản dịch |
-| `fact_selection_lifecycle` | Một lần lựa chọn, mốc đầu tiên và hoàn tất phân biệt |
-| `fact_procurement_event` | Một sự kiện có bằng chứng, không suy từ mọi lần hash đổi |
-| `fact_data_coverage` | Release + resource + search date + capability; không cộng trùng ngày qua capabilities |
-
-`selection_episode` là một lần tổ chức lựa chọn có bằng chứng, không mặc định
-bằng package. `selection_scope` là episode + cấp package/lot; result chưa nối
-notice có scope cục bộ, không tạo notice giả. Bridges xử lý bidder–member,
-award–recipient/supplier, scope–location, comparison–award và entity relationships.
-Lọc qua bridge không được nhân số tiền; chỉ phân bổ khi có evidence/share hợp lệ.
-
-| Chỉ số | Quy tắc tối thiểu |
-| --- | --- |
-| Quy mô/cơ cấu | Distinct đúng entity trong một release; số gói khác số notice/result; giữ nhóm unknown và coverage |
-| Giá trị trúng | SUM award độc lập đủ điều kiện, cùng currency; không phải tiền thanh toán |
-| Tiết kiệm | `SUM(B - A) / SUM(B)` trên cùng tập scope đủ điều kiện, không AVG tỷ lệ từng gói; mẫu số 0 → null |
-| So sánh giá | Cùng scope, currency, thuế, reference revision/basis, tập awards đủ và không chồng package/lot; phần chưa rõ bị loại có lý do |
-| Một bên dự thầu | Chỉ tính khi danh sách đầy đủ và bidder identity/consortium đã resolve; missing list không phải 0 |
-| Tỷ lệ thắng | Bidder-scope thắng / bidder-scope có outcome cuối đã biết; kèm coverage outcome; dữ liệu chỉ có người thắng chưa đủ |
-| CR4/HHI | Thị trường/cohort rõ, phần giá trị độc quyền và identity đủ; không cấp toàn award cho từng thành viên liên danh |
-| Đơn giá | So cùng sản phẩm/quy cách, đơn vị, currency và basis; không SUM đơn giá hoặc quantity khác đơn vị |
-| Thời lượng | Mốc cùng episode, cùng precision/timezone, phân biệt kết quả đầu và hoàn tất; không dùng ngày ingest |
-| Tăng trưởng | Hai kỳ cùng coverage/basis/currency; chênh lệch phạm vi thu thập không phải tăng trưởng thị trường |
-
-Tiết kiệm âm giữ nguyên nếu đầu vào hợp lệ. Tỷ lệ, median và distinct phải tính
-lại trên tập chung, không cộng các nhóm. Không cộng snapshots qua thời gian;
-không cộng vốn project + plan + package. Chỉ báo tập trung/đồng dự không tự là
-kết luận vi phạm. Dữ liệu hiện tại chưa đủ để cam kết hợp đồng đã ký, giải ngân,
-tiến độ thực hiện hoặc chất lượng nhà thầu; cần nguồn bổ sung.
-
-## Trình tự triển khai tiếp
-
-1. Profile đầy đủ phạm vi pilot; chốt identity, aliases, codelists, timezone,
-   money/currency và child schemas. Bằng chứng mẫu không thay full validation.
-2. Xây input selection, lineage, release/readback/rollback và core revisions/current.
-3. Bổ sung relationships, organizations, lots và participants; chỉ mở awards/items
-   sau khi xác minh outcome/role/price scope/form schemas.
-4. Xây Gold theo metric đủ điều kiện; benchmark full và incremental, công bố
-   coverage/exclusions/release ID và khả năng truy về raw.
-
-Nghiệm thu phải bao gồm: HTTP 200 nhưng root null, identity/alias conflict, cùng
-version khác nội dung, repair chuyển table, ngày cũ đổi/mất record, target đến
-muộn, child reorder/duplicates, liên danh/nhiều lô, tiền/timezone mơ hồ, crash và
-ACK uncertain. Full build và incremental cùng selection phải cho cùng semantic
-rows. Không công bố certified khi còn integrity, PK/FK hoặc reconciliation sai.
+Giai đoạn đầu dùng bốn resource `project`, `khlcnt`, `notify_contractor`, `contractor_result` cho lịch sử 2022–2025. [Thiết kế fact/dim mới](gold-dimensional-model.md) đề xuất năm fact theo nhu cầu và chín dimension dùng chung; có cấp chi tiết, quy tắc tiền, phạm vi và kỳ báo cáo. Thiết kế còn ở trạng thái Proposed, chưa tạo bảng hoặc xác nhận mọi metric đã đủ điều kiện dữ liệu.
