@@ -94,10 +94,10 @@ def test_get_primary_key_resolution():
 
 def test_stage_partition_executes_dynamic_partition_overwrite():
     """Verify stage_partition executes targeted partition deletes without touching other days."""
-    from unittest.mock import MagicMock
-    from procurement.silver.application.warehouse import stage_partition
-    import pyarrow as pa
     import datetime
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.warehouse import stage_partition
 
     mock_db = MagicMock()
     mock_catalog = MagicMock()
@@ -110,7 +110,19 @@ def test_stage_partition_executes_dynamic_partition_overwrite():
     mock_db.sql.return_value.fetchone.return_value = [5]
 
     executed_sql = []
-    mock_db.execute.side_effect = lambda sql: executed_sql.append(sql)
+
+    def _mock_execute(sql):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [
+            (0, "raw_json", "VARCHAR"),
+            (1, "bid_result", "BIGINT"),
+            (2, "price_source", "VARCHAR"),
+            (3, "currency", "VARCHAR"),
+        ]
+        return cursor
+
+    mock_db.execute.side_effect = _mock_execute
 
     candidate_rows = [
         {"revision_id": "r1", "entity_id": "IB1", "public_date": datetime.date(2024, 5, 1)},
@@ -136,7 +148,11 @@ def test_stage_partition_executes_dynamic_partition_overwrite():
     assert "BEGIN" in executed_sql
     assert "COMMIT" in executed_sql
     # Verify True Key-Level UPSERT delete was executed on primary key
-    assert any("DELETE FROM lake.silver.notice_revision WHERE revision_id IN (SELECT revision_id FROM _incoming_cand)" in sql for sql in executed_sql)
+    assert any(
+        "DELETE FROM lake.silver.notice_revision WHERE revision_id IN (SELECT revision_id FROM _incoming_cand)"
+        in sql
+        for sql in executed_sql
+    )
     # Verify insert was executed
     assert any("INSERT INTO lake.silver.notice_revision BY NAME" in sql for sql in executed_sql)
     # Verify catalog was pinned
@@ -148,6 +164,7 @@ def test_stage_partition_executes_dynamic_partition_overwrite():
 def test_stage_partition_unpartitioned_uses_primary_key_subquery():
     """Verify stage_partition on unpartitioned tables deletes only matching incoming primary keys."""
     from unittest.mock import MagicMock
+
     from procurement.silver.application.warehouse import stage_partition
 
     mock_db = MagicMock()
@@ -161,7 +178,19 @@ def test_stage_partition_unpartitioned_uses_primary_key_subquery():
     mock_db.sql.return_value.fetchone.return_value = [2]
 
     executed_sql = []
-    mock_db.execute.side_effect = lambda sql: executed_sql.append(sql)
+
+    def _mock_execute(sql):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [
+            (0, "raw_json", "VARCHAR"),
+            (1, "bid_result", "BIGINT"),
+            (2, "price_source", "VARCHAR"),
+            (3, "currency", "VARCHAR"),
+        ]
+        return cursor
+
+    mock_db.execute.side_effect = _mock_execute
 
     issues = [
         {"issue_id": "iss-1", "code": "E01", "path": "p", "severity": "WARN"},
@@ -177,12 +206,17 @@ def test_stage_partition_unpartitioned_uses_primary_key_subquery():
 
     assert "quality_issue" in snapshots
     # Verify subquery delete on primary key
-    assert any("DELETE FROM lake.silver.quality_issue WHERE issue_id IN (SELECT issue_id FROM _incoming_cand)" in sql for sql in executed_sql)
+    assert any(
+        "DELETE FROM lake.silver.quality_issue WHERE issue_id IN (SELECT issue_id FROM _incoming_cand)"
+        in sql
+        for sql in executed_sql
+    )
 
 
 def test_stage_partition_rolls_back_on_error():
     """Verify stage_partition rolls back DuckDB transaction when an exception occurs."""
     from unittest.mock import MagicMock
+
     from procurement.silver.application.warehouse import stage_partition
 
     mock_db = MagicMock()
@@ -219,15 +253,28 @@ def test_stage_partition_rolls_back_on_error():
 def test_ensure_views_generation():
     """Verify ensure_views correctly constructs window function queries for all core views."""
     from unittest.mock import MagicMock
+
     from procurement.silver.application.warehouse import ensure_views
 
     mock_db = MagicMock()
     executed_sql = []
-    mock_db.execute.side_effect = lambda sql: executed_sql.append(sql)
+
+    def _mock_execute(sql):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [
+            (0, "raw_json", "VARCHAR"),
+            (1, "bid_result", "BIGINT"),
+            (2, "price_source", "VARCHAR"),
+            (3, "currency", "VARCHAR"),
+        ]
+        return cursor
+
+    mock_db.execute.side_effect = _mock_execute
 
     views = ensure_views(mock_db, namespace="silver", view_schema="custom_schema")
 
-    assert len(views) == 6
+    assert len(views) == 10
     assert "custom_schema.v_latest_notice" in views
     assert "custom_schema.v_latest_project" in views
     assert "custom_schema.v_latest_plan" in views
@@ -242,3 +289,716 @@ def test_ensure_views_generation():
     assert "ORDER BY notify_version DESC NULLS LAST" in notice_sql
     assert "FROM lake.silver.notice_revision" in notice_sql
     assert "WHERE rn = 1" in notice_sql
+
+
+def test_stage_partition_deletes_stale_award_contractor_children_when_new_set_empty():
+    """Verify stage_partition deletes award_contractor children for replaced revisions even when new set empty."""
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    mock_db = MagicMock()
+    mock_catalog = MagicMock()
+    mock_catalog.table.return_value = {
+        "metadata": {
+            "format-version": 2,
+            "current-snapshot-id": 501,
+            "snapshots": [{"snapshot-id": 501, "summary": {"total-records": "0"}}],
+        }
+    }
+
+    executed_sql = []
+    registered_tables = {}
+
+    def _mock_execute(sql):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [
+            (0, "raw_json", "VARCHAR"),
+            (1, "bid_result", "BIGINT"),
+            (2, "price_source", "VARCHAR"),
+            (3, "currency", "VARCHAR"),
+        ]
+        return cursor
+
+    mock_db.execute.side_effect = _mock_execute
+    mock_db.register.side_effect = lambda name, tbl: registered_tables.update({name: tbl})
+
+    # Replaced revision with zero winners in new set
+    tables = {
+        "result_revision": [{"revision_id": "rev-res-1", "entity_id": "ent-1"}],
+        "award_contractor": [],
+    }
+
+    snapshots = stage_partition(
+        mock_db,
+        mock_catalog,
+        namespace="silver",
+        tables=tables,
+    )
+
+    assert "award_contractor" in snapshots
+    # Verify candidate revision IDs registered
+    assert "_cand_result_rids" in registered_tables
+    rids = registered_tables["_cand_result_rids"]["revision_id"].to_pylist()
+    assert rids == ["rev-res-1"]
+
+    # Verify targeted revision deletion executed on award_contractor
+    delete_sql = next(
+        s
+        for s in executed_sql
+        if "DELETE FROM lake.silver.award_contractor WHERE revision_id IN" in s
+    )
+    assert "SELECT revision_id FROM _cand_result_rids" in delete_sql
+
+    # Verify no INSERT was executed for award_contractor because candidate is empty
+    assert not any("INSERT INTO lake.silver.award_contractor" in s for s in executed_sql)
+
+
+def test_stage_partition_award_contractor_preserves_unrelated_revisions():
+    """Verify award_contractor replacement deletes only matching revision IDs and inserts new records."""
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    mock_db = MagicMock()
+    mock_catalog = MagicMock()
+    mock_catalog.table.return_value = {
+        "metadata": {
+            "format-version": 2,
+            "current-snapshot-id": 502,
+            "snapshots": [{"snapshot-id": 502, "summary": {"total-records": "1"}}],
+        }
+    }
+
+    executed_sql = []
+    registered_tables = {}
+
+    def _mock_execute(sql):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [
+            (0, "raw_json", "VARCHAR"),
+            (1, "bid_result", "BIGINT"),
+            (2, "price_source", "VARCHAR"),
+            (3, "currency", "VARCHAR"),
+        ]
+        return cursor
+
+    mock_db.execute.side_effect = _mock_execute
+    mock_db.register.side_effect = lambda name, tbl: registered_tables.update({name: tbl})
+
+    candidate_contractors = [
+        {
+            "award_contractor_id": "c1",
+            "award_lot_id": "lot1",
+            "revision_id": "rev-res-1",
+            "contractor_code": "vn001",
+            "contractor_name": "Nhà thầu 1",
+            "is_consortium": False,
+            "awarded_price": 5000000,
+        }
+    ]
+
+    tables = {
+        "result_revision": [{"revision_id": "rev-res-1", "entity_id": "ent-1"}],
+        "award_contractor": candidate_contractors,
+    }
+
+    snapshots = stage_partition(
+        mock_db,
+        mock_catalog,
+        namespace="silver",
+        tables=tables,
+    )
+
+    assert "award_contractor" in snapshots
+    assert any(
+        "DELETE FROM lake.silver.award_contractor WHERE revision_id IN" in s for s in executed_sql
+    )
+    assert any("INSERT INTO lake.silver.award_contractor BY NAME" in s for s in executed_sql)
+
+
+def test_stateful_cleanup_real_duckdb_removes_obsolete_losers_and_preserves_unrelated():
+    """Real DuckDB stateful test: verify obsolete losers removed, 0-winner replacement and unrelated retained."""
+    import re
+
+    import duckdb
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    class LocalDuckDBShim:
+        def __init__(self):
+            self.conn = duckdb.connect(":memory:")
+            self.conn.execute("ATTACH ':memory:' AS lake")
+
+        def execute(self, sql):
+            if "PARTITIONED BY" in sql:
+                sql = sql.split(" PARTITIONED BY ")[0]
+            return self.conn.execute(sql)
+
+        def sql(self, query):
+            cleaned_query = re.sub(
+                r"\s+AT\s*\(\s*VERSION\s*=>\s*\d+\s*\)", "", query, flags=re.IGNORECASE
+            )
+            return self.conn.sql(cleaned_query)
+
+        def register(self, name, table):
+            return self.conn.register(name, table)
+
+        def unregister(self, name):
+            return self.conn.unregister(name)
+
+    class LocalCatalogShim:
+        def __init__(self, db_shim):
+            self.db_shim = db_shim
+
+        def table(self, namespace, name):
+            import contextlib
+
+            count = 0
+            with contextlib.suppress(Exception):
+                count = self.db_shim.conn.sql(
+                    f"SELECT count(*) FROM lake.{namespace}.{name}"
+                ).fetchone()[0]
+            return {
+                "metadata": {
+                    "format-version": 2,
+                    "current-snapshot-id": 1,
+                    "snapshots": [{"snapshot-id": 1, "summary": {"total-records": str(count)}}],
+                }
+            }
+
+        def pin(self, namespace, name, snapshot_id, release_id):
+            pass
+
+    db = LocalDuckDBShim()
+    cat = LocalCatalogShim(db)
+
+    # 1. Initial state: rev-1 has winner c1 and obsolete loser c2; rev-2 has winner c3 (unrelated)
+    cand_initial = [
+        {
+            "award_contractor_id": "c1",
+            "award_lot_id": "l1",
+            "revision_id": "rev-1",
+            "contractor_code": "v1",
+            "contractor_name": "N1",
+            "is_consortium": False,
+            "awarded_price": 100,
+        },
+        {
+            "award_contractor_id": "c2",
+            "award_lot_id": "l1",
+            "revision_id": "rev-1",
+            "contractor_code": "v2",
+            "contractor_name": "N2",
+            "is_consortium": False,
+            "awarded_price": 200,
+        },
+        {
+            "award_contractor_id": "c3",
+            "award_lot_id": "l2",
+            "revision_id": "rev-2",
+            "contractor_code": "v3",
+            "contractor_name": "N3",
+            "is_consortium": False,
+            "awarded_price": 300,
+        },
+    ]
+    stage_partition(db, cat, "silver", {"award_contractor": cand_initial})
+
+    rows_initial = db.conn.execute(
+        "SELECT award_contractor_id, revision_id FROM lake.silver.award_contractor ORDER BY award_contractor_id"
+    ).fetchall()
+    assert rows_initial == [("c1", "rev-1"), ("c2", "rev-1"), ("c3", "rev-2")]
+
+    # 2. Rerun rev-1 with ZERO winners: must delete both c1 and c2 from rev-1, and preserve unrelated rev-2
+    stage_partition(
+        db, cat, "silver", {"result_revision": [{"revision_id": "rev-1"}], "award_contractor": []}
+    )
+    rows_after_zero = db.conn.execute(
+        "SELECT award_contractor_id, revision_id FROM lake.silver.award_contractor ORDER BY award_contractor_id"
+    ).fetchall()
+    assert rows_after_zero == [("c3", "rev-2")]
+
+    # 3. Rerun rev-1 with winner c1 only (c2 was obsolete loser): must insert c1, leave c2 removed, and keep rev-2
+    cand_rev1 = [
+        {
+            "award_contractor_id": "c1",
+            "award_lot_id": "l1",
+            "revision_id": "rev-1",
+            "contractor_code": "v1",
+            "contractor_name": "N1",
+            "is_consortium": False,
+            "awarded_price": 100,
+        },
+    ]
+    stage_partition(
+        db,
+        cat,
+        "silver",
+        {"result_revision": [{"revision_id": "rev-1"}], "award_contractor": cand_rev1},
+    )
+    rows_final = db.conn.execute(
+        "SELECT award_contractor_id, revision_id FROM lake.silver.award_contractor ORDER BY award_contractor_id"
+    ).fetchall()
+    assert rows_final == [("c1", "rev-1"), ("c3", "rev-2")]
+
+
+def test_real_duckdb_schema_migration_and_idempotency():
+    """Real DuckDB test: verify explicit schema migration for award_lot/award_contractor and idempotent rerun."""
+    import re
+
+    import duckdb
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    class LocalDuckDBShim:
+        def __init__(self):
+            self.conn = duckdb.connect(":memory:")
+            self.conn.execute("ATTACH ':memory:' AS lake")
+
+        def execute(self, sql):
+            if "PARTITIONED BY" in sql:
+                sql = sql.split(" PARTITIONED BY ")[0]
+            return self.conn.execute(sql)
+
+        def sql(self, query):
+            cleaned_query = re.sub(
+                r"\s+AT\s*\(\s*VERSION\s*=>\s*\d+\s*\)", "", query, flags=re.IGNORECASE
+            )
+            return self.conn.sql(cleaned_query)
+
+        def register(self, name, table):
+            return self.conn.register(name, table)
+
+        def unregister(self, name):
+            return self.conn.unregister(name)
+
+    class LocalCatalogShim:
+        def __init__(self, db_shim):
+            self.db_shim = db_shim
+
+        def table(self, namespace, name):
+            import contextlib
+
+            count = 0
+            with contextlib.suppress(Exception):
+                count = self.db_shim.conn.sql(
+                    f"SELECT count(*) FROM lake.{namespace}.{name}"
+                ).fetchone()[0]
+            return {
+                "metadata": {
+                    "format-version": 2,
+                    "current-snapshot-id": 1,
+                    "snapshots": [{"snapshot-id": 1, "summary": {"total-records": str(count)}}],
+                }
+            }
+
+        def pin(self, namespace, name, snapshot_id, release_id):
+            pass
+
+    db = LocalDuckDBShim()
+    cat = LocalCatalogShim(db)
+
+    # 1. Pre-create old-schema tables without new columns
+    db.conn.execute("CREATE SCHEMA lake.silver")
+    db.conn.execute(
+        "CREATE TABLE lake.silver.award_lot (award_lot_id VARCHAR, revision_id VARCHAR, lot_no VARCHAR)"
+    )
+    db.conn.execute("INSERT INTO lake.silver.award_lot VALUES ('lot_old', 'rev_old', '1')")
+
+    db.conn.execute(
+        "CREATE TABLE lake.silver.award_contractor (award_contractor_id VARCHAR, award_lot_id VARCHAR, revision_id VARCHAR, contractor_code VARCHAR, contractor_name VARCHAR, is_consortium BOOLEAN)"
+    )
+    db.conn.execute(
+        "INSERT INTO lake.silver.award_contractor VALUES ('c_old', 'lot_old', 'rev_old', 'vn0', 'Old Contractor', False)"
+    )
+
+    # 2. Stage candidate rows containing the new columns
+    new_lots = [
+        {
+            "award_lot_id": "lot_new",
+            "revision_id": "rev_new",
+            "lot_no": "2",
+            "raw_json": '{"key": "val"}',
+        }
+    ]
+    new_contractors = [
+        {
+            "award_contractor_id": "c_new",
+            "award_lot_id": "lot_new",
+            "revision_id": "rev_new",
+            "contractor_code": "vn1",
+            "contractor_name": "New Contractor",
+            "is_consortium": False,
+            "bid_result": 1,
+            "price_source": "bidWiningPrice",
+            "currency": "VND",
+        }
+    ]
+
+    stage_partition(db, cat, "silver", {"award_lot": new_lots, "award_contractor": new_contractors})
+
+    # Verify columns were added via ALTER TABLE ADD COLUMN
+    lot_cols = [
+        c[1] for c in db.conn.execute("PRAGMA table_info('lake.silver.award_lot')").fetchall()
+    ]
+    assert "raw_json" in lot_cols
+
+    contractor_cols = [
+        c[1]
+        for c in db.conn.execute("PRAGMA table_info('lake.silver.award_contractor')").fetchall()
+    ]
+    assert "bid_result" in contractor_cols
+    assert "price_source" in contractor_cols
+    assert "currency" in contractor_cols
+
+    # Verify old data preserved with NULL for new column
+    old_lot = db.conn.execute(
+        "SELECT award_lot_id, raw_json FROM lake.silver.award_lot WHERE award_lot_id = 'lot_old'"
+    ).fetchone()
+    assert old_lot == ("lot_old", None)
+
+    # Verify new data inserted with new column populated
+    new_lot = db.conn.execute(
+        "SELECT award_lot_id, raw_json FROM lake.silver.award_lot WHERE award_lot_id = 'lot_new'"
+    ).fetchone()
+    assert new_lot == ("lot_new", '{"key": "val"}')
+
+    # 3. Idempotent rerun: run stage_partition again, must succeed without schema errors
+    stage_partition(db, cat, "silver", {"award_lot": new_lots, "award_contractor": new_contractors})
+
+
+def test_real_duckdb_schema_migration_fails_on_incompatible_schema():
+    """Verify migration raises ValueError when an existing column has an incompatible type."""
+    import duckdb
+
+    from procurement.silver.application.warehouse import _migrate_result_schema_if_needed
+
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE SCHEMA lake")
+    conn.execute("CREATE TABLE lake.award_lot (award_lot_id VARCHAR, raw_json INTEGER)")
+
+    with pytest.raises(ValueError, match="Incompatible schema for lake.award_lot.raw_json"):
+        _migrate_result_schema_if_needed(conn, "lake.award_lot", "award_lot")
+
+
+def test_process_silver_service_fails_closed_when_iceberg_fails():
+    """Verify ProcessSilverService fails closed for all resources when Iceberg publication requested but fails."""
+    from datetime import date
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.process_silver_service import ProcessSilverService
+
+    bronze, storage = MagicMock(), MagicMock()
+    broken_iceberg = {"uri": "http://127.0.0.1:59999", "s3.endpoint": "http://127.0.0.1:59999"}
+    service = ProcessSilverService(bronze, storage, "bucket", "contractor_result", broken_iceberg)
+
+    with pytest.raises(
+        RuntimeError,
+        match="Iceberg initialization failed for contractor_result; publication was requested",
+    ):
+        service.execute(date(2024, 9, 16), date(2024, 9, 16))
+
+
+def test_migrate_result_schema_fails_closed_on_introspection_error():
+    """Verify _migrate_result_schema_if_needed fails closed with sanitized RuntimeError on introspection error."""
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.warehouse import _migrate_result_schema_if_needed
+
+    mock_db = MagicMock()
+    mock_db.execute.side_effect = RuntimeError("database connection failed or corrupted")
+
+    with pytest.raises(RuntimeError, match="Failed to inspect schema for lake.silver.award_lot"):
+        _migrate_result_schema_if_needed(mock_db, "lake.silver.award_lot", "award_lot")
+
+
+def test_migrate_result_schema_fails_closed_on_empty_table_info():
+    """Verify _migrate_result_schema_if_needed fails closed when PRAGMA table_info returns empty."""
+    from unittest.mock import MagicMock
+
+    from procurement.silver.application.warehouse import _migrate_result_schema_if_needed
+
+    mock_db = MagicMock()
+    mock_db.execute.return_value.fetchall.return_value = []
+
+    with pytest.raises(
+        RuntimeError, match="Table inspection returned no columns for lake.silver.award_lot"
+    ):
+        _migrate_result_schema_if_needed(mock_db, "lake.silver.award_lot", "award_lot")
+
+
+def test_stage_partition_governance_replaces_by_exact_incoming_observation_cohort():
+    """Verify quality_issue/quarantine rows for incoming observation cohort are replaced when empty, while preserving unrelated observations."""
+    import duckdb
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    class LocalDuckDBShim:
+        def __init__(self):
+            self.conn = duckdb.connect(":memory:")
+            self.conn.execute("ATTACH ':memory:' AS lake")
+
+        def execute(self, query):
+            if "PARTITIONED BY" in query:
+                query = query.split(" PARTITIONED BY ")[0]
+            return self.conn.execute(query)
+
+        def sql(self, query):
+            import re
+
+            cleaned_query = re.sub(
+                r"\s+AT\s*\(\s*VERSION\s*=>\s*\d+\s*\)", "", query, flags=re.IGNORECASE
+            )
+            return self.conn.sql(cleaned_query)
+
+        def register(self, name, table):
+            return self.conn.register(name, table)
+
+        def unregister(self, name):
+            return self.conn.unregister(name)
+
+    class LocalCatalogShim:
+        def __init__(self, db_shim):
+            self.db_shim = db_shim
+
+        def table(self, namespace, name):
+            import contextlib
+
+            count = 0
+            with contextlib.suppress(Exception):
+                count = self.db_shim.conn.sql(
+                    f"SELECT count(*) FROM lake.{namespace}.{name}"
+                ).fetchone()[0]
+            return {
+                "metadata": {
+                    "format-version": 2,
+                    "current-snapshot-id": 1,
+                    "snapshots": [{"snapshot-id": 1, "summary": {"total-records": str(count)}}],
+                }
+            }
+
+        def pin(self, namespace, name, snapshot_id, release_id):
+            pass
+
+    db = LocalDuckDBShim()
+    cat = LocalCatalogShim(db)
+
+    # 1. Initial state: obs-1 has issue-1; obs-2 (unrelated) has issue-2
+    initial_issues = [
+        {
+            "issue_id": "iss-1",
+            "observation_id": "obs-1",
+            "code": "E1",
+            "path": "p1",
+            "severity": "WARNING",
+        },
+        {
+            "issue_id": "iss-2",
+            "observation_id": "obs-2",
+            "code": "E2",
+            "path": "p2",
+            "severity": "WARNING",
+        },
+    ]
+    stage_partition(db, cat, "silver", {"quality_issue": initial_issues})
+
+    rows_init = db.conn.execute(
+        "SELECT issue_id, observation_id FROM lake.silver.quality_issue ORDER BY issue_id"
+    ).fetchall()
+    assert rows_init == [("iss-1", "obs-1"), ("iss-2", "obs-2")]
+
+    # 2. Rerun obs-1 with empty quality issues: must delete issue-1 for obs-1, while preserving issue-2 for obs-2
+    stage_partition(
+        db,
+        cat,
+        "silver",
+        {
+            "observation": [{"observation_id": "obs-1"}],
+            "quality_issue": [],
+        },
+    )
+
+    rows_after = db.conn.execute(
+        "SELECT issue_id, observation_id FROM lake.silver.quality_issue ORDER BY issue_id"
+    ).fetchall()
+    assert rows_after == [("iss-2", "obs-2")]
+
+
+def test_stage_partition_row_count_uses_logical_count_when_positional_deletes_exist():
+    """Verify stage_partition row_count uses logical SQL count when positional deletes exist in metadata."""
+    import duckdb
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    class LocalDuckDBShim:
+        def __init__(self):
+            self.conn = duckdb.connect(":memory:")
+            self.conn.execute("ATTACH ':memory:' AS lake")
+
+        def execute(self, query):
+            if "PARTITIONED BY" in query:
+                query = query.split(" PARTITIONED BY ")[0]
+            return self.conn.execute(query)
+
+        def sql(self, query):
+            import re
+
+            cleaned_query = re.sub(
+                r"\s+AT\s*\(\s*VERSION\s*=>\s*\d+\s*\)", "", query, flags=re.IGNORECASE
+            )
+            return self.conn.sql(cleaned_query)
+
+        def register(self, name, table):
+            return self.conn.register(name, table)
+
+        def unregister(self, name):
+            return self.conn.unregister(name)
+
+    class DeleteFilesCatalogShim:
+        def __init__(self, db_shim):
+            self.db_shim = db_shim
+
+        def table(self, namespace, name):
+            return {
+                "metadata": {
+                    "format-version": 2,
+                    "current-snapshot-id": 1,
+                    "snapshots": [
+                        {
+                            "snapshot-id": 1,
+                            "summary": {
+                                "total-records": "1627972",
+                                "total-position-deletes": "55305",
+                                "total-delete-files": "10",
+                            },
+                        }
+                    ],
+                }
+            }
+
+        def pin(self, namespace, name, snapshot_id, release_id):
+            pass
+
+    db = LocalDuckDBShim()
+    cat = DeleteFilesCatalogShim(db)
+
+    # Insert 5 actual rows into the table
+    cand = [
+        {"participation_id": f"p{i}", "revision_id": "r1", "lot_no": "1", "raw_json": "{}"}
+        for i in range(5)
+    ]
+    snapshots = stage_partition(db, cat, "silver", {"bid_participation": cand})
+
+    entry = snapshots["bid_participation"]
+    # row_count must be the logical count (5), NOT physical 1627972
+    assert entry["row_count"] == 5
+    assert entry["physical_record_count"] == 1627972
+
+
+def test_stateful_cleanup_real_duckdb_removes_stale_award_lots_and_preserves_unrelated():
+    """Real DuckDB stateful test: verify stale award_lot rows removed on exact revision replay,
+
+    including partial lot removal and zero-lot replacement, while unrelated revisions survive.
+    """
+    import re
+
+    import duckdb
+
+    from procurement.silver.application.warehouse import stage_partition
+
+    class LocalDuckDBShim:
+        def __init__(self):
+            self.conn = duckdb.connect(":memory:")
+            self.conn.execute("ATTACH ':memory:' AS lake")
+
+        def execute(self, sql):
+            if "PARTITIONED BY" in sql:
+                sql = sql.split(" PARTITIONED BY ")[0]
+            return self.conn.execute(sql)
+
+        def sql(self, query):
+            cleaned_query = re.sub(
+                r"\s+AT\s*\(\s*VERSION\s*=>\s*\d+\s*\)", "", query, flags=re.IGNORECASE
+            )
+            return self.conn.sql(cleaned_query)
+
+        def register(self, name, table):
+            return self.conn.register(name, table)
+
+        def unregister(self, name):
+            return self.conn.unregister(name)
+
+    class LocalCatalogShim:
+        def __init__(self, db_shim):
+            self.db_shim = db_shim
+
+        def table(self, namespace, name):
+            import contextlib
+
+            count = 0
+            with contextlib.suppress(Exception):
+                count = self.db_shim.conn.sql(
+                    f"SELECT count(*) FROM lake.{namespace}.{name}"
+                ).fetchone()[0]
+            return {
+                "metadata": {
+                    "format-version": 2,
+                    "current-snapshot-id": 1,
+                    "snapshots": [{"snapshot-id": 1, "summary": {"total-records": str(count)}}],
+                }
+            }
+
+        def pin(self, namespace, name, snapshot_id, release_id):
+            pass
+
+    db = LocalDuckDBShim()
+    cat = LocalCatalogShim(db)
+
+    # 1. Initial state: rev-1 has lots 'a' and 'b'; unrelated rev-2 has lot 'c'
+    initial_lots = [
+        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1", "raw_json": "{}"},
+        {"award_lot_id": "b", "revision_id": "rev-1", "lot_no": "2", "raw_json": "{}"},
+        {"award_lot_id": "c", "revision_id": "rev-2", "lot_no": "1", "raw_json": "{}"},
+    ]
+    stage_partition(db, cat, "silver", {"award_lot": initial_lots})
+
+    rows_initial = db.conn.execute(
+        "SELECT award_lot_id, revision_id FROM lake.silver.award_lot ORDER BY award_lot_id"
+    ).fetchall()
+    assert rows_initial == [("a", "rev-1"), ("b", "rev-1"), ("c", "rev-2")]
+
+    # 2. Replay rev-1 with only lot 'a': must remove lot 'b' and preserve unrelated rev-2 ('c')
+    cand_rev1_fewer = [
+        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1", "raw_json": "{}"},
+    ]
+    stage_partition(
+        db,
+        cat,
+        "silver",
+        {
+            "result_revision": [{"revision_id": "rev-1"}],
+            "award_lot": cand_rev1_fewer,
+        },
+    )
+    rows_after_fewer = db.conn.execute(
+        "SELECT award_lot_id, revision_id FROM lake.silver.award_lot ORDER BY award_lot_id"
+    ).fetchall()
+    assert rows_after_fewer == [("a", "rev-1"), ("c", "rev-2")]
+
+    # 3. Replay rev-1 with empty award_lot: must remove lot 'a' and preserve unrelated rev-2 ('c')
+    stage_partition(
+        db,
+        cat,
+        "silver",
+        {
+            "result_revision": [{"revision_id": "rev-1"}],
+            "award_lot": [],
+        },
+    )
+    rows_after_empty = db.conn.execute(
+        "SELECT award_lot_id, revision_id FROM lake.silver.award_lot ORDER BY award_lot_id"
+    ).fetchall()
+    assert rows_after_empty == [("c", "rev-2")]

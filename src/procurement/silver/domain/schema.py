@@ -52,6 +52,88 @@ quarantine_table = sa.Table(
     comment="Quarantined occurrences failing basic identity/format constraints",
 )
 
+
+# Contract execution is sourced by report publication day, including older contracts.
+# Partition on source_date so refreshing a report day cannot delete another day's contracts.
+def _execution_columns():
+    return [
+        sa.Column("revision_id", sa.String, primary_key=True),
+        sa.Column("entity_id", sa.String, nullable=False),
+        sa.Column("entity_type", sa.String, nullable=False),
+        sa.Column("observation_id", sa.String),
+        sa.Column("is_current", sa.Boolean),
+        sa.Column("source_date", sa.Date, nullable=False),
+        sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("root_json", sa.Text, nullable=False),
+    ]
+
+
+contract_revision_table = sa.Table(
+    "contract_revision",
+    metadata,
+    *_execution_columns(),
+    *[
+        sa.Column(name, sa.String)
+        for name in (
+            "source_contract_id",
+            "contract_code",
+            "contract_no",
+            "contract_version",
+            "contract_name",
+            "package_name",
+            "investor_code",
+            "investor_name",
+            "contractor_code",
+            "contractor_name",
+            "currency",
+            "notice_source_id",
+            "notice_no",
+            "notice_version",
+            "result_source_id",
+            "result_version",
+            "published_at_raw",
+        )
+    ],
+    *[sa.Column(name, sa.Date) for name in ("signed_date", "effective_date", "public_date")],
+    sa.Column("price_after_tax", sa.Numeric(38, 6)),
+    comment="Observed contract versions referenced by published execution reports",
+)
+
+contract_performance_revision_table = sa.Table(
+    "contract_performance_revision",
+    metadata,
+    *_execution_columns(),
+    *[
+        sa.Column(name, sa.String)
+        for name in (
+            "source_evaluation_id",
+            "evaluation_no",
+            "evaluation_version",
+            "contract_code",
+            "contract_version",
+            "investor_code",
+            "investor_name",
+            "contractor_code",
+            "contractor_name",
+            "progress_status_code",
+            "quality_status_code",
+            "published_at_raw",
+        )
+    ],
+    *[
+        sa.Column(name, sa.Date)
+        for name in (
+            "public_date",
+            "planned_completion_date",
+            "actual_completion_date",
+            "adjusted_completion_date",
+        )
+    ],
+    sa.Column("is_completed", sa.Boolean),
+    comment="Published contract execution report versions; not periodic progress snapshots",
+)
+
+
 # ---------------------------------------------------------------------------
 # TIER 2: 5 CORE ENTITY REVISIONS
 # ---------------------------------------------------------------------------
@@ -505,6 +587,7 @@ award_lot_table = sa.Table(
     sa.Column("currency", sa.String, nullable=True),
     sa.Column("winning_code", sa.String, nullable=True),
     sa.Column("status", sa.String, nullable=True),
+    sa.Column("raw_json", sa.Text, nullable=True),
     comment="Contract award decision per lot",
 )
 
@@ -524,6 +607,9 @@ award_contractor_table = sa.Table(
     sa.Column("role", sa.String, nullable=True),
     sa.Column("awarded_price", sa.Numeric(38, 6), nullable=True),
     sa.Column("evaluation_rank", sa.Integer, nullable=True),
+    sa.Column("bid_result", sa.Integer, nullable=True),
+    sa.Column("price_source", sa.String, nullable=True),
+    sa.Column("currency", sa.String, nullable=True),
     comment="Awarded contractor and consortium members",
 )
 
@@ -623,6 +709,8 @@ def get_child_schemas() -> dict[str, str]:
 SILVER_PARTITION_SPECS: dict[str, str] = {
     # Tier 1: Governance
     "observation": "source_date",
+    "contract_revision": "source_date",
+    "contract_performance_revision": "source_date",
     # Tier 2: Core Revisions (partitioned by public_date)
     "notice_revision": "public_date",
     "project_revision": "public_date",
@@ -676,5 +764,5 @@ def get_primary_key(table_name: str) -> str | None:
     if sa_table is None:
         sa_table = metadata.tables.get(clean_name)
     if sa_table is not None and len(sa_table.primary_key.columns) > 0:
-        return list(sa_table.primary_key.columns)[0].name
+        return next(iter(sa_table.primary_key.columns)).name
     return None

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from procurement.common.catalog import get_resource
 
-NOTICE_MAPPING_VERSION = "notice-2"
+NOTICE_MAPPING_VERSION = "notice-3"
 NOTICE_OUTPUT_TABLES = (
     "observation",
     "notice_revision",
@@ -20,7 +20,7 @@ NOTICE_TABLES = (
     "notify_contractor_reoffer_detail",
 )
 
-PROJECT_MAPPING_VERSION = "project-1"
+PROJECT_MAPPING_VERSION = "project-2"
 PROJECT_OUTPUT_TABLES = (
     "observation",
     "project_revision",
@@ -30,7 +30,7 @@ PROJECT_OUTPUT_TABLES = (
 )
 PROJECT_TABLES = ("project_detail",)
 
-RESULT_MAPPING_VERSION = "result-1"
+RESULT_MAPPING_VERSION = "result-3"
 RESULT_OUTPUT_TABLES = (
     "observation",
     "result_revision",
@@ -41,7 +41,7 @@ RESULT_OUTPUT_TABLES = (
 )
 RESULT_TABLES = ("contractor_result_detail",)
 
-KHLCNT_MAPPING_VERSION = "khlcnt-1"
+KHLCNT_MAPPING_VERSION = "khlcnt-2"
 KHLCNT_OUTPUT_TABLES = (
     "observation",
     "plan_revision",
@@ -66,6 +66,23 @@ class SilverResource:
     output_tables: tuple[str, ...]
     mapping_version: str
 
+    def candidate_groups(
+        self, data_prefix: str, *, isolate_governance: bool = False
+    ) -> tuple[tuple[str, tuple[str, ...]], ...]:
+        """Keep new execution lineage files from overwriting other resources' daily files."""
+        if isolate_governance or self.resource in {"contract_performance", "contractor_result"}:
+            domain = tuple(
+                t
+                for t in self.output_tables
+                if t not in {"observation", "quality_issue", "quarantine"}
+            )
+            governance = tuple(t for t in self.output_tables if t not in domain)
+            return (
+                (data_prefix, domain),
+                (f"{data_prefix}/_governance/{self.resource}", governance),
+            )
+        return ((data_prefix, self.output_tables),)
+
     def select_tables(self, family: str | None = None) -> tuple[str, ...]:
         available = dict(self.families)
         if family is not None and family not in available:
@@ -75,6 +92,22 @@ class SilverResource:
 
 def get_silver_resource(name: str) -> SilverResource:
     """Retrieve the SilverResource configuration for a resource alias."""
+    if name == "contract_performance":
+        return SilverResource(
+            resource=name,
+            families=(
+                ("contract", "contract_detail"),
+                ("performance", "contract_performance_detail"),
+            ),
+            output_tables=(
+                "observation",
+                "contract_revision",
+                "contract_performance_revision",
+                "quality_issue",
+                "quarantine",
+            ),
+            mapping_version="contract-performance-2",
+        )
     if name in {"notice", "tbmt", "notify_contractor"}:
         definition = get_resource("notify_contractor")
         families = tuple(

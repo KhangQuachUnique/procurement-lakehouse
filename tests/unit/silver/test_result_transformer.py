@@ -1,7 +1,6 @@
 """Unit tests for ContractorResultTransformer (contractor selection results)."""
 
-from datetime import UTC, date, datetime
-from decimal import Decimal
+from datetime import UTC, datetime
 
 from procurement.silver.application.resources import (
     RESULT_MAPPING_VERSION,
@@ -260,7 +259,9 @@ def test_result_plan_reference_extraction():
     result = transformer.transform(envelope)
 
     assert len(result.references) == 3
-    assert any(r.target_type == "plan" and r.target_identity == "PL2200001197" for r in result.references)
+    assert any(
+        r.target_type == "plan" and r.target_identity == "PL2200001197" for r in result.references
+    )
 
 
 def test_result_version_fallback_from_dto():
@@ -295,7 +296,6 @@ def test_result_temporal_inversion_detected():
     assert any(i.code == "invalid_date_order" for i in result.issues)
 
 
-
 def test_result_transformer_dummy_placeholder_price():
     transformer = ContractorResultTransformer()
     payload = {
@@ -325,3 +325,774 @@ def test_result_transformer_dummy_placeholder_price():
     lot_child = next(c for c in result.children if c.kind == "award_lot")
     assert lot_child.typed_attributes["lot_price"] is None
     assert any(i.code == "dummy_placeholder_price" for i in result.issues)
+
+
+def test_award_contractor_only_confirmed_winners_bidresult_1_or_str_1():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-win-test-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPrice": "10000000",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "1000000"},
+                        {
+                            "id": "c2",
+                            "orgCode": "v2",
+                            "bidResult": "1",
+                            "bidWiningPrice": "2000000",
+                        },
+                        {"id": "c3", "orgCode": "v3", "bidResult": 0, "bidWiningPrice": "3000000"},
+                        {"id": "c4", "orgCode": "v4", "bidResult": 2},
+                        {"id": "c5", "orgCode": "v5", "bidResult": "3"},
+                    ],
+                }
+            ],
+        }
+    }
+    env = make_envelope(payload, source_id="res-win-test-1")
+    result = transformer.transform(env)
+
+    # 5 contractor children total in payload
+    contractor_children = [c for c in result.children if c.kind == "award_contractor"]
+    assert len(contractor_children) == 5
+
+    # Only c1 and c2 are confirmed winners with typed_table
+    winner_children = [c for c in contractor_children if c.typed_table == "award_contractor"]
+    assert len(winner_children) == 2
+    assert {c.typed_attributes["contractor_code"] for c in winner_children} == {"v1", "v2"}
+
+    # Non-winners have typed_table=None and typed_attributes=None
+    non_winner_children = [c for c in contractor_children if c.typed_table is None]
+    assert len(non_winner_children) == 3
+    for c in non_winner_children:
+        assert c.typed_attributes is None
+        assert c.payload_json != ""  # Raw JSON retained
+
+    # Check assembled typed table
+    tables = assemble([result.to_dict()])
+    assert len(tables["award_contractor"]) == 2
+    assert {r["contractor_code"] for r in tables["award_contractor"]} == {"v1", "v2"}
+    for r in tables["award_contractor"]:
+        assert r["bid_result"] == 1
+        assert r["price_source"] == "bidWiningPrice"
+        assert r["currency"] == "VND"
+
+    # Raw lot JSON retained
+    assert len(tables["award_lot"]) == 1
+    assert "contractorList" in tables["award_lot"][0]["raw_json"]
+
+    # Non-winner c3 with bidWiningPrice triggers warning
+    assert any(i.code == "non_winner_with_winning_price" for i in result.issues)
+
+
+def test_keep_root_and_lot_with_zero_winners():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-zero-win-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPrice": "10000000",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 0},
+                        {"id": "c2", "orgCode": "v2", "bidResult": 2},
+                    ],
+                }
+            ],
+        }
+    }
+    env = make_envelope(payload, source_id="res-zero-win-1")
+    result = transformer.transform(env)
+    tables = assemble([result.to_dict()])
+
+    # Root revision kept with null total winning price
+    assert len(tables["result_revision"]) == 1
+    assert tables["result_revision"][0]["total_winning_price"] is None
+
+    # Lot kept with null winning price
+    assert len(tables["award_lot"]) == 1
+    assert tables["award_lot"][0]["lot_price"] == "10000000.000000"
+    assert tables["award_lot"][0]["winning_price"] is None
+
+    # Zero rows in typed award_contractor
+    assert len(tables["award_contractor"]) == 0
+
+
+def test_winning_price_only_bid_wining_price_no_fallback():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-fallback-test-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPrice": "5000000",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "bidWiningPrice": None,
+                            "lotFinalPrice": "4000000",
+                            "lotPrice": "3000000",
+                        }
+                    ],
+                }
+            ],
+        }
+    }
+    env = make_envelope(payload, source_id="res-fallback-test-1")
+    result = transformer.transform(env)
+    tables = assemble([result.to_dict()])
+
+    # No fallback: awarded_price is None
+    assert len(tables["award_contractor"]) == 1
+    assert tables["award_contractor"][0]["awarded_price"] is None
+    assert tables["award_contractor"][0]["price_source"] is None
+
+    # Incomplete winner price makes lot and root totals null
+    assert tables["award_lot"][0]["winning_price"] is None
+    assert tables["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "incomplete_winner_price" for i in result.issues)
+
+
+def test_winning_price_handles_zero_explicitly_and_invalid_safely():
+    transformer = ContractorResultTransformer()
+    # Zero winning price: source price kept as 0, but flag unverified_zero_winning_price and null derived lot/root
+    payload_zero = {
+        "bideContractorInputResultDTO": {
+            "id": "res-zero-price-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": 0}
+                    ],
+                }
+            ],
+        }
+    }
+    result_zero = transformer.transform(make_envelope(payload_zero, source_id="res-zero-price-1"))
+    tables_zero = assemble([result_zero.to_dict()])
+    assert tables_zero["award_contractor"][0]["awarded_price"] == "0.000000"
+    assert tables_zero["award_lot"][0]["winning_price"] is None
+    assert tables_zero["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "unverified_zero_winning_price" for i in result_zero.issues)
+
+    # Invalid winning price (non-numeric)
+    payload_inv = {
+        "bideContractorInputResultDTO": {
+            "id": "res-inv-price-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "bidWiningPrice": "invalid_val",
+                        }
+                    ],
+                }
+            ],
+        }
+    }
+    result_inv = transformer.transform(make_envelope(payload_inv, source_id="res-inv-price-1"))
+    tables_inv = assemble([result_inv.to_dict()])
+    assert tables_inv["award_contractor"][0]["awarded_price"] is None
+    assert tables_inv["award_lot"][0]["winning_price"] is None
+    assert tables_inv["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "invalid_money" for i in result_inv.issues)
+
+
+def test_missing_and_conflicting_currency_no_default_vnd():
+    transformer = ContractorResultTransformer()
+    # Missing currency: neither unit supplied
+    payload_missing = {
+        "bideContractorInputResultDTO": {
+            "id": "res-no-curr-1",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                }
+            ],
+        }
+    }
+    res_miss = transformer.transform(make_envelope(payload_missing, source_id="res-no-curr-1"))
+    tables_miss = assemble([res_miss.to_dict()])
+    assert tables_miss["result_revision"][0]["currency"] is None
+    assert tables_miss["award_lot"][0]["currency"] is None
+    assert tables_miss["award_contractor"][0]["currency"] is None
+    assert any(i.code == "unknown_currency" for i in res_miss.issues)
+
+    # Conflicting currency at root: bidPriceUnit USD vs bidEstimatePriceUnit VND
+    payload_conflict = {
+        "bideContractorInputResultDTO": {
+            "id": "res-conflict-curr-1",
+            "bidPriceUnit": "USD",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                }
+            ],
+        }
+    }
+    res_conf = transformer.transform(
+        make_envelope(payload_conflict, source_id="res-conflict-curr-1")
+    )
+    tables_conf = assemble([res_conf.to_dict()])
+    assert tables_conf["result_revision"][0]["currency"] is None
+    assert any(i.code == "conflicting_currency" for i in res_conf.issues)
+
+
+def test_incomplete_winner_prices_make_totals_null_not_partial():
+    transformer = ContractorResultTransformer()
+    # 2 winners in lot: C1 has price, C2 has missing price
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-incomp-price-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "1000000"},
+                        {"id": "c2", "orgCode": "v2", "bidResult": 1, "bidWiningPrice": None},
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-incomp-price-1"))
+    tables = assemble([result.to_dict()])
+
+    # Lot total and Root total must be NULL, NOT 1000000.000000 (partial total)!
+    assert tables["award_lot"][0]["winning_price"] is None
+    assert tables["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "incomplete_winner_price" for i in result.issues)
+
+    # Multi-lot: Lot 1 complete, Lot 2 has incomplete winner price
+    payload_multilot = {
+        "bideContractorInputResultDTO": {
+            "id": "res-multi-incomp-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                },
+                {
+                    "id": "lot-2",
+                    "lotNo": "2",
+                    "contractorList": [
+                        {"id": "c2", "orgCode": "v2", "bidResult": 1, "bidWiningPrice": None}
+                    ],
+                },
+            ],
+        }
+    }
+    result_multi = transformer.transform(
+        make_envelope(payload_multilot, source_id="res-multi-incomp-1")
+    )
+    tables_multi = assemble([result_multi.to_dict()])
+    lot_1 = next(l for l in tables_multi["award_lot"] if l["lot_no"] == "1")
+    lot_2 = next(l for l in tables_multi["award_lot"] if l["lot_no"] == "2")
+    assert lot_1["winning_price"] == "5000000.000000"
+    assert lot_2["winning_price"] is None
+    # Root must NOT be partial 5000000.000000!
+    assert tables_multi["result_revision"][0]["total_winning_price"] is None
+
+
+def test_consortium_ambiguity_conservative_null_and_warning():
+    transformer = ContractorResultTransformer()
+    # 2 consortium members winning same lot with repeated full total
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-consortium-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "ventureCode": "VC-01",
+                            "ventureName": "Liên danh An Bình",
+                            "bidWiningPrice": "10000000",
+                        },
+                        {
+                            "id": "c2",
+                            "orgCode": "v2",
+                            "bidResult": 1,
+                            "ventureCode": "VC-01",
+                            "ventureName": "Liên danh An Bình",
+                            "bidWiningPrice": "10000000",
+                        },
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-consortium-1"))
+    tables = assemble([result.to_dict()])
+
+    # Conservative null: never multiply repeated total to 20000000!
+    assert tables["award_lot"][0]["winning_price"] is None
+    assert tables["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "unverified_consortium_allocation" for i in result.issues)
+
+    # Both contractors remain in award_contractor with individual prices
+    assert len(tables["award_contractor"]) == 2
+    for c in tables["award_contractor"]:
+        assert c["awarded_price"] == "10000000.000000"
+        assert c["is_consortium"] is True
+
+
+def test_independent_same_price_winners_not_deduped():
+    transformer = ContractorResultTransformer()
+    # 2 independent winners with the exact same price -> do not dedup!
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-indep-same-price-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "bidWiningPrice": "5000000",
+                        },
+                        {
+                            "id": "c2",
+                            "orgCode": "v2",
+                            "bidResult": 1,
+                            "bidWiningPrice": "5000000",
+                        },
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-indep-same-price-1"))
+    tables = assemble([result.to_dict()])
+
+    # Independent same-price winners are not deduped: 5M + 5M = 10M
+    assert tables["award_lot"][0]["winning_price"] == "10000000.000000"
+    assert tables["result_revision"][0]["total_winning_price"] == "10000000.000000"
+    assert len(tables["award_contractor"]) == 2
+
+
+def test_outcome_warnings_for_missing_and_unsupported_codes():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-outcome-test-1",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": None},
+                        {"id": "c2", "orgCode": "v2", "bidResult": "99"},
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-outcome-test-1"))
+    assert any(i.code == "missing_outcome" for i in result.issues)
+    assert any(i.code == "unsupported_outcome" for i in result.issues)
+
+
+def test_raw_bid_result_strict_normalization_rejects_bool_float_accepts_stripped():
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-strict-norm-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c_strip",
+                            "orgCode": "v_strip",
+                            "bidResult": " 1 ",
+                            "bidWiningPrice": "1000000",
+                        },
+                        {
+                            "id": "c_bool_t",
+                            "orgCode": "v_bool_t",
+                            "bidResult": True,
+                            "bidWiningPrice": "2000000",
+                        },
+                        {
+                            "id": "c_bool_f",
+                            "orgCode": "v_bool_f",
+                            "bidResult": False,
+                            "bidWiningPrice": "3000000",
+                        },
+                        {
+                            "id": "c_flt",
+                            "orgCode": "v_flt",
+                            "bidResult": 1.0,
+                            "bidWiningPrice": "4000000",
+                        },
+                    ],
+                }
+            ],
+        }
+    }
+    env = make_envelope(payload, source_id="res-strict-norm-1")
+    result = transformer.transform(env)
+    tables = assemble([result.to_dict()])
+
+    # Only " 1 " stripped exact string is accepted as winner!
+    assert len(tables["award_contractor"]) == 1
+    assert tables["award_contractor"][0]["contractor_code"] == "v_strip"
+    assert tables["award_contractor"][0]["bid_result"] == 1
+
+    # True, False, 1.0 are rejected as unsupported outcomes (never winner!)
+    winner_children = [c for c in result.children if c.typed_table == "award_contractor"]
+    assert len(winner_children) == 1
+    assert winner_children[0].typed_attributes["contractor_code"] == "v_strip"
+
+    # Verify bool/float flagged as unsupported_outcome
+    unsupported_issues = [i for i in result.issues if i.code == "unsupported_outcome"]
+    assert len(unsupported_issues) >= 3
+
+
+def test_missing_or_unsupported_outcome_anywhere_in_lot_marks_unresolved():
+    transformer = ContractorResultTransformer()
+    # Lot has a confirmed winner, but also has a contractor with missing outcome
+    payload_missing = {
+        "bideContractorInputResultDTO": {
+            "id": "res-unres-1",
+            "bidEstimatePriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"},
+                        {"id": "c2", "orgCode": "v2", "bidResult": None},
+                    ],
+                }
+            ],
+        }
+    }
+    result_missing = transformer.transform(make_envelope(payload_missing, source_id="res-unres-1"))
+    tables_missing = assemble([result_missing.to_dict()])
+
+    # Winner's known source price is kept in award_contractor
+    assert len(tables_missing["award_contractor"]) == 1
+    assert tables_missing["award_contractor"][0]["awarded_price"] == "5000000.000000"
+
+    # But lot and root totals must be NULL (completeness unresolved!)
+    assert tables_missing["award_lot"][0]["winning_price"] is None
+    assert tables_missing["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "missing_outcome" for i in result_missing.issues)
+
+
+def test_lot_currency_resolution_conflicts_salvaging_and_invalid_types():
+    transformer = ContractorResultTransformer()
+
+    # 1. Conflicting lotPriceUnit vs currency on the same lot
+    payload_lot_conf = {
+        "bideContractorInputResultDTO": {
+            "id": "res-lot-curr-conf-1",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPriceUnit": "USD",
+                    "currency": "VND",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                }
+            ],
+        }
+    }
+    result_lot_conf = transformer.transform(
+        make_envelope(payload_lot_conf, source_id="res-lot-curr-conf-1")
+    )
+    tables_lot_conf = assemble([result_lot_conf.to_dict()])
+    assert tables_lot_conf["award_lot"][0]["currency"] is None
+    assert tables_lot_conf["award_lot"][0]["winning_price"] is None
+    assert any(i.code == "conflicting_currency" for i in result_lot_conf.issues)
+
+    # 2. Absent root currency, but unambiguous explicit lot currency salvages the lot
+    payload_salvage = {
+        "bideContractorInputResultDTO": {
+            "id": "res-salvage-1",
+            # No root currency
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "currency": "USD",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                }
+            ],
+        }
+    }
+    result_salvage = transformer.transform(
+        make_envelope(payload_salvage, source_id="res-salvage-1")
+    )
+    tables_salvage = assemble([result_salvage.to_dict()])
+    assert tables_salvage["award_lot"][0]["currency"] == "USD"
+    assert tables_salvage["award_lot"][0]["winning_price"] == "5000000.000000"
+    assert tables_salvage["result_revision"][0]["currency"] == "USD"
+    assert tables_salvage["result_revision"][0]["total_winning_price"] == "5000000.000000"
+
+    # 3. Currency field with bool or float is rejected
+    payload_invalid_curr = {
+        "bideContractorInputResultDTO": {
+            "id": "res-inv-curr-1",
+            "bidPriceUnit": True,
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "lotPriceUnit": 14.5,
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": "5000000"}
+                    ],
+                }
+            ],
+        }
+    }
+    result_inv_curr = transformer.transform(
+        make_envelope(payload_invalid_curr, source_id="res-inv-curr-1")
+    )
+    tables_inv_curr = assemble([result_inv_curr.to_dict()])
+    assert tables_inv_curr["award_lot"][0]["currency"] is None
+    assert tables_inv_curr["award_lot"][0]["winning_price"] is None
+    assert any(i.code == "unknown_currency" for i in result_inv_curr.issues)
+
+
+def test_cross_lot_unresolved_outcome_nulls_root_total_while_keeping_valid_lot():
+    """Reviewer fixture: root VND, lot L1 winner 1 price 100; lot L2 contractor outcome None / no price.
+
+    Root total must be NULL when ANY lot has an unresolved outcome (even when that lot has zero confirmed winners),
+    while preserving the valid lot L1 total for partial-scope analysis.
+    """
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-cross-lot-1",
+            "bidPriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "bidWiningPrice": "100",
+                        }
+                    ],
+                },
+                {
+                    "id": "lot-2",
+                    "lotNo": "2",
+                    "contractorList": [
+                        {
+                            "id": "c2",
+                            "orgCode": "v2",
+                            "bidResult": None,  # Missing outcome!
+                        }
+                    ],
+                },
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-cross-lot-1"))
+    tables = assemble([result.to_dict()])
+
+    # Valid lot L1 total is preserved for partial-scope analysis
+    l1 = next(l for l in tables["award_lot"] if l["lot_no"] == "1")
+    assert l1["winning_price"] == "100.000000"
+
+    # Lot L2 has no confirmed winner and is unresolved
+    l2 = next(l for l in tables["award_lot"] if l["lot_no"] == "2")
+    assert l2["winning_price"] is None
+
+    # Root total MUST be NULL because lot L2 has an unresolved outcome!
+    assert tables["result_revision"][0]["total_winning_price"] is None
+
+    # Quality issue missing_outcome must be logged
+    assert any(i.code == "missing_outcome" for i in result.issues)
+
+
+def test_malformed_contractor_and_lot_entries_mark_issue_and_null_root():
+    """Verify malformed contractor and lot entries raise malformed_entry issues and nullify root total."""
+    transformer = ContractorResultTransformer()
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-malformed-1",
+            "bidPriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {
+                            "id": "c1",
+                            "orgCode": "v1",
+                            "bidResult": 1,
+                            "bidWiningPrice": "200",
+                        }
+                    ],
+                },
+                {
+                    "id": "lot-2",
+                    "lotNo": "2",
+                    "contractorList": [
+                        "corrupted_non_dict_entry",  # Malformed contractor entry
+                    ],
+                },
+                "corrupted_non_dict_lot",  # Malformed lot entry
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-malformed-1"))
+    tables = assemble([result.to_dict()])
+
+    # Valid lot L1 total is kept
+    l1 = next(l for l in tables["award_lot"] if l["lot_no"] == "1")
+    assert l1["winning_price"] == "200.000000"
+
+    # Root total is NULL due to malformed entries
+    assert tables["result_revision"][0]["total_winning_price"] is None
+
+    # Quality issue malformed_entry must be present
+    malformed_issues = [i for i in result.issues if i.code == "malformed_entry"]
+    assert len(malformed_issues) >= 2
+
+
+def test_exact_large_value_sum_within_decimal_38_6():
+    """Verify sum of large values exceeding default precision 28 maintains exact DECIMAL(38,6) precision."""
+    transformer = ContractorResultTransformer()
+    # 31 digits before dot + 6 fraction digits = 37 digits total (exceeds default Decimal precision 28!)
+    v1 = "5000000000000000000000000000000.123456"
+    v2 = "4000000000000000000000000000000.654321"
+    expected_sum = "9000000000000000000000000000000.777777"
+
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-large-sum-1",
+            "bidPriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": v1},
+                        {"id": "c2", "orgCode": "v2", "bidResult": 1, "bidWiningPrice": v2},
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-large-sum-1"))
+    tables = assemble([result.to_dict()])
+
+    # Exact sum preserved with all 37 digits without loss of fractional digits
+    assert tables["award_lot"][0]["winning_price"] == expected_sum
+    assert tables["result_revision"][0]["total_winning_price"] == expected_sum
+
+
+def test_decimal_38_6_sum_overflow_detected_rather_than_rounded():
+    """Verify that sum overflowing DECIMAL(38,6) capacity (>= 10^32) is detected and nullified."""
+    transformer = ContractorResultTransformer()
+    v_overflow = (
+        "60000000000000000000000000000000.000000"  # 6 * 10^31 each -> sum is 1.2 * 10^32 >= 10^32
+    )
+
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "res-overflow-1",
+            "bidPriceUnit": "VND",
+            "lotResultDTO": [
+                {
+                    "id": "lot-1",
+                    "lotNo": "1",
+                    "contractorList": [
+                        {"id": "c1", "orgCode": "v1", "bidResult": 1, "bidWiningPrice": v_overflow},
+                        {"id": "c2", "orgCode": "v2", "bidResult": 1, "bidWiningPrice": v_overflow},
+                    ],
+                }
+            ],
+        }
+    }
+    result = transformer.transform(make_envelope(payload, source_id="res-overflow-1"))
+    tables = assemble([result.to_dict()])
+
+    # Overflow must make totals NULL and flag invalid_money rather than wrapping or rounding
+    assert tables["award_lot"][0]["winning_price"] is None
+    assert tables["result_revision"][0]["total_winning_price"] is None
+    assert any(i.code == "invalid_money" for i in result.issues)
+
+
+def test_year_repair_retains_original_evidence_and_audit():
+    payload = {
+        "bideContractorInputResultDTO": {
+            "id": "repair-example",
+            "publicDate": "3023-09-16T12:00:00",
+            "decisionDate": "0222-09-15T12:00:00",
+        }
+    }
+    record = ContractorResultTransformer().transform(make_envelope(payload))
+    assert record.typed_attributes["public_date"] == "2023-09-16"
+    assert record.typed_attributes["decision_date"] == "2022-09-15"
+    assert "3023-09-16" in record.observation["payload_json"]
+    assert "0222-09-15" in record.revision.payload_json
+    repaired = [i for i in record.issues if i.code.startswith("date_year_repaired")]
+    assert len(repaired) == 2
+    assert {i.code for i in repaired} == {
+        "date_year_repaired_0222_to_2022",
+        "date_year_repaired_3023_to_2023",
+    }
+    assert all(i.observation_id == record.observation["observation_id"] for i in repaired)

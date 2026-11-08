@@ -15,7 +15,7 @@ from procurement.storage.iceberg import identifier
 SCHEMAS = get_silver_schemas()
 
 _local_duckdb = threading.local()
-_ICEBERG_COMMIT_LOCK = threading.Lock()
+_ICEBERG_COMMIT_LOCK = threading.RLock()
 
 
 def _get_duckdb_conn():
@@ -46,6 +46,62 @@ def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
         db.execute("DROP TABLE IF EXISTS typed_rows")
 
 
+RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
+    "award_lot": {
+        "raw_json": "VARCHAR",
+    },
+    "award_contractor": {
+        "bid_result": "BIGINT",
+        "price_source": "VARCHAR",
+        "currency": "VARCHAR",
+    },
+}
+
+
+def _migrate_result_schema_if_needed(db, table_identifier: str, clean_name: str) -> None:
+    expected_additions = RESULT_SCHEMA_MIGRATIONS.get(clean_name)
+    if not expected_additions:
+        return
+
+    with _ICEBERG_COMMIT_LOCK:
+        try:
+            rows = db.execute(f"PRAGMA table_info('{table_identifier}')").fetchall()
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to inspect schema for {table_identifier}: {type(exc).__name__}"
+            ) from exc
+
+        if not rows:
+            raise RuntimeError(f"Table inspection returned no columns for {table_identifier}")
+
+        existing_cols = {row[1].lower(): str(row[2]).upper() for row in rows}
+
+        for col_name, expected_type in expected_additions.items():
+            if col_name.lower() in existing_cols:
+                curr_type = existing_cols[col_name.lower()]
+                if expected_type == "BIGINT" and "INT" not in curr_type:
+                    raise ValueError(
+                        f"Incompatible schema for {table_identifier}.{col_name}: "
+                        f"expected {expected_type}, found {curr_type}"
+                    )
+                if expected_type == "VARCHAR" and not any(
+                    t in curr_type for t in ("VARCHAR", "TEXT", "STRING")
+                ):
+                    raise ValueError(
+                        f"Incompatible schema for {table_identifier}.{col_name}: "
+                        f"expected {expected_type}, found {curr_type}"
+                    )
+            else:
+                try:
+                    db.execute(
+                        f"ALTER TABLE {table_identifier} ADD COLUMN {col_name} {expected_type}"
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Failed to migrate column {col_name} on {table_identifier}: {type(exc).__name__}"
+                    ) from exc
+
+
 def stage_partition(
     db,
     catalog,
@@ -55,6 +111,7 @@ def stage_partition(
     partition_date: date | str | None = None,
     release_id: str | None = None,
     schemas: dict[str, str] | None = None,
+    change_journal=None,
 ) -> dict[str, dict[str, Any]]:
     """Stage candidate tables into Iceberg Lake using idempotent partition/key overwrites.
 
@@ -85,6 +142,48 @@ def stage_partition(
     db.execute(f"CREATE SCHEMA IF NOT EXISTS lake.{clean_ns}")
     snapshots = {}
 
+    def _extract_rids(cand: Any) -> set[str]:
+        rids = set()
+        if isinstance(cand, pa.Table):
+            if "revision_id" in cand.column_names:
+                for v in cand["revision_id"].to_pylist():
+                    if v is not None:
+                        rids.add(str(v))
+        elif isinstance(cand, list):
+            for row in cand:
+                if isinstance(row, dict) and row.get("revision_id"):
+                    rids.add(str(row["revision_id"]))
+        return rids
+
+    replaced_result_rids: set[str] = set()
+    if "result_revision" in tables:
+        replaced_result_rids.update(_extract_rids(tables["result_revision"]))
+    if "award_lot" in tables:
+        replaced_result_rids.update(_extract_rids(tables["award_lot"]))
+    if "award_contractor" in tables:
+        replaced_result_rids.update(_extract_rids(tables["award_contractor"]))
+
+    def _extract_obs_ids(cand: Any) -> set[str]:
+        obs_ids = set()
+        if isinstance(cand, pa.Table):
+            if "observation_id" in cand.column_names:
+                for v in cand["observation_id"].to_pylist():
+                    if v is not None:
+                        obs_ids.add(str(v))
+        elif isinstance(cand, list):
+            for row in cand:
+                if isinstance(row, dict) and row.get("observation_id"):
+                    obs_ids.add(str(row["observation_id"]))
+        return obs_ids
+
+    incoming_observation_ids: set[str] = set()
+    if "observation" in tables:
+        incoming_observation_ids.update(_extract_obs_ids(tables["observation"]))
+    if "quality_issue" in tables:
+        incoming_observation_ids.update(_extract_obs_ids(tables["quality_issue"]))
+    if "quarantine" in tables:
+        incoming_observation_ids.update(_extract_obs_ids(tables["quarantine"]))
+
     for name, candidate in tables.items():
         clean_name = identifier(name)
         schema = schemas.get(clean_name)
@@ -93,7 +192,9 @@ def stage_partition(
 
         table = f"lake.{clean_ns}.{clean_name}"
         ddl = to_iceberg_ddl(clean_name, schema, clean_ns)
-        db.execute(ddl)
+        with _ICEBERG_COMMIT_LOCK:
+            db.execute(ddl)
+            _migrate_result_schema_if_needed(db, table, clean_name)
 
         arrow_table: pa.Table | None = None
         if isinstance(candidate, pa.Table):
@@ -104,13 +205,52 @@ def stage_partition(
         spec = get_partition_spec(clean_name)
         pk = get_primary_key(clean_name)
 
+        journal_before = None
+        if change_journal is not None:
+            from procurement.silver.application.change_journal import capture_before
+
+            journal_before = capture_before(
+                db, catalog, clean_ns, clean_name, arrow_table, replaced_result_rids, partition_date
+            )
         max_retries = 3
         for attempt in range(max_retries):
             with _ICEBERG_COMMIT_LOCK:
                 db.execute("BEGIN")
                 try:
+                    if clean_name == "contract_performance_revision" and partition_date is not None:
+                        # Replace this publication-day slice, including records removed on refresh.
+                        day_value = date.fromisoformat(str(partition_date)).isoformat()
+                        db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
                     # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
-                    if pk and arrow_table is not None and len(arrow_table) > 0:
+                    if clean_name in {"quality_issue", "quarantine"} and incoming_observation_ids:
+                        db.register(
+                            "_cohort_obs_ids",
+                            pa.Table.from_arrays(
+                                [pa.array(sorted(incoming_observation_ids), type=pa.string())],
+                                names=["observation_id"],
+                            ),
+                        )
+                        try:
+                            db.execute(
+                                f"DELETE FROM {table} WHERE observation_id IN (SELECT observation_id FROM _cohort_obs_ids)"
+                            )
+                        finally:
+                            db.unregister("_cohort_obs_ids")
+                    elif clean_name in {"award_lot", "award_contractor"} and replaced_result_rids:
+                        db.register(
+                            "_cand_result_rids",
+                            pa.Table.from_arrays(
+                                [pa.array(sorted(replaced_result_rids), type=pa.string())],
+                                names=["revision_id"],
+                            ),
+                        )
+                        try:
+                            db.execute(
+                                f"DELETE FROM {table} WHERE revision_id IN (SELECT revision_id FROM _cand_result_rids)"
+                            )
+                        finally:
+                            db.unregister("_cand_result_rids")
+                    elif pk and arrow_table is not None and len(arrow_table) > 0:
                         db.register("_incoming_cand", arrow_table)
                         try:
                             db.execute(
@@ -118,7 +258,12 @@ def stage_partition(
                             )
                         finally:
                             db.unregister("_incoming_cand")
-                    elif spec and partition_date is not None and (arrow_table is None or len(arrow_table) == 0):
+                    elif (
+                        clean_name != "contract_revision"
+                        and spec
+                        and partition_date is not None
+                        and (arrow_table is None or len(arrow_table) == 0)
+                    ):
                         if isinstance(partition_date, date):
                             p_str = partition_date.isoformat()
                         else:
@@ -164,13 +309,55 @@ def stage_partition(
                 (s for s in metadata.get("snapshots", []) if s.get("snapshot-id") == snapshot_id),
                 None,
             )
-            if curr_snap and "summary" in curr_snap and "total-records" in curr_snap["summary"]:
-                actual = int(curr_snap["summary"]["total-records"])
+            has_deletes = False
+            physical_count = None
+            if curr_snap and "summary" in curr_snap:
+                summary = curr_snap["summary"]
+                if "total-records" in summary:
+                    try:
+                        physical_count = int(summary["total-records"])
+                    except (ValueError, TypeError):
+                        physical_count = None
+                try:
+                    total_pos_deletes = int(summary.get("total-position-deletes", 0))
+                except (ValueError, TypeError):
+                    total_pos_deletes = 0
+                try:
+                    total_del_files = int(summary.get("total-delete-files", 0))
+                except (ValueError, TypeError):
+                    total_del_files = 0
+                try:
+                    total_eq_deletes = int(summary.get("total-equality-deletes", 0))
+                except (ValueError, TypeError):
+                    total_eq_deletes = 0
+
+                if total_pos_deletes > 0 or total_del_files > 0 or total_eq_deletes > 0:
+                    has_deletes = True
+
+            if has_deletes or physical_count is None:
+                try:
+                    actual = db.sql(
+                        f"SELECT count(*) FROM {table} AT (VERSION => {snapshot_id})"
+                    ).fetchone()[0]
+                except Exception:  # noqa: BLE001
+                    actual = db.sql(f"SELECT count(*) FROM {table}").fetchone()[0]
             else:
-                actual = db.sql(
-                    f"SELECT count(*) FROM {table} AT (VERSION => {snapshot_id})"
-                ).fetchone()[0]
-            snapshots[clean_name] = {"snapshot_id": snapshot_id, "row_count": actual}
+                actual = physical_count
+
+            snap_entry = {"snapshot_id": snapshot_id, "row_count": actual,
+                          "table_uuid": metadata.get("table-uuid")}
+            if physical_count is not None:
+                snap_entry["physical_record_count"] = physical_count
+            if change_journal is not None:
+                from procurement.silver.application.change_journal import capture_after
+
+                snap_entry["change_tracking"] = capture_after(
+                    db, change_journal, clean_ns, clean_name, journal_before, metadata
+                )
+            snapshots[clean_name] = snap_entry
+        elif clean_name in {"award_lot", "award_contractor"}:
+            snapshots[clean_name] = {"snapshot_id": None, "row_count": 0,
+                                     "table_uuid": metadata.get("table-uuid")}
 
     # Automatically ensure active vectorized current views in DuckDB
     ensure_views(db, clean_ns)
@@ -179,6 +366,26 @@ def stage_partition(
 
 
 VIEW_DEFINITIONS: dict[str, dict[str, str]] = {
+    "v_contract_version": {
+        "source_table": "contract_revision",
+        "partition_by": "entity_id, contract_version",
+        "order_by": "observed_at DESC, revision_id DESC",
+    },
+    "v_contract_performance_version": {
+        "source_table": "contract_performance_revision",
+        "partition_by": "entity_id, evaluation_version",
+        "order_by": "observed_at DESC, revision_id DESC",
+    },
+    "v_latest_contract": {
+        "source_table": "contract_revision",
+        "partition_by": "entity_id",
+        "order_by": "TRY_CAST(contract_version AS BIGINT) DESC NULLS LAST, observed_at DESC, revision_id DESC",
+    },
+    "v_latest_contract_performance": {
+        "source_table": "contract_performance_revision",
+        "partition_by": "entity_id",
+        "order_by": "TRY_CAST(evaluation_version AS BIGINT) DESC NULLS LAST, observed_at DESC, revision_id DESC",
+    },
     "v_latest_notice": {
         "source_table": "notice_revision",
         "partition_by": "entity_id",
@@ -239,16 +446,19 @@ def ensure_views(
         src_table = f"lake.{clean_ns}.{cfg['source_table']}"
         try:
             db.sql(f"SELECT 1 FROM {src_table} LIMIT 0")
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — missing tables are normal on first deployment
             continue
 
+        projection = "* EXCLUDE (rn)"
+        if view_name in {"v_latest_contract", "v_latest_contract_performance"}:
+            projection = "* EXCLUDE (rn, is_current), TRUE AS is_current"
         sql = f"""
         CREATE OR REPLACE VIEW {v_schema}.{view_name} AS
-        SELECT * EXCLUDE (rn)
+        SELECT {projection}
         FROM (
             SELECT *, ROW_NUMBER() OVER (
-                PARTITION BY {cfg['partition_by']} 
-                ORDER BY {cfg['order_by']}
+                PARTITION BY {cfg["partition_by"]}
+                ORDER BY {cfg["order_by"]}
             ) AS rn
             FROM {src_table}
         ) WHERE rn = 1

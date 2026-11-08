@@ -26,7 +26,7 @@ from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
 from procurement.silver.domain.transformers.base import BaseResourceTransformer, canonical_json
 
-NOTICE_MAPPING_VERSION = "notice-2"
+NOTICE_MAPPING_VERSION = "notice-3"
 
 
 class NoticeTransformer(BaseResourceTransformer):

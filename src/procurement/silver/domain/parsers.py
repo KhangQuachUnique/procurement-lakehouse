@@ -8,6 +8,7 @@ Rules enforced:
 - Booleans must not treat truthy strings like "0" as True.
 """
 
+from contextvars import ContextVar
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any
@@ -32,7 +33,17 @@ def lookup_path(value: Any, path: str) -> Any:
 
 
 SENTINEL_VALUES = {
-    "n/a", "na", "null", "none", "unknown", "undefined", "-", "--", "chưa có", "không có", "không"
+    "n/a",
+    "na",
+    "null",
+    "none",
+    "unknown",
+    "undefined",
+    "-",
+    "--",
+    "chưa có",
+    "không có",
+    "không",
 }
 PROJECT_REFERENCE_PLACEHOLDERS = frozenset({"N/A", "NA", "NULL", "NONE"})
 
@@ -84,16 +95,38 @@ def parse_money(value: Any) -> str | None:
         raise ValueError(f"Invalid monetary format: {value}") from exc
 
 
+# Explicit, user-approved repairs; never infer other years from current time.
+DATE_YEAR_REPAIRS = {"0222": "2022", "3023": "2023"}
+DATE_REPAIR_EVENTS: ContextVar[list[tuple[str, str]] | None] = ContextVar(
+    "date_repair_events", default=None
+)
+
+
+def repair_date_year(value: str) -> str:
+    """Repair only a four-digit ISO year at the start of a date string."""
+    if len(value) >= 10 and value[4] == "-" and value[:4] in DATE_YEAR_REPAIRS:
+        return DATE_YEAR_REPAIRS[value[:4]] + value[4:]
+    return value
+
+
+def record_date_repair(original: str, repaired: str) -> None:
+    events = DATE_REPAIR_EVENTS.get()
+    if events is not None and original != repaired:
+        events.append((original, repaired))
+
+
 def parse_iso_datetime(value: Any, default_tz: ZoneInfo = VIETNAM_TZ) -> datetime | None:
     """Parse ISO datetime string, attaching default timezone if naive."""
     text_val = clean_text(value)
     if not text_val:
         return None
     try:
-        normalized = text_val.replace("Z", "+00:00")
+        repaired = repair_date_year(text_val)
+        normalized = repaired.replace("Z", "+00:00")
         dt = datetime.fromisoformat(normalized)
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=default_tz)
+        record_date_repair(text_val, repaired)
         return dt
     except ValueError as exc:
         raise ValueError(f"Invalid ISO datetime: {value}") from exc
@@ -109,7 +142,10 @@ def parse_date(value: Any) -> str | None:
     elif " " in text_val:
         text_val = text_val.split(" ", 1)[0]
     try:
-        return date.fromisoformat(text_val).isoformat()
+        repaired = repair_date_year(text_val)
+        result = date.fromisoformat(repaired).isoformat()
+        record_date_repair(text_val, repaired)
+        return result
     except ValueError as exc:
         raise ValueError(f"Invalid date format: {value}") from exc
 

@@ -108,8 +108,9 @@ def connect(
     install: bool = False,
     max_memory: str = "4GB",
     threads: int = 4,
+    database: str = ":memory:",
 ):
-    db = duckdb.connect(config={"max_memory": max_memory, "threads": str(threads)})
+    db = duckdb.connect(database, config={"max_memory": max_memory, "threads": str(threads)})
     try:
         db.execute("SET preserve_insertion_order = false")
     except Exception:

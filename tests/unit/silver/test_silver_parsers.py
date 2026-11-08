@@ -87,3 +87,20 @@ def test_lookup_path():
     assert lookup_path(data, "projectDTO.details.id") == "123"
     assert lookup_path(data, "projectDTO.missing") is None
     assert lookup_path(data, "") == data
+
+
+@pytest.mark.parametrize("wrong,right", [("0222", "2022"), ("3023", "2023")])
+def test_approved_year_repairs(wrong, right):
+    assert parse_date(f"{wrong}-09-16T12:30:00Z") == f"{right}-09-16"
+    dt = parse_iso_datetime(f"{wrong}-09-16T12:30:00+07:00")
+    assert dt.year == int(right)
+    assert dt.utcoffset().total_seconds() == 7 * 3600
+    assert parse_date(parse_date(f"{wrong}-09-16")) == f"{right}-09-16"
+
+
+def test_year_repairs_do_not_guess_other_dates():
+    assert parse_date("2028-01-01") == "2028-01-01"
+    assert parse_date("1999-01-01") == "1999-01-01"
+    assert parse_date("3024-01-01") == "3024-01-01"
+    with pytest.raises(ValueError):
+        parse_date("0222-02-29")
