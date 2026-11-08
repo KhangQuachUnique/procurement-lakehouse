@@ -1,0 +1,10 @@
+SELECT owner_key,report_date,geography_key,sector_key,method_key,currency_key,award_scope_count,effective_award_scope_count,eligible_amount_count,award_amount_sum FROM (SELECT package_key AS owner_key,
+award_published_date_key AS report_date,
+reporting_geography_key AS geography_key,
+sector_key AS sector_key,
+method_key AS method_key,
+currency_key AS currency_key,
+CAST(coalesce((1),0) AS BIGINT) AS award_scope_count,
+CAST(coalesce((CASE WHEN award_state IN ('effective','effective_completed') THEN 1 ELSE 0 END),0) AS BIGINT) AS effective_award_scope_count,
+CAST(coalesce((CASE WHEN is_amount_eligible AND award_state IN ('effective','effective_completed') THEN 1 ELSE 0 END),0) AS BIGINT) AS eligible_amount_count,
+CAST(coalesce((CASE WHEN is_amount_eligible AND award_state IN ('effective','effective_completed') THEN award_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS award_amount_sum FROM business.fact_award WHERE (is_in_event_period OR award_published_date_key IS NULL)) projected

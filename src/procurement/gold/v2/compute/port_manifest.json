@@ -1,0 +1,123 @@
+{
+  "baseline_builder_sha256": "f6f57882408738e563c9d769cccb263e86295329dcfe0dd590c67fe3f9cfedb1",
+  "steps": {
+    "dimensions_base": {
+      "baseline_lines": [
+        195,
+        354
+      ],
+      "sql_assets": 10,
+      "explicit_context": [
+        "ev_end",
+        "ev_start",
+        "rel_award_lot",
+        "rel_not",
+        "rel_pkg",
+        "rel_pkg_loc",
+        "rel_plan",
+        "rel_res",
+        "release_config",
+        "schema_prefix"
+      ]
+    },
+    "selection": {
+      "baseline_lines": [
+        355,
+        551
+      ],
+      "sql_assets": 8,
+      "explicit_context": [
+        "obs_cutoff_pred",
+        "rel_not",
+        "rel_obs",
+        "rel_pkg",
+        "rel_pkg_loc",
+        "rel_plan",
+        "rel_res"
+      ]
+    },
+    "dimensions_business": {
+      "baseline_lines": [
+        552,
+        692
+      ],
+      "sql_assets": 4,
+      "explicit_context": [
+        "rel_award_lot",
+        "release_config",
+        "release_id",
+        "schema_prefix"
+      ]
+    },
+    "demand": {
+      "baseline_lines": [
+        693,
+        822
+      ],
+      "sql_assets": 4,
+      "explicit_context": [
+        "build_ts_iso",
+        "rel_pkg_loc",
+        "release_config",
+        "release_id",
+        "schema_prefix"
+      ]
+    },
+    "notice": {
+      "baseline_lines": [
+        823,
+        924
+      ],
+      "sql_assets": 2,
+      "explicit_context": [
+        "build_ts_iso",
+        "release_config",
+        "release_id",
+        "schema_prefix"
+      ]
+    },
+    "award": {
+      "baseline_lines": [
+        925,
+        1319
+      ],
+      "sql_assets": 9,
+      "explicit_context": [
+        "build_ts_iso",
+        "rel_award_ctr",
+        "rel_award_lot",
+        "release_id",
+        "schema_prefix"
+      ]
+    },
+    "savings": {
+      "baseline_lines": [
+        1320,
+        1618
+      ],
+      "sql_assets": 5,
+      "explicit_context": [
+        "build_ts_iso",
+        "ev_end",
+        "ev_start",
+        "rel_obs",
+        "rel_pkg",
+        "release_config",
+        "release_id",
+        "schema_prefix"
+      ]
+    },
+    "duration": {
+      "baseline_lines": [
+        1619,
+        1798
+      ],
+      "sql_assets": 4,
+      "explicit_context": [
+        "build_ts_iso",
+        "release_id",
+        "schema_prefix"
+      ]
+    }
+  }
+}
