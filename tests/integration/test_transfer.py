@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 import zipfile
+from datetime import date
 
 import httpx
 import pytest
@@ -9,9 +10,12 @@ import pytest
 from procurement import transfer
 from procurement.common.catalog import get_resource
 from procurement.common.settings import settings
+from procurement.ingestion.batch_runner import run_batch_range
+from procurement.ingestion.engine.daily_runner import run_daily_resource
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
-from procurement.jobs import ingest, runner
+from procurement.ingestion.sources.muasamcong.project.resource import create_project_spec
 from procurement.ops.repositories.control import ControlRepository
+from procurement.storage.committed import select_committed_days, verify_committed
 from procurement.transfer import export_bundle, import_bundle, inspect_bundle
 from procurement.transfer.archive import CHUNK_SIZE, copy_digest
 
@@ -22,7 +26,6 @@ def test_transfer_real_dlt_between_independent_buckets(store, tmp_path, monkeypa
     fs, source_bucket = store
     monkeypatch.setattr(settings, "MUASAMCONG_TOKEN", "test-only")
     monkeypatch.setattr(settings, "INGESTION_LOCK_DIR", str(tmp_path / "locks"))
-    monkeypatch.setattr(runner, "create_s3_filesystem", lambda: fs)
 
     def handler(request):
         if isinstance(json.loads(request.content), list):
@@ -32,15 +35,17 @@ def test_transfer_real_dlt_between_independent_buckets(store, tmp_path, monkeypa
             }})
         return httpx.Response(200, json={"id": "project-one", "projectDTO": {"version": "01"}})
 
-    monkeypatch.setattr(runner, "MuasamcongClient",
-                        lambda **kwargs: MuasamcongClient(
-                            **kwargs, transport=httpx.MockTransport(handler)))
-    args = ingest._parser().parse_args([
-        "backfill", "--resource", "project", "--start-date", "2024-02-29",
-        "--end-date", "2024-02-29",
-    ])
-    _, code = ingest.execute_flow(args, fs=fs)
-    assert code == 0
+    # Historical archive compatibility tests seed the legacy domain engine directly;
+    # there is no operational CLI that can create new S3-manifest ingestion runs.
+    day = date(2024, 2, 29)
+    with MuasamcongClient(token="test-only", transport=httpx.MockTransport(handler)) as client:
+        spec = create_project_spec(client)
+        run_batch_range(
+            day, day, fs=fs, identity=spec.identity,
+            run_day=lambda run_id, source_date: run_daily_resource(
+                fs=fs, spec=spec, run_id=run_id, source_date=source_date, page_size=50,
+            ),
+        )
     archive = tmp_path / "year.zip"
     # Exercise ZIP64 headers/end records through the full workflow without a huge DLT load.
     monkeypatch.setattr(zipfile, "ZIP64_LIMIT", 1024)
@@ -76,10 +81,8 @@ def test_transfer_real_dlt_between_independent_buckets(store, tmp_path, monkeypa
         assert attempts[0].status.value == "success"
         assert len(repository.list_pages(identity, run_id=attempts[0].run_id,
                                          source_date=attempts[0].source_date)) == 1
-        args.mode = "verify"
-        verified, code = ingest.execute_flow(args, fs=fs)
-        assert code == 0
-        assert verified["resources"][0]["verified"]["records"] == 1
+        selection = select_committed_days(fs, get_resource("project"), day, day)
+        assert verify_committed(fs, selection)["records"] == 1
         before = fs.find(target, detail=True)
         assert len(import_bundle(fs, archive)["skipped_days"]) == 1
         assert fs.find(target, detail=True) == before

@@ -55,6 +55,7 @@ class ResourceSpec:
     iter_records: IterRecords
     search_key: Callable[[dict[str, Any]], Hashable | None] | None = None
     quality_config_hash: str | None = None
+    strict_pagination: bool = False
 
     def records(
         self,

@@ -16,21 +16,52 @@ from procurement.ingestion.sources.muasamcong.concurrency import RequestBudget
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
+def is_source_rate_limit(response: httpx.Response) -> bool:
+    """The smart-search gateway also wraps upstream 429 as HTTP 400 plain text."""
+    return response.status_code == 429 or (
+        response.status_code == 400
+        and b"api rate limit exceeded" in response.content[:4096].lower()
+    )
+
+
+class SourceRateLimitError(httpx.HTTPStatusError):
+    def __init__(self, path: str, response: httpx.Response):
+        self.diagnostics = {
+            "stage": "rate_limit",
+            "endpoint": path.split("?", 1)[0],
+            "http_status": response.status_code,
+            "effective_status": 429,
+            "retry_after": response.headers.get("Retry-After", ""),
+        }
+        super().__init__(
+            f"Source rate limit (upstream 429, HTTP {response.status_code}): "
+            f"{self.diagnostics['endpoint']}",
+            request=response.request,
+            response=response,
+        )
+
+
 class SourceResponseError(httpx.HTTPError):
     """A successful HTTP response could not be decoded; contains no body or token."""
 
     def __init__(self, path, body, response, attempts):
         self.diagnostics = {
-            "stage": "response_decode", "endpoint": path.split("?", 1)[0],
-            "request_id": str(body.get("id")) if isinstance(body, dict) and body.get("id") else None,
+            "stage": "response_decode",
+            "endpoint": path.split("?", 1)[0],
+            "request_id": str(body.get("id"))
+            if isinstance(body, dict) and body.get("id")
+            else None,
             "http_status": response.status_code,
             "content_type": response.headers.get("content-type", ""),
             "response_bytes": len(response.content),
-            "response_hash": hashlib.sha256(response.content).hexdigest(), "attempts": attempts,
+            "response_hash": hashlib.sha256(response.content).hexdigest(),
+            "attempts": attempts,
         }
-        super().__init__(f"Source returned invalid JSON after {attempts} attempt(s): "
-                         f"{self.diagnostics['endpoint']} (HTTP {response.status_code}, "
-                         f"{len(response.content)} bytes)")
+        super().__init__(
+            f"Source returned invalid JSON after {attempts} attempt(s): "
+            f"{self.diagnostics['endpoint']} (HTTP {response.status_code}, "
+            f"{len(response.content)} bytes)"
+        )
 
 
 def create_muasamcong_ssl_context() -> ssl.SSLContext:
@@ -54,6 +85,7 @@ class MuasamcongClient:
         retry_base_delay: float | None = None,
         shared_retry_cooldown: bool = False,
         observer: Callable[[dict[str, Any]], None] | None = None,
+        stop_on_rate_limit: bool = False,
     ) -> None:
         if not token:
             raise ValueError("Muasamcong token is required")
@@ -62,6 +94,9 @@ class MuasamcongClient:
         if retry_base_delay is not None and retry_base_delay <= 0:
             raise ValueError("retry_base_delay must be positive")
         self._token = token
+        self._transport = transport
+        self._explicit_budget = request_budget
+        self._stop_on_rate_limit = stop_on_rate_limit
         self._max_attempts = max_attempts
         self._max_retry_delay = max_retry_delay
         self._sleep = sleep
@@ -69,7 +104,8 @@ class MuasamcongClient:
         self._shared_retry_cooldown = shared_retry_cooldown
         self._observer = observer
         self._request_budget = (
-            request_budget if request_budget is not None
+            request_budget
+            if request_budget is not None
             else RequestBudget(settings.MUASAMCONG_MAX_INFLIGHT)
         )
         self._client = httpx.Client(
@@ -92,6 +128,24 @@ class MuasamcongClient:
 
     def close(self) -> None:
         self._client.close()
+
+    def contract_performance_reader(self) -> "MuasamcongClient":
+        """Isolate this resource's pacing/circuit from existing adapters' defaults."""
+        budget = self._explicit_budget
+        return MuasamcongClient(
+            token=self._token,
+            transport=self._transport,
+            sleep=self._sleep,
+            max_attempts=min(self._max_attempts, 3),
+            max_retry_delay=self._max_retry_delay,
+            request_budget=RequestBudget(
+                min(4, budget.max_inflight) if budget else 4,
+                min_interval=max(0.05, budget.min_interval) if budget else 0.05,
+            ),
+            shared_retry_cooldown=True,
+            observer=self._observer,
+            stop_on_rate_limit=True,
+        )
 
     def cancel_requests(self) -> None:
         """Stop queued source calls when a detail worker or its caller is interrupted."""
@@ -116,8 +170,12 @@ class MuasamcongClient:
             try:
                 with self._request_budget.request():
                     response = self._send(path, body, attempt)
-                    if response.status_code in {401, 403}:
+                    if response.status_code in {401, 403} or (
+                        self._stop_on_rate_limit and is_source_rate_limit(response)
+                    ):
                         self._request_budget.reject_auth(response)
+                if self._stop_on_rate_limit and is_source_rate_limit(response):
+                    raise SourceRateLimitError(path, response)
                 if response.status_code in RETRYABLE_STATUS_CODES and attempt < self._max_attempts:
                     delay = self._retry_delay(attempt, response.headers.get("Retry-After"))
                     # Do not retry earlier than requested when the server delay exceeds our budget.
@@ -125,6 +183,13 @@ class MuasamcongClient:
                         self._wait_retry(delay)
                         continue
                 response.raise_for_status()
+                if (
+                    self._stop_on_rate_limit
+                    and "text/html" in response.headers.get("content-type", "").lower()
+                ):
+                    # Public HTML login/challenge/error pages are not data or a retry target.
+                    self._request_budget.cancel()
+                    raise SourceResponseError(path, body, response, attempt)
                 try:
                     payload = response.json()
                 except (json.JSONDecodeError, UnicodeDecodeError):
@@ -152,8 +217,13 @@ class MuasamcongClient:
         if self._observer is None:
             return self._client.post(path, params={"token": self._token}, json=body)
         started = time.monotonic()
-        event = {"kind": "attempt", "endpoint": path.split("?", 1)[0],
-                 "attempt": attempt, "http_status": None, "error": None}
+        event = {
+            "kind": "attempt",
+            "endpoint": path.split("?", 1)[0],
+            "attempt": attempt,
+            "http_status": None,
+            "error": None,
+        }
         try:
             response = self._client.post(path, params={"token": self._token}, json=body)
             event["http_status"] = response.status_code

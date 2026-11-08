@@ -21,7 +21,9 @@ NOW = datetime(2026, 9, 18, tzinfo=UTC)
 
 
 @pytest.fixture
-def index_env(tmp_path):
+def index_env(tmp_path, monkeypatch):
+    # These tests exercise SQLite projection readiness, independent of local DB config.
+    monkeypatch.delenv("APP_DATABASE_URL", raising=False)
     bucket = (tmp_path / "bucket").as_posix()
     fs = fsspec.filesystem("file", auto_mkdir=True, skip_instance_cache=True)
     fs.makedirs(bucket)

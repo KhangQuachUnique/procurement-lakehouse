@@ -161,6 +161,7 @@ def select_snapshot_files(
     end: date | None = None,
     year: int | None = None,
     committed_days: dict | None = None,
+    file_metadata: dict | None = None,
 ) -> dict[BronzeTable, list[str]]:
     """Resolve current committed files using MetadataService snapshots instead of S3 globs."""
     start_d = start or (date(year, 1, 1) if year else date(2020, 1, 1))
@@ -196,7 +197,13 @@ def select_snapshot_files(
             for file_desc in snap.files:
                 table_obj = table_map.get(file_desc.table_name)
                 if table_obj:
-                    files[table_obj].append(f"s3://{file_desc.bucket}/{file_desc.object_key}")
+                    uri = f"s3://{file_desc.bucket}/{file_desc.object_key}"
+                    files[table_obj].append(uri)
+                    if file_metadata is not None:
+                        file_metadata[uri] = {
+                            "size": file_desc.size_bytes,
+                            "ETag": file_desc.sha256,
+                        }
     return files
 
 
@@ -227,6 +234,7 @@ def _select_current_files(
             end=end,
             year=year,
             committed_days=committed_days,
+            file_metadata=file_metadata,
         )
 
     files = {table: [] for table in tables}
@@ -572,13 +580,9 @@ def open_bronze_explorer(
             f"No Bronze tables found in s3://{settings.OBJECT_STORAGE_BUCKET}/bronze"
         )
 
-    metadata_service = None
-    try:
-        from procurement.bootstrap import get_metadata_service
-        metadata_service = get_metadata_service()
-        print("Using Postgres MetadataService for fast snapshot selection.", flush=True)
-    except Exception as exc:
-        print(f"Postgres MetadataService unavailable ({exc}); falling back to S3 manifest scanning.", flush=True)
+    from procurement.bootstrap import get_metadata_service
+
+    metadata_service = get_metadata_service()
 
     issues = []
     selected = _select_current_files(

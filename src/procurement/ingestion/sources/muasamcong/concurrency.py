@@ -14,6 +14,7 @@ class RequestBudget:
     def __init__(self, max_inflight: int = 3, *, min_interval=0.0, clock=monotonic, wait=sleep):
         if max_inflight < 1:
             raise ValueError("max_inflight must be positive")
+        self._max_inflight = max_inflight
         self._slots = BoundedSemaphore(max_inflight)
         self._lock = Lock()
         self._auth_response: httpx.Response | None = None
@@ -25,6 +26,14 @@ class RequestBudget:
         self._pace_lock = Lock()
         self._next_start = 0.0
         self._cooldown_until = 0.0
+
+    @property
+    def max_inflight(self) -> int:
+        return self._max_inflight
+
+    @property
+    def min_interval(self) -> float:
+        return self._interval
 
     def defer(self, seconds):
         """Pause queued requests as well as the request being retried."""
@@ -43,7 +52,7 @@ class RequestBudget:
                 if delay <= 0:
                     self._next_start = self._clock() + self._interval
                     return
-                self._wait(min(delay, .25))
+                self._wait(min(delay, 0.25))
 
     def reject_auth(self, response: httpx.Response) -> None:
         with self._lock:
