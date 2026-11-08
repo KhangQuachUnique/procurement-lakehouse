@@ -496,6 +496,79 @@ def result(
         raise typer.Exit(code=1)
 
 
+@app.command("contract_performance")
+def contract_performance(
+    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
+    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
+    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    continue_on_error: Annotated[
+        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
+    ] = False,
+    skip_existing: Annotated[
+        bool,
+        typer.Option(
+            "--skip-existing",
+            help="Skip processing for days where Silver data already exists in storage.",
+        ),
+    ] = False,
+    iceberg: Annotated[
+        bool,
+        typer.Option(
+            "--iceberg/--no-iceberg",
+            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
+        ),
+    ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
+):
+    """Process published execution reports and their referenced contract versions."""
+    try:
+        first, last = date_range(day, start, end)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    fs, bucket = get_storage()
+    typer.echo(f"contract_performance | {first} .. {last}")
+    report = execute_resource(
+        fs,
+        bucket,
+        "contract_performance",
+        first,
+        last,
+        family=None,
+        continue_on_error=continue_on_error,
+        skip_existing=skip_existing,
+        iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
+    )
+    typer.echo(f"Status: {report['status']}")
+    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
+    if iceberg:
+        typer.echo(
+            "Apache Iceberg Format v2 tables updated: lake.silver.* (views: silver.v_latest_*)."
+        )
+    typer.echo(
+        "Output published to Silver Lakehouse tables "
+        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+    )
+    display_run_summary(report, "contract_performance", iceberg)
+    if report["status"] != "completed":
+        raise typer.Exit(code=1)
+
+
 class KHLCNTFamily(StrEnum):
     plan = "plan"
     package = "package"
@@ -625,7 +698,7 @@ def all_resources(
         raise typer.BadParameter(str(exc)) from exc
 
     fs, bucket = get_storage()
-    resources = ["khlcnt", "notice", "project", "contractor_result"]
+    resources = ["khlcnt", "notice", "project", "contractor_result", "contract_performance"]
     year_chunks = split_date_range_by_year(first, last)
     is_multi_year = len(year_chunks) > 1 and parallel
 
@@ -679,6 +752,7 @@ def list_resources():
     typer.echo("notice (alias: tbmt): standard, vk_adb, reoffer")
     typer.echo("project (alias: du_an): project")
     typer.echo("result (alias: kq_lcnt, contractor_result): contractor_result")
+    typer.echo("contract_performance: contract, performance")
     typer.echo("khlcnt (alias: plan, package): plan, package")
 
 
@@ -763,6 +837,28 @@ def reset(
         )
 
 
+def _sync_contract_performance(fs, bucket: str, year: int | None) -> None:
+    """Rebuild from committed Bronze so shared governance and revisions remain idempotent."""
+    from procurement.infrastructure.database import create_application_engine
+    from procurement.silver.adapters.driven.bronze.arrow_adapter import ArrowBronzeRepositoryAdapter
+
+    engine = create_application_engine()
+    try:
+        repo = ArrowBronzeRepositoryAdapter(fs=fs, db_engine=engine)
+        first = date(year or 2000, 1, 1)
+        last = date(year or date.today().year, 12, 31)
+        partitions = repo.select_committed_partitions(["contract_performance"], first, last)
+        for partition in partitions:
+            day = date.fromisoformat(partition.source_date)
+            report = run_resource(fs, bucket, "contract_performance", day, day,
+                                  db_engine=engine, iceberg=True)
+            if report["status"] != "completed":
+                raise typer.Exit(code=1)
+        typer.echo(f"contract_performance: synchronized {len(partitions)} committed days")
+    finally:
+        engine.dispose()
+
+
 @app.command("sync-iceberg")
 @app.command("sync", hidden=True)
 def sync_iceberg(
@@ -805,6 +901,12 @@ def sync_iceberg(
 
     fs, bucket = get_storage()
     all_schemas = get_silver_schemas()
+    execution_tables = {"contract_revision", "contract_performance_revision"}
+    if table in execution_tables:
+        raise typer.BadParameter("Use --resource contract_performance to synchronize the linked pair")
+    if resource == "contract_performance":
+        _sync_contract_performance(fs, bucket, year)
+        return
 
     if table:
         target_tables = [table]
@@ -858,7 +960,11 @@ def sync_iceberg(
                 console.print(f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]")
                 continue
 
-            partition_paths = fs.glob(f"{bucket}/silver/{tbl_name}/source_date=*-*")
+            table_prefix = f"{bucket}/silver/{tbl_name}"
+            if resource in {"result", "kq_lcnt", "contractor_result", "contract_performance"} and tbl_name in {"observation", "quality_issue", "quarantine"}:
+                governance_resource = "contract_performance" if resource == "contract_performance" else "contractor_result"
+                table_prefix = f"{bucket}/silver/_governance/{governance_resource}/{tbl_name}"
+            partition_paths = fs.glob(f"{table_prefix}/source_date=*-*")
             discovered_months = set()
             for p in partition_paths:
                 base = p.rsplit("/", 1)[-1]
@@ -904,8 +1010,8 @@ def sync_iceberg(
 
             # 3. Stream ingest in bounded monthly chunks (~30k - 70k rows per chunk)
             for m in months_to_sync:
-                s3_pattern = f"s3://{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
-                fs_pattern = f"{bucket}/silver/{tbl_name}/source_date={m}-*/*.parquet"
+                s3_pattern = f"s3://{table_prefix}/source_date={m}-*/*.parquet"
+                fs_pattern = f"{table_prefix}/source_date={m}-*/*.parquet"
                 files = fs.glob(fs_pattern)
                 if not files:
                     continue
@@ -973,6 +1079,9 @@ def sync_iceberg(
 
         with contextlib.suppress(Exception):
             ctypes.CDLL("libc.so.6").malloc_trim(0)
+
+    if not resource and not table:
+        _sync_contract_performance(fs, bucket, year)
 
     console.print(
         Panel(
@@ -1084,6 +1193,7 @@ def inspect(
 @app.command("ui")
 def ui(
     port: Annotated[int, typer.Option("--port", "-p", help="Port to bind DuckDB Web UI.")] = 4213,
+    gold_target: Annotated[str | None, typer.Option("--gold-target", help="Explicit compact Gold target namespace to mount.")] = None,
     browser: Annotated[
         bool, typer.Option("--browser/--no-browser", help="Open browser automatically.")
     ] = True,
@@ -1113,6 +1223,16 @@ def ui(
 
         # 2. Mount vectorized latest views
         views = ensure_views(db, namespace="silver")
+
+        from procurement.storage.gold_views import ensure_gold_views
+
+        gold_views = []
+        if gold_target:
+            from procurement.storage.iceberg import RestCatalog
+            with RestCatalog(iceberg_cfg) as catalog:
+                gold_views = ensure_gold_views(db, catalog, target_namespace=gold_target)
+        if gold_views:
+            typer.echo(f"Gold active release: {len(gold_views)} views available as gold.*")
 
         # 3. Load DuckDB UI extension
         db.execute("INSTALL ui")

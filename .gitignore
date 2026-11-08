@@ -73,3 +73,6 @@ imports/
 # =========================
 infra/docker/secrets/*
 !infra/docker/secrets/.gitkeep
+
+# Contract performance ingestion working state
+/.tmp/contract-performance-dlt/

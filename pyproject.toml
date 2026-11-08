@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "procurement-lakehouse"
-version = "0.1.0"
+version = "0.2.0rc3"
 description = "Data Lakehouse for public procurement analytics"
 requires-python = ">=3.12,<3.15"
 
@@ -19,6 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
+gold = "procurement.gold.v2.cli:main"
 silver = "procurement.cli.silver:main"
 
 [project.optional-dependencies]
@@ -52,6 +53,9 @@ module_name = "procurement.orchestration.definitions"
 where = ["src"]
 
 [tool.setuptools.package-data]
+"procurement.gold.v2" = ["*.json"]
+"procurement.gold.v2.compute" = ["*.json"]
+"procurement.gold.v2.compute.sql" = ["*.sql"]
 "procurement.quality" = ["*.toml"]
 "procurement.api.ops" = ["static/*.css", "static/*.js", "templates/*.html"]
 "procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]

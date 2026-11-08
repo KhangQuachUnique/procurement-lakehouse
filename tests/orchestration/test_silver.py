@@ -141,7 +141,7 @@ def test_silver_asset_materialize_high_quarantine_rate(storage, monkeypatch):
                     "blocking_issues": 0,
                 },
                 "files": {t.table: f"path/{t.table}" for t in group.tables},
-                "iceberg": {},
+                "iceberg": {t.table: {"snapshot_id": 123, "row_count": 50} for t in group.tables},
             }
         ],
     }
