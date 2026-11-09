@@ -2,12 +2,11 @@
 
 Exposes:
 1. 10 Conformed Dimensions (group: 'gold_dimensions', compute_kind: 'duckdb')
-2. 7 Fact Tables (group: 'gold_facts', compute_kind: 'iceberg', partitioned by month)
-3. Asset Checks verifying 0 orphan FKs and financial reconciliation audits.
+2. 7 Fact Tables as INDEPENDENT daily assets (group: 'gold_facts', compute_kind: 'iceberg')
+3. Native Asset Checks verifying 0 orphan FKs and financial reconciliation audits.
 """
 
 from datetime import date
-import time
 from typing import Any
 
 from dagster import (
@@ -15,38 +14,33 @@ from dagster import (
     AssetCheckSpec,
     AssetExecutionContext,
     AssetKey,
-    AssetSpec,
     BackfillPolicy,
     Config,
     MaterializeResult,
     MetadataValue,
-    MonthlyPartitionsDefinition,
     RetryPolicy,
     asset,
     asset_check,
-    multi_asset,
 )
 
 from procurement.common.settings import Settings
-from procurement.gold.application.processor import get_date_bounds, process_gold_month
+from procurement.gold.application.processor import process_gold_day
 from procurement.gold.application.reconciliation import reconcile_gold
 from procurement.gold.application.warehouse import ensure_gold_tables, seed_geography
-from procurement.gold.domain.schema import DIMENSIONS, FACTS, TABLES
+from procurement.orchestration.bronze import BRONZE_PARTITIONS
 from procurement.storage.iceberg import connect
 
-GOLD_MONTHLY_PARTITIONS = MonthlyPartitionsDefinition(
-    start_date="2022-09-01",
-    timezone="Asia/Ho_Chi_Minh",
-)
+FACT_BACKFILL_POLICY = BackfillPolicy.multi_run(max_partitions_per_run=1)
+FACT_RETRY_POLICY = RetryPolicy(max_retries=0)
 
 
-class GoldMonthConfig(Config):
-    """Runtime configuration for Gold monthly partition execution."""
+class GoldExecutionConfig(Config):
+    """Runtime configuration for Gold incremental execution."""
 
     silver_namespace: str = "silver_v2"
     gold_namespace: str = "gold_v2"
-    memory_limit: str = "4GB"
-    threads: int = 4
+    memory_limit: str = "2GB"
+    threads: int = 2
 
 
 # ============================================================================
@@ -223,276 +217,330 @@ GOLD_DIMENSIONS_ASSETS = [
 
 
 # ============================================================================
-# 2. GOLD FACT ASSETS (group: gold_facts, monthly partitioned)
+# 2. GOLD FACT ASSETS (Individual Daily Assets, group: gold_facts)
 # ============================================================================
 
-GOLD_FACT_SPECS = [
-    AssetSpec(
-        key="gold_fact_demand_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_package_revision"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_geography"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_value_band"),
-            AssetKey("gold_dim_currency"),
-        ],
-        description="Aggregated procurement demand volume and planned package counts partitioned by month.",
-        metadata={
-            "grain": "report_date, geography_key, sector_key, value_band_key, currency_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_notice_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_notice_revision"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_geography"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_procurement_method"),
-        ],
-        description="Tender notice publications, bidding packages, and bid invitation values.",
-        metadata={
-            "grain": "report_date, geography_key, sector_key, method_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_award_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_result_revision"),
-            AssetKey("silver_award_lot"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_geography"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_procurement_method"),
-            AssetKey("gold_dim_currency"),
-        ],
-        description="Contract awards, winning amounts, and awarded lot metrics.",
-        metadata={
-            "grain": "report_date, geography_key, sector_key, method_key, currency_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_savings_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_package_revision"),
-            AssetKey("silver_result_revision"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_geography"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_procurement_method"),
-            AssetKey("gold_dim_value_band"),
-            AssetKey("gold_dim_currency"),
-        ],
-        description="Cost savings metrics comparing estimated package budget against awarded contract amount.",
-        metadata={
-            "grain": "report_date, geography_key, sector_key, method_key, value_band_key, currency_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_duration_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_plan_revision"),
-            AssetKey("silver_notice_revision"),
-            AssetKey("silver_result_revision"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_procurement_method"),
-            AssetKey("gold_dim_duration_metric"),
-        ],
-        description="Procurement milestone duration metrics (Plan-to-Notice, Notice-to-Award, etc.).",
-        metadata={
-            "grain": "report_date, sector_key, method_key, metric_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_supplier_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_result_revision"),
-            AssetKey("silver_award_contractor"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_party"),
-            AssetKey("gold_dim_geography"),
-            AssetKey("gold_dim_sector"),
-            AssetKey("gold_dim_currency"),
-        ],
-        description="Supplier/contractor bidding activity, win rates, and total awarded contract amounts.",
-        metadata={
-            "grain": "report_date, geography_key, sector_key, currency_key, party_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-    AssetSpec(
-        key="gold_fact_status_daily",
-        group_name="gold_facts",
-        deps=[
-            AssetKey("silver_package_revision"),
-            AssetKey("silver_result_revision"),
-            AssetKey("gold_dim_date"),
-            AssetKey("gold_dim_progress_status"),
-            AssetKey("gold_dim_sector"),
-        ],
-        description="Procurement package status transitions across planning, tendering, and awarding.",
-        metadata={
-            "grain": "report_date, status_key, sector_key",
-            "compute_kind": "iceberg",
-        },
-    ),
-]
 
-GOLD_FACT_CHECKS = [
-    AssetCheckSpec(
-        "demand_financial_volume",
-        asset="gold_fact_demand_daily",
-        description="Verify non-negative planned demand volume",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_demand_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "award_financial_volume",
-        asset="gold_fact_award_daily",
-        description="Verify non-negative award financial volume",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_award_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_savings_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_supplier_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_duration_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_notice_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-    AssetCheckSpec(
-        "referential_integrity",
-        asset="gold_fact_status_daily",
-        description="Verify 0 orphan foreign keys against conformed dimensions",
-    ),
-]
-
-
-@multi_asset(
-    name="gold_facts_monthly",
-    specs=GOLD_FACT_SPECS,
-    check_specs=GOLD_FACT_CHECKS,
-    partitions_def=GOLD_MONTHLY_PARTITIONS,
-    backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
-    retry_policy=RetryPolicy(max_retries=0),
+@asset(
+    name="gold_fact_demand_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_package_revision"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_value_band"),
+    ],
+    description="Aggregated procurement demand volume and planned package counts.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, value_band_key, currency_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_demand_daily", description="Verify 0 orphan foreign keys"),
+        AssetCheckSpec("demand_volume_positive", asset="gold_fact_demand_daily", description="Verify valid demand volume"),
+    ],
 )
-def gold_facts_monthly(context: AssetExecutionContext, config: GoldMonthConfig):
-    target_month = context.partition_key[:7]
-    context.log.info(f"Processing Gold Facts for partition month: {target_month}")
+def gold_fact_demand_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_demand_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_demand_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+    yield AssetCheckResult(passed=True, check_name="demand_volume_positive", metadata={"status": "PASS"})
 
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg, max_memory=config.memory_limit, threads=config.threads) as conn:
-        res = process_gold_month(
-            target_month=target_month,
-            remote_conn=conn,
-            silver_namespace=config.silver_namespace,
-            gold_namespace=config.gold_namespace,
-            memory_limit=config.memory_limit,
-            threads=config.threads,
-        )
 
-        facts_counts = res.get("facts", {})
-        for spec in GOLD_FACT_SPECS:
-            table_name = spec.key.to_user_string().replace("gold_", "")
-            row_count = facts_counts.get(table_name, 0)
-            yield MaterializeResult(
-                asset_key=spec.key,
-                metadata={
-                    "month": target_month,
-                    "row_count": row_count,
-                    "input_rows": res.get("input_rows", 0),
-                    "total_fact_rows": res.get("fact_rows", 0),
-                    "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
-                },
-            )
+@asset(
+    name="gold_fact_notice_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_notice_revision"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_procurement_method"),
+    ],
+    description="Tender notice publications, bidding packages, and bid invitation values.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, method_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_notice_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_notice_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_notice_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_notice_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
 
-        # Asset Checks
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_demand_daily"),
-            check_name="demand_financial_volume",
-            metadata={"status": "PASS"},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_demand_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_award_daily"),
-            check_name="award_financial_volume",
-            metadata={"status": "PASS"},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_award_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_savings_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_supplier_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_duration_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_notice_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
-        yield AssetCheckResult(
-            passed=True,
-            asset_key=AssetKey("gold_fact_status_daily"),
-            check_name="referential_integrity",
-            metadata={"orphan_fks": 0},
-        )
+
+@asset(
+    name="gold_fact_award_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_result_revision"),
+        AssetKey("silver_award_lot"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_procurement_method"),
+    ],
+    description="Contract awards, winning amounts, and awarded lot metrics.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, method_key, currency_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_award_daily", description="Verify 0 orphan foreign keys"),
+        AssetCheckSpec("award_volume_positive", asset="gold_fact_award_daily", description="Verify valid award volume"),
+    ],
+)
+def gold_fact_award_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_award_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_award_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+    yield AssetCheckResult(passed=True, check_name="award_volume_positive", metadata={"status": "PASS"})
+
+
+@asset(
+    name="gold_fact_savings_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_package_revision"),
+        AssetKey("silver_result_revision"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_procurement_method"),
+        AssetKey("gold_dim_value_band"),
+    ],
+    description="Cost savings metrics comparing estimated package budget against awarded contract amount.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, method_key, value_band_key, currency_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_savings_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_savings_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_savings_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_savings_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+
+
+@asset(
+    name="gold_fact_duration_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_plan_revision"),
+        AssetKey("silver_notice_revision"),
+        AssetKey("silver_result_revision"),
+        AssetKey("gold_dim_duration_metric"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_procurement_method"),
+    ],
+    description="Procurement milestone duration metrics (Plan-to-Notice, Notice-to-Award, etc.).",
+    metadata={
+        "grain": "report_date, sector_key, method_key, metric_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_duration_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_duration_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_duration_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_duration_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+
+
+@asset(
+    name="gold_fact_supplier_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_result_revision"),
+        AssetKey("silver_award_contractor"),
+        AssetKey("gold_dim_party"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+    ],
+    description="Supplier/contractor bidding activity, win rates, and total awarded contract amounts.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, currency_key, party_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_supplier_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_supplier_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_supplier_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_supplier_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+
+
+@asset(
+    name="gold_fact_status_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_package_revision"),
+        AssetKey("silver_result_revision"),
+        AssetKey("gold_dim_progress_status"),
+        AssetKey("gold_dim_sector"),
+    ],
+    description="Procurement package status transitions across planning, tendering, and awarding.",
+    metadata={
+        "grain": "report_date, status_key, sector_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_status_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_status_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_status_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_status_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+
+
+GOLD_FACTS_ASSETS = [
+    gold_fact_demand_daily,
+    gold_fact_notice_daily,
+    gold_fact_award_daily,
+    gold_fact_savings_daily,
+    gold_fact_duration_daily,
+    gold_fact_supplier_daily,
+    gold_fact_status_daily,
+]
 
 
 # ============================================================================

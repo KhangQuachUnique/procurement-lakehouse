@@ -18,7 +18,7 @@ from procurement.orchestration.bronze import BRONZE_PARTITIONS, bronze_assets
 from procurement.orchestration.gold_assets import (
     GOLD_ASSET_CHECKS,
     GOLD_DIMENSIONS_ASSETS,
-    gold_facts_monthly,
+    GOLD_FACTS_ASSETS,
 )
 from procurement.orchestration.gold_v2 import gold_v2_run_job
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
@@ -52,7 +52,7 @@ gold_dimensions_job = define_asset_job(
 )
 
 gold_facts_job = define_asset_job(
-    "gold_facts_monthly_job",
+    "gold_facts_daily_job",
     selection=AssetSelection.groups("gold_facts"),
     executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
     tags={"dagster/max_retries": "0"},
@@ -60,7 +60,7 @@ gold_facts_job = define_asset_job(
 
 lakehouse_end_to_end_job = define_asset_job(
     "lakehouse_end_to_end",
-    selection=AssetSelection.groups("bronze", "silver", "gold_dimensions"),
+    selection=AssetSelection.groups("bronze", "silver", "gold_dimensions", "gold_facts"),
     executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
     tags={"dagster/max_retries": "0"},
 )
@@ -122,7 +122,7 @@ def silver_daily_schedule(context: ScheduleEvaluationContext):
     default_status=DefaultScheduleStatus.STOPPED,
 )
 def lakehouse_end_to_end_schedule(context: ScheduleEvaluationContext):
-    """Daily schedule through dependency-checked Bronze, Silver and Conformed Dimensions."""
+    """Daily schedule through dependency-checked Bronze, Silver, Dimensions, and Facts."""
     tick = context.scheduled_execution_time.astimezone(VIETNAM_TZ)
     key = (tick.date() - timedelta(days=1)).isoformat()
     if key < BRONZE_PARTITIONS.start.date().isoformat():
@@ -151,7 +151,7 @@ defs = Definitions(
         *bronze_assets,
         *silver_assets,
         *GOLD_DIMENSIONS_ASSETS,
-        gold_facts_monthly,
+        *GOLD_FACTS_ASSETS,
     ],
     asset_checks=GOLD_ASSET_CHECKS,
     jobs=[

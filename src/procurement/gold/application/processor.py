@@ -1,7 +1,7 @@
-"""Application Service for month-level and batch Gold dimensional processing.
+"""Application Service for day-level and month-level Gold dimensional processing.
 
 Coordinates:
-1. Extracting Silver revisions and references for a target month.
+1. Extracting Silver revisions and references for a target date range.
 2. Running business transformations (linking relations, dedup, status).
 3. Projecting into Conformed Dimensions and Fact Cohorts.
 4. Aggregating facts to their contract grain.
@@ -9,7 +9,7 @@ Coordinates:
 """
 
 from contextlib import contextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 import time
 from typing import Any
 
@@ -41,6 +41,13 @@ def get_date_bounds(target_month: str) -> tuple[str, str]:
     return start_date, end_date
 
 
+def get_day_bounds(target_date: str) -> tuple[str, str]:
+    """Calculate [start_date, end_date) for a single YYYY-MM-DD day string."""
+    d = date.fromisoformat(target_date)
+    next_d = d + timedelta(days=1)
+    return str(d), str(next_d)
+
+
 @contextmanager
 def get_iceberg_connection(remote_conn=None, memory_limit="2GB", threads=4):
     """Context manager returning an active Iceberg connection."""
@@ -52,17 +59,19 @@ def get_iceberg_connection(remote_conn=None, memory_limit="2GB", threads=4):
             yield conn
 
 
-def process_gold_month(
-    target_month: str,
+def process_gold_range(
+    start_date: str,
+    end_date: str,
+    target_facts: list[str] | None = None,
     remote_conn=None,
     silver_namespace: str = "silver_v2",
     gold_namespace: str = "gold_v2",
     memory_limit: str = "4GB",
     threads: int = 4,
 ) -> dict[str, Any]:
-    """Execute monthly Gold processing with Partition Overwrite on facts and idempotent dimension upserts."""
-    start_date, end_date = get_date_bounds(target_month)
+    """Execute Gold processing for any date range with Partition Overwrite on facts and idempotent dimension upserts."""
     t0 = time.perf_counter()
+    target_facts = target_facts or list(FACTS)
 
     local = duckdb.connect(":memory:", config={"max_memory": memory_limit, "threads": str(threads)})
     local.execute("CREATE SCHEMA frozen")
@@ -158,7 +167,7 @@ def process_gold_month(
                     file_key, file_sha256, row_ordinal, observed_at, source_id, source_version, content_hash, payload_json
                 )
                 SELECT DISTINCT
-                    r.observation_id, '{tbl}', '{start_date}'::DATE, 'batch_month', '{tbl}',
+                    r.observation_id, '{tbl}', '{start_date}'::DATE, 'range_run', '{tbl}',
                     'k', 's', 0, coalesce(r.public_date, '{start_date}'::DATE)::TIMESTAMP, r.entity_id, 1, 'h', '{{}}'
                 FROM frozen.{tbl} r
                 WHERE NOT EXISTS (SELECT 1 FROM frozen.observation o WHERE o.observation_id = r.observation_id)
@@ -181,6 +190,8 @@ def process_gold_month(
         if input_rows == 0:
             local.close()
             return {
+                "start_date": start_date,
+                "end_date": end_date,
                 "input_rows": 0,
                 "fact_rows": 0,
                 "extract_time": t_extract,
@@ -188,14 +199,14 @@ def process_gold_month(
                 "proj_time": 0.0,
                 "publish_time": 0.0,
                 "total_time": time.perf_counter() - t0,
-                "facts": {f: 0 for f in FACTS},
+                "facts": {f: 0 for f in target_facts},
             }
 
         # 2. Run Business Transformation
         t_biz_start = time.perf_counter()
         ready = SilverReadyInput(
-            input_id=f"input_{target_month}",
-            cohort_id=f"cohort_{target_month}",
+            input_id=f"input_{start_date}_{end_date}",
+            cohort_id=f"cohort_{start_date}_{end_date}",
             namespace=silver_namespace,
             mapping_version="v1",
             completed_at=datetime.now(UTC),
@@ -207,7 +218,7 @@ def process_gold_month(
             tables=tuple(Snapshot(table=n, table_uuid="uuid_" + n, snapshot_id=1, rows=0) for n in INPUT_TABLES),
         )
         plan = RunPlan(
-            run_id=f"run_{target_month.replace('-', '_')}",
+            run_id=f"run_{start_date.replace('-', '_')}_{end_date.replace('-', '_')}",
             mode="backfill",
             logic_version="a" * 64,
             reference_version="raw_v1",
@@ -231,7 +242,7 @@ def process_gold_month(
         # 4. Fact Group Aggregation
         local.execute("CREATE SCHEMA outbox")
         fact_counts = {}
-        for fact in FACTS:
+        for fact in target_facts:
             table = TABLES[fact]
             grain = table.grain
             measures = table.measures
@@ -270,8 +281,8 @@ def process_gold_month(
                 finally:
                     conn.unregister("_upload_dim")
 
-        # Facts: Partition Overwrite for target month
-        for fact in FACTS:
+        # Facts: Partition Overwrite for date window
+        for fact in target_facts:
             fact_table = local.execute(f"SELECT * FROM outbox.{fact}").to_arrow_table()
             cols = ", ".join(c.name for c in TABLES[fact].columns)
             conn.execute("BEGIN")
@@ -297,7 +308,8 @@ def process_gold_month(
         local.close()
 
         return {
-            "month": target_month,
+            "start_date": start_date,
+            "end_date": end_date,
             "input_rows": input_rows,
             "fact_rows": total_fact_rows,
             "extract_time": t_extract,
@@ -307,3 +319,48 @@ def process_gold_month(
             "total_time": total_time,
             "facts": fact_counts,
         }
+
+
+def process_gold_day(
+    target_date: str,
+    target_facts: list[str] | None = None,
+    remote_conn=None,
+    silver_namespace: str = "silver_v2",
+    gold_namespace: str = "gold_v2",
+    memory_limit: str = "2GB",
+    threads: int = 2,
+) -> dict[str, Any]:
+    """Execute 1-day incremental Gold processing."""
+    start_date, end_date = get_day_bounds(target_date)
+    return process_gold_range(
+        start_date=start_date,
+        end_date=end_date,
+        target_facts=target_facts,
+        remote_conn=remote_conn,
+        silver_namespace=silver_namespace,
+        gold_namespace=gold_namespace,
+        memory_limit=memory_limit,
+        threads=threads,
+    )
+
+
+def process_gold_month(
+    target_month: str,
+    remote_conn=None,
+    silver_namespace: str = "silver_v2",
+    gold_namespace: str = "gold_v2",
+    memory_limit: str = "4GB",
+    threads: int = 4,
+) -> dict[str, Any]:
+    """Execute monthly Gold processing with Partition Overwrite on facts and idempotent dimension upserts."""
+    start_date, end_date = get_date_bounds(target_month)
+    return process_gold_range(
+        start_date=start_date,
+        end_date=end_date,
+        target_facts=list(FACTS),
+        remote_conn=remote_conn,
+        silver_namespace=silver_namespace,
+        gold_namespace=gold_namespace,
+        memory_limit=memory_limit,
+        threads=threads,
+    )
