@@ -47,6 +47,15 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         if target_table in tables:
             tables[target_table][rid] = typed
 
+        # Populate source_month for child components from public_date or source_date
+        s_date = observation.get("source_date")
+        p_date = typed.get("public_date")
+        month_str = None
+        if p_date is not None:
+            month_str = str(p_date)[:7]
+        elif s_date is not None:
+            month_str = str(s_date)[:7]
+
         for child in row["children"]:
             target = child.get("typed_table")
             if not target:
@@ -66,6 +75,8 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
                 child_id_key != child["child_id"] or typed_child.get("revision_id") != rid
             ):
                 raise ValueError("Typed child identity must match its source child")
+            if month_str and isinstance(typed_child, dict) and "source_month" not in typed_child:
+                typed_child["source_month"] = month_str
             if target in tables:
                 tables[target][child["child_id"]] = typed_child
 

@@ -15,6 +15,8 @@ RUN groupadd --gid 10001 procurement \
     && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch /var/lib/procurement/dagster /var/lib/procurement/benchmarks /var/lib/procurement/benchmark-artifacts \
     && chown -R procurement:procurement /var/lib/procurement
 WORKDIR /app
+# Iceberg/DuckDB may stage local files beneath the working directory.
+RUN mkdir -p /app/data /app/.tmp && chown procurement:procurement /app/data /app/.tmp
 COPY --from=builder /app/.venv /app/.venv
 COPY infra/dagster/workspace.yaml /opt/dagster/workspace.yaml
 ENV PATH="/app/.venv/bin:$PATH" \
@@ -26,4 +28,4 @@ ENV PATH="/app/.venv/bin:$PATH" \
     BENCHMARK_EXPORT_DIR=/var/lib/procurement/benchmark-artifacts \
     RUNTIME__DLTHUB_TELEMETRY=false
 USER procurement
-CMD ["python", "-m", "procurement.jobs.ingest", "--help"]
+CMD ["python", "-m", "procurement.cli.ingest", "--help"]

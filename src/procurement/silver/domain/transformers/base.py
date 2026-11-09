@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from procurement.silver.domain.contracts import VERSION
-from procurement.silver.domain.parsers import clean_text
+from procurement.silver.domain.parsers import DATE_REPAIR_EVENTS, clean_text
 from procurement.silver.domain.protocols import (
     EntityIdentity,
     EntityRevision,
@@ -123,9 +123,12 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
             "source_id": envelope.source_id,
             "source_version": envelope.source_version,
             "content_hash": envelope.content_hash,
-            "payload_json": canonical_json(envelope.payload),
         }
         return obs_id, observation
+
+    def semantic_payload(self, envelope: RawRecordEnvelope, root: dict[str, Any]) -> Any:
+        """Default revision contract; adapters may isolate an authoritative root."""
+        return envelope.payload
 
     def transform(self, envelope: RawRecordEnvelope) -> TransformedRecord:
         """Execute the end-to-end transformation flow for a single record."""
@@ -174,7 +177,7 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
         )
 
         # Build Immutable Entity Revision
-        semantic_hash = digest(envelope.payload)
+        semantic_hash = digest(self.semantic_payload(envelope, root))
         source_ver = None if self.entity_type == "package" else clean_text(envelope.source_version)
         revision_id = digest([entity_id, source_ver, semantic_hash, self.revision_contracts])
         revision = EntityRevision(
@@ -183,13 +186,41 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
             source_version=source_ver,
             semantic_hash=semantic_hash,
             mapping_version=self.mapping_version,
-            payload_json=canonical_json(envelope.payload),
+            payload_json=None,
         )
 
         # Extract Typed Attributes, References & Children
-        typed = self.extract_attributes(root, revision_id, entity_id, issues, obs_id)
-        references = self.extract_references(root, revision_id)
-        children = self.extract_children(envelope.payload, revision_id, issues, obs_id)
+        repairs = []
+        token = DATE_REPAIR_EVENTS.set(repairs)
+        try:
+            typed = self.extract_attributes(root, revision_id, entity_id, issues, obs_id)
+            references = self.extract_references(root, revision_id)
+            children = self.extract_children(envelope.payload, revision_id, issues, obs_id)
+        finally:
+            DATE_REPAIR_EVENTS.reset(token)
+
+        # Original payload remains immutable in both observation and revision.
+        # Locate repaired values in that evidence, including nested child dates.
+        def audit_dates(value, path="payload"):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    audit_dates(child, path + "." + str(key))
+            elif isinstance(value, list):
+                for index, child in enumerate(value):
+                    audit_dates(child, path + "[" + str(index) + "]")
+            elif isinstance(value, str):
+                for original, repaired in set(repairs):
+                    if (
+                        value.strip() == original
+                        or value.strip().split("T")[0].split(" ")[0] == original
+                    ):
+                        code = "date_year_repaired_" + original[:4] + "_to_" + repaired[:4]
+                        issues.append(
+                            QualityIssue(digest([obs_id, code, path]), obs_id, code, path)
+                        )
+
+        if repairs:
+            audit_dates(envelope.payload)
 
         return TransformedRecord(
             observation=observation,

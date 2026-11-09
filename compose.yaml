@@ -57,6 +57,10 @@ services:
       - "127.0.0.1:23646:23646"
     volumes:
       - object-storage-data:/data
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   # ----------------------------------------------------------------------------
   # 2. CƠ SỞ DỮ LIỆU METADATA ỨNG DỤNG (PostgreSQL 17)
@@ -150,6 +154,7 @@ services:
     environment:
       <<: *dagster-env
       ORCHESTRATION_ENABLED: "true"
+      GOLD_SILVER_READINESS_ROOT: ${PWD}/data/manual-result-history
       BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
       BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
       OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
@@ -180,6 +185,8 @@ services:
       - ./infra/dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
       - ingestion-state:/var/lib/procurement
       - watch-state:/var/lib/procurement/watch
+      - ./data:${PWD}/data:ro
+      - ./data/gold/reporting:/var/lib/procurement/gold/reporting
     depends_on:
       dagster-postgres:
         condition: service_healthy
@@ -200,7 +207,7 @@ services:
     <<: *dagster
     command: [dagster-webserver, --host, 0.0.0.0, --port, "3000", --workspace, /opt/dagster/workspace.yaml]
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3002:3000"
     depends_on:
       dagster-code-location:
         condition: service_healthy

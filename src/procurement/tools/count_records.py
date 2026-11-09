@@ -14,6 +14,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from procurement.bootstrap import get_metadata_service
 from procurement.common.catalog import RESOURCE_CATALOG, SUPPORTED_RESOURCES
 from procurement.common.settings import settings
 from procurement.storage.object_store import create_s3_filesystem
@@ -128,9 +129,11 @@ def build_report(selected, counts, committed, issues, start, end):
     for resource, days in committed.items():
         for day, attempt in days.items():
             actual = day_counts[(resource, day)]
-            if actual != attempt.bronze_records:
+            expected = (attempt.record_count if hasattr(attempt, "record_count")
+                        else attempt.bronze_records)
+            if actual != expected:
                 issues.append({"resource": resource, "source_date": day, "issue": "count_mismatch",
-                               "expected_records": attempt.bronze_records, "actual_records": actual})
+                               "expected_records": expected, "actual_records": actual})
     missing_days = {resource: (end-start).days + 1 - len(days) for resource, days in committed.items()}
     totals = Counter()
     for (_, label), count in rows.items():
@@ -194,7 +197,8 @@ def main(argv=None):
     metadata, committed, issues = {}, {}, []
     selected = _select_current_files(fs, bucket=settings.OBJECT_STORAGE_BUCKET, tables=tables,
                                      start=start, end=end, workers=args.workers, issues=issues,
-                                     file_metadata=metadata, committed_days=committed)
+                                     file_metadata=metadata, committed_days=committed,
+                                     metadata_service=get_metadata_service())
     counts = count_files(fs, [uri for paths in selected.values() for uri in paths], metadata,
                          args.cache_dir / "footers.sqlite", namespace=namespace, workers=args.workers)
     report = build_report(selected, counts, committed, issues, start, end)

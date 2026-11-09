@@ -146,7 +146,7 @@ def test_children_preserve_mirrors_unknown_arrays_and_do_not_double_count_lots()
     assert "child" not in tables
     assert "child" not in NOTICE_OUTPUT_TABLES
     assert tables["notice_location"][0]["province_code"] == "001"
-    assert json.loads(result.observation["payload_json"]) == p
+    assert result.observation["content_hash"] is not None
     validate(tables)
     sql_roundtrip(tables)
 
@@ -185,7 +185,7 @@ def test_conflicting_mirror_quarantined_with_raw_evidence(field, value):
     assert result.quarantine.reason == "conflicting_identity"
     tables = assemble([result.to_dict()])
     assert validate(tables)["quarantined"] == 1
-    assert json.loads(tables["observation"][0]["payload_json"]) == p
+    assert tables["quarantine"][0]["reason"] == "conflicting_identity"
 
 
 @pytest.mark.parametrize(
@@ -236,7 +236,7 @@ def test_build_dispatch_matches_registered_transformer(family):
     expected = run(env).to_dict()
     assert result["typed"] == expected["typed"]
     assert result["revision"] == expected["revision"]
-    assert result["observation"]["payload_json"] == raw
+    assert result["observation"]["content_hash"] == expected["observation"]["content_hash"]
     assert env.table_name in NOTICE_TABLES
 
 
@@ -315,4 +315,19 @@ def test_notice_temporal_inversion_detected():
     p = {"bidoNotifyContractorM": r}
     result = run(envelope(data=p))
     assert any(i.code == "invalid_date_order" for i in result.issues)
+
+
+def test_notice_anchor_date_inference():
+    # User types typo future dates 3023-12-20 and 2066-01-10, but notice publicDate is 2023-12-05
+    r = root()
+    r["publicDate"] = "2023-12-05T10:00:00"
+    r["bidOpenDate"] = "3023-12-20T10:00:00"
+    r["bidCloseDate"] = "2066-12-25T10:00:00"
+    p = {"bidoNotifyContractorM": r}
+    result = run(envelope(data=p))
+    attrs = result.typed_attributes
+    assert attrs["public_date"] == "2023-12-05"
+    # 3023 snaps to 2023, 2066 snaps to anchor 2023
+    assert attrs["bid_open_date"].startswith("2023-12-20")
+    assert attrs["bid_close_date"].startswith("2023-12-25")
 

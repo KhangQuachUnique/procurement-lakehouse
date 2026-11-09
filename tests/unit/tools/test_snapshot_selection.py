@@ -55,6 +55,7 @@ def test_select_snapshot_files_retrieves_files_and_commits():
 
     tables = [BronzeTable(dataset="muasamcong", table="project_detail")]
     committed_days = {}
+    file_metadata = {}
 
     selected = select_snapshot_files(
         mock_meta,
@@ -62,6 +63,7 @@ def test_select_snapshot_files_retrieves_files_and_commits():
         start=date(2024, 1, 1),
         end=date(2024, 1, 1),
         committed_days=committed_days,
+        file_metadata=file_metadata,
     )
 
     table_key = tables[0]
@@ -72,3 +74,5 @@ def test_select_snapshot_files_retrieves_files_and_commits():
     assert "project" in committed_days
     assert "2024-01-01" in committed_days["project"]
     assert committed_days["project"]["2024-01-01"].record_count == 10
+
+    assert file_metadata[selected[table_key][0]] == {"size": 1024, "ETag": "a" * 64}

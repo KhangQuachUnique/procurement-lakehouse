@@ -17,7 +17,7 @@ class Settings(BaseModel):
     ORCHESTRATION_ENABLED: bool = False
     DAGSTER_URL: str = "http://127.0.0.1:3000"
     LOG_LEVEL: str = "INFO"
-    MUASAMCONG_BASE_URL: str = "https://muasamcong.mpi.gov.vn"
+    MUASAMCONG_BASE_URL: str = "https://muasamcong.mof.gov.vn"
     MUASAMCONG_TIMEOUT_SECONDS: float = Field(default=30, gt=0)
     MUASAMCONG_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
     MUASAMCONG_MAX_RETRY_DELAY_SECONDS: float = Field(default=30, ge=0, le=300)
@@ -40,8 +40,13 @@ class Settings(BaseModel):
     ICEBERG_CATALOG_URI: str = "http://localhost:8181"
     ICEBERG_WAREHOUSE: str = "s3://warehouse"
     ICEBERG_CATALOG_PORT: int = Field(default=8181, ge=1, le=65535)
+    SILVER_RELEASE_NAMESPACE: str = "silver"
+    SILVER_TARGET_NAMESPACE: str = "silver"
+    GOLD_RELEASE_NAMESPACE: str = "gold"
+    GOLD_TARGET_NAMESPACE: str = "gold"
     DLT_PIPELINES_DIR: str | None = None
     INGESTION_LOCK_DIR: str = "data/locks"
+    SILVER_CHANGE_JOURNAL_ROOT: str | None = None
     OPS_INDEX_PATH: str = "data/ops/index.sqlite3"
     OPS_SYNC_INTERVAL_SECONDS: float = Field(default=5, ge=1, le=3600)
     OPS_RECONCILE_INTERVAL_SECONDS: float = Field(default=300, ge=5, le=86400)

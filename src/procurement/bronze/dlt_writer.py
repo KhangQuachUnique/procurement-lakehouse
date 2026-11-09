@@ -91,23 +91,29 @@ def create_bronze_resource(records: Iterable[BronzeRecord], *, name: str):
 class DltBronzeWriter:
     """One attempt owns one pipeline. Counts include only confirmed table loads."""
 
-    def __init__(self, pipeline_factory: Callable[[], Any]) -> None:
+    def __init__(self, pipeline_factory: Callable[[], Any], *, batch_tables: bool = False) -> None:
+        self._batch_tables = batch_tables
         self._pipeline_factory = pipeline_factory
         self._pipeline: Any = None
 
     def write_page(self, tables: Mapping[str, list[BronzeRecord]]) -> int:
         persisted = 0
         try:
-            for table, records in tables.items():
-                if not records:
-                    continue
+            nonempty = [(table, records) for table, records in tables.items() if records]
+            groups = (
+                [nonempty] if self._batch_tables and nonempty else [[pair] for pair in nonempty]
+            )
+            for group in groups:
                 if self._pipeline is None:
                     self._pipeline = self._pipeline_factory()
-                info = self._pipeline.run(create_bronze_resource(records, name=table))
+                resources = [
+                    create_bronze_resource(records, name=table) for table, records in group
+                ]
+                info = self._pipeline.run(resources if self._batch_tables else resources[0])
                 if info is None:
                     raise RuntimeError("DLT returned no load receipt for a non-empty resource")
                 info.raise_on_failed_jobs()
-                persisted += len(records)
+                persisted += sum(len(records) for _, records in group)
         except INTERRUPTIONS:
             raise
         except Exception as exc:

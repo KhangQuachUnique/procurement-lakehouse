@@ -26,7 +26,7 @@ from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
 from procurement.silver.domain.transformers.base import BaseResourceTransformer, canonical_json
 
-NOTICE_MAPPING_VERSION = "notice-2"
+NOTICE_MAPPING_VERSION = "notice-3"
 
 
 class NoticeTransformer(BaseResourceTransformer):
@@ -178,13 +178,16 @@ class NoticeTransformer(BaseResourceTransformer):
     def issue(issues, oid, code, path):
         issues.append(QualityIssue(digest([oid, code, path]), oid, code, path))
 
-    def parsed(self, value, parser, issues, oid, path, code):
+    def parsed(self, value, parser, issues, oid, path, code, anchor_date=None):
         if value is None or value == "":
             return None
         try:
             if parser in (parse_date, parse_iso_datetime) and clean_text(value) is None:
                 raise ValueError("Invalid date type")
-            parsed = parser(value)
+            if parser in (parse_date, parse_iso_datetime):
+                parsed = parser(value, anchor_date=anchor_date)
+            else:
+                parsed = parser(value)
             return parsed.isoformat() if parser is parse_iso_datetime and parsed else parsed
         except (ValueError, TypeError, OverflowError):
             self.issue(issues, oid, code, path)
@@ -192,11 +195,12 @@ class NoticeTransformer(BaseResourceTransformer):
 
     def extract_attributes(self, root, revision_id, entity_id, issues, obs_id):
         sources = {}
+        pub_anchor = clean_text(root.get("publicDate"))
 
-        def field(column, source, parser=clean_text, code="invalid_value"):
+        def field(column, source, parser=clean_text, code="invalid_value", anchor_date=None):
             if source in root:
                 sources[column] = source
-            return self.parsed(root.get(source), parser, issues, obs_id, source, code)
+            return self.parsed(root.get(source), parser, issues, obs_id, source, code, anchor_date=anchor_date)
 
         attrs = {
             "revision_id": revision_id,
@@ -204,7 +208,6 @@ class NoticeTransformer(BaseResourceTransformer):
             "entity_type": "notice",
             "source_table": self.table_name,
             "source_family": self.family,
-            "root_json": canonical_json(root),
             "timestamp_policy": "naive=Asia/Ho_Chi_Minh",
             "plan_id": None,
             "plan_version": None,
@@ -283,19 +286,26 @@ class NoticeTransformer(BaseResourceTransformer):
         for col, source in {
             "published_at": "publicDate",
             "original_published_at": "originalPublicDate",
-            "bid_open_date": "bidOpenDate",
-            "bid_close_date": "bidCloseDate",
-            "reoffer_open_at": "reofferOpenDate",
-            "reoffer_close_at": "reofferCloseDate",
             "cancelled_at": "cancelDate",
         }.items():
             attrs[col] = field(col, source, parse_iso_datetime, "invalid_datetime")
         for col, source in {
-            "public_date": "publicDate",
+            "bid_open_date": "bidOpenDate",
+            "bid_close_date": "bidCloseDate",
+            "reoffer_open_at": "reofferOpenDate",
+            "reoffer_close_at": "reofferCloseDate",
+        }.items():
+            attrs[col] = field(
+                col, source, parse_iso_datetime, "invalid_datetime", anchor_date=pub_anchor
+            )
+        attrs["public_date"] = field("public_date", "publicDate", parse_date, "invalid_date")
+        for col, source in {
             "plan_decision_date": "planDecisionDate",
             "cancel_decision_date": "cancelDecisionDate",
         }.items():
-            attrs[col] = field(col, source, parse_date, "invalid_date")
+            attrs[col] = field(
+                col, source, parse_date, "invalid_date", anchor_date=pub_anchor
+            )
         for col, source in {
             "is_internet": "isInternet",
             "is_domestic": "isDomestic",
@@ -371,7 +381,6 @@ class NoticeTransformer(BaseResourceTransformer):
                         source_id=source_id,
                         source_path=lot_path,
                         ordinal=ordinal,
-                        raw_json=raw,
                     )
                     children.append(
                         ExtractedChild(
@@ -382,7 +391,7 @@ class NoticeTransformer(BaseResourceTransformer):
                             path=lot_path,
                             ordinal=ordinal,
                             source_id=source_id,
-                            payload_json=raw,
+                            payload_json=None,
                             typed_table=table,
                             typed_attributes=attributes,
                         )
@@ -399,14 +408,12 @@ class NoticeTransformer(BaseResourceTransformer):
                     if attributes is not None and table is not None:
                         child_id = digest([revision_id, loc_path, ordinal, value])
                         source_id = clean_text(value.get("id")) if isinstance(value, dict) else None
-                        raw = canonical_json(value)
                         attributes.update(
                             child_id=child_id,
                             revision_id=revision_id,
                             source_id=source_id,
                             source_path=loc_path,
                             ordinal=ordinal,
-                            raw_json=raw,
                         )
                         children.append(
                             ExtractedChild(
@@ -417,7 +424,7 @@ class NoticeTransformer(BaseResourceTransformer):
                                 path=loc_path,
                                 ordinal=ordinal,
                                 source_id=source_id,
-                                payload_json=raw,
+                                payload_json=None,
                                 typed_table=table,
                                 typed_attributes=attributes,
                             )
@@ -437,14 +444,12 @@ class NoticeTransformer(BaseResourceTransformer):
                             source_id = (
                                 clean_text(value.get("id")) if isinstance(value, dict) else None
                             )
-                            raw = canonical_json(value)
                             attributes.update(
                                 child_id=child_id,
                                 revision_id=revision_id,
                                 source_id=source_id,
                                 source_path=sub_path,
                                 ordinal=ordinal,
-                                raw_json=raw,
                             )
                             children.append(
                                 ExtractedChild(
@@ -455,7 +460,7 @@ class NoticeTransformer(BaseResourceTransformer):
                                     path=sub_path,
                                     ordinal=ordinal,
                                     source_id=source_id,
-                                    payload_json=raw,
+                                    payload_json=None,
                                     typed_table=table,
                                     typed_attributes=attributes,
                                 )

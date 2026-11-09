@@ -27,8 +27,11 @@ RESOURCE_CATALOG = (
     ),
     ResourceDefinition(
         ResourceIdentity(DEFAULT_SOURCE, "notify_contractor"),
-        ("notify_contractor_standard_detail", "notify_contractor_reoffer_detail",
-         "notify_contractor_vk_adb_detail"),
+        (
+            "notify_contractor_standard_detail",
+            "notify_contractor_reoffer_detail",
+            "notify_contractor_vk_adb_detail",
+        ),
         "procurement.ingestion.sources.muasamcong.notify_contractor.resource:"
         "create_notify_contractor_spec",
     ),
@@ -42,6 +45,12 @@ RESOURCE_CATALOG = (
         ("contractor_result_detail",),
         "procurement.ingestion.sources.muasamcong.contractor_result.resource:"
         "create_contractor_result_spec",
+    ),
+    ResourceDefinition(
+        ResourceIdentity(DEFAULT_SOURCE, "contract_performance"),
+        ("contract_performance_detail", "contract_detail"),
+        "procurement.ingestion.sources.muasamcong.contract_performance.resource:"
+        "create_contract_performance_spec",
     ),
 )
 

@@ -47,7 +47,6 @@ def transform(
         payload=payload,
     )
     result = transformer.transform(envelope)
-    result.observation["payload_json"] = raw if isinstance(raw, str) else canonical_json(raw)
     return result.to_dict()
 
 

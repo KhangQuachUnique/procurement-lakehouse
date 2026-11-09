@@ -12,24 +12,12 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from procurement.common.catalog import get_resource
 from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.silver.ports.outbound.bronze_repository import (
     BronzeFileDescriptor,
     BronzeRepositoryPort,
     CommittedBronzePartition,
 )
-from procurement.storage.committed import select_committed_days
-from procurement.storage.control import list_run_manifests, read_day_manifest
-
-
-def file_sha256(fs: Any, key: str) -> str:
-    """Calculate file SHA-256 in 1MB blocks."""
-    hasher = hashlib.sha256()
-    with fs.open(key, "rb") as stream:
-        while block := stream.read(1024 * 1024):
-            hasher.update(block)
-    return hasher.hexdigest()
 
 
 class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
@@ -42,24 +30,22 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         freeze_fn: Callable[..., Any] | None = None,
         records_fn: Callable[..., Any] | None = None,
         workers: int = 16,
+        verify_files: bool = False,
     ) -> None:
         self.fs = fs
         self.db_engine = db_engine
         self._freeze_fn = freeze_fn
         self._records_fn = records_fn
         self.workers = workers
-        self._runs_cache: dict[str, list[Any]] = {}
+        self.verify_files = verify_files
 
     def _get_engine(self) -> Any:
         if self.db_engine is not None:
             return self.db_engine
-        try:
-            from procurement.infrastructure.database import create_application_engine
+        from procurement.infrastructure.database import create_application_engine
 
-            self.db_engine = create_application_engine()
-            return self.db_engine
-        except Exception:  # noqa: BLE001
-            return None
+        self.db_engine = create_application_engine()
+        return self.db_engine
 
     def _select_committed_from_db(
         self, engine: Any, resources: list[str], start: date, end: date
@@ -130,13 +116,6 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
             for v in by_key.values()
         ]
 
-    def clear_runs_cache(self, resource: str | None = None) -> None:
-        """Clear cached run manifests for a resource or all resources."""
-        if resource is not None:
-            self._runs_cache.pop(resource, None)
-        else:
-            self._runs_cache.clear()
-
     def select_committed_partitions(
         self,
         resources: list[str],
@@ -174,44 +153,7 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         if start > end or not resources or len(set(resources)) != len(resources):
             raise ValueError("Select a nonempty unique resource set and an ordered date range")
 
-        if (engine := self._get_engine()) is not None:
-            return self._select_committed_from_db(engine, resources, start, end)
-
-        partitions = []
-        for resource in sorted(resources):
-            definition = get_resource(resource)
-            if resource not in self._runs_cache:
-                self._runs_cache[resource] = list_run_manifests(
-                    self.fs, definition.identity, workers=self.workers
-                )
-            cached_runs = self._runs_cache[resource]
-            for day in select_committed_days(
-                self.fs, definition, start, end, workers=self.workers, runs=cached_runs
-            ):
-                manifest = read_day_manifest(
-                    self.fs, definition.identity, day.run_id, day.source_date
-                )
-                if manifest is None or manifest.status.value != "success":
-                    raise ValueError("Selected commit disappeared")
-                files = tuple(
-                    BronzeFileDescriptor(
-                        table=table,
-                        key=key,
-                        sha256=file_sha256(self.fs, key),
-                    )
-                    for table, key in day.files
-                )
-                partitions.append(
-                    CommittedBronzePartition(
-                        resource=resource,
-                        source_date=day.source_date.isoformat(),
-                        run_id=day.run_id,
-                        expected_records=day.expected_records,
-                        files=files,
-                        manifest=manifest.model_dump(mode="json"),
-                    )
-                )
-        return partitions
+        return self._select_committed_from_db(self._get_engine(), resources, start, end)
 
     def stream_partition_records(
         self,
@@ -242,6 +184,13 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
         for file in partition.files:
             file_dict = {"table": file.table, "key": file.key, "sha256": file.sha256}
             with self.fs.open(file.key, "rb") as stream:
+                if self.verify_files:
+                    checksum = hashlib.sha256()
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        checksum.update(chunk)
+                    if checksum.hexdigest() != file.sha256:
+                        raise ValueError("Bronze file SHA256 mismatch")
+                    stream.seek(0)
                 valid_run_ids = {partition.run_id}
                 if isinstance(partition.manifest, dict) and partition.manifest.get("dagster_run_id"):
                     valid_run_ids.add(str(partition.manifest["dagster_run_id"]))
@@ -254,7 +203,7 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
                         ):
                             raise ValueError("Bronze lineage mismatch")
 
-                        if verify_content_hash:
+                        if verify_content_hash or self.verify_files:
                             payload = (
                                 json.loads(row["payload"])
                                 if isinstance(row["payload"], str)

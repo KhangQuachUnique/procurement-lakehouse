@@ -14,6 +14,7 @@ from dagster import (
     Config,
     Failure,
     MaterializeResult,
+    MetadataValue,
     OpExecutionContext,
     RetryPolicy,
     job,
@@ -55,11 +56,24 @@ class SilverResourceGroup:
 
 SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
     SilverResourceGroup(
+        resource_name="contract_performance",
+        upstream_bronze_name="bronze_contract_performance",
+        primary_revision_table="contract_performance_revision",
+        tables=(
+            SilverTableSpec("contract_revision", "Referenced contract versions and signed terms"),
+            SilverTableSpec(
+                "contract_performance_revision", "Published contract execution results"
+            ),
+        ),
+    ),
+    SilverResourceGroup(
         resource_name="project",
         upstream_bronze_name="bronze_project",
         primary_revision_table="project_revision",
         tables=(
-            SilverTableSpec("project_revision", "Standardized procurement project revisions and metadata"),
+            SilverTableSpec(
+                "project_revision", "Standardized procurement project revisions and metadata"
+            ),
             SilverTableSpec("project_location", "Geographical execution locations of projects"),
         ),
     ),
@@ -69,7 +83,9 @@ SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
         primary_revision_table="plan_revision",
         tables=(
             SilverTableSpec("plan_revision", "Procurement plan revisions and estimated budgets"),
-            SilverTableSpec("package_revision", "Bid package revisions, procurement methods and timelines"),
+            SilverTableSpec(
+                "package_revision", "Bid package revisions, procurement methods and timelines"
+            ),
             SilverTableSpec("package_lot", "Procurement bid package lots and price items"),
             SilverTableSpec("package_location", "Geographical execution locations of bid packages"),
         ),
@@ -79,10 +95,16 @@ SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
         upstream_bronze_name="bronze_notify_contractor",
         primary_revision_table="notice_revision",
         tables=(
-            SilverTableSpec("notice_revision", "Tender notice (TBMT) revisions, deadlines and requirements"),
+            SilverTableSpec(
+                "notice_revision", "Tender notice (TBMT) revisions, deadlines and requirements"
+            ),
             SilverTableSpec("notice_lot", "Tender notice bidding lots and itemized prices"),
-            SilverTableSpec("notice_location", "Geographical execution locations of tender notices"),
-            SilverTableSpec("notice_reoffer_submission", "Tender reoffer submissions and price quotes"),
+            SilverTableSpec(
+                "notice_location", "Geographical execution locations of tender notices"
+            ),
+            SilverTableSpec(
+                "notice_reoffer_submission", "Tender reoffer submissions and price quotes"
+            ),
         ),
     ),
     SilverResourceGroup(
@@ -92,7 +114,9 @@ SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
         tables=(
             SilverTableSpec("result_revision", "Contractor selection result (KQLCNT) decisions"),
             SilverTableSpec("award_lot", "Winning bid lots, awarded prices and contract durations"),
-            SilverTableSpec("award_contractor", "Winning contractors, consortium details and tax codes"),
+            SilverTableSpec(
+                "award_contractor", "Winning contractors, consortium details and tax codes"
+            ),
         ),
     ),
 )
@@ -109,6 +133,11 @@ class SilverConfig(Config):
         default=False,
         description="Skip execution if Silver output partitions already exist",
     )
+    readiness_evidence: bool = False
+    iceberg_namespace: str = settings.SILVER_TARGET_NAMESPACE
+    iceberg_memory_limit: str = "4GB"
+    iceberg_threads: int = 4
+
     family: str | None = Field(
         default=None,
         description="Optional family sub-filter for the resource",
@@ -117,10 +146,13 @@ class SilverConfig(Config):
 
 def build_silver_multi_asset(group: SilverResourceGroup):
     """Build a partitioned multi-asset representing all physical tables for a Silver resource."""
+    silver_group_name = (
+        "silver_pilot" if group.resource_name == "contract_performance" else "silver"
+    )
     specs = [
         AssetSpec(
             key=f"silver_{t.table}",
-            group_name="silver",
+            group_name=silver_group_name,
             deps=[AssetKey(group.upstream_bronze_name)],
             description=t.description,
             automation_condition=EAGER_AUTOMATION,
@@ -145,7 +177,7 @@ def build_silver_multi_asset(group: SilverResourceGroup):
         AssetCheckSpec(
             "iceberg_publication",
             asset=primary_key,
-            blocking=False,
+            blocking=True,
             description="Verify table partitions were staged/committed into Iceberg catalog",
         ),
     ]
@@ -166,6 +198,7 @@ def build_silver_multi_asset(group: SilverResourceGroup):
         fs = context.resources.object_storage
         bucket = settings.OBJECT_STORAGE_BUCKET
 
+        readiness_kwargs = {"readiness_evidence": True} if config.readiness_evidence else {}
         report = run_resource(
             fs=fs,
             bucket=bucket,
@@ -175,6 +208,7 @@ def build_silver_multi_asset(group: SilverResourceGroup):
             family=config.family,
             skip_existing=config.skip_existing,
             iceberg=config.publish_iceberg,
+            **readiness_kwargs,
         )
 
         days = report.get("days", [])
@@ -257,7 +291,9 @@ def build_silver_multi_asset(group: SilverResourceGroup):
         for t in group.tables:
             tbl_name = t.table
             tbl_key = f"silver_{tbl_name}"
-            tbl_iceberg = iceberg_staged.get(tbl_name, {}) if isinstance(iceberg_staged, dict) else {}
+            tbl_iceberg = (
+                iceberg_staged.get(tbl_name, {}) if isinstance(iceberg_staged, dict) else {}
+            )
             parquet_file = files.get(tbl_name, "") if isinstance(files, dict) else ""
 
             meta: dict[str, Any] = {
@@ -268,12 +304,27 @@ def build_silver_multi_asset(group: SilverResourceGroup):
                 "parquet_path": parquet_file,
             }
             if tbl_name == group.primary_revision_table:
-                meta.update({
-                    "run_id": report.get("run_id", ""),
-                    "accepted": acc,
-                    "quarantined": quar,
-                    "issues": issues,
-                })
+                meta.update(
+                    {
+                        "run_id": report.get("run_id", ""),
+                        "accepted": acc,
+                        "quarantined": quar,
+                        "issues": issues,
+                        "blocking_issues": blocking_issues,
+                        "published_to_iceberg": bool(config.publish_iceberg and iceberg_passed),
+                    }
+                )
+            if tbl_name == group.primary_revision_table and config.readiness_evidence:
+                meta["gold_readiness_report"] = MetadataValue.json(
+                    {
+                        "run_id": report["run_id"],
+                        "resource": report["resource"],
+                        "family": report["family"],
+                        "mapping_version": report["mapping_version"],
+                        "iceberg_enabled": report["iceberg_enabled"],
+                        "days": [entry],
+                    }
+                )
             if tbl_iceberg:
                 meta["iceberg_snapshot_id"] = tbl_iceberg.get("snapshot_id")
                 meta["iceberg_total_rows"] = tbl_iceberg.get("row_count")
@@ -306,7 +357,9 @@ class IcebergSyncConfig(Config):
     required_resource_keys={"object_storage"},
     description="Batch synchronize Silver Parquet data on S3 into Apache Iceberg Format v2",
 )
-def sync_silver_iceberg_op(context: OpExecutionContext, config: IcebergSyncConfig) -> dict[str, Any]:
+def sync_silver_iceberg_op(
+    context: OpExecutionContext, config: IcebergSyncConfig
+) -> dict[str, Any]:
     """Execute streaming chunked sync into Iceberg tables and refresh SIMD latest views."""
     from procurement.cli.silver import sync_iceberg
 

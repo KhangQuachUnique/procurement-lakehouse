@@ -1,9 +1,10 @@
 """Ingestion service: core business use case for materializing a resource for a day."""
 
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Callable
 from datetime import UTC, datetime
+from threading import Event, Thread
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -18,11 +19,13 @@ from procurement.bronze.dlt_writer import (
 from procurement.bronze.verification import calculate_file_sha256
 from procurement.bronze.writer import BufferedBronzeWriter
 from procurement.common.dates import api_day_window
+from procurement.common.errors import extract_http_status, sanitize_error_message
 from procurement.ingestion.contracts import (
     MaterializeDayRequest,
     MaterializeDayResult,
 )
 from procurement.ingestion.engine.models import ResourceSpec
+from procurement.ingestion.engine.pagination import iter_search_pages
 from procurement.ingestion.engine.stats import PageStats
 from procurement.metadata.contracts import MetadataService
 from procurement.metadata.models import (
@@ -116,10 +119,31 @@ class IngestionService:
         assert attempt is not None
         assert begin_res.lease is not None
         generation = begin_res.lease.generation
-        spec = self._spec_factory(request.resource)
         run_id_str = str(attempt.id)
 
+        heartbeat_stop = Event()
+        heartbeat_errors: list[Exception] = []
+        heartbeat_thread = None
+        spec: ResourceSpec | None = None
+        page_num = 0
+
+        def renew_heartbeat():
+            while not heartbeat_stop.wait(30):
+                try:
+                    self.metadata.renew_lease(
+                        attempt.id,
+                        owner_id=request.owner_id,
+                        generation=generation,
+                    )
+                except Exception as exc:  # noqa: BLE001 — propagate renewal failure to caller
+                    heartbeat_errors.append(exc)
+                    return
+
         try:
+            spec = self._spec_factory(request.resource)
+            if spec.strict_pagination:
+                heartbeat_thread = Thread(target=renew_heartbeat, daemon=True)
+                heartbeat_thread.start()
             pipeline_name = "_".join(
                 (
                     _pipeline_component(spec.pipeline_name),
@@ -142,6 +166,10 @@ class IngestionService:
             dlt_pipeline_opts: dict[str, Any] = {}
             if self.pipelines_dir:
                 dlt_pipeline_opts["pipelines_dir"] = self.pipelines_dir
+            execution_cluster = request.resource == "contract_performance"
+            if execution_cluster:
+                # A unique attempt starts from source; PostgreSQL commits are the resume authority.
+                dlt_pipeline_opts["restore_from_destination"] = False
 
             pipeline = dlt.pipeline(
                 pipeline_name=pipeline_name,
@@ -150,12 +178,28 @@ class IngestionService:
                 **dlt_pipeline_opts,
             )
 
-            raw_writer = DltBronzeWriter(lambda: pipeline)
+            raw_writer = DltBronzeWriter(lambda: pipeline, batch_tables=execution_cluster)
             buffered_writer = BufferedBronzeWriter(raw_writer)
 
             window_from, window_to = api_day_window(request.source_date)
             page_num = 0
             total_records = 0
+            search_count = 0
+            record_counts = Counter()
+            issue_counts = Counter()
+            contract_codes = set()
+            written_tables: set[str] = set()
+            strict_pages = (
+                iter_search_pages(
+                    spec.fetch_page,
+                    window_from=window_from,
+                    window_to=window_to,
+                    page_size=request.page_size,
+                    search_key=spec.search_key,
+                )
+                if spec.strict_pagination
+                else None
+            )
 
             while True:
                 # Renew heartbeat before each fetch
@@ -166,12 +210,19 @@ class IngestionService:
                 )
 
                 page_start = datetime.now(UTC)
-                page_data = spec.fetch_page(
-                    page_number=page_num,
-                    page_size=request.page_size,
-                    window_from=window_from,
-                    window_to=window_to,
-                )
+                if heartbeat_errors:
+                    raise heartbeat_errors[0]
+                if strict_pages is not None:
+                    returned_page, page_data = next(strict_pages)
+                    if returned_page != page_num:
+                        raise ValueError("Unexpected strict page index")
+                else:
+                    page_data = spec.fetch_page(
+                        page_number=page_num,
+                        page_size=request.page_size,
+                        window_from=window_from,
+                        window_to=window_to,
+                    )
 
                 items = page_data.get("page", {}).get("content", [])
                 stats = PageStats()
@@ -188,6 +239,12 @@ class IngestionService:
                     )
                 )
 
+                if heartbeat_errors:
+                    raise heartbeat_errors[0]
+                search_count += len(items)
+                record_counts.update(stats.record_counts)
+                issue_counts.update(issue["code"] for issue in stats.quality_observations)
+                contract_codes.update(i["contractCode"] for i in items if i.get("contractCode"))
                 table_batches: dict[str, list[Any]] = defaultdict(list)
                 for item in bronze_items:
                     table_batches[item.table].append(item.record)
@@ -231,6 +288,7 @@ class IngestionService:
                         f"Extraction failed on page {page_num} with {len(errors)} error(s)"
                     )
 
+                written_tables.update(table_batches)
                 buffered_writer.write_page(table_batches)
                 page_records = sum(len(records) for records in table_batches.values())
                 total_records += page_records
@@ -260,11 +318,16 @@ class IngestionService:
             if hasattr(self.fs, "invalidate_cache"):
                 self.fs.invalidate_cache()
             clean_bucket = str(self.bucket).removeprefix("file://").replace("\\", "/")
-            files_pattern = (
-                f"{clean_bucket}/bronze/{spec.dataset_name}/*/"
-                f"source_date={request.source_date.isoformat()}/run_id={run_id_str}/*.parquet"
+            # Keep listing bounded to tables actually emitted by this attempt. A wildcard
+            # before source_date makes S3 traverse unrelated resources and historical days.
+            found_keys = sorted(
+                key
+                for table_name in sorted(written_tables)
+                for key in self.fs.glob(
+                    f"{clean_bucket}/bronze/{spec.dataset_name}/{table_name}/"
+                    f"source_date={request.source_date.isoformat()}/run_id={run_id_str}/*.parquet"
+                )
             )
-            found_keys = sorted(self.fs.glob(files_pattern))
 
             commit_files: list[CommitFileDescriptor] = []
             for file_num, raw_key in enumerate(found_keys):
@@ -281,7 +344,11 @@ class IngestionService:
 
                 with self.fs.open(full_key, "rb") as f:
                     raw_content = f.read()
-                    content_bytes = raw_content.encode("utf-8") if isinstance(raw_content, str) else bytes(raw_content)
+                    content_bytes = (
+                        raw_content.encode("utf-8")
+                        if isinstance(raw_content, str)
+                        else bytes(raw_content)
+                    )
                     sha256 = calculate_file_sha256(content_bytes)
                     f.seek(0)
                     pq_file = pq.ParquetFile(f)
@@ -301,6 +368,17 @@ class IngestionService:
                     )
                 )
 
+            if heartbeat_errors:
+                raise heartbeat_errors[0]
+            metrics = {
+                "records": total_records,
+                "files": len(commit_files),
+                "search_items": search_count,
+                "record_counts": dict(record_counts),
+                "quality_counts": dict(issue_counts),
+                "distinct_contracts": len(contract_codes),
+                "pages": page_num,
+            }
             commit = self.metadata.publish_commit(
                 attempt.id,
                 owner_id=request.owner_id,
@@ -308,7 +386,7 @@ class IngestionService:
                 expected_base_commit_id=attempt.base_commit_id,
                 record_count=total_records,
                 files=commit_files,
-                verification={"files_verified": len(commit_files)},
+                verification={"files_verified": len(commit_files), **metrics},
             )
 
             return MaterializeDayResult(
@@ -321,14 +399,33 @@ class IngestionService:
                 file_count=commit.file_count,
                 commit_id=commit.id,
                 attempt_id=attempt.id,
-                metrics={"records": total_records, "files": len(commit_files)},
+                metrics=metrics,
             )
 
-        except Exception as exc:
+        except BaseException as exc:
+            if spec is not None and spec.strict_pagination:
+                self.metadata.record_error(
+                    ErrorDescriptor(
+                        id=uuid4(),
+                        attempt_id=attempt.id,
+                        stage="ingestion",
+                        error_type=type(exc).__name__,
+                        message=sanitize_error_message(str(exc)),
+                        page_number=page_num,
+                        http_status=extract_http_status(exc),
+                        details=getattr(exc, "diagnostics", {}),
+                        occurred_at=datetime.now(UTC),
+                    )
+                )
             self.metadata.fail_attempt(
                 attempt.id,
                 owner_id=request.owner_id,
                 generation=generation,
-                reason=str(exc),
+                reason=sanitize_error_message(str(exc)),
             )
             raise
+
+        finally:
+            heartbeat_stop.set()
+            if heartbeat_thread is not None:
+                heartbeat_thread.join(timeout=15)

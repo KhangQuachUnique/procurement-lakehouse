@@ -1,0 +1,30 @@
+{
+  "source_builder_sha256": "f6f57882408738e563c9d769cccb263e86295329dcfe0dd590c67fe3f9cfedb1",
+  "fixture_source_sha256": "abe467af7acf53ff23a7bbf20e74bf3ae7254aa9db7d55a59599c326babc7e31",
+  "scope": "fixed reviewed source-shaped fixture, five private business facts; NOT public schema oracle or full history",
+  "columns_excluded": [
+    "created_at"
+  ],
+  "tables": {
+    "fact_procurement_demand": {
+      "rows": 22,
+      "sha256": "e5038906443d1f83ffe2791e20a6913ff0ae0bf03b9710d906b6973ff7dd467d"
+    },
+    "fact_tender_notice": {
+      "rows": 5,
+      "sha256": "415fae7789de13a16283ee39e92f4fc8706c823da037c6f88f6f53cf2301590d"
+    },
+    "fact_award": {
+      "rows": 19,
+      "sha256": "162a944360b569205b538bfa61d45fed1e9b8f6990c48314b2123ceb13e59ff8"
+    },
+    "fact_savings": {
+      "rows": 19,
+      "sha256": "72a3a4b65081786c18ccf2d2123cd2a93924c6f24d89ce2515160f7a116454ce"
+    },
+    "fact_selection_round": {
+      "rows": 5,
+      "sha256": "ece5e4008495150bf9337aeca1180d4ca909bb96e4a381febfdbac660764d31e"
+    }
+  }
+}

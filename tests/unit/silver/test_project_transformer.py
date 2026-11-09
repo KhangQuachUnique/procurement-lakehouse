@@ -180,8 +180,8 @@ def test_transform_project_with_pipe_codes_and_toplevel_metadata():
     loc_child = result.children[0]
     assert loc_child.kind == "location"
     assert loc_child.source_id == "115"
-    assert '"prov_code":"115"' in loc_child.payload_json
-    assert '"district_code":"11509"' in loc_child.payload_json
+    assert loc_child.typed_attributes["province_code"] == "115"
+    assert loc_child.typed_attributes["district_code"] == "11509"
 
 
 def test_project_full_assembly_and_validation():
@@ -359,5 +359,31 @@ def test_project_pre_golive_empty_location():
 
     # Should not produce dummy empty location children
     assert len(result.children) == 0
+
+
+def test_project_cross_field_anchor_inference():
+    transformer = ProjectDetailTransformer()
+    # User typed 2066-08-20, but publicDate is 2024-08-24 -> snaps to 2024-08-20
+    payload = {
+        "projectDTO": {
+            "id": "PRJ-ANCHOR",
+            "decisionDate": "2066-08-20",
+            "publicDate": "2024-08-24",
+        }
+    }
+    result = transformer.transform(make_envelope(payload))
+    assert result.typed_attributes["decision_date"] == "2024-08-20"
+    assert result.typed_attributes["public_date"] == "2024-08-24"
+
+    # Historical project from 1977 preserved safely
+    payload_hist = {
+        "projectDTO": {
+            "id": "PRJ-HIST",
+            "decisionDate": "1977-05-12",
+            "publicDate": "2024-08-24",
+        }
+    }
+    result_hist = transformer.transform(make_envelope(payload_hist))
+    assert result_hist.typed_attributes["decision_date"] == "1977-05-12"
 
 

@@ -1,0 +1,9 @@
+SELECT owner_key,report_date,sector_key,method_key,metric_key,interval_count,excluded_sample_count,duration_sum,sample_count FROM (SELECT package_key AS owner_key,
+report_date AS report_date,
+coalesce(sector_key,'SEC_UNKNOWN') AS sector_key,
+coalesce(method_key,'METHOD_UNKNOWN') AS method_key,
+metric_key AS metric_key,
+CAST(coalesce((1),0) AS BIGINT) AS interval_count,
+CAST(coalesce((CASE WHEN eligible THEN 0 ELSE 1 END),0) AS BIGINT) AS excluded_sample_count,
+CAST(coalesce((coalesce(duration_value,0)),0) AS DECIMAL(38,6)) AS duration_sum,
+CAST(coalesce((CASE WHEN eligible THEN 1 ELSE 0 END),0) AS BIGINT) AS sample_count FROM (SELECT package_key,first_notice_date_key report_date,sector_key,method_key,'plan_to_notice_days' metric_key,CASE WHEN is_plan_to_notice_eligible THEN plan_to_notice_days ELSE 0 END duration_value,is_plan_to_notice_eligible eligible FROM business.fact_selection_round UNION ALL SELECT package_key,close_date_key report_date,sector_key,method_key,'notice_to_close_hours' metric_key,CASE WHEN is_notice_to_close_eligible THEN notice_to_close_hours ELSE 0 END duration_value,is_notice_to_close_eligible eligible FROM business.fact_selection_round UNION ALL SELECT package_key,first_award_published_date_key report_date,sector_key,method_key,'close_to_first_award_days' metric_key,CASE WHEN is_close_to_first_award_eligible THEN close_to_first_award_days ELSE 0 END duration_value,is_close_to_first_award_eligible eligible FROM business.fact_selection_round UNION ALL SELECT package_key,complete_award_published_date_key report_date,sector_key,method_key,'close_to_complete_award_days' metric_key,CASE WHEN is_close_to_complete_award_eligible THEN close_to_complete_award_days ELSE 0 END duration_value,is_close_to_complete_award_eligible eligible FROM business.fact_selection_round) intervals WHERE (report_date BETWEEN DATE '{event_start}' AND DATE '{event_end}' OR report_date IS NULL)) projected

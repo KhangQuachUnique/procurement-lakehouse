@@ -355,7 +355,7 @@ def test_cli_multi_year_parallel_execution(monkeypatch):
     monkeypatch.setattr(silver, "run_resource", run)
     result = runner.invoke(
         silver.app,
-        ["notice", "--start-date", "2022-01-01", "--end-date", "2024-12-31"],
+        ["notice", "--start-date", "2022-01-01", "--end-date", "2024-12-31", "--no-iceberg"],
     )
     assert result.exit_code == 0, result.output
     # Expect 3 calls corresponding to 2022, 2023, 2024

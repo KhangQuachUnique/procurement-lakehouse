@@ -106,6 +106,13 @@ def run_resource(
     db_engine: Any = None,
     iceberg: bool = False,
     iceberg_config: Any = None,
+    change_journal=None,
+    readiness_evidence=False,
+    iceberg_namespace="silver",
+    iceberg_memory_limit="4GB",
+    iceberg_threads=4,
+    direct_iceberg_only: bool = False,
+    batch_size: int = 30,
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]
@@ -115,6 +122,7 @@ def run_resource(
     bronze_repo = ArrowBronzeRepositoryAdapter(
         fs=fs,
         db_engine=db_engine,
+        verify_files=resource == "contract_performance",
         freeze_fn=active_freeze if active_freeze is not default_freeze else None,
         records_fn=active_records if active_records is not default_records else None,
     )
@@ -128,12 +136,24 @@ def run_resource(
     elif iceberg_config is not None:
         resolved_iceberg_config = iceberg_config
 
+    if resolved_iceberg_config is not None and change_journal is None:
+        from procurement.common.settings import settings
+
+        change_journal = settings.SILVER_CHANGE_JOURNAL_ROOT
+
     use_case = ProcessSilverService(
         bronze_repo=bronze_repo,
         silver_repo=silver_repo,
         bucket=bucket,
         resource_name=resource,
         iceberg_config=resolved_iceberg_config,
+        change_journal=change_journal,
+        readiness_evidence=readiness_evidence,
+        iceberg_namespace=iceberg_namespace,
+        iceberg_memory_limit=iceberg_memory_limit,
+        iceberg_threads=iceberg_threads,
+        direct_iceberg_only=direct_iceberg_only,
+        batch_size=batch_size,
     )
 
     return use_case.execute(
@@ -142,6 +162,7 @@ def run_resource(
         family=family,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
+        batch_size=batch_size,
         on_progress=on_progress,
     )
 

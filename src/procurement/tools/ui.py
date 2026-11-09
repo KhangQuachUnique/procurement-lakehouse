@@ -348,7 +348,7 @@ def render_compaction_plan(result: dict[str, Any], plan_path: Any) -> None:
     panel_text = (
         f"[bold green]✨ Compaction plan created successfully![/bold green]\n"
         f"To apply this plan under execution lock, run:\n"
-        f"[bold cyan]uv run python -m procurement.tools.compact_bronze run --plan {plan_path}[/bold cyan]"
+        f"Legacy compaction plan: {plan_path}. The S3-manifest compaction CLI has been removed."
     )
     console.print(Panel(panel_text, title="🚀 Ready to Compact", border_style="green", box=box.ROUNDED))
     console.print()

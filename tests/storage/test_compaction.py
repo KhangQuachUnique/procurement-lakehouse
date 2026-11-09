@@ -391,18 +391,16 @@ def test_missing_quality_is_not_invented(env):
     assert not fs.glob(f"{quality_prefix(identity, receipt['run_id'], DAY)}/*.json")
 
 
-def test_cli_plan_run_resume(env, monkeypatch, capsys):
-    from procurement.tools import compact_bronze
-
+def test_saved_plan_run_resume(env):
     fs, root = env
     seed(fs)
-    monkeypatch.setattr(compact_bronze, "create_s3_filesystem", lambda: fs)
-    compact_bronze.main(["plan", "--resource", "khlcnt", "--start-date", str(DAY),
-                         "--end-date", str(DAY), "--output-dir", str(root / "exports")])
-    path = json.loads(capsys.readouterr().out)["plan"]
-    assert compact_bronze.main(["run", "--plan", path]) == 0
+    plan = plan_for(fs)
+    path = root / "plan.json"
+    path.write_text(json.dumps(plan), encoding="utf-8")
+    restored = json.loads(path.read_text(encoding="utf-8"))
+    assert compaction.run_plan(fs, restored, root / "work")["complete"]
     run_id = selected(fs)[0].run_id
-    assert compact_bronze.main(["run", "--plan", path]) == 0
+    assert compaction.run_plan(fs, restored, root / "work")["complete"]
     assert selected(fs)[0].run_id == run_id
 
 

@@ -6,12 +6,14 @@ import json
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
+from procurement.bootstrap import get_metadata_service
 from procurement.common.catalog import get_resource
+from procurement.metadata.models import PartitionIdentity
 from procurement.quality.contracts import lookup
-from procurement.storage.committed import iter_committed_records, select_committed_days
+from procurement.storage.committed import CommittedDay, iter_committed_records
 from procurement.storage.object_store import create_s3_filesystem
 
 OPENING_ROOTS = {
@@ -258,7 +260,21 @@ def main(argv=None):
     output.mkdir(parents=True, exist_ok=False)
     print(f"Selecting committed days for {args.year} (requires every day SUCCESS)...", flush=True)
     fs = create_s3_filesystem()
-    selection = select_committed_days(fs, get_resource(args.resource), start, end)
+    identity = get_resource(args.resource).identity
+    snapshots = get_metadata_service().get_snapshot([
+        PartitionIdentity(identity.source, identity.resource, start + timedelta(days=i))
+        for i in range((end - start).days + 1)
+    ])
+    if len(snapshots) != (end - start).days + 1:
+        raise ValueError("Every requested day must have a PostgreSQL commit")
+    selection = tuple(
+        CommittedDay(
+            snap.partition.identity.source_date, str(snap.commit.attempt_id),
+            snap.commit.record_count,
+            tuple((f.table_name, f"{f.bucket}/{f.object_key}") for f in snap.files),
+        )
+        for snap in sorted(snapshots, key=lambda snap: snap.partition.identity.source_date)
+    )
     summary = run_profile(fs, selection, output, args.year, args.workers)
     print(f"DONE: {summary['records']:,} records; reports: {output.resolve()}", flush=True)
 

@@ -6,11 +6,15 @@ import sys
 from datetime import date, timedelta
 from uuid import UUID, uuid4
 
-from procurement.bootstrap import get_ingestion_service
+from dotenv import load_dotenv
+
+from procurement.bootstrap import get_ingestion_service, get_metadata_service
 from procurement.common.catalog import DEFAULT_SOURCE, SUPPORTED_RESOURCES
+from procurement.common.dates import today_vn, validate_closed_range
+from procurement.common.errors import sanitize_error_message
 from procurement.ingestion.contracts import MaterializeDayRequest
+from procurement.metadata.models import PartitionIdentity
 from procurement.tools.ui import (
-    create_progress_display,
     is_rich_enabled,
     render_ingestion_summary,
 )
@@ -21,6 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
         description="Materialize partition day(s) for a given resource using IngestionService."
     )
     parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Read PostgreSQL commits and show missing dates without crawling or writing.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output raw JSON instead of interactive UI",
@@ -28,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--resource",
         required=True,
-        choices=SUPPORTED_RESOURCES,
+        choices=("all", *SUPPORTED_RESOURCES),
         help="Target procurement resource name.",
     )
     parser.add_argument(
@@ -55,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--year",
         type=int,
         default=None,
-        help="Full calendar year to ingest (e.g. 2025).",
+        help="Calendar year; the current year ends at yesterday in Vietnam.",
     )
     parser.add_argument(
         "--continue-on-error",
@@ -98,6 +106,7 @@ def resolve_dates(args: argparse.Namespace) -> list[date]:
     if args.source_date is not None:
         if args.year is not None or args.start_date is not None or args.end_date is not None:
             raise ValueError("--date cannot be combined with --year or --start-date/--end-date")
+        validate_closed_range(args.source_date, args.source_date, today=today_vn())
         return [args.source_date]
     if args.year is not None:
         if args.start_date is not None or args.end_date is not None:
@@ -110,8 +119,9 @@ def resolve_dates(args: argparse.Namespace) -> list[date]:
     else:
         raise ValueError("Must specify --date, --year, or both --start-date and --end-date")
 
-    if start > end:
-        raise ValueError(f"Start date {start} must be <= end date {end}")
+    if args.year == today_vn().year:
+        end = today_vn() - timedelta(days=1)
+    validate_closed_range(start, end, today=today_vn())
 
     days: list[date] = []
     curr = start
@@ -123,88 +133,68 @@ def resolve_dates(args: argparse.Namespace) -> list[date]:
 
 def run_ingest(args: argparse.Namespace) -> dict:
     dates = resolve_dates(args)
+    resources = SUPPORTED_RESOURCES if args.resource == "all" else (args.resource,)
+    if (args.request_id is not None or args.owner_id is not None) and len(dates) * len(resources) > 1:
+        raise ValueError("--request-id/--owner-id require a single resource and date")
+    if args.dry_run:
+        metadata = get_metadata_service()
+        plans = []
+        for resource in resources:
+            snapshots = metadata.get_snapshot([
+                PartitionIdentity(args.source, resource, day) for day in dates
+            ])
+            committed = {view.partition.identity.source_date for view in snapshots}
+            plans.append({
+                "resource": resource,
+                "committed_days": len(committed),
+                "reused_days": 0 if args.refresh else len(committed),
+                "planned_dates": [str(day) for day in dates if args.refresh or day not in committed],
+            })
+        return {
+            "status": "success", "dry_run": True, "metadata": "postgresql",
+            "start_date": str(dates[0]), "end_date": str(dates[-1]),
+            "total_days": len(dates), "resources": plans,
+        }
+
     service = get_ingestion_service()
     reports = []
-    use_rich = is_rich_enabled(args)
-
-    if use_rich and len(dates) > 1:
-        progress = create_progress_display()
-        with progress:
-            task = progress.add_task(
-                f"[bold magenta]{args.resource}[/bold magenta]",
-                label=args.resource,
-                sublabel="Ingesting",
-                total=len(dates),
-                status="Starting...",
-            )
-            for idx, day in enumerate(dates, start=1):
-                req = MaterializeDayRequest(
-                    source_date=day,
-                    source=args.source,
-                    resource=args.resource,
-                    refresh=args.refresh,
-                    request_id=args.request_id or uuid4(),
-                    owner_id=args.owner_id or uuid4(),
-                    dagster_run_id=args.dagster_run_id,
-                )
-                result = service.materialize_day(req)
-                rep = {
-                    "source": result.source,
-                    "resource": result.resource,
-                    "source_date": str(result.source_date),
-                    "status": result.status,
-                    "reused": result.reused,
-                    "commit_id": str(result.commit_id) if result.commit_id else None,
-                    "attempt_id": str(result.attempt_id) if result.attempt_id else None,
-                    "record_count": result.record_count,
-                    "file_count": result.file_count,
-                    "metrics": result.metrics,
-                }
-                reports.append(rep)
-                progress.update(
-                    task,
-                    completed=idx,
-                    status=f"{day} ({result.record_count} records)",
-                )
-                if result.status != "success" and not args.continue_on_error and len(dates) > 1:
-                    break
-    else:
+    stopped = False
+    for resource in resources:
         for day in dates:
             req = MaterializeDayRequest(
-                source_date=day,
-                source=args.source,
-                resource=args.resource,
-                refresh=args.refresh,
-                request_id=args.request_id or uuid4(),
-                owner_id=args.owner_id or uuid4(),
-                dagster_run_id=args.dagster_run_id,
+                source_date=day, source=args.source, resource=resource,
+                refresh=args.refresh, request_id=args.request_id or uuid4(),
+                owner_id=args.owner_id or uuid4(), dagster_run_id=args.dagster_run_id,
             )
             result = service.materialize_day(req)
-            rep = {
-                "source": result.source,
-                "resource": result.resource,
-                "source_date": str(result.source_date),
-                "status": result.status,
+            reports.append({
+                "source": result.source, "resource": result.resource,
+                "source_date": str(result.source_date), "status": result.status,
                 "reused": result.reused,
                 "commit_id": str(result.commit_id) if result.commit_id else None,
                 "attempt_id": str(result.attempt_id) if result.attempt_id else None,
-                "record_count": result.record_count,
-                "file_count": result.file_count,
+                "record_count": result.record_count, "file_count": result.file_count,
                 "metrics": result.metrics,
-            }
-            reports.append(rep)
-            if result.status != "success" and not args.continue_on_error and len(dates) > 1:
+            })
+            print(
+                f"{resource}/{day}: {result.status} "
+                f"({'reused' if result.reused else 'ingested'}, {result.record_count} records)",
+                file=sys.stderr, flush=True,
+            )
+            if result.status != "success" and not args.continue_on_error:
+                stopped = True
                 break
-
-    if len(dates) == 1 and args.source_date is not None:
+        if stopped:
+            break
+    if len(dates) == 1 and args.source_date is not None and len(resources) == 1:
         return reports[0]
-
     return {
-        "resource": args.resource,
-        "total_days": len(dates),
-        "processed_days": len(reports),
-        "success_days": sum(1 for r in reports if r["status"] == "success"),
-        "failed_days": sum(1 for r in reports if r["status"] != "success"),
+        "resource": args.resource, "metadata": "postgresql",
+        "total_days": len(dates) * len(resources), "processed_days": len(reports),
+        "success_days": sum(r["status"] == "success" for r in reports),
+        "failed_days": sum(r["status"] != "success" for r in reports),
+        "reused_days": sum(r["reused"] for r in reports),
+        "stopped_early": len(reports) < len(dates) * len(resources),
         "results": reports,
         "status": "success" if all(r["status"] == "success" for r in reports) else "failed",
     }
@@ -213,10 +203,11 @@ def run_ingest(args: argparse.Namespace) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    load_dotenv()
 
     try:
         report = run_ingest(args)
-        if is_rich_enabled(args):
+        if is_rich_enabled(args) and not args.dry_run:
             render_ingestion_summary(report)
         else:
             print(json.dumps(report, indent=2))
@@ -227,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
             "resource": args.resource,
             "source_date": str(args.source_date) if args.source_date else None,
             "status": "failed",
-            "error": str(exc),
+            "error": sanitize_error_message(str(exc)),
         }
         print(json.dumps(err_report, indent=2), file=sys.stderr)
         return 1
