@@ -17,9 +17,13 @@ Hệ thống hỗ trợ nạp bù dữ liệu lịch sử một cách an toàn m
 5. Nhấn **Submit Backfill**. Daemon Dagster sẽ tự động thực thi tuần tự từng ngày một cách hoàn toàn tự động.
 
 ### 1.2. Chạy Backfill Thông qua CLI Script
-Bạn cũng có thể chạy script backfill độc lập cho tầng Gold theo từng tháng:
+Bạn có thể chạy backfill độc lập từng tầng thông qua CLI:
 ```bash
-python scripts/run_gold_full_backfill.py --start-month 2025-01 --end-month 2025-12
+# 1. Backfill tầng Silver cho một khoảng thời gian (tự động gom batch và đa luồng):
+uv run silver all --start-date 2025-01-01 --end-date 2025-01-31
+
+# 2. Hoặc chạy script backfill lịch sử toàn diện cho tầng Gold (2022 - 2026):
+python scripts/run_gold_full_backfill.py
 ```
 
 ---

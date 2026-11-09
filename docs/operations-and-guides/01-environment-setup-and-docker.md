@@ -51,11 +51,15 @@ APP_POSTGRES_PASSWORD=password
 APP_POSTGRES_DB=procurement
 DAGSTER_POSTGRES_PASSWORD=dagster
 
-# Production Gold Active Release
-GOLD_RELEASE_NAMESPACE=gold_v2
+# Target Namespaces (Mặc định chuẩn xuất xưởng là 'silver' và 'gold')
+# Đặt thành 'silver_v2', 'gold_v2' khi bạn phát triển/thử nghiệm phiên bản mới
+SILVER_TARGET_NAMESPACE=silver
+SILVER_RELEASE_NAMESPACE=silver
+GOLD_TARGET_NAMESPACE=gold
+GOLD_RELEASE_NAMESPACE=gold
 
-# API Mua Sắm Công
-MUASAMCONG_BASE_URL=https://muasamcong.mpi.gov.vn
+# API Mua Sắm Công (Bộ Tài chính)
+MUASAMCONG_BASE_URL=https://muasamcong.mof.gov.vn
 ```
 
 ---

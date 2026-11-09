@@ -1,0 +1,1247 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="fact_demand_daily" name="fact_demand_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1562" pageHeight="1320">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_demand_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1512" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily" value="fact_demand_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="499.0" width="459" height="372" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="48" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="84" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_geography_key" value="FK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="120" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="156" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_value_band_key" value="FK* value_band_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="192" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_currency_key" value="FK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="228" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_package_count" value="package_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="264" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_eligible_amount_count" value="eligible_amount_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="300" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_demand_daily_planned_amount_sum" value="planned_amount_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_demand_daily">
+          <mxGeometry x="0" y="336" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.27419354838709675;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_demand_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.46774193548387094;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_demand_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography" value="dim_geography" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1148" y="298.5" width="384" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_key" value="PK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="48" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_version" value="geography_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="84" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_code" value="province_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="120" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_name" value="province_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="156" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_region_name" value="region_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="192" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_multi_geography" value="is_multi_geography : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="228" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="264" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_from" value="valid_from : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="300" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_to" value="valid_to : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="336" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_current" value="is_current : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="372" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_geography" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.3709677419354839;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_geography" target="fact_demand_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band" value="dim_value_band" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1148" y="771.5" width="359" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_key" value="PK* band_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_currency_key" value="currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_policy_version" value="policy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_min_amount" value="min_amount : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_max_amount" value="max_amount : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_label" value="band_label : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="228" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_order" value="band_order : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="264" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_value_band" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.5645161290322581;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_value_band" target="fact_demand_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency" value="dim_currency" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1008.0" width="359" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_key" value="PK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_code" value="currency_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_supported" value="is_supported : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_currency" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.6612903225806451;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_currency" target="fact_demand_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1255" width="1512" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_notice_daily" name="fact_notice_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1525" pageHeight="1099">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_notice_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1475" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily" value="fact_notice_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="406.5" width="422" height="336" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="48" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="84" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_geography_key" value="FK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="120" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="156" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_method_key" value="FK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="192" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_notice_family" value="notice_family : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="228" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_notice_count" value="notice_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="264" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_notice_daily_cancelled_notice_count" value="cancelled_notice_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_notice_daily">
+          <mxGeometry x="0" y="300" width="422" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="188.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.30357142857142855;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_notice_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="733.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.5178571428571429;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_notice_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography" value="dim_geography" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1111" y="170.0" width="384" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_key" value="PK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="48" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_version" value="geography_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="84" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_code" value="province_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="120" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_name" value="province_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="156" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_region_name" value="region_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="192" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_multi_geography" value="is_multi_geography : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="228" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="264" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_from" value="valid_from : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="300" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_to" value="valid_to : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="336" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_current" value="is_current : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="372" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_geography" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.4107142857142857;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_geography" target="fact_notice_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method" value="dim_procurement_method" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1111" y="643.0" width="372" height="336" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_key" value="PK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="48" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_mapping_version" value="mapping_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="84" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_form_raw" value="bid_form_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="120" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_mode_raw" value="bid_mode_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="156" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_domestic" value="is_domestic : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="192" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_internet" value="is_internet : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="228" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_contract_type_raw" value="contract_type_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="264" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_category" value="method_category : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="300" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_procurement_method" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.625;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_procurement_method" target="fact_notice_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1034" width="1475" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_award_daily" name="fact_award_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1587" pageHeight="1320">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_award_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1537" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily" value="fact_award_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="481.0" width="484" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="48" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="84" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_geography_key" value="FK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="120" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="156" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_method_key" value="FK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="192" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_currency_key" value="FK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="228" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_award_scope_count" value="award_scope_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="264" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_effective_award_scope_count" value="effective_award_scope_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="300" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_eligible_amount_count" value="eligible_amount_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="336" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_award_daily_award_amount_sum" value="award_amount_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_award_daily">
+          <mxGeometry x="0" y="372" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.25;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_award_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.4264705882352941;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_award_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography" value="dim_geography" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1173" y="280.5" width="384" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_key" value="PK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="48" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_version" value="geography_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="84" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_code" value="province_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="120" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_name" value="province_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="156" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_region_name" value="region_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="192" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_multi_geography" value="is_multi_geography : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="228" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="264" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_from" value="valid_from : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="300" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_to" value="valid_to : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="336" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_current" value="is_current : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="372" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_geography" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.3382352941176471;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_geography" target="fact_award_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method" value="dim_procurement_method" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1173" y="753.5" width="372" height="336" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_key" value="PK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="48" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_mapping_version" value="mapping_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="84" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_form_raw" value="bid_form_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="120" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_mode_raw" value="bid_mode_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="156" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_domestic" value="is_domestic : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="192" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_internet" value="is_internet : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="228" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_contract_type_raw" value="contract_type_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="264" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_category" value="method_category : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="300" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_procurement_method" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.5147058823529411;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_procurement_method" target="fact_award_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency" value="dim_currency" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1008.0" width="359" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_key" value="PK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_code" value="currency_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_supported" value="is_supported : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_currency" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.6029411764705882;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_currency" target="fact_award_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1255" width="1537" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_savings_daily" name="fact_savings_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1662" pageHeight="1428">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_savings_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1612" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily" value="fact_savings_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="427.0" width="559" height="624" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="48" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="84" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_geography_key" value="FK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="120" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="156" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_method_key" value="FK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="192" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_value_band_key" value="FK* value_band_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="228" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_currency_key" value="FK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="264" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_scope_count" value="scope_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="300" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_descriptive_sample_count" value="descriptive_sample_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="336" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_descriptive_baseline_sum" value="descriptive_baseline_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="372" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_descriptive_award_sum" value="descriptive_award_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="408" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_descriptive_difference_sum" value="descriptive_difference_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="444" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_verified_sample_count" value="verified_sample_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="480" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_verified_baseline_sum" value="verified_baseline_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="516" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_verified_award_sum" value="verified_award_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="552" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_savings_daily_verified_saving_sum" value="verified_saving_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_savings_daily">
+          <mxGeometry x="0" y="588" width="559" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.16346153846153846;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.27884615384615385;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography" value="dim_geography" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1248" y="206.0" width="384" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_key" value="PK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="48" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_version" value="geography_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="84" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_code" value="province_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="120" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_name" value="province_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="156" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_region_name" value="region_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="192" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_multi_geography" value="is_multi_geography : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="228" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="264" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_from" value="valid_from : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="300" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_to" value="valid_to : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="336" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_current" value="is_current : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="372" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_geography" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.22115384615384615;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_geography" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method" value="dim_procurement_method" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1248" y="679.0" width="372" height="336" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_key" value="PK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="48" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_mapping_version" value="mapping_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="84" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_form_raw" value="bid_form_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="120" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_mode_raw" value="bid_mode_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="156" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_domestic" value="is_domestic : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="192" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_internet" value="is_internet : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="228" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_contract_type_raw" value="contract_type_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="264" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_category" value="method_category : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="300" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_procurement_method" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.33653846153846156;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_procurement_method" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band" value="dim_value_band" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1008.0" width="359" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_key" value="PK* band_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_currency_key" value="currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_policy_version" value="policy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_min_amount" value="min_amount : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_max_amount" value="max_amount : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_label" value="band_label : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="228" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_value_band_band_order" value="band_order : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_value_band">
+          <mxGeometry x="0" y="264" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_value_band" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.3942307692307692;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_value_band" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency" value="dim_currency" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1248" y="1080.0" width="359" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_key" value="PK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_code" value="currency_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_supported" value="is_supported : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_currency" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.4519230769230769;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_currency" target="fact_savings_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1363" width="1612" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_duration_daily" name="fact_duration_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1171">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_duration_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1450" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily" value="fact_duration_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="552" y="424.5" width="409" height="372" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="48" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="84" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="120" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_method_key" value="FK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="156" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_metric_key" value="FK* metric_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="192" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_interval_count" value="interval_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="228" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_excluded_sample_count" value="excluded_sample_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="264" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_duration_sum" value="duration_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="300" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_duration_daily_sample_count" value="sample_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_duration_daily">
+          <mxGeometry x="0" y="336" width="409" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="93" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.27419354838709675;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_duration_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_duration_metric" value="dim_duration_metric" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1111" y="679.0" width="334" height="156" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_duration_metric_metric_key" value="PK* metric_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_duration_metric">
+          <mxGeometry x="0" y="48" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_duration_metric_metric_name" value="metric_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_duration_metric">
+          <mxGeometry x="0" y="84" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_duration_metric_duration_unit" value="duration_unit : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_duration_metric">
+          <mxGeometry x="0" y="120" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_duration_metric" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.5645161290322581;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_duration_metric" target="fact_duration_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method" value="dim_procurement_method" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="372" height="336" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_key" value="PK* method_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="48" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_mapping_version" value="mapping_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="84" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_form_raw" value="bid_form_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="120" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_bid_mode_raw" value="bid_mode_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="156" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_domestic" value="is_domestic : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="192" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_is_internet" value="is_internet : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="228" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_contract_type_raw" value="contract_type_raw : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="264" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_procurement_method_method_category" value="method_category : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_procurement_method">
+          <mxGeometry x="0" y="300" width="372" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_procurement_method" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.46774193548387094;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_procurement_method" target="fact_duration_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1111" y="386.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.3709677419354839;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_duration_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1106" width="1450" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_supplier_daily" name="fact_supplier_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1587" pageHeight="1392">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_supplier_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1537" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily" value="fact_supplier_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="499.0" width="484" height="444" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="48" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="84" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_geography_key" value="FK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="120" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="156" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_currency_key" value="FK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="192" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_party_key" value="FK* party_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="228" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_recipient_allocation_state" value="recipient_allocation_state : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="264" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_award_scope_count" value="award_scope_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="300" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_effective_award_scope_count" value="effective_award_scope_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="336" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_eligible_amount_count" value="eligible_amount_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="372" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_supplier_daily_award_amount_sum" value="award_amount_sum : DECIMAL(38,6)" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_supplier_daily">
+          <mxGeometry x="0" y="408" width="484" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.22972972972972974;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_supplier_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party" value="dim_party" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1008.0" width="359" height="264" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_party_key" value="PK* party_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_party_kind" value="party_kind : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_party_code" value="party_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_party_name" value="party_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_tax_code" value="tax_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_party_source_namespace" value="source_namespace : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_party">
+          <mxGeometry x="0" y="228" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_party" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.5540540540540541;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_party" target="fact_supplier_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.3918918918918919;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_supplier_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography" value="dim_geography" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1173" y="388.5" width="384" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_key" value="PK* geography_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="48" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_geography_version" value="geography_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="84" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_code" value="province_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="120" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_province_name" value="province_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="156" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_region_name" value="region_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="192" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_multi_geography" value="is_multi_geography : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="228" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="264" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_from" value="valid_from : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="300" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_valid_to" value="valid_to : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="336" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_geography_is_current" value="is_current : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_geography">
+          <mxGeometry x="0" y="372" width="384" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_geography" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.3108108108108108;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_geography" target="fact_supplier_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency" value="dim_currency" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1173" y="861.5" width="359" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_key" value="PK* currency_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_currency_code" value="currency_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_supported" value="is_supported : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_currency_is_unknown" value="is_unknown : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_currency">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_currency" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.47297297297297297;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_currency" target="fact_supplier_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="1327" width="1537" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fact_status_daily" name="fact_status_daily">
+    <mxGraphModel dx="2800" dy="2300" grid="1" page="1" pageScale="1" pageWidth="1512" pageHeight="1063">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="fact_status_daily — THIẾT KẾ ĐỀ XUẤT" style="text;html=0;fontSize=28;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="25" width="1462" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily" value="fact_status_daily" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="539" y="442.5" width="334" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily_group_key" value="PK* group_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_status_daily">
+          <mxGeometry x="0" y="48" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily_report_date" value="FK* report_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_status_daily">
+          <mxGeometry x="0" y="84" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily_status_key" value="FK* status_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_status_daily">
+          <mxGeometry x="0" y="120" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily_sector_key" value="FK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_status_daily">
+          <mxGeometry x="0" y="156" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_status_daily_package_count" value="package_count : BIGINT" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="fact_status_daily">
+          <mxGeometry x="0" y="192" width="334" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170.0" width="309" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_date_key" value="PK* date_key : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="48" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year" value="year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="84" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_quarter" value="quarter : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="120" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_month" value="month : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="156" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day" value="day : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="192" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_day_of_week" value="day_of_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="228" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_is_weekend" value="is_weekend : BOOLEAN" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="264" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_quarter" value="year_quarter : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="300" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_year_month" value="year_month : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="336" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_year" value="iso_year : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="372" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_iso_week" value="iso_week : INTEGER" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="408" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date_week_start_date" value="week_start_date : DATE" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_date">
+          <mxGeometry x="0" y="444" width="309" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_date" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.4473684210526316;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_date" target="fact_status_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_progress_status" value="dim_progress_status" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1023" y="478.5" width="459" height="156" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_progress_status_status_key" value="PK* status_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_progress_status">
+          <mxGeometry x="0" y="48" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_progress_status_notice_observation_state" value="notice_observation_state : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_progress_status">
+          <mxGeometry x="0" y="84" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_progress_status_award_observation_state" value="award_observation_state : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_progress_status">
+          <mxGeometry x="0" y="120" width="459" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_progress_status" style="edgeStyle=none;html=0;exitX=0;exitY=0.5;exitPerimeter=0;entryX=1;entryY=0.6052631578947368;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_progress_status" target="fact_status_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector" value="dim_sector" style="swimlane;html=0;startSize=48;fontSize=24;fontStyle=1;collapsible=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="30" y="715.0" width="359" height="228" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_key" value="PK* sector_key : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="48" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_taxonomy_version" value="taxonomy_version : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="84" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_code" value="sector_code : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="120" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_name" value="sector_name : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="156" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_sector_sector_group" value="sector_group : VARCHAR" style="text;html=0;align=left;spacingLeft=12;fontSize=22;verticalAlign=middle;" vertex="1" parent="dim_sector">
+          <mxGeometry x="0" y="192" width="359" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_sector" style="edgeStyle=none;html=0;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.7631578947368421;entryPerimeter=0;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="dim_sector" target="fact_status_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK*/FK*: khóa logic • Đầy đủ trường của mô hình đề xuất • Không thay đổi Gold đang chạy" style="text;html=0;fontSize=18;align=center;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="998" width="1462" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

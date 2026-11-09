@@ -23,7 +23,7 @@ from dagster import (
     asset_check,
 )
 
-from procurement.common.settings import Settings
+from procurement.common.settings import Settings, settings
 from procurement.gold.application.processor import process_gold_day
 from procurement.gold.application.reconciliation import reconcile_gold
 from procurement.gold.application.warehouse import ensure_gold_tables, seed_geography
@@ -38,12 +38,12 @@ class GoldExecutionConfig(Config):
     """Runtime configuration for Gold incremental execution.
 
     Governance Policy:
-    Production Dagster pipelines strictly execute against the active promoted release (default: 'gold_v2').
-    Experimental/candidate runs with custom targets are reserved for the CLI.
+    Production Dagster pipelines execute against the configured release (default: settings.GOLD_TARGET_NAMESPACE).
+    Experimental/candidate runs with custom targets are configurable via environment or CLI.
     """
 
-    silver_namespace: str = "silver_v2"
-    gold_namespace: str = "gold_v2"
+    silver_namespace: str = settings.SILVER_TARGET_NAMESPACE
+    gold_namespace: str = settings.GOLD_TARGET_NAMESPACE
     memory_limit: str = "2GB"
     threads: int = 2
 
@@ -68,11 +68,12 @@ class GoldExecutionConfig(Config):
     ],
 )
 def gold_dim_geography(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
+    target_ns = settings.GOLD_TARGET_NAMESPACE
+    cfg = settings.iceberg_config()
     with connect(cfg) as conn:
-        ensure_gold_tables(conn, namespace="gold_v2")
-        seed_geography(conn, namespace="gold_v2")
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_geography").fetchone()[0]
+        ensure_gold_tables(conn, namespace=target_ns)
+        seed_geography(conn, namespace=target_ns)
+        count = conn.execute(f"SELECT count(*) FROM lake.{target_ns}.dim_geography").fetchone()[0]
 
     yield MaterializeResult(
         metadata={
@@ -95,10 +96,11 @@ def gold_dim_geography(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "date_key"},
 )
 def gold_dim_date(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
+    target_ns = settings.GOLD_TARGET_NAMESPACE
+    cfg = settings.iceberg_config()
     with connect(cfg) as conn:
-        ensure_gold_tables(conn, namespace="gold_v2")
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_date").fetchone()[0]
+        ensure_gold_tables(conn, namespace=target_ns)
+        count = conn.execute(f"SELECT count(*) FROM lake.{target_ns}.dim_date").fetchone()[0]
 
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
@@ -552,9 +554,11 @@ GOLD_FACTS_ASSETS = [
     description="Automated 3-part Financial and Referential Integrity Audit across lake.gold_v2",
 )
 def full_gold_reconciliation_audit() -> AssetCheckResult:
-    cfg = Settings.from_environment().iceberg_config()
+    gold_ns = settings.GOLD_TARGET_NAMESPACE
+    silver_ns = settings.SILVER_TARGET_NAMESPACE
+    cfg = settings.iceberg_config()
     with connect(cfg) as conn:
-        report = reconcile_gold(conn, gold_schema="lake.gold_v2", silver_schema="lake.silver_v2")
+        report = reconcile_gold(conn, gold_schema=f"lake.{gold_ns}", silver_schema=f"lake.{silver_ns}")
 
     return AssetCheckResult(
         passed=report.is_valid,

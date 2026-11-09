@@ -20,8 +20,9 @@ dependencies = [
 ]
 
 [project.scripts]
-gold = "procurement.gold.adapters.driving.cli:main"
+ingest = "procurement.cli.ingest:main"
 silver = "procurement.cli.silver:main"
+gold = "procurement.gold.adapters.driving.cli:main"
 
 [project.optional-dependencies]
 metadata = [

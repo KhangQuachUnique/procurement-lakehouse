@@ -28,7 +28,7 @@ flowchart TD
 
     subgraph S3["3. Tầng Silver (Relational Lakehouse)"]
         SILVER_TRANS["Silver Transformer & Normalizer<br/>(Pydantic Validation, 1-Hop Relations)"]
-        SILVER_ICEBERG[("Apache Iceberg Format v2<br/>Catalog: lake.silver_v2<br/>(23 Bảng Chuẩn hóa Quan hệ)")]
+        SILVER_ICEBERG[("Apache Iceberg Format v2<br/>Catalog: lake.silver<br/>(23 Bảng Chuẩn hóa Quan hệ)")]
         JOURNAL[("Silver Change Journal<br/>(Ghi nhận Delta & Audit Trail)")]
         
         BRONZE_S3 --> SILVER_TRANS
@@ -40,8 +40,8 @@ flowchart TD
     subgraph S4["4. Tầng Gold (Business Dimensional Star Schema)"]
         GOLD_COMPUTE["Gold Analytical Compute Engine<br/>(DuckDB In-Memory OLAP)"]
         CLUSTERING["Entity Resolution<br/>(Union-Find Graph Clustering)"]
-        GOLD_DIMS[("9 Bảng Chiều (Dimensions)<br/>lake.gold_v2.dim_*")]
-        GOLD_FACTS[("7 Bảng Sự kiện (Facts)<br/>lake.gold_v2.fact_*_daily")]
+        GOLD_DIMS[("9 Bảng Chiều (Dimensions)<br/>lake.gold.dim_*")]
+        GOLD_FACTS[("7 Bảng Sự kiện (Facts)<br/>lake.gold.fact_*_daily")]
         VIEWS[("Zero-Copy Reporting Views<br/>gold.*")]
         
         SILVER_ICEBERG --> GOLD_COMPUTE
@@ -116,4 +116,4 @@ flowchart LR
 
 4. **Zero-Copy Reporting Views (`gold.*`):**
    - Người dùng và hệ thống BI (Metabase, Looker, Superset) truy vấn thông qua các SQL View logic trong schema `gold.*`.
-   - Các view này trỏ trực tiếp tới release vật lý đang active (ví dụ: `lake.gold_v2.*`), cho phép chuyển đổi phiên bản (blue-green promote) tức thì mà không cần copy hay di chuyển dữ liệu.
+   - Các view này trỏ trực tiếp tới release vật lý đang active (ví dụ: `lake.gold.*` hoặc bản thử nghiệm `lake.gold_v2.*`), cho phép chuyển đổi phiên bản (blue-green promote) tức thì mà không cần copy hay di chuyển dữ liệu.

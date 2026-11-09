@@ -134,7 +134,7 @@ class SilverConfig(Config):
         description="Skip execution if Silver output partitions already exist",
     )
     readiness_evidence: bool = False
-    iceberg_namespace: str = "silver"
+    iceberg_namespace: str = settings.SILVER_TARGET_NAMESPACE
     iceberg_memory_limit: str = "4GB"
     iceberg_threads: int = 4
 

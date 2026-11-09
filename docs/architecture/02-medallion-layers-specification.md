@@ -32,7 +32,7 @@ Hệ thống xử lý 4 tài nguyên chính phục vụ phân tích mua sắm c�
 
 Tầng Silver chuyển đổi dữ liệu thô bán cấu trúc thành **23 bảng quan hệ chuẩn hóa (Normalized Relational Schema)** theo tiêu chuẩn **Apache Iceberg Format v2**.
 
-### 2.1. Cấu trúc 23 Bảng Quan hệ (`lake.silver_v2`)
+### 2.1. Cấu trúc 23 Bảng Quan hệ (`lake.silver`)
 Dữ liệu được tổ chức theo quan hệ 1-Hop với các bảng gốc (Anchor Revisions) và bảng chi tiết:
 
 ```mermaid
@@ -146,18 +146,18 @@ Mọi bảng Fact đều có hạt phân vùng là `report_date` (phân vùng Ng
 - **Fact Table Transaction:**
   ```sql
   BEGIN TRANSACTION;
-  DELETE FROM lake.gold_v2.fact_award_daily 
+  DELETE FROM lake.gold.fact_award_daily 
   WHERE report_date >= '2025-10-09' AND report_date < '2025-10-10';
 
-  INSERT INTO lake.gold_v2.fact_award_daily
+  INSERT INTO lake.gold.fact_award_daily
   SELECT * FROM temp_fact_award_daily;
   COMMIT;
   ```
 - **Dimension Table Transaction:**
   ```sql
-  INSERT INTO lake.gold_v2.dim_party
+  INSERT INTO lake.gold.dim_party
   SELECT * FROM temp_dim_party t
   WHERE NOT EXISTS (
-    SELECT 1 FROM lake.gold_v2.dim_party d WHERE d.party_key = t.party_key
+    SELECT 1 FROM lake.gold.dim_party d WHERE d.party_key = t.party_key
   );
   ```

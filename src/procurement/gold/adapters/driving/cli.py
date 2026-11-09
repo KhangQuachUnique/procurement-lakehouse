@@ -134,7 +134,7 @@ def materialize_history(
 
 @app.command("ensure-tables")
 def cmd_ensure_tables(
-    namespace: str = typer.Option("gold_v2", help="Target Iceberg namespace in catalog 'lake'"),
+    namespace: str = typer.Option("gold", help="Target Iceberg namespace in catalog 'lake'"),
 ):
     """Provision all 16 tables in lake.{namespace} with monthly partitioning on facts."""
     from procurement.common.settings import Settings
@@ -148,7 +148,7 @@ def cmd_ensure_tables(
 
 @app.command("seed-geography")
 def cmd_seed_geography(
-    namespace: str = typer.Option("gold_v2", help="Target Iceberg namespace in catalog 'lake'"),
+    namespace: str = typer.Option("gold", help="Target Iceberg namespace in catalog 'lake'"),
 ):
     """Seed dim_geography with the authoritative 63 provinces dictionary."""
     from procurement.common.settings import Settings
@@ -177,8 +177,8 @@ def cmd_promote(
 
 @app.command("reconcile")
 def cmd_reconcile(
-    gold_schema: str = typer.Option("lake.gold_v2", help="Gold physical or view schema"),
-    silver_schema: str = typer.Option("silver", help="Silver schema"),
+    gold_schema: str = typer.Option("lake.gold", help="Gold physical or view schema"),
+    silver_schema: str = typer.Option("lake.silver", help="Silver schema"),
 ):
     """Run automated 3-part financial and volume reconciliation between Gold and Silver."""
     from procurement.common.settings import Settings
