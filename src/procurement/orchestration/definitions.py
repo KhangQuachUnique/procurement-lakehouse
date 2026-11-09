@@ -15,6 +15,11 @@ from dagster import (
 
 from procurement.common.dates import VIETNAM_TZ
 from procurement.orchestration.bronze import BRONZE_PARTITIONS, bronze_assets
+from procurement.orchestration.gold_assets import (
+    GOLD_ASSET_CHECKS,
+    GOLD_DIMENSIONS_ASSETS,
+    gold_facts_monthly,
+)
 from procurement.orchestration.gold_v2 import gold_v2_active_release, gold_v2_run_job
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
@@ -42,6 +47,19 @@ lakehouse_job = define_asset_job(
     tags={"dagster/max_retries": "0"},
 )
 
+gold_dimensions_job = define_asset_job(
+    "gold_dimensions_sync",
+    selection=AssetSelection.groups("gold_dimensions"),
+    executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
+    tags={"dagster/max_retries": "0"},
+)
+
+gold_facts_job = define_asset_job(
+    "gold_facts_monthly_job",
+    selection=AssetSelection.groups("gold_facts"),
+    executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
+    tags={"dagster/max_retries": "0"},
+)
 
 lakehouse_end_to_end_job = define_asset_job(
     "lakehouse_end_to_end",
@@ -129,10 +147,19 @@ def lakehouse_end_to_end_schedule(context: ScheduleEvaluationContext):
 
 
 defs = Definitions(
-    assets=[*bronze_assets, *silver_assets, gold_v2_active_release],
+    assets=[
+        *bronze_assets,
+        *silver_assets,
+        *GOLD_DIMENSIONS_ASSETS,
+        gold_facts_monthly,
+        gold_v2_active_release,
+    ],
+    asset_checks=GOLD_ASSET_CHECKS,
     jobs=[
         lakehouse_end_to_end_job,
         gold_v2_run_job,
+        gold_dimensions_job,
+        gold_facts_job,
         bronze_job,
         silver_job,
         lakehouse_job,
