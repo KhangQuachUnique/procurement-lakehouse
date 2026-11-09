@@ -1,9 +1,14 @@
 # Cẩm Nang Phát Triển & Đặc Tả Kỹ Thuật Tầng Silver Lakehouse (Silver Master Specification & Dev Guide)
 
+> [!IMPORTANT]
+> **Tài liệu cập nhật chính thức:**
+> - [Kiến Trúc & Đặc Tả Kỹ Thuật Silver Lakehouse](silver-architecture.md) (Kiến trúc chuẩn Apache Iceberg Format v2, 23 bảng vật lý, 10 SIMD Views, Micro-Batching Accumulator, Single Source of Truth).
+> - [Cẩm Nang Vận Hành & Hướng Dẫn Sử Dụng CLI Silver](silver-operations.md) (Toàn bộ hướng dẫn sử dụng lệnh `procurement silver`, tham số, runbooks backfill và xử lý sự cố).
+
 - **Trạng thái:** CHÍNH THỨC (Single Source of Truth - SSOT cho toàn bộ Tầng Silver)
-- **Phiên bản kiến trúc:** Pure Relational 1-Hop Model (Nhánh `refactor/silver`)
+- **Phiên bản kiến trúc:** Pure Relational 1-Hop Model & Apache Iceberg Format v2 (Release `silver_v2`)
 - **Mã nguồn định nghĩa:** [`src/procurement/silver/domain/schema.py`](file:///home/soul/Dự%20án/procurement/procurement-lakehouse/src/procurement/silver/domain/schema.py)
-- **Tài liệu tham chiếu:** [Kiến trúc tổng thể](architecture.md) · [Vận hành](operations.md) · [Phát triển](development.md)
+- **Tài liệu tham chiếu:** [Kiến Trúc Silver](silver-architecture.md) · [Vận Hành Silver](silver-operations.md) · [Kiến Trúc Tổng Thể](architecture.md)
 
 ---
 
