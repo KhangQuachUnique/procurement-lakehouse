@@ -146,10 +146,13 @@ class SilverConfig(Config):
 
 def build_silver_multi_asset(group: SilverResourceGroup):
     """Build a partitioned multi-asset representing all physical tables for a Silver resource."""
+    silver_group_name = (
+        "silver_pilot" if group.resource_name == "contract_performance" else "silver"
+    )
     specs = [
         AssetSpec(
             key=f"silver_{t.table}",
-            group_name="silver",
+            group_name=silver_group_name,
             deps=[AssetKey(group.upstream_bronze_name)],
             description=t.description,
             automation_condition=EAGER_AUTOMATION,

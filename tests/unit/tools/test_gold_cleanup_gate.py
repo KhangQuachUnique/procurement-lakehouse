@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from procurement.gold.v2.schema import TABLES
+from procurement.gold.domain.schema import TABLES
 
 spec = importlib.util.spec_from_file_location(
     "cleanup_gate", Path(__file__).parents[3] / "scripts/check_gold_cleanup_gate.py"

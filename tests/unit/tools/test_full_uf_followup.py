@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from procurement.gold.v2.schema import TABLES
+from procurement.gold.domain.schema import TABLES
 
 
 def load_script():

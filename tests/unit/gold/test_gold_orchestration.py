@@ -24,7 +24,6 @@ def test_gold_dimensions_assets_registered():
         "gold_dim_date",
         "gold_dim_sector",
         "gold_dim_procurement_method",
-        "gold_dim_bidding_type",
         "gold_dim_value_band",
         "gold_dim_currency",
         "gold_dim_duration_metric",

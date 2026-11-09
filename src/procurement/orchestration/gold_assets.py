@@ -35,7 +35,12 @@ FACT_RETRY_POLICY = RetryPolicy(max_retries=0)
 
 
 class GoldExecutionConfig(Config):
-    """Runtime configuration for Gold incremental execution."""
+    """Runtime configuration for Gold incremental execution.
+
+    Governance Policy:
+    Production Dagster pipelines strictly execute against the active promoted release (default: 'gold_v2').
+    Experimental/candidate runs with custom targets are reserved for the CLI.
+    """
 
     silver_namespace: str = "silver_v2"
     gold_namespace: str = "gold_v2"
@@ -85,6 +90,7 @@ def gold_dim_geography(context: AssetExecutionContext):
 @asset(
     name="gold_dim_date",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_plan_revision")],
     description="Conformed calendar dimension covering fiscal years, quarters, months, weeks, and dates (2020-2030).",
     metadata={"compute_kind": "duckdb", "grain": "date_key"},
 )
@@ -100,6 +106,7 @@ def gold_dim_date(context: AssetExecutionContext):
 @asset(
     name="gold_dim_sector",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_plan_revision")],
     description="Procurement sector taxonomy (goods, civil works, consulting, non-consulting, mixed, etc.).",
     metadata={"compute_kind": "duckdb", "grain": "sector_key"},
 )
@@ -113,6 +120,7 @@ def gold_dim_sector(context: AssetExecutionContext):
 @asset(
     name="gold_dim_procurement_method",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_package_revision")],
     description="Procurement bidding method classifications and domestic/international/internet flags.",
     metadata={"compute_kind": "duckdb", "grain": "method_key"},
 )
@@ -124,21 +132,9 @@ def gold_dim_procurement_method(context: AssetExecutionContext):
 
 
 @asset(
-    name="gold_dim_bidding_type",
-    group_name="gold_dimensions",
-    description="Bidding procedure type classifications (single-stage one-envelope, two-envelope, etc.).",
-    metadata={"compute_kind": "duckdb", "grain": "type_key"},
-)
-def gold_dim_bidding_type(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_bidding_type").fetchone()[0]
-    return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
-
-
-@asset(
     name="gold_dim_value_band",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_package_revision")],
     description="Procurement package budget size bands (<500M, 500M-5B, 5B-50B, >50B VND).",
     metadata={"compute_kind": "duckdb", "grain": "band_key"},
 )
@@ -152,6 +148,7 @@ def gold_dim_value_band(context: AssetExecutionContext):
 @asset(
     name="gold_dim_currency",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_plan_revision")],
     description="Currency dimension with ISO codes (VND, USD, EUR, JPY) and support status.",
     metadata={"compute_kind": "duckdb", "grain": "currency_key"},
 )
@@ -165,6 +162,7 @@ def gold_dim_currency(context: AssetExecutionContext):
 @asset(
     name="gold_dim_duration_metric",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_plan_revision")],
     description="Milestone duration metric keys (PLAN_TO_NOTICE, NOTICE_TO_AWARD, BID_VALIDITY, etc.).",
     metadata={"compute_kind": "duckdb", "grain": "metric_key"},
 )
@@ -178,6 +176,7 @@ def gold_dim_duration_metric(context: AssetExecutionContext):
 @asset(
     name="gold_dim_progress_status",
     group_name="gold_dimensions",
+    deps=[AssetKey("silver_package_revision")],
     description="Bid package and project lifecycle progress status transitions.",
     metadata={"compute_kind": "duckdb", "grain": "status_key"},
 )
@@ -207,7 +206,6 @@ GOLD_DIMENSIONS_ASSETS = [
     gold_dim_date,
     gold_dim_sector,
     gold_dim_procurement_method,
-    gold_dim_bidding_type,
     gold_dim_value_band,
     gold_dim_currency,
     gold_dim_duration_metric,

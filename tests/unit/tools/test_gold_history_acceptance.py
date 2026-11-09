@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import duckdb
 import pytest
 
-from procurement.gold.v2.schema import TABLES
+from procurement.gold.domain.schema import TABLES
 from procurement.tools.gold_history_acceptance import compare_generations
 
 

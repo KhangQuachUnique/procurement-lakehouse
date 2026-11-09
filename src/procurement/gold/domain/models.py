@@ -139,8 +139,10 @@ class RunPlan(Contract):
             raise ValueError("Reference policy content/version mismatch")
         identifier(self.run_id)
         identifier(self.target_namespace)
-        if not self.target_namespace.startswith("gold_v2_"):
-            raise ValueError("V2 candidate requires an explicit gold_v2_* target")
+        if not re.match(r"^gold_v\d+(_[a-zA-Z0-9_]+)?$", self.target_namespace):
+            raise ValueError(
+                f"Target namespace '{self.target_namespace}' must match semantic versioning pattern 'gold_v<N>[_<suffix>]' (e.g. gold_v2, gold_v3, gold_v2_accepted)"
+            )
         if self.target_namespace == self.source.namespace:
             raise ValueError("Input and target must be isolated")
         if (
@@ -201,3 +203,6 @@ def compute_gold_logic_version() -> str:
         if p.exists()
     ]
     return digest(entries)
+
+
+logic_version = compute_gold_logic_version

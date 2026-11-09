@@ -23,6 +23,7 @@ BRONZE_FOLDER_MAP: dict[str, str] = {
     "bronze_khlcnt": "khlcnt_plan_detail",
     "bronze_notify_contractor": "notify_contractor_standard_detail",
     "bronze_contractor_result": "contractor_result_detail",
+    "bronze_contract_performance": "contract_performance_detail",
 }
 
 

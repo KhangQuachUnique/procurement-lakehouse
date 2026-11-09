@@ -23,9 +23,10 @@ from procurement.gold.domain.models import (
     SilverReadyInput,
     Snapshot,
 )
+from procurement.gold.application.warehouse import ensure_gold_tables
 from procurement.gold.domain.schema import DIMENSIONS, FACTS, TABLES, group_hash
-from procurement.gold.v2.compute.engine import run_business
-from procurement.gold.v2.compute.projection import project
+from procurement.gold.application.compute.engine import run_business
+from procurement.gold.application.compute.projection import project
 from procurement.storage.iceberg import connect
 
 
@@ -265,6 +266,7 @@ def process_gold_range(
 
         # 5. Publish to Iceberg Lakehouse (lake.{gold_namespace})
         t_pub_start = time.perf_counter()
+        ensure_gold_tables(conn, namespace=gold_namespace)
 
         # Dimensions: Insert Where Not Exists
         for dim in DIMENSIONS:

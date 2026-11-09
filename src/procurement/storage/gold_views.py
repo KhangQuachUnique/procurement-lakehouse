@@ -2,7 +2,7 @@
 
 from types import SimpleNamespace
 
-from procurement.gold.v2.adapters.iceberg import IcebergPublisher
+from procurement.gold.adapters.driven.iceberg.iceberg_publisher import IcebergPublisher
 from procurement.storage.iceberg import identifier
 
 

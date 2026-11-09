@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from typer.testing import CliRunner
 
-from procurement.gold.v2.cli import app
+from procurement.gold.adapters.driving.cli import app
 from procurement.tools.gold_main_history import run
 from procurement.tools.silver_bootstrap_writer import load_empty
 

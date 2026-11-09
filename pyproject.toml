@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-gold = "procurement.gold.v2.cli:main"
+gold = "procurement.gold.adapters.driving.cli:main"
 silver = "procurement.cli.silver:main"
 
 [project.optional-dependencies]
@@ -55,9 +55,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "procurement.gold.domain" = ["*.json"]
-"procurement.gold.v2" = ["*.json"]
-"procurement.gold.v2.compute" = ["*.json"]
-"procurement.gold.v2.compute.sql" = ["*.sql"]
+"procurement.gold.application.compute" = ["*.json"]
+"procurement.gold.application.compute.sql" = ["*.sql"]
 "procurement.quality" = ["*.toml"]
 "procurement.api.ops" = ["static/*.css", "static/*.js", "templates/*.html"]
 "procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]

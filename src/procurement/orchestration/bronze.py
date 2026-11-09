@@ -85,9 +85,11 @@ def build_bronze_asset(definition):
         checks.append(AssetCheckSpec("quality_contract", asset=name, blocking=True))
 
     def _create_asset_fn(cfg_cls):
+        asset_group = "bronze_pilot" if resource_name == "contract_performance" else "bronze"
+
         @asset(
             name=name,
-            group_name="bronze",
+            group_name=asset_group,
             partitions_def=BRONZE_PARTITIONS,
             required_resource_keys={"object_storage"},
             pool=INGESTION_POOL,

@@ -17,10 +17,10 @@ from dotenv import load_dotenv
 from procurement.common.dates import today_vn
 from procurement.common.file_lock import exclusive_file_lock
 from procurement.common.settings import Settings
-from procurement.gold.v2.contracts import RunPlan, SilverReadyInput, logic_version
-from procurement.gold.v2.references import ReferencePolicy
-from procurement.gold.v2.runtime import execute_run
-from procurement.gold.v2.state import StateStore
+from procurement.gold.application.runtime import execute_run
+from procurement.gold.application.state import StateStore
+from procurement.gold.domain.models import RunPlan, SilverReadyInput, logic_version
+from procurement.gold.domain.policies import ReferencePolicy
 from procurement.readiness_with_exception import seal_with_null_policy, validate_report
 from procurement.silver.application.readiness import save_bundle
 from procurement.source_quality import NULL_POLICY_DIGEST
@@ -260,8 +260,8 @@ def run(source, output, *, execute_managed=False, profile_first_partition=False)
             if result["phase"] != "COMMITTED":
                 raise ValueError("Official Gold did not commit")
             progress("gold_readback", {"tables": 16})
-            from procurement.gold.v2.adapters.iceberg import IcebergPublisher
-            from procurement.gold.v2.verification import verify
+            from procurement.gold.adapters.driven.iceberg.iceberg_publisher import IcebergPublisher
+            from procurement.gold.application.verification import verify
 
             with connect(cfg, max_memory="512MB", threads=1) as remote, RestCatalog(cfg) as catalog:
                 publisher = IcebergPublisher(remote, catalog)

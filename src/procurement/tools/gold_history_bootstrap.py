@@ -8,7 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from procurement.common.file_lock import exclusive_file_lock
-from procurement.gold.v2.contracts import logic_version
+from procurement.gold.domain.models import logic_version
 from procurement.readiness_with_exception import seal_with_null_policy, validate_report
 from procurement.silver.application.readiness import _ancestry, save_bundle
 from procurement.source_quality import NULL_POLICY_DIGEST

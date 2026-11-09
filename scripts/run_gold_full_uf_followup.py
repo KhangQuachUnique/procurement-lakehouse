@@ -17,13 +17,13 @@ import duckdb
 from dotenv import load_dotenv
 
 from procurement.common.settings import Settings
-from procurement.gold.v2.adapters.iceberg import IcebergPublisher
-from procurement.gold.v2.adapters.silver import IcebergReader
-from procurement.gold.v2.backend import PipelineBackend
-from procurement.gold.v2.contracts import INPUT_TABLES, RunPlan, SilverReadyInput, logic_version
-from procurement.gold.v2.schema import TABLES
-from procurement.gold.v2.service import GoldService
-from procurement.gold.v2.state import StateStore
+from procurement.gold.adapters.driven.iceberg.iceberg_publisher import IcebergPublisher
+from procurement.gold.adapters.driven.silver.iceberg_reader import IcebergReader
+from procurement.gold.application.backend import PipelineBackend
+from procurement.gold.application.gold_service import GoldService
+from procurement.gold.application.state import StateStore
+from procurement.gold.domain.models import INPUT_TABLES, RunPlan, SilverReadyInput, logic_version
+from procurement.gold.domain.schema import TABLES
 from procurement.storage.iceberg import RestCatalog, connect
 from procurement.tools.gold_history_candidate import file_hash, save
 
@@ -74,7 +74,7 @@ class ArtifactReader:
 
 
 def business_compatibility(archive):
-    current = Path("src/procurement/gold/v2")
+    current = Path("src/procurement/gold/application")
     selected = {
         "aggregation.py",
         "schema.py",

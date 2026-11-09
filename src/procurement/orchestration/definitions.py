@@ -65,6 +65,14 @@ lakehouse_end_to_end_job = define_asset_job(
     tags={"dagster/max_retries": "0"},
 )
 
+pilot_contract_performance_job = define_asset_job(
+    "pilot_contract_performance_job",
+    selection=AssetSelection.groups("bronze_pilot", "silver_pilot"),
+    description="Pilot/Experimental job for contract execution results (contract_performance)",
+    executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
+    tags={"dagster/max_retries": "0"},
+)
+
 
 # ============================================================================
 # SCHEDULES
@@ -160,6 +168,7 @@ defs = Definitions(
         gold_dimensions_job,
         bronze_job,
         silver_job,
+        pilot_contract_performance_job,
         gold_v2_run_job,
         reconcile_lakehouse_job,
         silver_sync_iceberg_job,

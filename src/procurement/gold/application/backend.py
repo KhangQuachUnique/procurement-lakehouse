@@ -1,13 +1,13 @@
 """Concrete local processing, with injected source/publisher IO boundaries."""
 
 from procurement.common.silver_gold_contract import INPUT_TABLES
+from procurement.gold.application.aggregation import accept_candidate, prepare_candidate
+from procurement.gold.application.calculation import calculate
+from procurement.gold.application.publication import prepare_outbox
+from procurement.gold.application.source import freeze
+from procurement.gold.application.source_cache import accept_cache
+from procurement.gold.domain.clustering.relationship_index import accept_index
 from procurement.gold.domain.models import RunPlan
-from procurement.gold.v2.aggregation import accept_candidate, prepare_candidate
-from procurement.gold.v2.calculation import calculate
-from procurement.gold.v2.publication import prepare_outbox
-from procurement.gold.v2.relationship_index import accept_index
-from procurement.gold.v2.source import freeze
-from procurement.gold.v2.source_cache import accept_cache
 
 
 class PipelineBackend:

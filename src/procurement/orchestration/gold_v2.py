@@ -12,7 +12,7 @@ class GoldRunConfig(Config):
 
 @op
 def execute_gold_v2(context: OpExecutionContext, config: GoldRunConfig) -> dict:
-    from procurement.gold.v2.runtime import execute_run
+    from procurement.gold.application.runtime import execute_run
 
     result = execute_run(
         config.run_id,
@@ -84,7 +84,7 @@ def load_prior_reports(path, namespace):
 
     value = json.loads(path.read_text())
     if "receipt" in value and "evidence" in value:
-        from procurement.gold.v2.contracts import SilverReadyInput
+        from procurement.gold.domain.models import SilverReadyInput
 
         ready = SilverReadyInput.model_validate(value["receipt"])
         if ready.namespace != namespace:
@@ -113,9 +113,9 @@ def plan_after_silver(context, config):
 
     from procurement.common.dates import today_vn
     from procurement.common.settings import Settings
-    from procurement.gold.v2.contracts import RunPlan, SilverReadyInput, logic_version
-    from procurement.gold.v2.references import ReferencePolicy
-    from procurement.gold.v2.state import StateStore
+    from procurement.gold.application.state import StateStore
+    from procurement.gold.domain.models import RunPlan, SilverReadyInput, logic_version
+    from procurement.gold.domain.policies import ReferencePolicy
     from procurement.readiness_with_exception import seal_with_null_policy as seal_readiness
     from procurement.silver.application.readiness import save_bundle
     from procurement.storage.iceberg import RestCatalog, connect, identifier
@@ -196,7 +196,7 @@ from procurement.orchestration.bronze import BRONZE_PARTITIONS
     partitions_def=BRONZE_PARTITIONS,
 )
 def gold_v2_active_release(context: AssetExecutionContext, config: GoldDailyV2Config):
-    from procurement.gold.v2.runtime import execute_run
+    from procurement.gold.application.runtime import execute_run
 
     if not config.allow_isolated_publication:
         raise ValueError("Gold v2 isolated publication requires explicit opt-in")

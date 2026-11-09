@@ -37,7 +37,7 @@ def test_definitions_cover_silver_assets_and_policies():
 
     for asset in silver.silver_assets:
         for k in asset.keys:
-            assert asset.group_names_by_key[k] == "silver"
+            assert asset.group_names_by_key[k] in {"silver", "silver_pilot"}
         assert asset.op.retry_policy.max_retries == 0
         assert asset.backfill_policy.max_partitions_per_run == 1
         group = next(g for g in silver.SILVER_GROUPS if f"silver_{g.primary_revision_table}" in {k.to_user_string() for k in asset.keys})
