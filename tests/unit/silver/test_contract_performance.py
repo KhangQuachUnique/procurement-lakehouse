@@ -100,9 +100,9 @@ def test_unrelated_context_does_not_create_revision(table):
     changed["search"] = {"context": "changed"}
     changed["versionsList"] = []
     changed["linked"] = {"resultList": []}
-    after = transformer.transform(replace(raw, payload=changed))
+    after = transformer.transform(replace(raw, payload=changed, content_hash="changed_hash"))
     assert before.revision.revision_id == after.revision.revision_id
-    assert before.observation["payload_json"] != after.observation["payload_json"]
+    assert before.observation["content_hash"] != after.observation["content_hash"]
     root_key = "contract" if table == "contract_detail" else "performance"
     changed[root_key]["contractorName"] = "Changed source name"
     assert transformer.transform(replace(raw, payload=changed)).revision != before.revision
@@ -133,7 +133,6 @@ def test_invalid_values_warn_and_preserve_source_root():
         "unknown_progress_status",
         "missing_contract_version",
     }
-    assert "bad-date" in result.typed_attributes["root_json"]
 
 
 def test_schemas_registration_and_partitions():
@@ -164,9 +163,9 @@ def test_latest_and_exact_version_views_are_global():
         ]:
             db.execute(
                 """INSERT INTO lake.silver.contract_revision
-                (revision_id,entity_id,entity_type,source_date,observed_at,root_json,
+                (revision_id,entity_id,entity_type,source_date,observed_at,
                  contract_version,contract_code,is_current)
-                VALUES (?, 'entity', 'contract', ?, ?, '{}', ?, 'HD001', true)""",
+                VALUES (?, 'entity', 'contract', ?, ?, ?, 'HD001', true)""",
                 [revision, day, day + "T00:00:00+00:00", version],
             )
         views = ensure_views(db)
@@ -276,7 +275,6 @@ def test_refresh_removing_one_report_keeps_contract_referenced_by_another_day():
             common = {
                 "source_date": day,
                 "observed_at": f"{day}T00:00:00+00:00",
-                "root_json": "{}",
                 "contract_code": "HD001",
                 "contract_version": "00",
             }

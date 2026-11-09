@@ -57,6 +57,10 @@ services:
       - "127.0.0.1:23646:23646"
     volumes:
       - object-storage-data:/data
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   # ----------------------------------------------------------------------------
   # 2. CƠ SỞ DỮ LIỆU METADATA ỨNG DỤNG (PostgreSQL 17)

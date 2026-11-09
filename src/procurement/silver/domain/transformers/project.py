@@ -98,8 +98,8 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             )
 
         # Temporal validation: decision date should not be after publication date
-        dec_date = parse_date(root.get("decisionDate"))
         pub_date = parse_date(root.get("publicDate"))
+        dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
         if dec_date and pub_date and dec_date > pub_date:
             issues.append(
                 QualityIssue(
@@ -132,7 +132,6 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             "public_date": pub_date,
             "public_date_raw": clean_text(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
-            "root_json": canonical_json(root),
         }
 
     def transform(self, envelope: RawRecordEnvelope) -> TransformedRecord:
@@ -250,7 +249,7 @@ class ProjectDetailTransformer(BaseResourceTransformer):
                             path="plocation",
                             ordinal=ordinal,
                             source_id=p_code,
-                            payload_json=canonical_json(loc_data),
+                            payload_json=None,
                             typed_table="project_location",
                             typed_attributes=typed_attributes,
                         )
@@ -294,7 +293,7 @@ class ProjectDetailTransformer(BaseResourceTransformer):
                     path="projectDTO.location",
                     ordinal=0,
                     source_id=prov_code,
-                    payload_json=canonical_json(loc_data),
+                    payload_json=None,
                     typed_table="project_location",
                     typed_attributes=typed_attributes,
                 )

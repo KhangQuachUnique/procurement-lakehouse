@@ -102,7 +102,7 @@ def transform(payload, **kwargs):
 
 def children_by_kind(result, kind):
     return [
-        json.loads(child.payload_json)
+        child.typed_attributes if child.typed_attributes is not None else (json.loads(child.payload_json) if child.payload_json else {})
         for child in result.children
         if child.kind == kind
     ]
@@ -135,7 +135,6 @@ def test_all_25_revision_fields_and_source_identity():
     assert typed["bid_start_quarter"] == "IV"
     assert typed["bid_start_month"] is None
     assert typed["public_date"] == "2022-10-19"
-    assert json.loads(typed["root_json"])["planVersion"] == "00"
     assert not result.issues
 
 
@@ -311,11 +310,6 @@ def test_medicine_price_quantity_unit_price_mapping():
     assert row["uom"] == "Viên"
     assert float(row["quantity"]) * float(row["planned_unit_price"]) == float(
         row["lot_price"]
-    )
-    # Source-only attributes are retained in parent root_json.
-    assert (
-        json.loads(result.typed_attributes["root_json"])["bidpBidLotList"][0]["nongDo"]
-        == "2mg"
     )
 
 

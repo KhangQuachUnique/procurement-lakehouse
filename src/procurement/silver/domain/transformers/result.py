@@ -736,8 +736,8 @@ class ContractorResultTransformer(BaseResourceTransformer):
             root, obs_id=obs_id, issues=issues
         )
 
-        dec_date = parse_date(root.get("decisionDate"))
         pub_date = parse_date(root.get("publicDate"))
+        dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
         if dec_date and pub_date and dec_date > pub_date:
             _add_issue(
                 issues,
@@ -777,7 +777,6 @@ class ContractorResultTransformer(BaseResourceTransformer):
             "public_date": pub_date,
             "public_date_raw": clean_text(root.get("publicDate")),
             "status_raw": clean_text(root.get("status")),
-            "root_json": canonical_json(root),
         }
 
     def transform(self, envelope: RawRecordEnvelope) -> TransformedRecord:
@@ -901,7 +900,7 @@ class ContractorResultTransformer(BaseResourceTransformer):
                             path=f"lotResultDTO[{lot.ordinal}].contractorList[{c.c_idx}]",
                             ordinal=c.c_idx,
                             source_id=c.c_id or c.contractor_code,
-                            payload_json=canonical_json(c.raw_payload),
+                            payload_json=None,
                             typed_table="award_contractor",
                             typed_attributes=contractor_attrs,
                         )
@@ -917,7 +916,7 @@ class ContractorResultTransformer(BaseResourceTransformer):
                             path=f"lotResultDTO[{lot.ordinal}].contractorList[{c.c_idx}]",
                             ordinal=c.c_idx,
                             source_id=c.c_id or c.contractor_code,
-                            payload_json=canonical_json(c.raw_payload),
+                            payload_json=None,
                             typed_table=None,
                             typed_attributes=None,
                         )
@@ -926,6 +925,7 @@ class ContractorResultTransformer(BaseResourceTransformer):
             lot_attrs = {
                 "award_lot_id": award_lot_child_id,
                 "revision_id": revision_id,
+                "source_lot_id": lot.lot_id,
                 "lot_no": lot.lot_no,
                 "lot_name": lot.lot_name,
                 "lot_price": lot.lot_price_str,
@@ -933,7 +933,6 @@ class ContractorResultTransformer(BaseResourceTransformer):
                 "currency": lot.lot_currency,
                 "winning_code": lot.winning_code,
                 "status": lot.lot_status,
-                "raw_json": canonical_json(lot.raw_payload),
             }
             children.append(
                 ExtractedChild(
@@ -944,7 +943,7 @@ class ContractorResultTransformer(BaseResourceTransformer):
                     path=f"lotResultDTO[{lot.ordinal}]",
                     ordinal=lot.ordinal,
                     source_id=lot.lot_id or lot.lot_no,
-                    payload_json=canonical_json(lot.raw_payload),
+                    payload_json=None,
                     typed_table="award_lot",
                     typed_attributes=lot_attrs,
                 )

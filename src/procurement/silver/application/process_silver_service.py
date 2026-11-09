@@ -5,10 +5,13 @@ SilverCandidateRepositoryPort in accordance with Hexagonal Architecture,
 and optionally stages verified Iceberg Format v2 tables.
 """
 
+from collections import defaultdict
 from collections.abc import Callable
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
+
+import pyarrow as pa
 
 from procurement.silver.application.observations import transform
 from procurement.silver.application.resources import get_silver_resource
@@ -36,7 +39,9 @@ class ProcessSilverService(ProcessSilverUseCase):
         readiness_evidence=False,
         iceberg_namespace="silver",
         iceberg_memory_limit="4GB",
-        iceberg_threads=4,
+        iceberg_threads=2,
+        direct_iceberg_only: bool = False,
+        batch_size: int = 30,
     ) -> None:
         self.bronze_repo = bronze_repo
         self.silver_repo = silver_repo
@@ -46,6 +51,8 @@ class ProcessSilverService(ProcessSilverUseCase):
         self.iceberg_config = iceberg_config
         self.change_journal = change_journal
         self.readiness_evidence = readiness_evidence
+        self.direct_iceberg_only = direct_iceberg_only
+        self.batch_size = max(1, batch_size)
         from procurement.storage.iceberg import identifier
 
         self.iceberg_namespace = identifier(iceberg_namespace)
@@ -60,6 +67,7 @@ class ProcessSilverService(ProcessSilverUseCase):
         family: str | None = None,
         continue_on_error: bool = False,
         skip_existing: bool = False,
+        batch_size: int | None = None,
         on_progress: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         """Verify all source families before applying family filter; report every day."""
@@ -73,6 +81,7 @@ class ProcessSilverService(ProcessSilverUseCase):
                     "Cannot skip contract_performance Iceberg publication by file existence alone"
                 )
 
+        active_batch_size = max(1, batch_size if batch_size is not None else self.batch_size)
         selected_tables = self.contract.select_tables(family)
         run_id = "r" + uuid4().hex
         data_prefix = f"{self.bucket}/silver"
@@ -107,38 +116,52 @@ class ProcessSilverService(ProcessSilverUseCase):
             all_partitions = self.bronze_repo.select_committed_partitions(
                 [self.contract.resource], start_date, end_date
             )
-            partitions_by_date = {p.source_date: p for p in all_partitions}
+            partitions_by_date = {str(p.source_date): p for p in all_partitions}
         except Exception:  # noqa: BLE001
             partitions_by_date = {}
 
         iceberg_db = None
         iceberg_catalog = None
+        existing_iceberg_dates: set[str] = set()
         if self.iceberg_config is not None:
-            from procurement.silver.application.warehouse import ensure_views
-            from procurement.storage.iceberg import RestCatalog, connect
+            from procurement.silver.application.warehouse import ensure_silver_tables, ensure_views
+            from procurement.storage.iceberg import RestCatalog, connect, identifier
 
             try:
+                from procurement.storage.catalog_scope import NamespaceCatalog
+
+                raw_catalog = RestCatalog(self.iceberg_config)
+                raw_catalog.create_namespace_if_not_exists(self.iceberg_namespace)
+                iceberg_catalog = NamespaceCatalog(
+                    raw_catalog, self.iceberg_namespace
+                )
                 iceberg_db = connect(
                     self.iceberg_config,
                     max_memory=self.iceberg_memory_limit,
                     threads=self.iceberg_threads,
                 )
-                from procurement.storage.catalog_scope import NamespaceCatalog
-
-                iceberg_catalog = NamespaceCatalog(
-                    RestCatalog(self.iceberg_config), self.iceberg_namespace
+                ensure_silver_tables(
+                    iceberg_db,
+                    iceberg_catalog,
+                    namespace=self.iceberg_namespace,
+                    tables=self.contract.output_tables,
                 )
-                if self.readiness_evidence:
-                    iceberg_db.execute("CREATE SCHEMA IF NOT EXISTS lake." + self.iceberg_namespace)
-                    from procurement.common.silver_gold_contract import INPUT_TABLES
-                    from procurement.silver.domain.schema import to_iceberg_ddl
-
-                    for table in self.contract.output_tables:
-                        if table in INPUT_TABLES:
-                            iceberg_db.execute(
-                                to_iceberg_ddl(table, namespace=self.iceberg_namespace)
-                            )
                 ensure_views(iceberg_db, namespace=self.iceberg_namespace)
+
+                if skip_existing:
+                    try:
+                        clean_ns = identifier(self.iceberg_namespace)
+                        res_tag = self.contract.resource
+                        query = f"""
+                            SELECT DISTINCT CAST(source_date AS VARCHAR)
+                            FROM lake.{clean_ns}.observation
+                            WHERE resource = '{res_tag}'
+                              AND source_date BETWEEN DATE '{start_date.isoformat()}' AND DATE '{end_date.isoformat()}'
+                        """
+                        obs_rows = iceberg_db.execute(query).fetchall()
+                        existing_iceberg_dates = {str(r[0]) for r in obs_rows if r[0]}
+                    except Exception:
+                        existing_iceberg_dates = set()
             except Exception as exc:
                 if iceberg_db is not None:
                     import contextlib
@@ -149,18 +172,57 @@ class ProcessSilverService(ProcessSilverUseCase):
                     f"Iceberg initialization failed for {self.contract.resource}; publication was requested"
                 ) from exc
 
+        batch_buffer: dict[str, list[pa.Table]] = defaultdict(list)
+        buffered_entries: list[dict[str, Any]] = []
+
+        def flush_batch() -> None:
+            nonlocal batch_buffer, buffered_entries
+            if not batch_buffer:
+                buffered_entries.clear()
+                return
+            merged_tables = {}
+            for t_name, t_list in batch_buffer.items():
+                non_empty = [t for t in t_list if len(t) > 0]
+                if non_empty:
+                    merged_tables[t_name] = pa.concat_tables(non_empty)
+                elif t_list:
+                    merged_tables[t_name] = t_list[0]
+
+            if merged_tables and iceberg_db is not None and iceberg_catalog is not None:
+                from procurement.silver.application.warehouse import stage_partition
+
+                staged_res = stage_partition(
+                    iceberg_db,
+                    iceberg_catalog,
+                    namespace=self.iceberg_namespace,
+                    tables=merged_tables,
+                    partition_date=None,
+                    release_id=None,
+                    change_journal=self.change_journal,
+                )
+                for b_entry in buffered_entries:
+                    b_entry["iceberg"] = staged_res
+            batch_buffer.clear()
+            buffered_entries.clear()
+            save_report()
+
         try:
             day = start_date
             while day <= end_date:
-                entry: dict[str, Any] = {"date": str(day), "status": "running"}
-                if (
-                    skip_existing
-                    and hasattr(self.silver_repo, "partition_exists")
-                    and all(
+                day_str = str(day)
+                entry: dict[str, Any] = {"date": day_str, "status": "running"}
+
+                is_already_staged = False
+                if skip_existing:
+                    if day_str in existing_iceberg_dates:
+                        is_already_staged = True
+                    elif hasattr(self.silver_repo, "partition_exists") and all(
                         self.silver_repo.partition_exists(prefix, day, names)
                         for prefix, names in storage_groups
-                    )
-                ):
+                    ):
+                        is_already_staged = True
+
+                if is_already_staged:
                     input_counts = dict.fromkeys(dict(self.contract.families), 0)
                     entry.update(
                         status="skipped",
@@ -171,7 +233,7 @@ class ProcessSilverService(ProcessSilverUseCase):
                             "issues": 0,
                             "blocking_issues": 0,
                         },
-                        message="Skipped: candidate already exists in storage",
+                        message="Skipped: partition already committed in lakehouse/storage",
                     )
                     report["days"].append(entry)
                     save_report()
@@ -181,15 +243,32 @@ class ProcessSilverService(ProcessSilverUseCase):
                     continue
 
                 try:
-                    day_str = str(day)
                     if day_str in partitions_by_date:
                         partition = partitions_by_date[day_str]
                     else:
                         single_parts = self.bronze_repo.select_committed_partitions(
                             [self.contract.resource], day, day
                         )
-                        if len(single_parts) != 1:
-                            raise ValueError(f"Expected exactly one committed day for {day}")
+                        if len(single_parts) == 0:
+                            entry.update(
+                                status="skipped",
+                                input_counts=dict.fromkeys(dict(self.contract.families), 0),
+                                quality={
+                                    "accepted": 0,
+                                    "quarantined": 0,
+                                    "issues": 0,
+                                    "blocking_issues": 0,
+                                },
+                                message=f"Skipped: no committed bronze data for {day}",
+                            )
+                            report["days"].append(entry)
+                            save_report()
+                            if on_progress:
+                                on_progress(entry)
+                            day += timedelta(days=1)
+                            continue
+                        elif len(single_parts) > 1:
+                            raise ValueError(f"Expected at most one committed day for {day}, got {len(single_parts)}")
                         partition = single_parts[0]
                     input_counts = dict.fromkeys(dict(self.contract.families), 0)
                     names = {table: name for name, table in self.contract.families}
@@ -233,19 +312,18 @@ class ProcessSilverService(ProcessSilverUseCase):
                     }
 
                     paths = {}
-                    for prefix, names in storage_groups:
-                        paths.update(
-                            self.silver_repo.write_candidate_tables(
-                                prefix,
-                                day,
-                                {name: output[name] for name in names},
+                    if not self.direct_iceberg_only:
+                        for prefix, names in storage_groups:
+                            paths.update(
+                                self.silver_repo.write_candidate_tables(
+                                    prefix,
+                                    day,
+                                    {name: output[name] for name in names},
+                                )
                             )
-                        )
 
                     iceberg_staged = None
                     if iceberg_db is not None and iceberg_catalog is not None:
-                        from procurement.silver.application.warehouse import stage_partition
-
                         tables_with_data = {
                             name: tbl for name, tbl in output.items() if len(tbl) > 0
                         }
@@ -264,18 +342,30 @@ class ProcessSilverService(ProcessSilverUseCase):
                             for gov_name in ("quality_issue", "quarantine"):
                                 if gov_name in output:
                                     tables_with_data[gov_name] = output[gov_name]
-                        if tables_with_data:
-                            iceberg_staged = stage_partition(
-                                iceberg_db,
-                                iceberg_catalog,
-                                namespace=self.iceberg_namespace,
-                                tables=tables_with_data,
-                                partition_date=day,
-                                release_id=None,
-                                change_journal=self.change_journal,
-                            )
+
+                        if active_batch_size > 1:
+                            for t_name, t_val in tables_with_data.items():
+                                if isinstance(t_val, pa.Table):
+                                    batch_buffer[t_name].append(t_val)
+                                elif t_val:
+                                    batch_buffer[t_name].append(pa.Table.from_pylist(t_val))
+                            buffered_entries.append(entry)
                         else:
-                            iceberg_staged = {}
+                            from procurement.silver.application.warehouse import stage_partition
+
+                            if tables_with_data:
+                                iceberg_staged = stage_partition(
+                                    iceberg_db,
+                                    iceberg_catalog,
+                                    namespace=self.iceberg_namespace,
+                                    tables=tables_with_data,
+                                    partition_date=day,
+                                    release_id=None,
+                                    change_journal=self.change_journal,
+                                )
+                            else:
+                                iceberg_staged = {}
+                            entry["iceberg"] = iceberg_staged
 
                     entry.update(
                         status="needs_review"
@@ -291,6 +381,14 @@ class ProcessSilverService(ProcessSilverUseCase):
                             for f in partition.files
                         ],
                     )
+
+                    if active_batch_size > 1 and batch_buffer:
+                        next_day = day + timedelta(days=1)
+                        is_end_of_range = (day == end_date)
+                        is_end_of_month = (day.month != next_day.month)
+                        is_batch_full = (len(buffered_entries) >= active_batch_size)
+                        if is_end_of_range or is_end_of_month or is_batch_full:
+                            flush_batch()
                     if self.readiness_evidence and entry["status"] == "completed":
                         if iceberg_catalog is None:
                             raise ValueError(
@@ -325,8 +423,6 @@ class ProcessSilverService(ProcessSilverUseCase):
                 try:
                     import gc
 
-                    import pyarrow as pa
-
                     pa.default_memory_pool().release_unused()
                     if len(report["days"]) % 10 == 0:
                         gc.collect()
@@ -337,6 +433,9 @@ class ProcessSilverService(ProcessSilverUseCase):
                     break
 
                 day += timedelta(days=1)
+
+            if active_batch_size > 1:
+                flush_batch()
 
             statuses = {e["status"] for e in report["days"]}
             report["status"] = (

@@ -7,7 +7,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from procurement.gold.v2.schema import TABLES
+# This read-only scheduler gate must run with stdlib alone. Read the same
+# contract as schema.py without importing the application (and its dependencies).
+TABLES = json.loads(
+    (Path(__file__).resolve().parents[1] / "src/procurement/gold/v2/schema.json").read_text()
+)
 
 
 def check(root, properties):

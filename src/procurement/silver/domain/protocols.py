@@ -47,7 +47,7 @@ class EntityRevision:
     source_version: str | None
     semantic_hash: str
     mapping_version: str
-    payload_json: str
+    payload_json: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,7 @@ class ExtractedChild:
     path: str
     ordinal: int
     source_id: str | None
-    payload_json: str
+    payload_json: str | None = None
     typed_table: str | None = None
     typed_attributes: dict[str, Any] | None = None
 

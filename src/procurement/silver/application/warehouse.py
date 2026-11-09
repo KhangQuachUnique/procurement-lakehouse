@@ -8,6 +8,7 @@ from procurement.silver.domain.schema import (
     get_partition_spec,
     get_primary_key,
     get_silver_schemas,
+    get_table_column_types,
     to_iceberg_ddl,
 )
 from procurement.storage.iceberg import identifier
@@ -48,24 +49,116 @@ def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
 
 RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
     "award_lot": {
+        "source_lot_id": "VARCHAR",
+        "source_month": "VARCHAR",
+        "raw_json": "VARCHAR",
+    },
+    "bid_participation": {
         "raw_json": "VARCHAR",
     },
     "award_contractor": {
         "bid_result": "BIGINT",
         "price_source": "VARCHAR",
         "currency": "VARCHAR",
+        "source_month": "VARCHAR",
+    },
+    "notice_lot": {
+        "source_month": "VARCHAR",
+    },
+    "notice_location": {
+        "source_month": "VARCHAR",
+    },
+    "notice_reoffer_submission": {
+        "source_month": "VARCHAR",
+    },
+    "notice_amendment": {
+        "source_month": "VARCHAR",
+    },
+    "project_location": {
+        "source_month": "VARCHAR",
+    },
+    "package_lot": {
+        "source_month": "VARCHAR",
+    },
+    "package_location": {
+        "source_month": "VARCHAR",
+    },
+    "opening_submission": {
+        "source_month": "VARCHAR",
+    },
+    "plan_revision": {
+        "source_id": "VARCHAR",
+    },
+    "package_revision": {
+        "source_id": "VARCHAR",
     },
 }
 
+def _get_provisioned_set(db) -> set[tuple[str, str]]:
+    if not hasattr(db, "_provisioned_silver_tables"):
+        try:
+            db._provisioned_silver_tables = set()
+        except Exception:
+            return set()
+    return db._provisioned_silver_tables
 
-def _migrate_result_schema_if_needed(db, table_identifier: str, clean_name: str) -> None:
+
+def ensure_silver_tables(
+    db,
+    catalog: Any,
+    namespace: str = "silver",
+    tables: list[str] | tuple[str, ...] | None = None,
+) -> list[str]:
+    """Pre-flight schema provisioning: create and verify all Silver Iceberg tables upfront.
+
+    Ensures that the inner daily processing loop executes ZERO DDL statements,
+    eliminating lock contention and REST catalog roundtrips during execution.
+    """
+    clean_ns = identifier(namespace)
+    if hasattr(catalog, "create_namespace_if_not_exists"):
+        catalog.create_namespace_if_not_exists(clean_ns)
+    elif hasattr(catalog, "catalog") and hasattr(catalog.catalog, "create_namespace_if_not_exists"):
+        catalog.catalog.create_namespace_if_not_exists(clean_ns)
+    db.execute(f"CREATE SCHEMA IF NOT EXISTS lake.{clean_ns}")
+
+    all_schemas = get_silver_schemas()
+    target_tables = tables or list(all_schemas.keys())
+    provisioned: list[str] = []
+    prov_set = _get_provisioned_set(db)
+
+    for name in target_tables:
+        clean_name = identifier(name)
+        schema = all_schemas.get(clean_name)
+        if schema is None:
+            continue
+        key = (clean_ns, clean_name)
+        if key in prov_set:
+            continue
+
+        table_id = f"lake.{clean_ns}.{clean_name}"
+        ddl = to_iceberg_ddl(clean_name, schema, clean_ns)
+        with _ICEBERG_COMMIT_LOCK:
+            db.execute(ddl)
+            _migrate_result_schema_if_needed(db, table_id, clean_name)
+            prov_set.add(key)
+        provisioned.append(clean_name)
+
+    return provisioned
+
+
+def _migrate_result_schema_if_needed(
+    db, table_identifier: str, clean_name: str, arrow_table: pa.Table | None = None
+) -> None:
     expected_additions = RESULT_SCHEMA_MIGRATIONS.get(clean_name)
     if not expected_additions:
         return
 
     with _ICEBERG_COMMIT_LOCK:
         try:
-            rows = db.execute(f"PRAGMA table_info('{table_identifier}')").fetchall()
+            res = db.execute(f"PRAGMA table_info('{table_identifier}')")
+            if res is None:
+                return
+            rows = res.fetchall()
         except Exception as exc:
             raise RuntimeError(
                 f"Failed to inspect schema for {table_identifier}: {type(exc).__name__}"
@@ -96,10 +189,12 @@ def _migrate_result_schema_if_needed(db, table_identifier: str, clean_name: str)
                     db.execute(
                         f"ALTER TABLE {table_identifier} ADD COLUMN {col_name} {expected_type}"
                     )
+                    existing_cols[col_name.lower()] = expected_type
                 except Exception as exc:
-                    raise RuntimeError(
-                        f"Failed to migrate column {col_name} on {table_identifier}: {type(exc).__name__}"
-                    ) from exc
+                    if "already exists" not in str(exc).lower():
+                        raise RuntimeError(
+                            f"Failed to migrate column {col_name} on {table_identifier}: {type(exc).__name__}"
+                        ) from exc
 
 
 def stage_partition(
@@ -139,6 +234,10 @@ def stage_partition(
     """
     schemas = schemas or get_silver_schemas()
     clean_ns = identifier(namespace)
+    if hasattr(catalog, "create_namespace_if_not_exists"):
+        catalog.create_namespace_if_not_exists(clean_ns)
+    elif hasattr(catalog, "catalog") and hasattr(catalog.catalog, "create_namespace_if_not_exists"):
+        catalog.catalog.create_namespace_if_not_exists(clean_ns)
     db.execute(f"CREATE SCHEMA IF NOT EXISTS lake.{clean_ns}")
     snapshots = {}
 
@@ -190,17 +289,22 @@ def stage_partition(
         if schema is None:
             continue
 
-        table = f"lake.{clean_ns}.{clean_name}"
-        ddl = to_iceberg_ddl(clean_name, schema, clean_ns)
-        with _ICEBERG_COMMIT_LOCK:
-            db.execute(ddl)
-            _migrate_result_schema_if_needed(db, table, clean_name)
-
         arrow_table: pa.Table | None = None
         if isinstance(candidate, pa.Table):
             arrow_table = candidate
         elif isinstance(candidate, list):
             arrow_table = pa.Table.from_pylist(candidate) if candidate else None
+
+        table = f"lake.{clean_ns}.{clean_name}"
+        key = (clean_ns, clean_name)
+        prov_set = _get_provisioned_set(db)
+        if key not in prov_set:
+            ddl = to_iceberg_ddl(clean_name, schema, clean_ns)
+            with _ICEBERG_COMMIT_LOCK:
+                if key not in prov_set:
+                    db.execute(ddl)
+                    _migrate_result_schema_if_needed(db, table, clean_name, arrow_table)
+                    prov_set.add(key)
 
         spec = get_partition_spec(clean_name)
         pk = get_primary_key(clean_name)
@@ -221,6 +325,24 @@ def stage_partition(
                         # Replace this publication-day slice, including records removed on refresh.
                         day_value = date.fromisoformat(str(partition_date)).isoformat()
                         db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
+                    elif clean_name == "observation":
+                        if (
+                            arrow_table is not None
+                            and "resource" in arrow_table.column_names
+                            and "source_date" in arrow_table.column_names
+                            and len(arrow_table) > 0
+                        ):
+                            db.register("_incoming_obs_dates", arrow_table)
+                            try:
+                                db.execute(
+                                    f"DELETE FROM {table} WHERE (source_date, resource) IN "
+                                    f"(SELECT DISTINCT source_date, resource FROM _incoming_obs_dates)"
+                                )
+                            finally:
+                                db.unregister("_incoming_obs_dates")
+                        elif partition_date is not None:
+                            day_value = date.fromisoformat(str(partition_date)).isoformat()
+                            db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
                     # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
                     if clean_name in {"quality_issue", "quarantine"} and incoming_observation_ids:
                         db.register(
@@ -414,7 +536,7 @@ VIEW_DEFINITIONS: dict[str, dict[str, str]] = {
     "v_latest_opening": {
         "source_table": "opening_revision",
         "partition_by": "entity_id",
-        "order_by": "public_date DESC NULLS LAST, bid_open_date DESC NULLS LAST",
+        "order_by": "public_date DESC NULLS LAST, actual_open_date DESC NULLS LAST",
     },
 }
 
@@ -463,8 +585,11 @@ def ensure_views(
             FROM {src_table}
         ) WHERE rn = 1
         """
-        db.execute(sql)
-        created.append(f"{v_schema}.{view_name}")
+        try:
+            db.execute(sql)
+            created.append(f"{v_schema}.{view_name}")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to create view %s.%s: %s", v_schema, view_name, exc)
 
     return created
 
@@ -491,9 +616,41 @@ def read_pinned(db, release: dict[str, Any], name: str):
     ).to_arrow_table()
 
 
+def ensure_release_views(
+    db,
+    target_namespace: str = "silver_v2",
+    release_schema: str = "silver",
+) -> list[str]:
+    """Mount full logical release views in DuckDB schema 'silver' pointing to physical lake.{target_namespace}.*."""
+    clean_ns = identifier(target_namespace)
+    v_schema = identifier(release_schema)
+    db.execute(f"CREATE SCHEMA IF NOT EXISTS {v_schema}")
+    created: list[str] = []
+
+    # 1. Mount raw tables
+    schemas = get_silver_schemas()
+    for clean_name in schemas:
+        src_table = f"lake.{clean_ns}.{clean_name}"
+        try:
+            db.sql(f"SELECT 1 FROM {src_table} LIMIT 0")
+            db.execute(
+                f"CREATE OR REPLACE VIEW {v_schema}.{clean_name} AS SELECT * FROM {src_table}"
+            )
+            created.append(f"{v_schema}.{clean_name}")
+        except Exception:
+            continue
+
+    # 2. Mount deduplicated SIMD views
+    latest_views = ensure_views(db, namespace=target_namespace, view_schema=release_schema)
+    created.extend(latest_views)
+    return created
+
+
 __all__ = [
     "SCHEMAS",
     "VIEW_DEFINITIONS",
+    "ensure_release_views",
+    "ensure_silver_tables",
     "ensure_views",
     "get_partition_spec",
     "get_primary_key",

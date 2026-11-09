@@ -2,6 +2,7 @@
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import duckdb
@@ -83,6 +84,22 @@ class RestCatalog:
     def table(self, namespace, table):
         return self.request("GET", f"namespaces/{identifier(namespace)}/tables/{identifier(table)}")
 
+    def create_namespace_if_not_exists(self, namespace: str) -> None:
+        ns = identifier(namespace)
+        try:
+            self.request("POST", "namespaces", json={"namespace": [ns]})
+        except Exception as exc:
+            # 409 Conflict means namespace already exists in Iceberg REST catalog
+            if "409" in str(exc) or "AlreadyExists" in str(exc):
+                return
+            try:
+                res = self.request("GET", "namespaces")
+                if res and [ns] in res.get("namespaces", []):
+                    return
+            except Exception:
+                pass
+            raise
+
     def pin(self, namespace, table, snapshot_id, release_id):
         name = "release_" + identifier(release_id)
         table_info = self.table(namespace, table)
@@ -107,10 +124,30 @@ def connect(
     *,
     install: bool = False,
     max_memory: str = "4GB",
-    threads: int = 4,
+    threads: int = 2,
     database: str = ":memory:",
 ):
-    db = duckdb.connect(database, config={"max_memory": max_memory, "threads": str(threads)})
+    duckdb_config = {"max_memory": max_memory, "threads": str(threads)}
+    try:
+        home_duckdb = Path.home() / ".duckdb"
+        is_writable = False
+        try:
+            home_duckdb.mkdir(parents=True, exist_ok=True)
+            test_file = home_duckdb / ".write_test"
+            test_file.touch()
+            test_file.unlink()
+            is_writable = True
+        except (OSError, PermissionError):
+            is_writable = False
+
+        if not is_writable:
+            tmp_duckdb = Path("/tmp/.duckdb")
+            tmp_duckdb.mkdir(parents=True, exist_ok=True)
+            duckdb_config["extension_directory"] = str(tmp_duckdb)
+    except Exception:
+        pass
+
+    db = duckdb.connect(database, config=duckdb_config)
     try:
         db.execute("SET preserve_insertion_order = false")
     except Exception:
@@ -126,6 +163,16 @@ def connect(
                 except Exception:
                     db.execute(f"INSTALL {extension}")
                     db.execute(f"LOAD {extension}")
+        try:
+            db.execute("SET http_keep_alive = true")
+            db.execute("SET enable_http_metadata_cache = true")
+            db.execute("SET httpfs_connection_caching = true")
+            db.execute("SET http_retries = 10")
+            db.execute("SET http_retry_wait_ms = 200")
+            db.execute("SET http_retry_backoff = 2")
+            db.execute("SET http_timeout = 60")
+        except Exception:
+            pass
         endpoint = urlsplit(config.s3_endpoint)
         if endpoint.scheme not in ("http", "https") or not endpoint.netloc:
             raise ValueError("S3 endpoint must be an HTTP(S) URL")

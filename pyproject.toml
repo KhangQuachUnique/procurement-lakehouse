@@ -15,6 +15,7 @@ dependencies = [
     "pydantic>=2.11,<3",
     "python-dotenv>=1,<2",
     "s3fs>=2026.7,<2027",
+    "sqlalchemy>=2,<2.1",
     "typer>=0.16,<1",
 ]
 

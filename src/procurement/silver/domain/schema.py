@@ -29,7 +29,6 @@ observation_table = sa.Table(
     sa.Column("source_id", sa.String, nullable=True),
     sa.Column("source_version", sa.String, nullable=True),
     sa.Column("content_hash", sa.String(64), nullable=False),
-    sa.Column("payload_json", sa.Text, nullable=False),
     comment="Physical raw observation record from Bronze Parquet with full lineage",
 )
 
@@ -64,7 +63,6 @@ def _execution_columns():
         sa.Column("is_current", sa.Boolean),
         sa.Column("source_date", sa.Date, nullable=False),
         sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("root_json", sa.Text, nullable=False),
     ]
 
 
@@ -163,7 +161,6 @@ project_revision_table = sa.Table(
     sa.Column("public_date", sa.Date, nullable=True),
     sa.Column("public_date_raw", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     comment="Investment project revision",
 )
 
@@ -175,6 +172,7 @@ plan_revision_table = sa.Table(
     sa.Column("entity_type", sa.String, nullable=False),
     sa.Column("observation_id", sa.String, nullable=True),
     sa.Column("is_current", sa.Boolean, nullable=True),
+    sa.Column("source_id", sa.String, nullable=True),
     sa.Column("plan_no", sa.String, nullable=True),
     sa.Column("title", sa.String, nullable=True),
     sa.Column("investor_name", sa.String, nullable=True),
@@ -190,7 +188,6 @@ plan_revision_table = sa.Table(
     sa.Column("location", sa.String, nullable=True),
     sa.Column("public_date", sa.Date, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     comment="Procurement plan (KHLCNT) revision",
 )
 
@@ -202,6 +199,7 @@ package_revision_table = sa.Table(
     sa.Column("entity_type", sa.String, nullable=False),
     sa.Column("observation_id", sa.String, nullable=True),
     sa.Column("is_current", sa.Boolean, nullable=True),
+    sa.Column("source_id", sa.String, nullable=True),
     sa.Column("package_no", sa.String, nullable=True),
     sa.Column("title", sa.String, nullable=True),
     sa.Column("plan_no", sa.String, nullable=True),
@@ -223,7 +221,6 @@ package_revision_table = sa.Table(
     sa.Column("bid_start_quarter", sa.String, nullable=True),
     sa.Column("bid_start_month", sa.BigInteger, nullable=True),
     sa.Column("public_date", sa.Date, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     comment="Package in procurement plan revision",
 )
 
@@ -257,7 +254,6 @@ notice_revision_table = sa.Table(
     sa.Column("public_date", sa.Date, nullable=True),
     sa.Column("public_date_raw", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     # Notice-specific extra columns (notice-2 contract)
     sa.Column("source_table", sa.String, nullable=True),
     sa.Column("source_family", sa.String, nullable=True),
@@ -356,7 +352,6 @@ result_revision_table = sa.Table(
     sa.Column("public_date", sa.Date, nullable=True),
     sa.Column("public_date_raw", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     comment="Contractor selection result revision",
 )
 
@@ -378,7 +373,6 @@ opening_revision_table = sa.Table(
     sa.Column("public_date", sa.Date, nullable=True),
     sa.Column("public_date_raw", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("root_json", sa.Text, nullable=False),
     comment="Bid opening revision",
 )
 
@@ -395,7 +389,6 @@ lot_table = sa.Table(
     sa.Column("currency", sa.String, nullable=True),
     sa.Column("winning_code", sa.String, nullable=True),
     sa.Column("status_raw", sa.String, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=False),
     comment="Legacy generic lot table",
 )
 
@@ -415,7 +408,6 @@ bid_participation_table = sa.Table(
     sa.Column("currency", sa.String, nullable=True),
     sa.Column("is_winner", sa.Boolean, nullable=True),
     sa.Column("evaluation_rank", sa.BigInteger, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=False),
     comment="Legacy generic bid participation table",
 )
 
@@ -431,7 +423,7 @@ notice_lot_table = sa.Table(
     sa.Column("source_id", sa.String, nullable=True),
     sa.Column("source_path", sa.String, nullable=True),
     sa.Column("ordinal", sa.BigInteger, nullable=False),
-    sa.Column("raw_json", sa.Text, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("lot_no", sa.String, nullable=True),
     sa.Column("lot_name", sa.String, nullable=True),
     sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
@@ -453,7 +445,7 @@ notice_location_table = sa.Table(
     sa.Column("source_id", sa.String, nullable=True),
     sa.Column("source_path", sa.String, nullable=True),
     sa.Column("ordinal", sa.BigInteger, nullable=False),
-    sa.Column("raw_json", sa.Text, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("province_code", sa.String, nullable=True),
     sa.Column("province_name", sa.String, nullable=True),
     sa.Column("district_code", sa.String, nullable=True),
@@ -471,7 +463,7 @@ notice_reoffer_submission_table = sa.Table(
     sa.Column("source_id", sa.String, nullable=True),
     sa.Column("source_path", sa.String, nullable=True),
     sa.Column("ordinal", sa.BigInteger, nullable=False),
-    sa.Column("raw_json", sa.Text, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("source_list", sa.String, nullable=False),
     sa.Column("submission_id", sa.String, nullable=True),
     sa.Column("reoffer_id", sa.String, nullable=True),
@@ -498,6 +490,7 @@ project_location_table = sa.Table(
     metadata,
     sa.Column("location_id", sa.String, primary_key=True),
     sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("province_code", sa.String, nullable=True),
     sa.Column("province_name", sa.String, nullable=True),
     sa.Column("district_code", sa.String, nullable=True),
@@ -514,6 +507,7 @@ package_lot_table = sa.Table(
     sa.Column("lot_id", sa.String, primary_key=True),
     sa.Column("revision_id", sa.String, nullable=False),
     sa.Column("source_lot_id", sa.String, nullable=True),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("lot_ordinal", sa.BigInteger, nullable=False),
     sa.Column("lot_no", sa.String, nullable=True),
     sa.Column("lot_name", sa.String, nullable=True),
@@ -531,6 +525,7 @@ package_location_table = sa.Table(
     metadata,
     sa.Column("location_id", sa.String, primary_key=True),
     sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("location_ordinal", sa.BigInteger, nullable=False),
     sa.Column("province_code", sa.String, nullable=True),
     sa.Column("province_name", sa.String, nullable=True),
@@ -550,7 +545,7 @@ notice_amendment_table = sa.Table(
     sa.Column("old_close_date", sa.DateTime(timezone=True), nullable=True),
     sa.Column("new_close_date", sa.DateTime(timezone=True), nullable=True),
     sa.Column("reason", sa.String, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     comment="Tender invitation deadline postponement and amendment history",
 )
 
@@ -580,6 +575,8 @@ award_lot_table = sa.Table(
     metadata,
     sa.Column("award_lot_id", sa.String, primary_key=True),
     sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("source_lot_id", sa.String, nullable=True),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("lot_no", sa.String, nullable=False),
     sa.Column("lot_name", sa.String, nullable=True),
     sa.Column("lot_price", sa.Numeric(38, 6), nullable=True),
@@ -587,7 +584,6 @@ award_lot_table = sa.Table(
     sa.Column("currency", sa.String, nullable=True),
     sa.Column("winning_code", sa.String, nullable=True),
     sa.Column("status", sa.String, nullable=True),
-    sa.Column("raw_json", sa.Text, nullable=True),
     comment="Contract award decision per lot",
 )
 
@@ -597,6 +593,7 @@ award_contractor_table = sa.Table(
     sa.Column("award_contractor_id", sa.String, primary_key=True),
     sa.Column("award_lot_id", sa.String, nullable=False),
     sa.Column("revision_id", sa.String, nullable=False),
+    sa.Column("source_month", sa.String, nullable=True),
     sa.Column("contractor_code", sa.String, nullable=False),
     sa.Column("contractor_name", sa.String, nullable=False),
     sa.Column("tax_code", sa.String, nullable=True),
@@ -766,3 +763,15 @@ def get_primary_key(table_name: str) -> str | None:
     if sa_table is not None and len(sa_table.primary_key.columns) > 0:
         return next(iter(sa_table.primary_key.columns)).name
     return None
+
+
+def get_table_column_types(table_name: str) -> dict[str, str]:
+    """Return a mapping of column names to DuckDB SQL types derived declaratively from metadata."""
+    clean_name = table_name.split(".")[-1]
+    sa_table = metadata.tables.get(f"silver.{clean_name}")
+    if sa_table is None:
+        sa_table = metadata.tables.get(clean_name)
+    if sa_table is None:
+        return {}
+    return {col.name: _column_to_duckdb_type(col.type) for col in sa_table.columns}
+

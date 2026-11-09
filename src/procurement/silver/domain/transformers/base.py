@@ -123,7 +123,6 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
             "source_id": envelope.source_id,
             "source_version": envelope.source_version,
             "content_hash": envelope.content_hash,
-            "payload_json": canonical_json(envelope.payload),
         }
         return obs_id, observation
 
@@ -187,7 +186,7 @@ class BaseResourceTransformer(ABC, SilverTransformerProtocol):
             source_version=source_ver,
             semantic_hash=semantic_hash,
             mapping_version=self.mapping_version,
-            payload_json=canonical_json(envelope.payload),
+            payload_json=None,
         )
 
         # Extract Typed Attributes, References & Children

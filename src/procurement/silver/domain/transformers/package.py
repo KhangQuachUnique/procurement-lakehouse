@@ -56,7 +56,7 @@ PACKAGE_REVISION_COLUMNS = (
     "bid_start_quarter",
     "bid_start_month",
     "public_date",
-    "root_json",
+    "source_id",
 )
 
 PACKAGE_LOCATION_COLUMNS = (
@@ -295,7 +295,7 @@ class PackageDetailTransformer(BaseResourceTransformer):
                 obs_id=obs_id,
             ),
             "public_date": public_date,
-            "root_json": canonical_json(root),
+            "source_id": _valid_reference(root.get("id")),
         }
         assert set(typed) == set(PACKAGE_REVISION_COLUMNS)
         return typed
@@ -365,7 +365,7 @@ class PackageDetailTransformer(BaseResourceTransformer):
                     path=path,
                     ordinal=ordinal,
                     source_id=clean_text(location.get("id")),
-                    payload_json=canonical_json(location_row),
+                    payload_json=None,
                     typed_table="package_location",
                     typed_attributes=location_row,
                 )
@@ -437,7 +437,7 @@ class PackageDetailTransformer(BaseResourceTransformer):
                     path=path,
                     ordinal=ordinal,
                     source_id=source_lot_id,
-                    payload_json=canonical_json(lot_row),
+                    payload_json=None,
                     typed_table="package_lot",
                     typed_attributes=lot_row,
                 )

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
@@ -504,7 +504,7 @@ dependencies = [
     { name = "giturlparse" },
     { name = "humanize" },
     { name = "jsonpath-ng" },
-    { name = "orjson", marker = "(python_full_version >= '3.14' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.14' and sys_platform == 'emscripten') or (platform_python_implementation != 'PyPy' and sys_platform != 'emscripten')" },
+    { name = "orjson", marker = "python_full_version >= '3.14' or (platform_python_implementation != 'PyPy' and sys_platform != 'emscripten')" },
     { name = "packaging" },
     { name = "pathvalidate" },
     { name = "pendulum" },
@@ -1380,6 +1380,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "s3fs" },
+    { name = "sqlalchemy" },
     { name = "typer" },
 ]
 
@@ -1428,6 +1429,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12,<1" },
     { name = "s3fs", specifier = ">=2026.7,<2027" },
+    { name = "sqlalchemy", specifier = ">=2,<2.1" },
     { name = "sqlalchemy", marker = "extra == 'metadata'", specifier = ">=2,<2.1" },
     { name = "sqlalchemy", marker = "extra == 'ops'", specifier = ">=2,<2.1" },
     { name = "sqlalchemy", marker = "extra == 'orchestration'", specifier = ">=2,<2.1" },

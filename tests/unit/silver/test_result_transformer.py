@@ -382,9 +382,9 @@ def test_award_contractor_only_confirmed_winners_bidresult_1_or_str_1():
         assert r["price_source"] == "bidWiningPrice"
         assert r["currency"] == "VND"
 
-    # Raw lot JSON retained
+    # Lot parsed correctly
     assert len(tables["award_lot"]) == 1
-    assert "contractorList" in tables["award_lot"][0]["raw_json"]
+    assert tables["award_lot"][0]["lot_no"] == "1"
 
     # Non-winner c3 with bidWiningPrice triggers warning
     assert any(i.code == "non_winner_with_winning_price" for i in result.issues)
@@ -1087,8 +1087,6 @@ def test_year_repair_retains_original_evidence_and_audit():
     record = ContractorResultTransformer().transform(make_envelope(payload))
     assert record.typed_attributes["public_date"] == "2023-09-16"
     assert record.typed_attributes["decision_date"] == "2022-09-15"
-    assert "3023-09-16" in record.observation["payload_json"]
-    assert "0222-09-15" in record.revision.payload_json
     repaired = [i for i in record.issues if i.code.startswith("date_year_repaired")]
     assert len(repaired) == 2
     assert {i.code for i in repaired} == {

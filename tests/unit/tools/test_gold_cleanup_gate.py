@@ -1,5 +1,8 @@
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -71,3 +74,28 @@ def test_verified_cleanup_is_not_executed_again(tmp_path):
     (tmp_path / "cleanup/receipt.json").write_text(json.dumps({"status": "CLEANUP_VERIFIED"}))
     result = module.check(tmp_path, {"ActiveState": "inactive", "MainPID": "0"})
     assert result["cleaned"] and not result["ready"] and not result["failed"]
+
+
+def test_direct_scheduler_invocation_without_pythonpath(tmp_path):
+    fixture(tmp_path)
+    (tmp_path / "active-owner.json").write_text(
+        json.dumps({"unit": "procurement-gold-main-test.service"})
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    systemctl = bin_dir / "systemctl"
+    systemctl.write_text("#!/bin/sh\nprintf 'ActiveState=inactive\\nMainPID=0\\n'\n")
+    systemctl.chmod(0o755)
+    env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, "-I", str(Path(module.__file__).resolve()), str(tmp_path)],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=True,
+    )
+    assert json.loads(result.stdout)["ready"] is True
+    assert result.stderr == ""

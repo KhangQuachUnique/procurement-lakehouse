@@ -40,6 +40,10 @@ class Settings(BaseModel):
     ICEBERG_CATALOG_URI: str = "http://localhost:8181"
     ICEBERG_WAREHOUSE: str = "s3://warehouse"
     ICEBERG_CATALOG_PORT: int = Field(default=8181, ge=1, le=65535)
+    SILVER_RELEASE_NAMESPACE: str = "silver"
+    SILVER_TARGET_NAMESPACE: str = "silver"
+    GOLD_RELEASE_NAMESPACE: str = "gold"
+    GOLD_TARGET_NAMESPACE: str = "gold"
     DLT_PIPELINES_DIR: str | None = None
     INGESTION_LOCK_DIR: str = "data/locks"
     SILVER_CHANGE_JOURNAL_ROOT: str | None = None

@@ -19,6 +19,12 @@ class NamespaceCatalog:
         self._check(namespace)
         return self.catalog.pin(namespace, *args, **kwargs)
 
+    def create_namespace_if_not_exists(self, namespace):
+        self._check(namespace)
+        if hasattr(self.catalog, "create_namespace_if_not_exists"):
+            return self.catalog.create_namespace_if_not_exists(namespace)
+        return None
+
     def request(self, method, path, **kwargs):
         match = re.match(r"^namespaces/([a-z][a-z0-9_]*)/tables(?:/|$)", path.lstrip("/"))
         if match is None:

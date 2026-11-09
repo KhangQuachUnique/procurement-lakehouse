@@ -91,7 +91,6 @@ class _ExecutionTransformer(BaseResourceTransformer):
             "entity_type": self.entity_type,
             **{column: clean_text(root.get(source)) for column, source in self.text_fields.items()},
             **{column: parsed(source, parse_date) for column, source in self.date_fields.items()},
-            "root_json": canonical_json(root),
         }
         if self.entity_type == "contract":
             result["price_after_tax"] = parsed("priceAfter", parse_money)

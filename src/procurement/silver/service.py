@@ -111,6 +111,8 @@ def run_resource(
     iceberg_namespace="silver",
     iceberg_memory_limit="4GB",
     iceberg_threads=4,
+    direct_iceberg_only: bool = False,
+    batch_size: int = 30,
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]
@@ -150,6 +152,8 @@ def run_resource(
         iceberg_namespace=iceberg_namespace,
         iceberg_memory_limit=iceberg_memory_limit,
         iceberg_threads=iceberg_threads,
+        direct_iceberg_only=direct_iceberg_only,
+        batch_size=batch_size,
     )
 
     return use_case.execute(
@@ -158,6 +162,7 @@ def run_resource(
         family=family,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
+        batch_size=batch_size,
         on_progress=on_progress,
     )
 

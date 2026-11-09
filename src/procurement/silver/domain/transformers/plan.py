@@ -126,18 +126,18 @@ class PlanDetailTransformer(BaseResourceTransformer):
                 )
             )
 
-        decision_date = self._parse_optional(
-            root.get("decisionDate"),
-            parser=parse_date,
-            field="decisionDate",
-            code="invalid_date",
-            issues=issues,
-            obs_id=obs_id,
-        )
         public_date = self._parse_optional(
             root.get("publicDate"),
             parser=parse_date,
             field="publicDate",
+            code="invalid_date",
+            issues=issues,
+            obs_id=obs_id,
+        )
+        decision_date = self._parse_optional(
+            root.get("decisionDate"),
+            parser=lambda v: parse_date(v, anchor_date=public_date),
+            field="decisionDate",
             code="invalid_date",
             issues=issues,
             obs_id=obs_id,
@@ -172,7 +172,7 @@ class PlanDetailTransformer(BaseResourceTransformer):
             "location": clean_text(root.get("location")),
             "public_date": public_date,
             "status_raw": clean_text(root.get("status")),
-            "root_json": canonical_json(root),
+            "source_id": clean_text(root.get("id")),
         }
 
     def extract_references(

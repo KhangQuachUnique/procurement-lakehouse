@@ -34,7 +34,7 @@ PLAN_FIELDS = {
     "location",
     "public_date",
     "status_raw",
-    "root_json",
+    "source_id",
 }
 
 
@@ -120,7 +120,6 @@ def test_all_columns_from_real_bronze_shape():
     assert out.references == []
     assert out.children == []
     assert out.issues == []
-    assert json.loads(a["root_json"]) == make_plan()["bidPoBidpPlanProjectDetailView"]
 
 
 def test_pid_and_pno_link_project_without_materializing_fk():
