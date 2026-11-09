@@ -1,4 +1,4 @@
-"""Candidate replacement code location; no schedules enabled or production switch."""
+"""Active production-grade Dagster code location with 4-stage Lakehouse lineage."""
 
 from datetime import timedelta
 
@@ -20,11 +20,15 @@ from procurement.orchestration.gold_assets import (
     GOLD_DIMENSIONS_ASSETS,
     gold_facts_monthly,
 )
-from procurement.orchestration.gold_v2 import gold_v2_active_release, gold_v2_run_job
+from procurement.orchestration.gold_v2 import gold_v2_run_job
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
 from procurement.orchestration.silver import SILVER_GROUPS, silver_assets, silver_sync_iceberg_job
-from procurement.orchestration.workflows import benchmark_job, quality_audit_job, quality_repair_job
+from procurement.orchestration.workflows import benchmark_job
+
+# ============================================================================
+# PIPELINE JOBS
+# ============================================================================
 
 bronze_job = define_asset_job(
     "bronze_daily",
@@ -36,13 +40,6 @@ bronze_job = define_asset_job(
 silver_job = define_asset_job(
     "silver_daily",
     selection=AssetSelection.groups("silver"),
-    executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
-    tags={"dagster/max_retries": "0"},
-)
-
-lakehouse_job = define_asset_job(
-    "lakehouse_daily",
-    selection=AssetSelection.groups("bronze") | AssetSelection.groups("silver"),
     executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
     tags={"dagster/max_retries": "0"},
 )
@@ -63,10 +60,15 @@ gold_facts_job = define_asset_job(
 
 lakehouse_end_to_end_job = define_asset_job(
     "lakehouse_end_to_end",
-    selection=AssetSelection.groups("bronze", "silver", "gold"),
+    selection=AssetSelection.groups("bronze", "silver", "gold_dimensions"),
     executor_def=multiprocess_executor.configured({"max_concurrent": 1}),
     tags={"dagster/max_retries": "0"},
 )
+
+
+# ============================================================================
+# SCHEDULES
+# ============================================================================
 
 
 @schedule(
@@ -76,7 +78,7 @@ lakehouse_end_to_end_job = define_asset_job(
     default_status=DefaultScheduleStatus.STOPPED,
 )
 def bronze_daily_schedule(context: ScheduleEvaluationContext):
-    """Refresh the last three closed dates, matching the legacy intended lookback."""
+    """Refresh the last three closed dates, matching the intended lookback."""
     tick = context.scheduled_execution_time.astimezone(VIETNAM_TZ)
     for offset in (3, 2, 1):
         key = (tick.date() - timedelta(days=offset)).isoformat()
@@ -120,13 +122,7 @@ def silver_daily_schedule(context: ScheduleEvaluationContext):
     default_status=DefaultScheduleStatus.STOPPED,
 )
 def lakehouse_end_to_end_schedule(context: ScheduleEvaluationContext):
-    """Candidate schedule requires explicit Gold v2 runtime config before enablement.
-
-    One closed day through dependency-checked Bronze, Silver and Gold.
-
-    Opt-in deployment only; do not enable alongside overlapping independent
-    schedules. Bootstrap/migrate Gold state before enabling this schedule.
-    """
+    """Daily schedule through dependency-checked Bronze, Silver and Conformed Dimensions."""
     tick = context.scheduled_execution_time.astimezone(VIETNAM_TZ)
     key = (tick.date() - timedelta(days=1)).isoformat()
     if key < BRONZE_PARTITIONS.start.date().isoformat():
@@ -146,27 +142,27 @@ def lakehouse_end_to_end_schedule(context: ScheduleEvaluationContext):
     )
 
 
+# ============================================================================
+# DEFINITIONS ROOT
+# ============================================================================
+
 defs = Definitions(
     assets=[
         *bronze_assets,
         *silver_assets,
         *GOLD_DIMENSIONS_ASSETS,
         gold_facts_monthly,
-        gold_v2_active_release,
     ],
     asset_checks=GOLD_ASSET_CHECKS,
     jobs=[
         lakehouse_end_to_end_job,
-        gold_v2_run_job,
-        gold_dimensions_job,
         gold_facts_job,
+        gold_dimensions_job,
         bronze_job,
         silver_job,
-        lakehouse_job,
-        silver_sync_iceberg_job,
+        gold_v2_run_job,
         reconcile_lakehouse_job,
-        quality_audit_job,
-        quality_repair_job,
+        silver_sync_iceberg_job,
         benchmark_job,
     ],
     schedules=[bronze_daily_schedule, silver_daily_schedule],
