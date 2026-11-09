@@ -16,7 +16,7 @@ def populated(db):
         db.execute(f"CREATE TABLE silver.{name} ({ddl})")
     populate_comprehensive_silver_fixtures(db)
     for n in INPUT_TABLES:
-        db.execute(f"INSERT INTO frozen.{n} SELECT * FROM silver.{n}")
+        db.execute(f"CREATE OR REPLACE TABLE frozen.{n} AS SELECT * FROM silver.{n}")
         db.execute(f"CREATE TABLE input_cache.{n} AS SELECT * FROM frozen.{n}")
 
 

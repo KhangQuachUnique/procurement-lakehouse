@@ -9,6 +9,12 @@ def populated(db):
     db.execute("CREATE SCHEMA silver")
     for name, ddl in get_silver_schemas().items():
         db.execute(f"CREATE TABLE silver.{name} ({ddl})")
+    db.execute("ALTER TABLE silver.observation ADD COLUMN IF NOT EXISTS payload_json VARCHAR DEFAULT '{}'")
+    db.execute("ALTER TABLE silver.plan_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    db.execute("ALTER TABLE silver.package_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    db.execute("ALTER TABLE silver.notice_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    db.execute("ALTER TABLE silver.result_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    db.execute("ALTER TABLE silver.award_lot ADD COLUMN IF NOT EXISTS raw_json VARCHAR DEFAULT '{}'")
     populate_comprehensive_silver_fixtures(db)
 
 

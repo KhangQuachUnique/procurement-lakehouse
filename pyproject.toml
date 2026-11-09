@@ -54,6 +54,7 @@ module_name = "procurement.orchestration.definitions"
 where = ["src"]
 
 [tool.setuptools.package-data]
+"procurement.gold.domain" = ["*.json"]
 "procurement.gold.v2" = ["*.json"]
 "procurement.gold.v2.compute" = ["*.json"]
 "procurement.gold.v2.compute.sql" = ["*.sql"]

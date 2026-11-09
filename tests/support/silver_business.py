@@ -5,6 +5,12 @@ import duckdb
 
 def populate_comprehensive_silver_fixtures(con: duckdb.DuckDBPyConnection) -> None:
     """Populate test silver tables with adversarial source-shaped fixtures covering all scenarios."""
+    con.execute("ALTER TABLE silver.observation ADD COLUMN IF NOT EXISTS payload_json VARCHAR DEFAULT '{}'")
+    con.execute("ALTER TABLE silver.plan_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    con.execute("ALTER TABLE silver.package_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    con.execute("ALTER TABLE silver.notice_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    con.execute("ALTER TABLE silver.result_revision ADD COLUMN IF NOT EXISTS root_json VARCHAR DEFAULT '{}'")
+    con.execute("ALTER TABLE silver.award_lot ADD COLUMN IF NOT EXISTS raw_json VARCHAR DEFAULT '{}'")
     # Observations
     con.execute("""
         INSERT INTO silver.observation (
