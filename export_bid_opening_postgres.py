@@ -21,6 +21,7 @@ from zipfile import ZIP_STORED, ZipFile
 
 from sqlalchemy import text
 
+from procurement.common.dates import today_vn
 from procurement.common.settings import settings
 from procurement.infrastructure.database import create_application_engine
 from procurement.storage.object_store import create_s3_filesystem
@@ -89,15 +90,17 @@ def _year_info(rows: list[dict], year: int, allow_partial: bool) -> dict:
                 "files": [],
             }
         if r["object_key"] is not None:
-            days[day]["files"].append({
-                "table_name": r["table_name"],
-                "bucket": r["bucket"],
-                "object_key": r["object_key"],
-                "file_number": int(r["file_number"]),
-                "row_count": int(r["file_rows"]),
-                "size_bytes": int(r["size_bytes"]),
-                "sha256": r["sha256"],
-            })
+            days[day]["files"].append(
+                {
+                    "table_name": r["table_name"],
+                    "bucket": r["bucket"],
+                    "object_key": r["object_key"],
+                    "file_number": int(r["file_number"]),
+                    "row_count": int(r["file_rows"]),
+                    "size_bytes": int(r["size_bytes"]),
+                    "sha256": r["sha256"],
+                }
+            )
     expected_days = (date(year + 1, 1, 1) - date(year, 1, 1)).days
     if len(days) != expected_days and not allow_partial:
         raise RuntimeError(
@@ -120,7 +123,10 @@ def _year_info(rows: list[dict], year: int, allow_partial: bool) -> dict:
                     f"{d['source_date']}: file belongs to bucket {f['bucket']!r}; "
                     f"expected {settings.OBJECT_STORAGE_BUCKET!r}"
                 )
-            if not f["object_key"].startswith("bronze/") or ".." in Path(f["object_key"]).parts:
+            if (
+                not f["object_key"].startswith("bronze/")
+                or ".." in Path(f["object_key"]).parts
+            ):
                 raise RuntimeError(f"Unsafe Parquet key: {f['object_key']!r}")
     all_files = [f for d in days.values() for f in d["files"]]
     return {
@@ -154,14 +160,19 @@ def _zip_year(fs, manifest: dict, out: Path) -> None:
                     dest = f"objects/{file['object_key']}"
                     h = hashlib.sha256()
                     size = 0
-                    with fs.open(src, "rb") as inp, zipf.open(dest, "w", force_zip64=True) as outfp:
+                    with (
+                        fs.open(src, "rb") as inp,
+                        zipf.open(dest, "w", force_zip64=True) as outfp,
+                    ):
                         while chunk := inp.read(1024 * 1024):
                             h.update(chunk)
                             outfp.write(chunk)
                             size += len(chunk)
                     if size != file["size_bytes"] or h.hexdigest() != file["sha256"]:
                         raise RuntimeError(f"Parquet checksum/size mismatch: {src}")
-            zipf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+            zipf.writestr(
+                "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2)
+            )
         with ZipFile(tmp, "r") as z:
             if z.testzip() is not None:
                 raise RuntimeError(f"ZIP CRC verification failed: {tmp}")
@@ -181,24 +192,48 @@ def main() -> int:
     fs = None if args.dry_run else create_s3_filesystem()
     try:
         with engine.connect() as conn:
+            today = today_vn()
+
             for year in args.years:
-                if year < 2000 or year >= date.today().year:
-                    raise ValueError(f"Not a closed historical calendar year: {year}")
-                rows = [dict(r) for r in conn.execute(SQL, {
-                    "first_day": date(year, 1, 1), "last_day": date(year + 1, 1, 1)
-                }).mappings()]
+                if year < 2000 or year > today.year:
+                    raise ValueError(f"Invalid export year: {year}")
+
+                if year == today.year and not args.allow_partial:
+                    raise ValueError(
+                        f"{year} is still in progress. Pass --allow-partial."
+                    )
+
+                first_day = date(year, 1, 1)
+                last_day = min(date(year + 1, 1, 1), today)
+
+                rows = [
+                    dict(r)
+                    for r in conn.execute(
+                        SQL,
+                        {
+                            "first_day": first_day,
+                            "last_day": last_day,
+                        },
+                    ).mappings()
+                ]
                 manifest = _year_info(rows, year, args.allow_partial)
                 path = args.out_dir / f"bid-opening-{year}-postgres.zip"
-                print(json.dumps({
-                    "year": year,
-                    "committed_days": manifest["committed_days"],
-                    "expected_days": manifest["expected_days"],
-                    "records": manifest["record_count"],
-                    "parquet_files": manifest["file_count"],
-                    "parquet_bytes": manifest["bytes"],
-                    "destination": str(path),
-                    "dry_run": args.dry_run,
-                }, indent=2), flush=True)
+                print(
+                    json.dumps(
+                        {
+                            "year": year,
+                            "committed_days": manifest["committed_days"],
+                            "expected_days": manifest["expected_days"],
+                            "records": manifest["record_count"],
+                            "parquet_files": manifest["file_count"],
+                            "parquet_bytes": manifest["bytes"],
+                            "destination": str(path),
+                            "dry_run": args.dry_run,
+                        },
+                        indent=2,
+                    ),
+                    flush=True,
+                )
                 if not args.dry_run:
                     _zip_year(fs, manifest, path)
                     print(f"VERIFIED ZIP: {path}", flush=True)

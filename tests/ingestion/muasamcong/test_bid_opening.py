@@ -7,7 +7,6 @@ import httpx
 import pytest
 
 from procurement.ingestion.engine.stats import PageStats
-
 from procurement.ingestion.sources.muasamcong.bid_opening.resource import (
     ADB_WB_OPENING_PATH,
     ENDPOINTS,
@@ -16,7 +15,6 @@ from procurement.ingestion.sources.muasamcong.bid_opening.resource import (
     BidOpeningApi,
     create_bid_opening_spec,
 )
-
 from procurement.ingestion.sources.muasamcong.client import MuasamcongClient
 from procurement.quality.contracts import (
     DetailValidationError,
@@ -2150,3 +2148,399 @@ def test_khac_cancelled_two_bidders_invalid_rejected(mutation):
         load_config(resource="bid_opening").contracts["bid_opening"],
     )
     assert result["status"] == "fail", mutation
+
+
+def khac_cancelled_mixed_timeline_example():
+    ctx, payload = khac_cancelled_priced_financial_example()
+
+    for part in payload.values():
+        notice = part["bidoNotifyContractorP"]
+        round_info = part["bidoBidroundOutMngViewDTO"]
+
+        notice.update(
+            {
+                "bidOpenDate": "2026-08-10T15:00:00",
+                "cancelDate": "2026-10-09T08:53:42",
+                "cancelDecisionDate": "2026-10-05T00:00:00",
+                "cancelDecisionNo": "4312151/QD-VTNet",
+                "cancelReason": "KDUN",
+            }
+        )
+
+        round_info.update(
+            {
+                "successBidOpenDate": "2026-10-30T10:04:18",
+                "successBidOpenDateTc": "2026-08-11T10:15:10",
+            }
+        )
+
+    return ctx, payload
+
+
+def test_khac_cancelled_mixed_timeline_accepted_with_warning():
+    ctx, payload = khac_cancelled_mixed_timeline_example()
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "cancelled_priced_financial_mixed_timeline"
+    assert "cancelled_khac_mixed_opening_timeline" in {
+        x["code"] for x in result["issues"]
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_cancellation",
+        "zero_financial_price",
+        "evaluated_financial_lot",
+        "financial_date_before_scheduled",
+    ],
+)
+def test_khac_cancelled_mixed_timeline_invalid_rejected(mutation):
+    ctx, payload = khac_cancelled_mixed_timeline_example()
+
+    financial = payload["opening_out_financial"]
+    bidder = financial["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"][
+        0
+    ]
+
+    if mutation == "wrong_cancellation":
+        financial["bidoNotifyContractorP"]["cancelDecisionNo"] = "DIFFERENT"
+
+    elif mutation == "zero_financial_price":
+        bidder["bidPrice"] = 0
+        bidder["bidFinalPrice"] = 0
+
+    elif mutation == "evaluated_financial_lot":
+        bidder["lotNoValueDTOList"][0]["ranking"] = 1
+
+    elif mutation == "financial_date_before_scheduled":
+        for part in payload.values():
+            part["bidoBidroundOutMngViewDTO"][
+                "successBidOpenDateTc"
+            ] = "2026-08-01T10:00:00"
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail", mutation
+
+
+def ldt_financial_source_conflict_example(dual_payload):
+    ctx, data = no_qualified_technical_example(dual_payload)
+
+    notice = data["notify"]["bidNoContractorResponse"]["bidNotification"]
+    round_info = data["roundmng"]["bidoBidroundMngViewDTO"]
+
+    # This is a single-lot notice, not a multi-lot evaluation.
+    notice["isMultiLot"] = False
+
+    round_info.update(
+        {
+            "isMultiLot": False,
+            "countContractor": 1,
+            "bidStatus": "OPEN_DXKT",
+            "evalStatus": "-1",
+            "successBidOpenDate": "2026-10-08T10:04:49",
+            "successBidOpenDateTc": "2026-07-30T21:09:49",
+        }
+    )
+
+    # One technical bidder.
+    submissions = data["bid_open_technical"]["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ]
+
+    submissions[:] = submissions[:1]
+
+    bidder = submissions[0]
+    bidder["createdDateBidOpen"] = "2026-10-08T10:04:48.8"
+    bidder["techResult"] = None
+    bidder["techScore"] = None
+
+    # One technical lot without evaluation results.
+    lot = data["lot_open_detail_technical"][0]
+    lot.update(
+        {
+            "passedYn": None,
+            "eligibilityYn": None,
+            "experienceYn": None,
+            "techScore": None,
+            "evalPrice": None,
+            "ranking": None,
+            "succBidderYn": None,
+            "succBidderPrice": None,
+        }
+    )
+
+    data["lot_open_detail_technical"] = [lot]
+
+    # The base fixture already contains explicit null financial
+    # roots, an empty financial lot list, and a self-linked notice.
+    assert data["bid_open_financial"]["bidSubmissionByContractorViewResponse"] is None
+    assert data["lot_open_detail_financial"] == []
+
+    return ctx, data
+
+
+def test_ldt_financial_source_conflict_accepted(dual_payload):
+    ctx, data = ldt_financial_source_conflict_example(dual_payload)
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "financial_source_conflict"
+
+    issue_codes = {item["code"] for item in result["issues"]}
+
+    assert "financial_null_with_publication_marker_conflict" in issue_codes
+
+    # Raw source values must not be rewritten.
+    assert data["bid_open_financial"]["bidSubmissionByContractorViewResponse"] is None
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "actual_cancellation",
+        "wrong_link",
+        "wrong_identity",
+        "evaluated_lot",
+        "financial_data_present",
+        "extra_lot",
+        "valid_chronology",
+        "missing_cancel_evidence",
+    ],
+)
+def test_ldt_financial_source_conflict_rejects_invalid(
+    dual_payload,
+    mutation,
+):
+    ctx, data = ldt_financial_source_conflict_example(dual_payload)
+
+    if mutation == "actual_cancellation":
+        data["cancellation_notice"]["bidCancelingResponse"][
+            "cancelDate"
+        ] = "2026-09-10T10:00:00"
+
+    elif mutation == "wrong_link":
+        plan = data["cancellation_notice"]["bidpPlanDetail"]
+        linked = json.loads(plan["linkNotifyInfo"])
+        linked["notifyNo"] = "IB_WRONG"
+        plan["linkNotifyInfo"] = json.dumps(linked)
+
+    elif mutation == "wrong_identity":
+        data["cancellation_notice"]["bidNoContractorResponse"]["bidNotification"][
+            "notifyNo"
+        ] = "IB_WRONG"
+
+    elif mutation == "evaluated_lot":
+        data["lot_open_detail_technical"][0]["passedYn"] = "Y"
+
+    elif mutation == "financial_data_present":
+        data["bid_open_financial"]["bidSubmissionByContractorViewResponse"] = {
+            "bidSubmissionDTOList": []
+        }
+
+    elif mutation == "extra_lot":
+        data["lot_open_detail_technical"].append(
+            copy.deepcopy(data["lot_open_detail_technical"][0])
+        )
+
+    elif mutation == "valid_chronology":
+        data["roundmng"]["bidoBidroundMngViewDTO"][
+            "successBidOpenDateTc"
+        ] = "2026-10-09T10:00:00"
+
+    elif mutation == "missing_cancel_evidence":
+        data["cancellation_notice"]["bidCancelingResponse"].pop("cancelDate")
+
+    result = validate_detail(
+        data,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail", mutation
+
+
+def khac_financial_null_marker_example():
+    ctx, technical, financial = khac_dual_example()
+    bid_no = "BP2600358982"
+
+    for part in (technical, financial):
+        part["bidoNotifyContractorP"].update(
+            {
+                "bidNo": bid_no,
+                "status": "01",
+                "bidOpenDate": "2026-10-30T10:00:00",
+                "cancelDate": None,
+                "cancelDecisionDate": None,
+                "cancelDecisionNo": None,
+                "cancelReason": None,
+                "cancelFileAttachName": None,
+            }
+        )
+
+        part["bidoBidroundOutMngViewDTO"].update(
+            {
+                "bidNo": bid_no,
+                "countContractor": 1,
+                "isMultiLot": None,
+                "bidStatus": "OPEN_DXKT",
+                "evalStatus": None,
+                "successBidOpenDate": "2026-10-30T10:04:18",
+                "successBidOpenDateTc": "2026-08-11T10:15:10",
+            }
+        )
+
+    technical["bidSubmissionByContractorViewResponse"] = {
+        "bidSubmissionDTOList": [
+            {
+                "id": "technical-submission",
+                "contractorCode": "vn0303476197",
+                "bidPrice": 0,
+                "bidFinalPrice": 0,
+                "techResult": None,
+                "techScore": None,
+                "lotNoValueDTOList": [
+                    {
+                        "lotNo": bid_no,
+                        "bidNo": None,
+                        "contractorCode": None,
+                        "lotPrice": 0,
+                        "lotFinalPrice": 0,
+                        "passedYn": None,
+                        "ranking": None,
+                    }
+                ],
+            }
+        ],
+        "bidoLotOpenDetailDTOS": None,
+        "bidOpenAdditionList": None,
+    }
+
+    financial["bidSubmissionByContractorViewResponse"] = {
+        "bidSubmissionDTOList": None,
+        "bidoLotOpenDetailDTOS": None,
+        "bidOpenAdditionList": None,
+    }
+
+    return ctx, {
+        "opening_out_technical": technical,
+        "opening_out_financial": financial,
+    }
+
+
+def test_khac_financial_null_marker_accepted():
+    ctx, payload = khac_financial_null_marker_example()
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "financial_source_conflict"
+    assert "khac_financial_null_with_early_publication_marker" in {
+        item["code"] for item in result["issues"]
+    }
+
+    assert (
+        payload["opening_out_financial"]["bidSubmissionByContractorViewResponse"][
+            "bidSubmissionDTOList"
+        ]
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_identity",
+        "cancelled_notice",
+        "technical_evaluated",
+        "lot_evaluated",
+        "missing_financial_key",
+        "wrong_financial_marker",
+        "wrong_contractor_count",
+    ],
+)
+def test_khac_financial_null_marker_rejects_invalid(mutation):
+    ctx, payload = khac_financial_null_marker_example()
+
+    technical = payload["opening_out_technical"]
+    financial = payload["opening_out_financial"]
+
+    if mutation == "wrong_identity":
+        financial["bidoNotifyContractorP"]["notifyNo"] = "IB_WRONG"
+
+    elif mutation == "cancelled_notice":
+        financial["bidoNotifyContractorP"]["cancelDate"] = "2026-10-29T10:00:00"
+
+    elif mutation == "technical_evaluated":
+        technical["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"][0][
+            "techResult"
+        ] = "Y"
+
+    elif mutation == "lot_evaluated":
+        technical["bidSubmissionByContractorViewResponse"]["bidSubmissionDTOList"][0][
+            "lotNoValueDTOList"
+        ][0]["ranking"] = 1
+
+    elif mutation == "missing_financial_key":
+        financial["bidSubmissionByContractorViewResponse"].pop("bidSubmissionDTOList")
+
+    elif mutation == "wrong_financial_marker":
+        for part in payload.values():
+            part["bidoBidroundOutMngViewDTO"][
+                "successBidOpenDateTc"
+            ] = "2026-10-31T10:00:00"
+
+    elif mutation == "wrong_contractor_count":
+        for part in payload.values():
+            part["bidoBidroundOutMngViewDTO"]["countContractor"] = 2
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "fail", mutation
+
+
+@pytest.mark.parametrize("missing_field", ["passedYn", "ranking"])
+def test_khac_financial_null_marker_optional_unevaluated_fields(
+    missing_field,
+):
+    ctx, payload = khac_financial_null_marker_example()
+
+    lot = payload["opening_out_technical"]["bidSubmissionByContractorViewResponse"][
+        "bidSubmissionDTOList"
+    ][0]["lotNoValueDTOList"][0]
+
+    lot.pop(missing_field, None)
+
+    result = validate_detail(
+        payload,
+        ctx,
+        load_config(resource="bid_opening").contracts["bid_opening"],
+    )
+
+    assert result["status"] == "warn"
+    assert result["collection_status"] == "financial_source_conflict"

@@ -1,4 +1,4 @@
-version = "bid-opening-9-khac-cancelled-unevaluated"
+version = "bid-opening-10-ldt-financial-source-conflict"
 resource = "bid_opening"
 
 [contracts.bid_opening]
