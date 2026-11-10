@@ -23,6 +23,7 @@ dependencies = [
 ingest = "procurement.cli.ingest:main"
 silver = "procurement.cli.silver:main"
 gold = "procurement.gold.adapters.driving.cli:main"
+bronze-transfer = "procurement.cli.bronze_transfer:main"
 
 [project.optional-dependencies]
 metadata = [
