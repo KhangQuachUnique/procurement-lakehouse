@@ -51,10 +51,6 @@ RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
     "award_lot": {
         "source_lot_id": "VARCHAR",
         "source_month": "VARCHAR",
-        "raw_json": "VARCHAR",
-    },
-    "bid_participation": {
-        "raw_json": "VARCHAR",
     },
     "award_contractor": {
         "bid_result": "BIGINT",
@@ -71,9 +67,6 @@ RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
     "notice_reoffer_submission": {
         "source_month": "VARCHAR",
     },
-    "notice_amendment": {
-        "source_month": "VARCHAR",
-    },
     "project_location": {
         "source_month": "VARCHAR",
     },
@@ -81,9 +74,6 @@ RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
         "source_month": "VARCHAR",
     },
     "package_location": {
-        "source_month": "VARCHAR",
-    },
-    "opening_submission": {
         "source_month": "VARCHAR",
     },
     "plan_revision": {

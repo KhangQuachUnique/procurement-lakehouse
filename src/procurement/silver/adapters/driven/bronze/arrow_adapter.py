@@ -195,7 +195,7 @@ class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
                 if isinstance(partition.manifest, dict) and partition.manifest.get("dagster_run_id"):
                     valid_run_ids.add(str(partition.manifest["dagster_run_id"]))
                 ordinal = 0
-                for batch in pq.ParquetFile(stream).iter_batches(batch_size=1024):
+                for batch in pq.ParquetFile(stream).iter_batches(batch_size=16384):
                     for row in batch.to_pylist():
                         if (
                             row["run_id"] not in valid_run_ids

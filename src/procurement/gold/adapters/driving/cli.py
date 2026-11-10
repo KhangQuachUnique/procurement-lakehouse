@@ -175,6 +175,73 @@ def cmd_promote(
         typer.echo(f"Promoted {len(views)} zero-copy views into {target_schema}.*")
 
 
+@app.command("run")
+def cmd_run(
+    date: str | None = typer.Option(None, "--date", "-d", help="Single date (YYYY-MM-DD) to process"),
+    month: str | None = typer.Option(None, "--month", "-m", help="Target month (YYYY-MM) to process"),
+    start_date: str | None = typer.Option(None, "--start-date", help="Start date (YYYY-MM-DD) for range"),
+    end_date: str | None = typer.Option(None, "--end-date", help="End date (YYYY-MM-DD) for range"),
+    silver_namespace: str = typer.Option("silver", help="Source Silver namespace in catalog 'lake'"),
+    gold_namespace: str = typer.Option("gold", help="Target Gold namespace in catalog 'lake'"),
+    memory_limit: str = typer.Option("4GB", help="DuckDB memory limit"),
+    threads: int = typer.Option(4, help="DuckDB execution threads"),
+):
+    """Execute Gold dimensional processing for a day, month, or historical date range."""
+    from datetime import date as dt_date
+    from procurement.gold.application.processor import (
+        process_gold_day,
+        process_gold_month,
+    )
+
+    if date:
+        typer.echo(f"Processing Gold for day {date}...")
+        res = process_gold_day(
+            date,
+            silver_namespace=silver_namespace,
+            gold_namespace=gold_namespace,
+            memory_limit=memory_limit,
+            threads=threads,
+        )
+        typer.echo(json.dumps(res, indent=2))
+        return
+
+    if month:
+        typer.echo(f"Processing Gold for month {month}...")
+        res = process_gold_month(
+            month,
+            silver_namespace=silver_namespace,
+            gold_namespace=gold_namespace,
+            memory_limit=memory_limit,
+            threads=threads,
+        )
+        typer.echo(json.dumps(res, indent=2))
+        return
+
+    if start_date and end_date:
+        cur = dt_date.fromisoformat(start_date).replace(day=1)
+        end_dt = dt_date.fromisoformat(end_date)
+        total_facts = 0
+        while cur <= end_dt:
+            ym = cur.strftime("%Y-%m")
+            typer.echo(f"▶ Processing Gold {ym}...")
+            res = process_gold_month(
+                ym,
+                silver_namespace=silver_namespace,
+                gold_namespace=gold_namespace,
+                memory_limit=memory_limit,
+                threads=threads,
+            )
+            total_facts += res.get("fact_rows", 0)
+            next_month = cur.month + 1 if cur.month < 12 else 1
+            next_year = cur.year if cur.month < 12 else cur.year + 1
+            cur = dt_date(next_year, next_month, 1)
+        typer.echo(f"✔ Completed Gold range {start_date} to {end_date} (Total fact rows: {total_facts})")
+        return
+
+    typer.echo("Error: Please provide --date, --month, or both --start-date and --end-date", err=True)
+    raise typer.Exit(code=1)
+
+
 @app.command("reconcile")
 def cmd_reconcile(
     gold_schema: str = typer.Option("lake.gold", help="Gold physical or view schema"),

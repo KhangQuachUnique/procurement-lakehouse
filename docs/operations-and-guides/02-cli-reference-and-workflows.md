@@ -114,26 +114,53 @@ uv run gold version
 ### 3.2. Khởi Tạo Hạ Tầng & Dữ Liệu Danh Mục
 ```bash
 # 1. Tự động khởi tạo 16 bảng trong Iceberg (lake.gold) với phân vùng tháng cho Facts
-uv run gold ensure-tables --namespace gold
+uv run gold ensure-tables
 
 # 2. Nạp dữ liệu danh mục 63 tỉnh/thành phố chuẩn vào dim_geography
-uv run gold seed-geography --namespace gold
+uv run gold seed-geography
+
+# Hoặc chỉ định namespace thử nghiệm:
+uv run gold ensure-tables --namespace gold_v3
+uv run gold seed-geography --namespace gold_v3
 ```
 
-### 3.3. Chuyển Đổi Views Báo Cáo Không Cần Copy (Zero-Copy Promote)
+### 3.3. Tính Toán Star Schema Tầng Gold (`gold run`)
+Thực thi tính toán chuyển đổi từ Silver sang Star Schema 16 bảng của Gold (tự động upsert Dimensions và partition overwrite Fact theo ngày/tháng):
+
 ```bash
-# Tạo/cập nhật 16 View trong schema gold.* trỏ tới bảng vật lý lake.gold_v2.*
-uv run gold promote --source-namespace gold_v2 --target-schema gold
+# 1. Chạy tính toán cho một ngày cụ thể (mặc định silver -> gold)
+uv run gold run --date 2025-10-09
+
+# 2. Chạy tính toán trọn gói cho một tháng (ví dụ tháng 10/2025)
+uv run gold run --month 2025-10
+
+# 3. Chạy dải ngày lịch sử (tự động phân trang xử lý từng tháng để tối ưu RAM)
+uv run gold run --start-date 2022-01-01 --end-date 2025-12-31
+
+# 4. Tùy chọn chỉ định namespace thử nghiệm (ví dụ silver_v3 sang gold_v3)
+uv run gold run --start-date 2022-01-01 --end-date 2025-12-31 --silver-namespace silver_v3 --gold-namespace gold_v3
 ```
 
-### 3.4. Kiểm Tra Đối Soát Tài Chính 3 Chiều (Reconciliation Audit)
+### 3.4. Chuyển Đổi Views Báo Cáo Không Cần Copy (Zero-Copy Promote)
 ```bash
-# So khớp tổng tiền kế hoạch, tổng tiền trúng thầu và khóa ngoại mồ côi
-uv run gold reconcile --gold-schema lake.gold --silver-schema lake.silver
+# Tạo/cập nhật 16 View trong schema gold.* trỏ tới bảng vật lý lake.gold.*
+uv run gold promote
+
+# Hoặc trỏ tới bản thử nghiệm (ví dụ lake.gold_v3.*):
+uv run gold promote --source-namespace gold_v3 --target-schema gold
+```
+
+### 3.5. Kiểm Tra Đối Soát Tài Chính 3 Chiều (Reconciliation Audit)
+```bash
+# So khớp tổng tiền kế hoạch, tổng tiền trúng thầu và khóa ngoại mồ côi (mặc định lake.gold vs lake.silver)
+uv run gold reconcile
+
+# Hoặc chỉ định rõ schema khi kiểm thử đối soát:
+uv run gold reconcile --gold-schema lake.gold_v3 --silver-schema lake.silver_v3
 ```
 *Kết quả xuất định dạng JSON: `is_valid: true`, giá trị tiền kế hoạch/trúng thầu, `orphan_fks: 0`.*
 
-### 3.5. Quản Lý RunPlan & Khôi Phục Sự Cố
+### 3.6. Quản Lý RunPlan & Khôi Phục Sự Cố
 ```bash
 uv run gold status                          # Xem trạng thái chạy local
 uv run gold plan --source ... --target ...  # Đóng băng kế hoạch tính toán
@@ -144,7 +171,7 @@ uv run gold verify --root ...               # So sánh đối chiếu snapshot t
 
 ---
 
-## 4. Hướng Dẫn Mẫu: Chạy Thủ Công Một Ngày Từ A $\rightarrow$ Z (Walkthrough)
+## 4. Hướng Dẫn Mẫu: Chạy Vận Hành Một Ngày Từ A $\rightarrow$ Z (Daily Walkthrough)
 
 Quy trình chuẩn thực tế để xử lý trọn vẹn dữ liệu cho ngày `2025-10-09`:
 
@@ -162,16 +189,35 @@ uv run silver all --date 2025-10-09
 # =============================================================
 # BƯỚC 3: Tính toán Star Schema 16 bảng (Gold)
 # =============================================================
-# Cách A (Khuyên dùng): Mở Dagster UI (:3002) -> Chọn ngày 2025-10-09 -> Nhấn Materialize
-# Cách B: Kích hoạt nhanh engine tính toán qua lệnh Python:
-python -c "
-from procurement.gold.application.processor import process_gold_day
-res = process_gold_day('2025-10-09')
-print(f'Done! Input: {res[\"input_rows\"]} rows, Facts: {res[\"fact_rows\"]} rows')
-"
+uv run gold run --date 2025-10-09
 
 # =============================================================
 # BƯỚC 4: Kiểm tra Đối soát Toàn vẹn (Reconcile)
 # =============================================================
 uv run gold reconcile
+```
+
+---
+
+## 5. Hướng Dẫn Mẫu: Chạy Toàn Bộ Dữ Liệu Lịch Sử 2022 – 2025 (Historical Backfill)
+
+Quy trình chuẩn để tái lập toàn bộ kho dữ liệu từ 2022 đến hết 2025 bằng CLI:
+
+```bash
+# 1. Khởi tạo cấu trúc bảng Gold & nạp 63 tỉnh thành chuẩn
+uv run gold ensure-tables
+uv run gold seed-geography
+
+# 2. Xử lý Silver đa luồng song song 4 năm (Workers=4, Batch Size=30 ngày/commit)
+uv run silver all --start-date 2022-01-01 --end-date 2025-12-31 --workers 4
+
+# 3. Tính toán Star Schema Gold toàn bộ 4 năm (Tự động duyệt 48 tháng)
+uv run gold run --start-date 2022-01-01 --end-date 2025-12-31
+
+# 4. Kiểm toán đối soát tài chính 3 chiều toàn diện
+uv run gold reconcile
+
+# 5. (Tùy chọn) Public Views phục vụ báo cáo BI
+uv run silver promote
+uv run gold promote
 ```

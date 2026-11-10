@@ -16,6 +16,7 @@ from typing import Any
 import duckdb
 
 from procurement.common.settings import Settings
+from procurement.common.silver_gold_contract import projection
 from procurement.gold.domain.models import (
     INPUT_TABLES,
     ResourceBudget,
@@ -78,98 +79,39 @@ def process_gold_range(
     local.execute("CREATE SCHEMA frozen")
 
     with get_iceberg_connection(remote_conn, memory_limit="2GB", threads=threads) as conn:
-        # 1. Extract Silver tables
-        pkg_arrow = conn.execute(f"""
-            SELECT *, '{{}}' AS root_json 
-            FROM lake.{silver_namespace}.package_revision 
-            WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-        """).to_arrow_table()
-        local.register("_pkgs", pkg_arrow)
-        local.execute("CREATE TABLE frozen.package_revision AS SELECT * FROM _pkgs")
-        local.unregister("_pkgs")
+        # 1. Extract Silver tables using the standard canonical projection
+        def _extract_table(table_name: str, where_sql: str) -> int:
+            cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
+            select_cols = ", ".join(projection(cols, table_name))
+            arrow_tbl = conn.execute(f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} WHERE {where_sql}").to_arrow_table()
+            count = len(arrow_tbl)
+            temp_name = f"_tmp_{table_name}"
+            local.register(temp_name, arrow_tbl)
+            local.execute(f"CREATE TABLE frozen.{table_name} AS SELECT * FROM {temp_name}")
+            local.unregister(temp_name)
+            return count
 
-        not_arrow = conn.execute(f"""
-            SELECT *, '{{}}' AS root_json 
-            FROM lake.{silver_namespace}.notice_revision 
-            WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-        """).to_arrow_table()
-        local.register("_nots", not_arrow)
-        local.execute("CREATE TABLE frozen.notice_revision AS SELECT * FROM _nots")
-        local.unregister("_nots")
-
-        res_arrow = conn.execute(f"""
-            SELECT *, '{{}}' AS root_json 
-            FROM lake.{silver_namespace}.result_revision 
-            WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-        """).to_arrow_table()
-        local.register("_res", res_arrow)
-        local.execute("CREATE TABLE frozen.result_revision AS SELECT * FROM _res")
-        local.unregister("_res")
-
-        plan_arrow = conn.execute(f"""
-            SELECT *, '{{}}' AS root_json 
-            FROM lake.{silver_namespace}.plan_revision 
-            WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-        """).to_arrow_table()
-        local.register("_plans", plan_arrow)
-        local.execute("CREATE TABLE frozen.plan_revision AS SELECT * FROM _plans")
-        local.unregister("_plans")
-
-        lot_arrow = conn.execute(f"""
-            SELECT al.*, '{{}}' AS raw_json 
-            FROM lake.{silver_namespace}.award_lot al
-            WHERE al.revision_id IN (
-                SELECT revision_id FROM lake.{silver_namespace}.result_revision 
-                WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-            )
-        """).to_arrow_table()
-        local.register("_lots", lot_arrow)
-        local.execute("CREATE TABLE frozen.award_lot AS SELECT * FROM _lots")
-        local.unregister("_lots")
-
-        ctr_arrow = conn.execute(f"""
-            SELECT ac.* 
-            FROM lake.{silver_namespace}.award_contractor ac
-            WHERE ac.revision_id IN (
-                SELECT revision_id FROM lake.{silver_namespace}.result_revision 
-                WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-            )
-        """).to_arrow_table()
-        local.register("_ctrs", ctr_arrow)
-        local.execute("CREATE TABLE frozen.award_contractor AS SELECT * FROM _ctrs")
-        local.unregister("_ctrs")
-
-        loc_arrow = conn.execute(f"""
-            SELECT pl.* 
-            FROM lake.{silver_namespace}.package_location pl
-            WHERE pl.revision_id IN (
-                SELECT revision_id FROM lake.{silver_namespace}.package_revision 
-                WHERE public_date >= '{start_date}' AND public_date < '{end_date}'
-            )
-        """).to_arrow_table()
-        local.register("_locs", loc_arrow)
-        local.execute("CREATE TABLE frozen.package_location AS SELECT * FROM _locs")
-        local.unregister("_locs")
-
-        obs_arrow = conn.execute(f"""
-            SELECT o.*, '{{}}' AS payload_json 
-            FROM lake.{silver_namespace}.observation o
-            WHERE o.source_date >= '{start_date}' AND o.source_date < '{end_date}'
-        """).to_arrow_table()
-        local.register("_obs", obs_arrow)
-        local.execute("CREATE TABLE frozen.observation AS SELECT * FROM _obs")
-        local.unregister("_obs")
+        input_rows = (
+            _extract_table("package_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("notice_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("result_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("plan_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("award_lot", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
+            + _extract_table("award_contractor", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
+            + _extract_table("package_location", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.package_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
+        )
+        _extract_table("observation", f"source_date >= '{start_date}' AND source_date < '{end_date}'")
 
         # Synthetic observations for any orphaned revisions
         for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision"):
             local.execute(f"""
                 INSERT INTO frozen.observation (
                     observation_id, resource, source_date, run_id, table_name,
-                    file_key, file_sha256, row_ordinal, observed_at, source_id, source_version, content_hash, payload_json
+                    file_key, file_sha256, row_ordinal, observed_at, source_id, source_version, content_hash
                 )
                 SELECT DISTINCT
                     r.observation_id, '{tbl}', '{start_date}'::DATE, 'range_run', '{tbl}',
-                    'k', 's', 0, coalesce(r.public_date, '{start_date}'::DATE)::TIMESTAMP, r.entity_id, 1, 'h', '{{}}'
+                    'k', 's', 0, coalesce(r.public_date, '{start_date}'::DATE)::TIMESTAMP, r.entity_id, 1, 'h'
                 FROM frozen.{tbl} r
                 WHERE NOT EXISTS (SELECT 1 FROM frozen.observation o WHERE o.observation_id = r.observation_id)
             """)
@@ -183,10 +125,6 @@ def process_gold_range(
         """)
 
         t_extract = time.perf_counter() - t0
-        input_rows = (
-            len(pkg_arrow) + len(not_arrow) + len(res_arrow) + len(plan_arrow)
-            + len(lot_arrow) + len(ctr_arrow) + len(loc_arrow)
-        )
 
         if input_rows == 0:
             local.close()
