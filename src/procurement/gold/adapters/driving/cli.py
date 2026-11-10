@@ -7,6 +7,17 @@ import json
 from pathlib import Path
 
 import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
 
 from procurement.gold.application.reconciliation import reconcile_gold
 from procurement.gold.application.state import StateStore
@@ -14,6 +25,7 @@ from procurement.gold.application.warehouse import ensure_gold_tables, promote_v
 from procurement.gold.domain.models import RunPlan, canonical, compute_gold_logic_version, logic_version
 from procurement.gold.domain.schema import TABLES
 
+console = Console(highlight=False)
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -175,6 +187,54 @@ def cmd_promote(
         typer.echo(f"Promoted {len(views)} zero-copy views into {target_schema}.*")
 
 
+def _display_gold_summary(
+    title: str,
+    scope_label: str,
+    total_input: int,
+    total_facts: int,
+    fact_totals: dict[str, int],
+    extract_time: float,
+    biz_time: float,
+    proj_time: float,
+    publish_time: float,
+    total_time: float,
+    silver_ns: str,
+    gold_ns: str,
+):
+    summary_table = Table(title="Conformed Fact Tables (Star Schema)", show_header=True, header_style="bold gold1")
+    summary_table.add_column("Fact Table", style="cyan")
+    summary_table.add_column("Rows Materialized", justify="right", style="green")
+    summary_table.add_column("Grain", style="dim")
+
+    from procurement.gold.domain.schema import TABLES
+
+    for fact_name in sorted(fact_totals.keys()):
+        cnt = fact_totals[fact_name]
+        grain_str = ", ".join(TABLES[fact_name].grain) if fact_name in TABLES else "-"
+        summary_table.add_row(fact_name, f"{cnt:,}", grain_str)
+
+    summary_table.add_section()
+    summary_table.add_row("[bold white]Total Fact Records[/]", f"[bold green]{total_facts:,}[/]", "[bold green]7 Fact Cohorts[/]")
+
+    timing_table = Table(title="Execution Latency Breakdown", show_header=True, header_style="bold sky_blue2")
+    timing_table.add_column("Pipeline Stage", style="white")
+    timing_table.add_column("Duration", justify="right", style="cyan")
+    timing_table.add_column("Throughput / Details", justify="right", style="green")
+
+    throughput = f"{total_facts / max(total_time, 0.001):,.0f} facts/sec"
+    timing_table.add_row("1. Extract Silver Revisions", f"{extract_time:.2f}s", f"{total_input / max(extract_time, 0.001):,.0f} rows/s")
+    timing_table.add_row("2. Business Logic & Clustering", f"{biz_time:.2f}s", "Entity Linking & Dedup")
+    timing_table.add_row("3. Projection & Group Aggregations", f"{proj_time:.2f}s", "Conformed Star Schemas")
+    timing_table.add_row("4. Iceberg Lakehouse Publish", f"{publish_time:.2f}s", f"{total_facts / max(publish_time, 0.001):,.0f} facts/s")
+    timing_table.add_section()
+    timing_table.add_row("[bold white]Total Wall Time[/]", f"[bold yellow]{total_time:.2f}s[/]", f"[bold green]{throughput}[/]")
+
+    console.print()
+    console.print(Panel(summary_table, title=f"[bold]Gold Star Schema Summary — {scope_label}[/]", border_style="gold1"))
+    console.print(Panel(timing_table, title="[bold]Performance & Latency Breakdown[/]", border_style="sky_blue2"))
+    console.rule(f"[bold green]✔ Gold Dimensional Pipeline Completed Successfully (lake.{gold_ns}.*)[/]")
+
+
 @app.command("run")
 def cmd_run(
     date: str | None = typer.Option(None, "--date", "-d", help="Single date (YYYY-MM-DD) to process"),
@@ -187,59 +247,140 @@ def cmd_run(
     threads: int = typer.Option(4, help="DuckDB execution threads"),
 ):
     """Execute Gold dimensional processing for a day, month, or historical date range."""
+    import time
+    from collections import defaultdict
     from datetime import date as dt_date
     from procurement.gold.application.processor import (
         process_gold_day,
         process_gold_month,
     )
 
+    if not (date or month or (start_date and end_date)):
+        console.print("[bold red]✘ Error:[/] Please provide --date, --month, or both --start-date and --end-date")
+        raise typer.Exit(code=1)
+
+    scope_label = date if date else month if month else f"{start_date} ➔ {end_date}"
+
+    console.print(
+        Panel(
+            f"[bold]Batch Gold Dimensional Pipeline Execution[/]\n"
+            f"Architecture: [bold cyan]Conformed Star Schema (10 Dimensions + 7 Facts)[/]\n"
+            f"Source: [bold green]lake.{silver_namespace}.*[/] ➔ Target: [bold gold1]lake.{gold_namespace}.*[/]\n"
+            f"Date Scope: [bold yellow]{scope_label}[/]\n"
+            f"Engine: [bold sky_blue2]DuckDB Vectorized + Apache Iceberg Format v2[/]\n"
+            f"Budget: [white]Memory: {memory_limit} | Threads: {threads}[/]",
+            title="[bold gold1]Procurement Lakehouse — Gold Layer[/]",
+            border_style="gold1",
+        )
+    )
+
+    t0 = time.perf_counter()
+    fact_totals: dict[str, int] = defaultdict(int)
+    total_input = 0
+    total_extract_time = 0.0
+    total_biz_time = 0.0
+    total_proj_time = 0.0
+    total_publish_time = 0.0
+
     if date:
-        typer.echo(f"Processing Gold for day {date}...")
-        res = process_gold_day(
-            date,
-            silver_namespace=silver_namespace,
-            gold_namespace=gold_namespace,
-            memory_limit=memory_limit,
-            threads=threads,
-        )
-        typer.echo(json.dumps(res, indent=2))
-        return
-
-    if month:
-        typer.echo(f"Processing Gold for month {month}...")
-        res = process_gold_month(
-            month,
-            silver_namespace=silver_namespace,
-            gold_namespace=gold_namespace,
-            memory_limit=memory_limit,
-            threads=threads,
-        )
-        typer.echo(json.dumps(res, indent=2))
-        return
-
-    if start_date and end_date:
-        cur = dt_date.fromisoformat(start_date).replace(day=1)
-        end_dt = dt_date.fromisoformat(end_date)
-        total_facts = 0
-        while cur <= end_dt:
-            ym = cur.strftime("%Y-%m")
-            typer.echo(f"▶ Processing Gold {ym}...")
-            res = process_gold_month(
-                ym,
+        with console.status(f"[bold gold1]Processing Gold for day {date}...[/]"):
+            res = process_gold_day(
+                date,
                 silver_namespace=silver_namespace,
                 gold_namespace=gold_namespace,
                 memory_limit=memory_limit,
                 threads=threads,
             )
-            total_facts += res.get("fact_rows", 0)
+        total_input = res.get("input_rows", 0)
+        total_extract_time = res.get("extract_time", 0.0)
+        total_biz_time = res.get("biz_time", 0.0)
+        total_proj_time = res.get("proj_time", 0.0)
+        total_publish_time = res.get("publish_time", 0.0)
+        for f, cnt in res.get("facts", {}).items():
+            fact_totals[f] += cnt
+
+    elif month:
+        with console.status(f"[bold gold1]Processing Gold for month {month}...[/]"):
+            res = process_gold_month(
+                month,
+                silver_namespace=silver_namespace,
+                gold_namespace=gold_namespace,
+                memory_limit=memory_limit,
+                threads=threads,
+            )
+        total_input = res.get("input_rows", 0)
+        total_extract_time = res.get("extract_time", 0.0)
+        total_biz_time = res.get("biz_time", 0.0)
+        total_proj_time = res.get("proj_time", 0.0)
+        total_publish_time = res.get("publish_time", 0.0)
+        for f, cnt in res.get("facts", {}).items():
+            fact_totals[f] += cnt
+
+    elif start_date and end_date:
+        months = []
+        cur = dt_date.fromisoformat(start_date).replace(day=1)
+        end_dt = dt_date.fromisoformat(end_date)
+        while cur <= end_dt:
+            months.append(cur.strftime("%Y-%m"))
             next_month = cur.month + 1 if cur.month < 12 else 1
             next_year = cur.year if cur.month < 12 else cur.year + 1
             cur = dt_date(next_year, next_month, 1)
-        typer.echo(f"✔ Completed Gold range {start_date} to {end_date} (Total fact rows: {total_facts})")
-        return
 
-    typer.echo("Error: Please provide --date, --month, or both --start-date and --end-date", err=True)
-    raise typer.Exit(code=1)
+        total_facts_acc = 0
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold gold1]{task.fields[name]}[/]"),
+            BarColumn(bar_width=25),
+            TaskProgressColumn(),
+            TextColumn("[white]{task.completed}/{task.total} months[/]"),
+            TextColumn("• [dim]facts=[/][bold green]{task.fields[facts]:,}[/]"),
+            TextColumn("• [dim]cur=[/][bold cyan]{task.fields[cur]}[/]"),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress_ui:
+            task_id = progress_ui.add_task(
+                "Gold Backfill",
+                total=len(months),
+                name="Gold Backfill",
+                facts=0,
+                cur=months[0] if months else "",
+            )
+            for ym in months:
+                progress_ui.update(task_id, cur=ym)
+                res = process_gold_month(
+                    ym,
+                    silver_namespace=silver_namespace,
+                    gold_namespace=gold_namespace,
+                    memory_limit=memory_limit,
+                    threads=threads,
+                )
+                m_facts = res.get("fact_rows", 0)
+                total_facts_acc += m_facts
+                total_input += res.get("input_rows", 0)
+                total_extract_time += res.get("extract_time", 0.0)
+                total_biz_time += res.get("biz_time", 0.0)
+                total_proj_time += res.get("proj_time", 0.0)
+                total_publish_time += res.get("publish_time", 0.0)
+                for f, cnt in res.get("facts", {}).items():
+                    fact_totals[f] += cnt
+                progress_ui.update(task_id, advance=1, facts=total_facts_acc, cur=ym)
+
+    wall_time = time.perf_counter() - t0
+    total_facts = sum(fact_totals.values())
+    _display_gold_summary(
+        title="Gold Star Schema",
+        scope_label=scope_label,
+        total_input=total_input,
+        total_facts=total_facts,
+        fact_totals=fact_totals,
+        extract_time=total_extract_time,
+        biz_time=total_biz_time,
+        proj_time=total_proj_time,
+        publish_time=total_publish_time,
+        total_time=wall_time,
+        silver_ns=silver_namespace,
+        gold_ns=gold_namespace,
+    )
 
 
 @app.command("reconcile")
@@ -253,22 +394,28 @@ def cmd_reconcile(
 
     config = Settings.from_environment().iceberg_config()
     with connect(config, max_memory="512MB", threads=1) as remote:
-        report = reconcile_gold(remote, gold_schema=gold_schema, silver_schema=silver_schema)
-        typer.echo(
-            json.dumps(
-                {
-                    "is_valid": report.is_valid,
-                    "gold_planned_amount": str(report.gold_planned_amount),
-                    "gold_award_amount": str(report.gold_award_amount),
-                    "orphan_fks": report.orphan_fks,
-                    "metrics": report.metrics,
-                    "errors": report.errors,
-                },
-                indent=2,
-            )
-        )
+        with console.status(f"[bold gold1]Running 3-part reconciliation: {gold_schema} vs {silver_schema}...[/]"):
+            report = reconcile_gold(remote, gold_schema=gold_schema, silver_schema=silver_schema)
+
+        reconcile_table = Table(title="3-Part Financial & Referential Reconciliation Audit", show_header=True, header_style="bold gold1")
+        reconcile_table.add_column("Audit Metric", style="cyan")
+        reconcile_table.add_column("Value / Status", justify="right", style="green")
+
+        status_text = "[bold green]PASS (100% MATCH)[/]" if report.is_valid else "[bold red]FAIL (MISMATCH)[/]"
+        reconcile_table.add_row("Audit Status", status_text)
+        reconcile_table.add_row("Gold Total Planned Amount", f"{report.gold_planned_amount:,.2f} VND")
+        reconcile_table.add_row("Gold Total Award Amount", f"{report.gold_award_amount:,.2f} VND")
+        orphan_text = "[bold green]0 (Perfect Referential Integrity)[/]" if not report.orphan_fks else f"[bold red]{len(report.orphan_fks)} violations[/]"
+        reconcile_table.add_row("Orphan Foreign Keys", orphan_text)
+
+        console.print()
+        console.print(Panel(reconcile_table, title=f"[bold]Reconciliation Audit — {gold_schema}[/]", border_style="green" if report.is_valid else "red"))
+
         if not report.is_valid:
+            console.print(f"[bold red]Errors detected:[/] {report.errors}")
             raise typer.Exit(code=1)
+        else:
+            console.rule("[bold green]✔ All Financial Balances & Foreign Key Constraints Verified![/]")
 
 
 def main():
