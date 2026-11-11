@@ -41,7 +41,7 @@ class ProcessSilverService(ProcessSilverUseCase):
         iceberg_memory_limit="4GB",
         iceberg_threads=2,
         direct_iceberg_only: bool = False,
-        batch_size: int = 30,
+        batch_size: int = 15,
     ) -> None:
         self.bronze_repo = bronze_repo
         self.silver_repo = silver_repo

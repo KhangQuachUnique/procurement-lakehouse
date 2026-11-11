@@ -25,7 +25,7 @@ def _get_duckdb_conn():
 
         _local_duckdb.conn = duckdb.connect(
             ":memory:",
-            config={"max_memory": "512MB", "threads": "2"},
+            config={"max_memory": "2GB", "threads": "2"},
         )
     return _local_duckdb.conn
 

@@ -112,7 +112,7 @@ def run_resource(
     iceberg_memory_limit="4GB",
     iceberg_threads=4,
     direct_iceberg_only: bool = False,
-    batch_size: int = 30,
+    batch_size: int = 15,
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]

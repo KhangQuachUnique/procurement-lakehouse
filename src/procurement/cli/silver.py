@@ -175,7 +175,7 @@ def execute_resource(
     parallel: bool = True,
     workers: int | None = None,
     namespace: str | None = None,
-    batch_size: int = 30,
+    batch_size: int = 15,
 ) -> dict:
     target_ns = namespace or settings.SILVER_TARGET_NAMESPACE
     year_chunks = split_date_range_by_year(start, end)
@@ -351,9 +351,9 @@ def notice(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Process standard, VK/ADB and reoffer automatically for each day."""
     try:
@@ -442,9 +442,9 @@ def project(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Process investment project (du_an) automatically for each day."""
     try:
@@ -535,9 +535,9 @@ def result(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Process contractor selection result (kq_lcnt) automatically for each day."""
     try:
@@ -626,9 +626,9 @@ def contract_performance(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Process published execution reports and their referenced contract versions."""
     try:
@@ -727,9 +727,9 @@ def khlcnt(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Process procurement plan & package (KHLCNT) automatically for each day."""
     try:
@@ -819,9 +819,9 @@ def all_resources(
         typer.Option(
             "--batch-size",
             "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
+            help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
-    ] = 30,
+    ] = 15,
 ):
     """Run Silver candidate & Iceberg pipeline across ALL resources (khlcnt, notice, project, result)."""
     try:
