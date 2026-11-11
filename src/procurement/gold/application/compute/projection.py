@@ -46,6 +46,9 @@ def project(db, plan, *, retain_accepted=True):
         ("notice_to_close_hours", "hours"),
         ("close_to_first_award_days", "days"),
         ("close_to_complete_award_days", "days"),
+        ("close_to_open_hours", "hours"),
+        ("open_to_award_days", "days"),
+        ("planned_to_actual_delay_days", "days"),
     ):
         db.execute(
             "INSERT INTO dimensions.dim_duration_metric VALUES (?,?,?)", [metric, metric, unit]

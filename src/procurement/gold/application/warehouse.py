@@ -75,6 +75,15 @@ def ensure_gold_tables(
             db.execute(sql)
             results[name] = sql
 
+            # Schema evolution: add any missing columns if table already existed
+            try:
+                existing_cols = {r[0] for r in db.execute(f"DESCRIBE {prefix}.{name}").fetchall()}
+                for c in table.columns:
+                    if c.name not in existing_cols:
+                        db.execute(f"ALTER TABLE {prefix}.{name} ADD COLUMN {c.name} {c.sql_type}")
+            except (duckdb.Error, RuntimeError):
+                pass
+
         # Seed dim_geography if empty or missing canonical records
         seed_geography(db, clean_ns)
 

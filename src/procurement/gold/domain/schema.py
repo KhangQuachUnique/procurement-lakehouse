@@ -90,7 +90,7 @@ def check_schema(db, schema: str):
     }
     if names != set(TABLES):
         raise ValueError(
-            f"Expected exactly 16 contract tables: missing={set(TABLES) - names}, extra={names - set(TABLES)}"
+            f"Expected exactly {len(TABLES)} contract tables: missing={set(TABLES) - names}, extra={names - set(TABLES)}"
         )
     for table in TABLES.values():
         actual = [(r[0], r[1]) for r in db.execute(f"DESCRIBE {schema}.{table.name}").fetchall()]

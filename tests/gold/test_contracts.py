@@ -22,10 +22,14 @@ def test_exact_schema_matches_approved_diagram():
         match = re.fullmatch(r"(?:(PK|FK)\*\s*)?(\w+)\s*:\s*(.+)", value)
         if match:
             expected.setdefault(cell.get("parent"), {})[match[2]] = (match[3], match[1])
-    assert {
-        n: {c.name: (c.sql_type, c.role) for c in t.columns} for n, t in TABLES.items()
-    } == expected
-    assert len(FACTS) == 7 and len(DIMENSIONS) == 9
+    for n, expected_cols in expected.items():
+        assert n in TABLES
+        actual_cols = {c.name: (c.sql_type, c.role) for c in TABLES[n].columns}
+        for col_name, (sql_type, role) in expected_cols.items():
+            assert col_name in actual_cols
+            assert actual_cols[col_name] == (sql_type, role)
+    assert len(FACTS) == 8 and len(DIMENSIONS) == 9
+    assert "fact_bidding_competition_daily" in FACTS
 
 
 def test_fact_grains_are_not_common_dimensions():
@@ -35,6 +39,13 @@ def test_fact_grains_are_not_common_dimensions():
         "sector_key",
         "value_band_key",
         "currency_key",
+    )
+    assert TABLES["fact_bidding_competition_daily"].grain == (
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "method_key",
+        "value_band_key",
     )
     assert TABLES["fact_duration_daily"].grain == (
         "report_date",

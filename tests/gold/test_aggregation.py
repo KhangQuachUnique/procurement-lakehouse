@@ -87,7 +87,7 @@ def public(db, schema):
 def test_all_seven_fact_replay_and_fixed_schema(db):
     setup(db)
     changes(db, ["owner1", "owner2"])
-    assert prepare(db, "r1")["tables"] == 16
+    assert prepare(db, "r1")["tables"] == len(TABLES)
     accept_candidate(db, "r1")
     first = public(db, "accepted")
     changes(db, ["owner1", "owner2"])

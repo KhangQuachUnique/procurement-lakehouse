@@ -7,7 +7,15 @@ both previous and new owner contributions.
 
 from procurement.gold.domain.models import INPUT_TABLES, identifier
 
-ROOTS = ("package_revision", "plan_revision", "notice_revision", "result_revision")
+ROOTS = (
+    "package_revision",
+    "plan_revision",
+    "notice_revision",
+    "result_revision",
+    "opening_revision",
+    "contract_revision",
+    "contract_performance_revision",
+)
 LINKS = {
     "package_revision": (
         ("package", "entity_id"),
@@ -32,11 +40,24 @@ LINKS = {
         ("notice", "notify_no"),
         ("result", "coalesce(result_id,entity_id)"),
     ),
+    "opening_revision": (
+        ("notice", "notify_no"),
+        ("package_code", "package_no"),
+        ("package", "package_id"),
+    ),
+    "contract_revision": (
+        ("notice", "notice_no"),
+        ("contract", "contract_code"),
+    ),
+    "contract_performance_revision": (
+        ("contract", "contract_code"),
+    ),
 }
 CHILDREN = {
     "package_location": "package_revision",
     "award_lot": "result_revision",
     "award_contractor": "result_revision",
+    "opening_submission": "opening_revision",
 }
 
 

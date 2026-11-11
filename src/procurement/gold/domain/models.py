@@ -97,7 +97,9 @@ class SilverReadyInput(Contract):
         if len(self.tables) != len(INPUT_TABLES) or {t.table for t in self.tables} != set(
             INPUT_TABLES
         ):
-            raise ValueError("Readiness requires exactly eight unique Silver tables")
+            raise ValueError(
+                f"Readiness requires exactly {len(INPUT_TABLES)} unique Silver tables"
+            )
         return self
 
 

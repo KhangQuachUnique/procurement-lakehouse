@@ -70,7 +70,8 @@ def test_receipt_seals_only_complete_coherent_evidence():
         completed_at=datetime(2026, 11, 7, tzinfo=UTC),
     )
     receipt = SilverReadyInput.model_validate(bundle["receipt"])
-    assert receipt.source_complete and len(receipt.tables) == 8
+    from procurement.common.silver_gold_contract import INPUT_TABLES
+    assert receipt.source_complete and len(receipt.tables) == len(INPUT_TABLES)
     assert bundle["evidence"] and receipt.mapping_version
 
 

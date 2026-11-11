@@ -8,7 +8,15 @@ both previous and new owner contributions.
 from procurement.gold.domain.models import INPUT_TABLES, identifier
 from .relationship_index import ensure_index, impact_graph
 
-ROOTS = ("package_revision", "plan_revision", "notice_revision", "result_revision")
+ROOTS = (
+    "package_revision",
+    "plan_revision",
+    "notice_revision",
+    "result_revision",
+    "opening_revision",
+    "contract_revision",
+    "contract_performance_revision",
+)
 LINKS = {
     "package_revision": (
         ("package", "entity_id"),
@@ -33,11 +41,24 @@ LINKS = {
         ("notice", "notify_no"),
         ("result", "coalesce(result_id,entity_id)"),
     ),
+    "opening_revision": (
+        ("notice", "notify_no"),
+        ("package_code", "package_no"),
+        ("package", "package_id"),
+    ),
+    "contract_revision": (
+        ("notice", "notice_no"),
+        ("contract", "contract_code"),
+    ),
+    "contract_performance_revision": (
+        ("contract", "contract_code"),
+    ),
 }
 CHILDREN = {
     "package_location": "package_revision",
     "award_lot": "result_revision",
     "award_contractor": "result_revision",
+    "opening_submission": "opening_revision",
 }
 
 
@@ -163,4 +184,7 @@ def affected_owners(db):
             values.append(
                 f"SELECT 'PKG_{state}:{match}:'||substr(node,{len(name) + 2}) FROM graph.impacted WHERE starts_with(node,'{name}:')"
             )
+    values.append(
+        "SELECT 'PKG_UNRESOLVED:OPENING:'||substr(node,length('opening_revision:')+1) FROM graph.impacted WHERE starts_with(node,'opening_revision:')"
+    )
     db.execute("INSERT INTO affected " + " UNION ".join(values))

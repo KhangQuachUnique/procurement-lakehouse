@@ -75,7 +75,7 @@ class Publisher:
         if self.fail:
             self.fail = False
             raise RuntimeError("remote commit acknowledgement lost")
-        return {"release_id": plan.run_id, "tables": 16}
+        return {"release_id": plan.run_id, "tables": len(TABLES)}
 
     def activate(self, plan):
         self.active = plan.run_id
@@ -97,8 +97,8 @@ def test_full_pipeline_incremental_replay_rebuild_and_new_status_day(tmp_path, d
     service.create(first)
     assert service.resume("r1")["phase"] == "COMMITTED"
     previous = publisher.releases["r1"]
-    assert len(reader.calls) == 8
-    assert service.resume("r1")["phase"] == "COMMITTED" and len(reader.calls) == 8
+    assert len(reader.calls) == len(INPUT_TABLES)
+    assert service.resume("r1")["phase"] == "COMMITTED" and len(reader.calls) == len(INPUT_TABLES)
     db.execute("UPDATE silver.package_revision SET bid_price=bid_price+10 WHERE entity_id='p1'")
     changed = Reader(db)
     second = changed.plan(plan, "r2", "r1")
@@ -163,7 +163,7 @@ def test_batch_checkpoint_survives_new_process_connection(tmp_path, db, plan):
         version=lambda: plan.logic_version,
     )
     service.resume("r1")
-    assert 1 not in completed and len(reader.calls) == 8
+    assert 1 not in completed and len(reader.calls) == len(INPUT_TABLES)
     clean_publisher = Publisher()
     clean_request = reader.plan(plan, run_id="clean", batch_rows=10000)
     clean_service = GoldService(

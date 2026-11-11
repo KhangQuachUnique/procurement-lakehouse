@@ -32,6 +32,18 @@ def execute(conn, context):
 
     execute_sql(conn, "savings_03.sql", {})
 
+    rel_contract_rev = getattr(context, "rel_contract_rev", None) or "frozen.contract_revision"
+    conn.execute(f"""
+        CREATE TEMP TABLE _gtmp_contract_savings AS
+        SELECT
+            r.revision_id AS result_revision_id,
+            SUM(c.price_after_tax) AS contract_price
+        FROM {rel_contract_rev} c
+        JOIN _gtmp_cand_result r ON c.result_source_id = r.bid_id OR c.notice_no = r.notify_no
+        WHERE c.price_after_tax > 0
+        GROUP BY r.revision_id
+    """)
+
     execute_sql(
         conn,
         "savings_04.sql",

@@ -19,8 +19,9 @@ def test_release_entrypoints_share_the_only_gold_runtime():
     result = CliRunner().invoke(app, ["schema"])
     assert result.exit_code == 0
     import json
+    from procurement.gold.domain.schema import TABLES
 
-    assert len(json.loads(result.stdout)) == 16
+    assert len(json.loads(result.stdout)) == len(TABLES)
 
 
 def test_ui_reader_requires_explicit_v2_target_before_remote_access(monkeypatch):
