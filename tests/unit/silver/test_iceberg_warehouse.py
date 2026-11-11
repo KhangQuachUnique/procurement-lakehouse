@@ -621,7 +621,7 @@ def test_real_duckdb_schema_migration_and_idempotency():
             "award_lot_id": "lot_new",
             "revision_id": "rev_new",
             "lot_no": "2",
-            "raw_json": '{"key": "val"}',
+            "source_lot_id": "slot_123",
         }
     ]
     new_contractors = [
@@ -644,7 +644,7 @@ def test_real_duckdb_schema_migration_and_idempotency():
     lot_cols = [
         c[1] for c in db.conn.execute("PRAGMA table_info('lake.silver.award_lot')").fetchall()
     ]
-    assert "raw_json" in lot_cols
+    assert "source_lot_id" in lot_cols
 
     contractor_cols = [
         c[1]
@@ -656,15 +656,15 @@ def test_real_duckdb_schema_migration_and_idempotency():
 
     # Verify old data preserved with NULL for new column
     old_lot = db.conn.execute(
-        "SELECT award_lot_id, raw_json FROM lake.silver.award_lot WHERE award_lot_id = 'lot_old'"
+        "SELECT award_lot_id, source_lot_id FROM lake.silver.award_lot WHERE award_lot_id = 'lot_old'"
     ).fetchone()
     assert old_lot == ("lot_old", None)
 
     # Verify new data inserted with new column populated
     new_lot = db.conn.execute(
-        "SELECT award_lot_id, raw_json FROM lake.silver.award_lot WHERE award_lot_id = 'lot_new'"
+        "SELECT award_lot_id, source_lot_id FROM lake.silver.award_lot WHERE award_lot_id = 'lot_new'"
     ).fetchone()
-    assert new_lot == ("lot_new", '{"key": "val"}')
+    assert new_lot == ("lot_new", "slot_123")
 
     # 3. Idempotent rerun: run stage_partition again, must succeed without schema errors
     stage_partition(db, cat, "silver", {"award_lot": new_lots, "award_contractor": new_contractors})
@@ -678,9 +678,9 @@ def test_real_duckdb_schema_migration_fails_on_incompatible_schema():
 
     conn = duckdb.connect(":memory:")
     conn.execute("CREATE SCHEMA lake")
-    conn.execute("CREATE TABLE lake.award_lot (award_lot_id VARCHAR, raw_json INTEGER)")
+    conn.execute("CREATE TABLE lake.award_lot (award_lot_id VARCHAR, source_lot_id INTEGER)")
 
-    with pytest.raises(ValueError, match="Incompatible schema for lake.award_lot.raw_json"):
+    with pytest.raises(ValueError, match="Incompatible schema for lake.award_lot.source_lot_id"):
         _migrate_result_schema_if_needed(conn, "lake.award_lot", "award_lot")
 
 
@@ -887,7 +887,7 @@ def test_stage_partition_row_count_uses_logical_count_when_positional_deletes_ex
 
     # Insert 5 actual rows into the table
     cand = [
-        {"participation_id": f"p{i}", "revision_id": "r1", "lot_no": "1", "raw_json": "{}"}
+        {"participation_id": f"p{i}", "revision_id": "r1", "lot_no": "1"}
         for i in range(5)
     ]
     snapshots = stage_partition(db, cat, "silver", {"bid_participation": cand})
@@ -959,9 +959,9 @@ def test_stateful_cleanup_real_duckdb_removes_stale_award_lots_and_preserves_unr
 
     # 1. Initial state: rev-1 has lots 'a' and 'b'; unrelated rev-2 has lot 'c'
     initial_lots = [
-        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1", "raw_json": "{}"},
-        {"award_lot_id": "b", "revision_id": "rev-1", "lot_no": "2", "raw_json": "{}"},
-        {"award_lot_id": "c", "revision_id": "rev-2", "lot_no": "1", "raw_json": "{}"},
+        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1"},
+        {"award_lot_id": "b", "revision_id": "rev-1", "lot_no": "2"},
+        {"award_lot_id": "c", "revision_id": "rev-2", "lot_no": "1"},
     ]
     stage_partition(db, cat, "silver", {"award_lot": initial_lots})
 
@@ -972,7 +972,7 @@ def test_stateful_cleanup_real_duckdb_removes_stale_award_lots_and_preserves_unr
 
     # 2. Replay rev-1 with only lot 'a': must remove lot 'b' and preserve unrelated rev-2 ('c')
     cand_rev1_fewer = [
-        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1", "raw_json": "{}"},
+        {"award_lot_id": "a", "revision_id": "rev-1", "lot_no": "1"},
     ]
     stage_partition(
         db,
