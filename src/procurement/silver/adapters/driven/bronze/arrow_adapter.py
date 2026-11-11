@@ -20,6 +20,15 @@ from procurement.silver.ports.outbound.bronze_repository import (
 )
 
 
+def file_sha256(fs: Any, key: str) -> str:
+    """Calculate file SHA-256 in 1MB blocks."""
+    hasher = hashlib.sha256()
+    with fs.open(key, "rb") as stream:
+        while block := stream.read(1024 * 1024):
+            hasher.update(block)
+    return hasher.hexdigest()
+
+
 class ArrowBronzeRepositoryAdapter(BronzeRepositoryPort):
     """PyArrow-based implementation of BronzeRepositoryPort with PostgreSQL metadata support."""
 

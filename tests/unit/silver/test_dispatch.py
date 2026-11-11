@@ -6,12 +6,21 @@ import pytest
 
 from procurement.silver.application.observations import transform
 from procurement.silver.domain.registry import require_transformer, transformer_contracts
+from procurement.silver.domain.transformers.bid_opening import BidOpeningTransformer
 from tests.unit.silver.test_project_transformer import make_envelope
+
+
+def test_bid_opening_transformer_is_registered():
+    transformer = require_transformer("bid_opening_detail")
+    assert isinstance(transformer, BidOpeningTransformer)
+    assert transformer.table_name == "bid_opening_detail"
+    assert transformer.entity_type == "opening"
+    assert transformer.id_scheme == "notify_no"
 
 
 def test_unimplemented_resource_is_explicit():
     with pytest.raises(ValueError, match="not implemented"):
-        require_transformer("bid_opening_detail")
+        require_transformer("unknown_resource_detail")
 
 
 def test_project_build_uses_same_registered_transformer():

@@ -4,7 +4,12 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from procurement.silver.domain.schema import get_child_schemas, get_silver_schemas
+from procurement.silver.domain.schema import (
+    get_child_schemas,
+    get_primary_key,
+    get_silver_schemas,
+    metadata,
+)
 from procurement.silver.domain.selection import digest
 
 SCHEMAS = get_silver_schemas()
@@ -63,11 +68,16 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
             if target not in CHILD_SCHEMAS:
                 raise ValueError(f"Unsupported typed child table: {target}")
             typed_child = child.get("typed_attributes")
+            pk_col = get_primary_key(target)
             child_id_key = (
-                typed_child.get(f"{target}_id")
-                or typed_child.get("child_id")
-                or typed_child.get("location_id")
-                or typed_child.get("lot_id")
+                typed_child.get(pk_col)
+                if pk_col and isinstance(typed_child, dict) and pk_col in typed_child
+                else (
+                    typed_child.get(f"{target}_id")
+                    or typed_child.get("child_id")
+                    or typed_child.get("location_id")
+                    or typed_child.get("lot_id")
+                )
                 if isinstance(typed_child, dict)
                 else None
             )
@@ -76,7 +86,11 @@ def assemble(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
             ):
                 raise ValueError("Typed child identity must match its source child")
             if month_str and isinstance(typed_child, dict) and "source_month" not in typed_child:
-                typed_child["source_month"] = month_str
+                sa_table = metadata.tables.get(f"silver.{target}")
+                if sa_table is None:
+                    sa_table = metadata.tables.get(target)
+                if sa_table is not None and "source_month" in sa_table.c.keys():
+                    typed_child["source_month"] = month_str
             if target in tables:
                 tables[target][child["child_id"]] = typed_child
 

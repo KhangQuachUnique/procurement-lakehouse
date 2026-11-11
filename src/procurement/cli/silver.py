@@ -576,6 +576,98 @@ def result(
         raise typer.Exit(code=1)
 
 
+@app.command("bid_opening")
+@app.command("opening", hidden=True)
+def bid_opening(
+    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
+    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
+    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    continue_on_error: Annotated[
+        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
+    ] = False,
+    skip_existing: Annotated[
+        bool,
+        typer.Option(
+            "--skip-existing",
+            help="Skip processing for days where Silver data already exists in storage.",
+        ),
+    ] = False,
+    iceberg: Annotated[
+        bool,
+        typer.Option(
+            "--iceberg/--no-iceberg",
+            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
+        ),
+    ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
+    namespace: Annotated[
+        str,
+        typer.Option(
+            "--namespace",
+            "-n",
+            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
+        ),
+    ] = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            "--batch-size",
+            "-b",
+            help="Number of days to accumulate before committing to Iceberg (default 30).",
+        ),
+    ] = 30,
+):
+    """Process bid opening (bien ban mo thau) automatically for each day."""
+    try:
+        first, last = date_range(day, start, end)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    fs, bucket = get_storage()
+    typer.echo(f"bid_opening | {first} .. {last}")
+    report = execute_resource(
+        fs,
+        bucket,
+        "bid_opening",
+        first,
+        last,
+        family=None,
+        continue_on_error=continue_on_error,
+        skip_existing=skip_existing,
+        iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
+        namespace=namespace,
+        batch_size=batch_size,
+    )
+    typer.echo(f"Status: {report['status']}")
+    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
+    if iceberg:
+        typer.echo(
+            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
+        )
+    typer.echo(
+        "Output published to Silver Lakehouse tables "
+        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+    )
+    display_run_summary(report, "bid_opening", iceberg, namespace=namespace)
+    if report["status"] != "completed":
+        raise typer.Exit(code=1)
+
+
 @app.command("contract_performance")
 def contract_performance(
     day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
@@ -830,7 +922,7 @@ def all_resources(
         raise typer.BadParameter(str(exc)) from exc
 
     fs, bucket = get_storage()
-    resources = ["khlcnt", "notice", "project", "contractor_result", "contract_performance"]
+    resources = ["khlcnt", "notice", "project", "bid_opening", "contractor_result", "contract_performance"]
     year_chunks = split_date_range_by_year(first, last)
     is_multi_year = len(year_chunks) > 1 and parallel
 
@@ -887,6 +979,7 @@ def list_resources():
     """List implemented resources and optional family choices."""
     typer.echo("notice (alias: tbmt): standard, vk_adb, reoffer")
     typer.echo("project (alias: du_an): project")
+    typer.echo("bid_opening (alias: opening): bid_opening_detail")
     typer.echo("result (alias: kq_lcnt, contractor_result): contractor_result")
     typer.echo("contract_performance: contract, performance")
     typer.echo("khlcnt (alias: plan, package): plan, package")

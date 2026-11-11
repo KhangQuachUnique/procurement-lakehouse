@@ -1,6 +1,7 @@
 """Silver transformers package. Automatically imports all registered modules."""
 
 from procurement.silver.domain.transformers.base import BaseResourceTransformer
+from procurement.silver.domain.transformers.bid_opening import BidOpeningTransformer
 from procurement.silver.domain.transformers.contract_performance import (
     ContractPerformanceTransformer,
     ContractTransformer,
@@ -17,6 +18,7 @@ from procurement.silver.domain.transformers.result import ContractorResultTransf
 
 __all__ = [
     "BaseResourceTransformer",
+    "BidOpeningTransformer",
     "ContractPerformanceTransformer",
     "ContractTransformer",
     "ContractorResultTransformer",
