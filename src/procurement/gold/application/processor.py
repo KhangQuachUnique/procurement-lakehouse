@@ -96,14 +96,18 @@ def process_gold_range(
             + _extract_table("notice_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("result_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("plan_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("opening_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("contract_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("contract_performance_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("award_lot", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
             + _extract_table("award_contractor", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
             + _extract_table("package_location", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.package_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
+            + _extract_table("opening_submission", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.opening_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
         )
         _extract_table("observation", f"source_date >= '{start_date}' AND source_date < '{end_date}'")
 
         # Synthetic observations for any orphaned revisions
-        for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision"):
+        for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision", "opening_revision", "contract_revision", "contract_performance_revision"):
             local.execute(f"""
                 INSERT INTO frozen.observation (
                     observation_id, resource, source_date, run_id, table_name,

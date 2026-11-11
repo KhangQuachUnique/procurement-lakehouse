@@ -12,7 +12,11 @@ INSERT INTO {p0}fact_selection_round (
     close_to_complete_award_days, is_close_to_complete_award_eligible,
     planned_start_from, planned_start_to, start_timing_status,
     round_state, award_completion_state, cancellation_state,
-    cancel_reason_raw, cancel_reason_category, evidence_set_key, created_at
+    cancel_reason_raw, cancel_reason_category, evidence_set_key, created_at,
+    actual_open_date_key, actual_open_at,
+    close_to_open_hours, is_close_to_open_eligible,
+    open_to_award_days, is_open_to_award_eligible,
+    planned_to_actual_delay_days, is_delay_eligible, contract_complete_date_key
 )
 SELECT
     '{p1}',
@@ -88,8 +92,31 @@ SELECT
     re.cancel_reason,
     CASE WHEN re.is_cancelled THEN 'explicit_round_cancellation' ELSE NULL END,
     re.evidence_set_key,
-    TIMESTAMPTZ '{p2}' AS created_at
+    TIMESTAMPTZ '{p2}' AS created_at,
+    ro.open_date AS actual_open_date_key,
+    ro.open_at AS actual_open_at,
+    CASE
+        WHEN re.close_at IS NOT NULL AND ro.open_at IS NOT NULL AND ro.open_at >= re.close_at
+        THEN CAST(ROUND(date_diff('second', re.close_at, ro.open_at) / 3600.0, 2) AS DECIMAL(38,6))
+        ELSE NULL
+    END AS close_to_open_hours,
+    (re.close_at IS NOT NULL AND ro.open_at IS NOT NULL AND ro.open_at >= re.close_at) AS is_close_to_open_eligible,
+    CASE
+        WHEN ro.open_date IS NOT NULL AND ra.complete_award_pub_date IS NOT NULL AND ra.complete_award_pub_date >= ro.open_date
+        THEN date_diff('day', ro.open_date, ra.complete_award_pub_date)
+        ELSE NULL
+    END AS open_to_award_days,
+    (ro.open_date IS NOT NULL AND ra.complete_award_pub_date IS NOT NULL AND ra.complete_award_pub_date >= ro.open_date) AS is_open_to_award_eligible,
+    CASE
+        WHEN rc.planned_completion_date IS NOT NULL AND rc.actual_completion_date IS NOT NULL
+        THEN date_diff('day', rc.planned_completion_date, rc.actual_completion_date)
+        ELSE NULL
+    END AS planned_to_actual_delay_days,
+    (rc.planned_completion_date IS NOT NULL AND rc.actual_completion_date IS NOT NULL) AS is_delay_eligible,
+    rc.contract_complete_date AS contract_complete_date_key
 FROM _gtmp_round_endpoints re
 LEFT JOIN _gtmp_round_award_endpoints ra ON re.round_business_key = ra.round_business_key
+LEFT JOIN _gtmp_round_opening_endpoints ro ON re.round_business_key = ro.round_business_key
+LEFT JOIN _gtmp_round_contract_endpoints rc ON re.round_business_key = rc.round_business_key
 LEFT JOIN {p3}fact_procurement_demand dem
   ON dem.release_id = '{p4}' AND dem.package_key = re.package_key;

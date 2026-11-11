@@ -462,6 +462,21 @@
       "name": "verified_saving_sum",
       "type": "DECIMAL(38,6)",
       "role": null
+    },
+    {
+      "name": "contract_sample_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "contract_amount_sum",
+      "type": "DECIMAL(38,6)",
+      "role": null
+    },
+    {
+      "name": "contract_saving_sum",
+      "type": "DECIMAL(38,6)",
+      "role": null
     }
   ],
   "fact_duration_daily": [
@@ -658,6 +673,88 @@
     {
       "name": "award_observation_state",
       "type": "VARCHAR",
+      "role": null
+    }
+  ],
+  "fact_bidding_competition_daily": [
+    {
+      "name": "group_key",
+      "type": "VARCHAR",
+      "role": "PK"
+    },
+    {
+      "name": "report_date",
+      "type": "DATE",
+      "role": "FK"
+    },
+    {
+      "name": "geography_key",
+      "type": "VARCHAR",
+      "role": "FK"
+    },
+    {
+      "name": "sector_key",
+      "type": "VARCHAR",
+      "role": "FK"
+    },
+    {
+      "name": "method_key",
+      "type": "VARCHAR",
+      "role": "FK"
+    },
+    {
+      "name": "value_band_key",
+      "type": "VARCHAR",
+      "role": "FK"
+    },
+    {
+      "name": "opening_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "total_bidders",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "single_bidder_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "multi_bidder_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "tech_passed_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "tech_failed_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "discounted_bidder_count",
+      "type": "BIGINT",
+      "role": null
+    },
+    {
+      "name": "total_bid_amount",
+      "type": "DECIMAL(38,6)",
+      "role": null
+    },
+    {
+      "name": "total_discount_amount",
+      "type": "DECIMAL(38,6)",
+      "role": null
+    },
+    {
+      "name": "total_final_bid_amount",
+      "type": "DECIMAL(38,6)",
       "role": null
     }
   ]

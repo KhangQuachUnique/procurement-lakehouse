@@ -13,6 +13,7 @@ from procurement.gold.domain.models import INPUT_TABLES, RunPlan, identifier
 
 from . import (
     award,
+    competition,
     demand,
     dimensions_base,
     dimensions_business,
@@ -51,9 +52,23 @@ class Context:
     release_id: str = "business_v2"
     schema_prefix: str = "business."
     obs_cutoff_pred: str = "TRUE"
+    rel_open_rev: str = ""
+    rel_open_sub: str = ""
+    rel_contract_rev: str = ""
+    rel_contract_perf: str = ""
 
 
-STEPS = (dimensions_base, selection, dimensions_business, demand, notice, award, savings, duration)
+STEPS = (
+    dimensions_base,
+    selection,
+    dimensions_business,
+    demand,
+    notice,
+    award,
+    savings,
+    duration,
+    competition,
+)
 
 
 def run_business(db, plan: RunPlan, source="frozen", on_step=None):
@@ -87,6 +102,10 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         rel_award_ctr=f"{source}.award_contractor",
         rel_pkg_loc=f"{source}.package_location",
         rel_plan=f"{source}.plan_revision",
+        rel_open_rev=f"{source}.opening_revision",
+        rel_open_sub=f"{source}.opening_submission",
+        rel_contract_rev=f"{source}.contract_revision",
+        rel_contract_perf=f"{source}.contract_performance_revision",
         release_config=BusinessConfig(),
         ev_start=plan.event_start.isoformat(),
         ev_end=plan.event_end.isoformat(),
@@ -110,6 +129,7 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         ("fact_award", "award_published_date_key"),
         ("fact_savings", "comparison_date_key"),
         ("fact_selection_round", "first_notice_date_key"),
+        ("fact_bidding_competition", "report_date"),
     ):
         db.execute(
             f"UPDATE business.{name} SET is_in_event_period=coalesce({day} BETWEEN ? AND ?,FALSE)",
@@ -121,6 +141,7 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         ("fact_award", "award_business_key"),
         ("fact_savings", "comparison_scope_key"),
         ("fact_selection_round", "round_business_key"),
+        ("fact_bidding_competition", "opening_key"),
     ):
         bad = db.execute(
             f"SELECT count(*) FROM (SELECT {key} FROM business.{fact} GROUP BY 1 HAVING count(*)>1 OR {key} IS NULL)"
@@ -142,5 +163,6 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
             "fact_award",
             "fact_savings",
             "fact_selection_round",
+            "fact_bidding_competition",
         )
     }

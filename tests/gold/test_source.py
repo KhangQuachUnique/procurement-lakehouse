@@ -4,6 +4,7 @@ import pytest
 
 from procurement.gold.adapters.driven.silver.iceberg_reader import IcebergReader
 from procurement.gold.application.source import freeze
+from procurement.gold.domain.models import INPUT_TABLES
 from tests.gold.test_business import populated
 from tests.gold.test_pipeline import Reader
 
@@ -45,4 +46,4 @@ def test_partial_source_capture_resumes_without_rereading_completed_tables(db, p
     reader.batches = original
     freeze(db, request, reader)
     assert reader.calls.count(first) == 1
-    assert db.execute("SELECT count(*) FROM control.captures").fetchone()[0] == 8
+    assert db.execute("SELECT count(*) FROM control.captures").fetchone()[0] == len(INPUT_TABLES)

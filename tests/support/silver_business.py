@@ -282,3 +282,43 @@ def populate_comprehensive_silver_fixtures(con: duckdb.DuckDBPyConnection) -> No
         -- P18 Winner (USD)
         ('actr_18_1', 'alot_18_1', 'rev_res_18', 'CTR_18', 'Cong ty 18 USD', '01020', 'US', FALSE, NULL, NULL, 'Chinh', 180000.0, 1, 'USD');
     """)
+
+    # Openings
+    con.execute("""
+        INSERT INTO silver.opening_revision (
+            revision_id, entity_id, entity_type, observation_id, is_current,
+            notify_no, notify_version, package_no, package_id, title,
+            actual_open_date, public_date, total_bidders
+        ) VALUES
+        ('rev_opn_1', 'opn1', 'bid_opening', 'obs_p1', TRUE, 'TBMT_001', '00', 'PKG_001', 'p1', 'Mo thau Goi 1', TIMESTAMPTZ '2024-01-20 09:00:00+00', DATE '2024-01-20', 2),
+        ('rev_opn_2', 'opn2', 'bid_opening', 'obs_p2', TRUE, 'TBMT_002', '00', 'PKG_002', 'p2', 'Mo thau Goi 2', TIMESTAMPTZ '2024-01-25 09:00:00+00', DATE '2024-01-25', 1);
+    """)
+
+    # Opening Submissions
+    con.execute("""
+        INSERT INTO silver.opening_submission (
+            submission_id, revision_id, opening_revision_id, contractor_code, contractor_name,
+            bid_price, currency, discount_rate, final_bid_price, tech_result
+        ) VALUES
+        ('sub_1_1', 'rev_opn_1', 'rev_opn_1', 'CTR_A', 'Cong ty Xay dung A', 56000000.0, 'VND', 0.0, 56000000.0, '1'),
+        ('sub_1_2', 'rev_opn_1', 'rev_opn_1', 'CTR_B', 'Cong ty Xay dung B', 58000000.0, 'VND', 5.0, 55100000.0, '1'),
+        ('sub_2_1', 'rev_opn_2', 'rev_opn_2', 'CTR_C1', 'Cong ty Thiet bi C1', 110000000.0, 'VND', 0.0, 110000000.0, '1');
+    """)
+
+    # Contracts
+    con.execute("""
+        INSERT INTO silver.contract_revision (
+            revision_id, entity_id, entity_type, observation_id, is_current,
+            contract_code, contract_no, contract_name, notice_no, public_date, price_after_tax
+        ) VALUES
+        ('rev_ctr_1', 'ctr1', 'contract', 'obs_p1', TRUE, 'CTR_CODE_001', 'HD_001', 'Hop dong Goi 1', 'TBMT_001', DATE '2024-02-01', 53000000.0);
+    """)
+
+    # Contract Performance
+    con.execute("""
+        INSERT INTO silver.contract_performance_revision (
+            revision_id, entity_id, entity_type, observation_id, is_current,
+            contract_code, evaluation_no, public_date, planned_completion_date, actual_completion_date, is_completed
+        ) VALUES
+        ('rev_cp_1', 'cp1', 'contract_performance', 'obs_p1', TRUE, 'CTR_CODE_001', 'DG_001', DATE '2024-06-01', DATE '2024-05-30', DATE '2024-06-05', TRUE);
+    """)

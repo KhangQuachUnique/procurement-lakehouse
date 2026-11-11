@@ -22,7 +22,7 @@ def test_ported_business_steps_generate_valid_16_table_candidate(db, plan):
     populated(db)
     steps = []
     counts = run_business(db, plan, source="silver", on_step=steps.append)
-    assert len(steps) == 8 and counts["fact_procurement_demand"] > 0
+    assert len(steps) == 9 and counts["fact_procurement_demand"] > 0
     # Source versions 2 and 10 must rank numerically, not lexicographically.
     assert (
         db.execute(
@@ -31,19 +31,12 @@ def test_ported_business_steps_generate_valid_16_table_candidate(db, plan):
         == 50000000
     )
     project(db, plan)
+    from procurement.gold.domain.schema import FACTS, TABLES
     db.execute(
         "CREATE TABLE affected AS "
         + " UNION ".join(
             "SELECT owner_key FROM changes." + n
-            for n in (
-                "fact_demand_daily",
-                "fact_notice_daily",
-                "fact_award_daily",
-                "fact_savings_daily",
-                "fact_duration_daily",
-                "fact_supplier_daily",
-                "fact_status_daily",
-            )
+            for n in FACTS
         )
     )
     evidence = prepare_candidate(
@@ -54,7 +47,7 @@ def test_ported_business_steps_generate_valid_16_table_candidate(db, plan):
         dimensions="dimensions",
         observation_day=plan.observation_day,
     )
-    assert evidence["verified"] and evidence["tables"] == 16
+    assert evidence["verified"] and evidence["tables"] == len(TABLES)
     accept_candidate(db, "r1")
     before = db.execute("SELECT * FROM accepted.fact_savings_daily ORDER BY ALL").fetchall()
     # Repeat same immutable inputs; no temp-table leftovers or double counting.
@@ -86,8 +79,10 @@ def test_business_selection_and_core_metrics_preserved_against_baseline(db, plan
         path = folder / (name + ".parquet")
         assert hashlib.sha256(path.read_bytes()).hexdigest() == proof["sha256"]
         db.read_parquet(str(path)).create_view("expected", replace=True)
+        cols = [r[0] for r in db.execute("DESCRIBE expected").fetchall() if r[0] != "created_at"]
+        cols_sql = ", ".join(cols)
         mismatch = db.execute(
-            f"SELECT count(*) FROM ((SELECT * EXCLUDE(created_at) FROM business.{name} EXCEPT ALL SELECT * FROM expected) UNION ALL (SELECT * FROM expected EXCEPT ALL SELECT * EXCLUDE(created_at) FROM business.{name}))"
+            f"SELECT count(*) FROM ((SELECT {cols_sql} FROM business.{name} EXCEPT ALL SELECT {cols_sql} FROM expected) UNION ALL (SELECT {cols_sql} FROM expected EXCEPT ALL SELECT {cols_sql} FROM business.{name}))"
         ).fetchone()[0]
         assert mismatch == 0, name
 

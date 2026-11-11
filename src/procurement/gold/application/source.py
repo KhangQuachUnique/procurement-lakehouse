@@ -69,7 +69,15 @@ def freeze(db, plan, reader: SnapshotReader):
             "CREATE TABLE frozen.observation AS SELECT * FROM capture.observation WHERE source_date<=?",
             [plan.source_cutoff],
         )
-        for name in ("package_revision", "notice_revision", "result_revision", "plan_revision"):
+        for name in (
+            "package_revision",
+            "notice_revision",
+            "result_revision",
+            "plan_revision",
+            "opening_revision",
+            "contract_revision",
+            "contract_performance_revision",
+        ):
             bad = db.execute(
                 f"SELECT count(*) FROM capture.{name} r WHERE r.observation_id IS NULL OR NOT EXISTS (SELECT 1 FROM capture.observation o WHERE o.observation_id=r.observation_id)"
             ).fetchone()[0]
@@ -82,6 +90,7 @@ def freeze(db, plan, reader: SnapshotReader):
             ("package_location", "package_revision"),
             ("award_lot", "result_revision"),
             ("award_contractor", "result_revision"),
+            ("opening_submission", "opening_revision"),
         ):
             bad = db.execute(
                 f"SELECT count(*) FROM capture.{name} c WHERE revision_id IS NULL OR NOT EXISTS (SELECT 1 FROM capture.{parent} r WHERE r.revision_id=c.revision_id)"

@@ -9,7 +9,8 @@ INSERT INTO {p0}fact_savings (
     saving_amount, is_comparable, primary_exclusion_reason,
     baseline_basis, baseline_revision_ref, baseline_evidence_set_key, award_evidence_set_key,
     comparison_rule_version, award_state, scope_completeness, is_baseline_valid,
-    evidence_set_key, created_at
+    evidence_set_key, created_at,
+    contract_amount, contract_saving_amount, is_contract_eligible
 )
 SELECT
     '{p1}',
@@ -117,8 +118,16 @@ SELECT
     END AS scope_completeness,
     (sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0) AS is_baseline_valid,
     fa.evidence_set_key,
-    TIMESTAMPTZ '{p9}' AS created_at
+    TIMESTAMPTZ '{p9}' AS created_at,
+    cs.contract_price AS contract_amount,
+    CASE
+        WHEN sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0 AND cs.contract_price IS NOT NULL AND cs.contract_price > 0
+        THEN sb.baseline_amount - cs.contract_price
+        ELSE NULL
+    END AS contract_saving_amount,
+    COALESCE(sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0 AND cs.contract_price IS NOT NULL AND cs.contract_price > 0, FALSE) AS is_contract_eligible
 FROM {p10}fact_award fa
 JOIN _gtmp_scope_baselines sb ON fa.award_business_key = sb.award_business_key
 LEFT JOIN _gtmp_package_lot_counts plc ON fa.package_key = plc.package_key AND split_part(fa.scope_key, ':ROUND:', 2) = plc.scope_round_key
+LEFT JOIN _gtmp_contract_savings cs ON split_part(fa.award_business_key, ':', 2) = cs.result_revision_id
 WHERE fa.release_id = '{p11}';
