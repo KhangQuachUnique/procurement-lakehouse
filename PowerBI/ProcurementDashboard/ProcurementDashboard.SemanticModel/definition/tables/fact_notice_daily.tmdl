@@ -1,0 +1,69 @@
+table fact_notice_daily
+	lineageTag: ad9e6194-6cc6-5568-a176-6a4af3ed505c
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: f21da115-33a5-5267-9de3-f634e0fc3590
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 669f91bf-9f0e-5ef3-bdb2-a03457df4923
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: b8f3675b-9bed-594a-aec7-a96e672a20c9
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: 76c33dd4-85a4-5cc7-b9b6-3bd05f650478
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: 961a47d3-87bb-5284-9625-f0e271366746
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column notice_family
+		dataType: string
+		lineageTag: e02f6d57-1f0d-5737-bded-966f22383189
+		summarizeBy: none
+		sourceColumn: notice_family
+
+	column notice_count
+		dataType: int64
+		isHidden
+		lineageTag: ab45087c-e44d-5bb8-ae64-c8dda15cad75
+		summarizeBy: none
+		sourceColumn: notice_count
+
+	column cancelled_notice_count
+		dataType: int64
+		isHidden
+		lineageTag: d554ea26-2891-5ee5-9b05-bbe58802cb84
+		summarizeBy: none
+		sourceColumn: cancelled_notice_count
+
+	partition fact_notice_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_notice_daily", {"group_key", "report_date", "geography_key", "sector_key", "method_key", "notice_family", "notice_count", "cancelled_notice_count"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"method_key", type text}, {"notice_family", type text}, {"notice_count", Int64.Type}, {"cancelled_notice_count", Int64.Type}}, "en-US")
+				in
+				    Typed
+

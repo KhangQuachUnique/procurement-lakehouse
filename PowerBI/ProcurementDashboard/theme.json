@@ -1,0 +1,96 @@
+{
+  "name": "Procurement Enterprise",
+  "dataColors": [
+    "#142D4E",
+    "#087F8C",
+    "#F59E0B",
+    "#64748B",
+    "#DC4C4C",
+    "#DDF3F2"
+  ],
+  "background": "#F7F9FC",
+  "foreground": "#172B4D",
+  "tableAccent": "#087F8C",
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#172B4D"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 10,
+      "color": "#64748B"
+    },
+    "callout": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 24,
+      "color": "#142D4E"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "visualHeader": [
+          {
+            "show": false
+          }
+        ],
+        "dropShadow": [
+          {
+            "show": false
+          }
+        ]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "grid": [
+          {
+            "gridVertical": false,
+            "rowPadding": 4
+          }
+        ],
+        "columnHeaders": [
+          {
+            "fontSize": 10,
+            "fontColor": {
+              "solid": {
+                "color": "#172B4D"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#DDF3F2"
+              }
+            }
+          }
+        ],
+        "values": [
+          {
+            "fontSize": 10
+          }
+        ]
+      }
+    },
+    "pivotTable": {
+      "*": {
+        "columnHeaders": [
+          {
+            "fontSize": 10
+          }
+        ],
+        "rowHeaders": [
+          {
+            "fontSize": 10
+          }
+        ],
+        "values": [
+          {
+            "fontSize": 10
+          }
+        ]
+      }
+    }
+  }
+}

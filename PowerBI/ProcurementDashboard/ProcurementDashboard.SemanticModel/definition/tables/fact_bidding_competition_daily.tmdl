@@ -1,0 +1,126 @@
+table fact_bidding_competition_daily
+	lineageTag: 1453302f-e7aa-598e-919b-7910baaf516a
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: 002d1564-ed3e-5aa1-8fcf-326a1267aa4c
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: ef5e81d9-1499-595a-aa70-99ba38fd4489
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: 60fac0f2-4226-5c44-86ac-30c0702364ab
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: f95d4688-ca5f-5014-8215-393f276a1ef0
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: 01747eb3-6ebd-513e-ac7b-65b79900c744
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column value_band_key
+		dataType: string
+		isHidden
+		lineageTag: 3fe9a4a6-754f-5b1d-aac4-24c1a285a615
+		summarizeBy: none
+		sourceColumn: value_band_key
+
+	column opening_count
+		dataType: int64
+		isHidden
+		lineageTag: 5dbeccf2-34f2-5427-a11a-998bb89da4d9
+		summarizeBy: none
+		sourceColumn: opening_count
+
+	column total_bidders
+		dataType: int64
+		isHidden
+		lineageTag: b080ea47-aeac-5d0c-836c-0734e200f346
+		summarizeBy: none
+		sourceColumn: total_bidders
+
+	column single_bidder_count
+		dataType: int64
+		isHidden
+		lineageTag: 0f4afb1c-54eb-5904-af27-65cf9daf0452
+		summarizeBy: none
+		sourceColumn: single_bidder_count
+
+	column multi_bidder_count
+		dataType: int64
+		isHidden
+		lineageTag: 68f1c409-4779-523f-9dcb-86b94e03df12
+		summarizeBy: none
+		sourceColumn: multi_bidder_count
+
+	column tech_passed_count
+		dataType: int64
+		isHidden
+		lineageTag: 5d7dcca0-7fec-5b77-9679-6f196c0f4cef
+		summarizeBy: none
+		sourceColumn: tech_passed_count
+
+	column tech_failed_count
+		dataType: int64
+		isHidden
+		lineageTag: cc79c7df-f341-5a3e-b156-465aad3527d1
+		summarizeBy: none
+		sourceColumn: tech_failed_count
+
+	column discounted_bidder_count
+		dataType: int64
+		isHidden
+		lineageTag: c79b7b28-1e00-50ed-b154-587f1e3bdcbd
+		summarizeBy: none
+		sourceColumn: discounted_bidder_count
+
+	column total_bid_amount
+		dataType: double
+		isHidden
+		lineageTag: 5441f748-025f-5134-9d6f-e1bbd04ba5af
+		summarizeBy: none
+		sourceColumn: total_bid_amount
+
+	column total_discount_amount
+		dataType: double
+		isHidden
+		lineageTag: 9decac5f-d476-5db4-a895-3228bf12ace6
+		summarizeBy: none
+		sourceColumn: total_discount_amount
+
+	column total_final_bid_amount
+		dataType: double
+		isHidden
+		lineageTag: 20cbc01c-6cac-5b5d-9107-dc4f5291f882
+		summarizeBy: none
+		sourceColumn: total_final_bid_amount
+
+	partition fact_bidding_competition_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_bidding_competition_daily", {"group_key", "report_date", "geography_key", "sector_key", "method_key", "value_band_key", "opening_count", "total_bidders", "single_bidder_count", "multi_bidder_count", "tech_passed_count", "tech_failed_count", "discounted_bidder_count", "total_bid_amount", "total_discount_amount", "total_final_bid_amount"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"method_key", type text}, {"value_band_key", type text}, {"opening_count", Int64.Type}, {"total_bidders", Int64.Type}, {"single_bidder_count", Int64.Type}, {"multi_bidder_count", Int64.Type}, {"tech_passed_count", Int64.Type}, {"tech_failed_count", Int64.Type}, {"discounted_bidder_count", Int64.Type}, {"total_bid_amount", type number}, {"total_discount_amount", type number}, {"total_final_bid_amount", type number}}, "en-US")
+				in
+				    Typed
+

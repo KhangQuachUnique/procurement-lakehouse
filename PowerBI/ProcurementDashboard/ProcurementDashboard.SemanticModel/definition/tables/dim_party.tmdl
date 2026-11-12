@@ -1,0 +1,56 @@
+table dim_party
+	lineageTag: f6242169-eae6-5c52-b56a-fb417d244967
+
+	column party_key
+		dataType: string
+		isHidden
+		lineageTag: e3c74e8d-170d-5dfa-b328-87aa18974bbd
+		summarizeBy: none
+		sourceColumn: party_key
+
+	column party_kind
+		dataType: string
+		lineageTag: 586d648f-6cce-5050-813e-d69af0bacc0c
+		summarizeBy: none
+		sourceColumn: party_kind
+
+	column party_code
+		dataType: string
+		lineageTag: 717971a3-973b-5c84-8fa4-b7ee811f918f
+		summarizeBy: none
+		sourceColumn: party_code
+
+	column party_name
+		dataType: string
+		lineageTag: 4e097859-9cbc-580a-a7e6-56bc8db68137
+		summarizeBy: none
+		sourceColumn: party_name
+
+	column tax_code
+		dataType: string
+		lineageTag: 45c2d24c-37dc-513e-ab92-4d85766e9814
+		summarizeBy: none
+		sourceColumn: tax_code
+
+	column source_namespace
+		dataType: string
+		lineageTag: 276e8abe-f360-59a9-b9ae-3ae0f122f389
+		summarizeBy: none
+		sourceColumn: source_namespace
+
+	column party_display
+		dataType: string
+		lineageTag: b178b422-16d2-5cd3-9163-4c5c4b8545e1
+		summarizeBy: none
+		sourceColumn: party_display
+
+	partition dim_party = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_party", {"party_key", "party_kind", "party_code", "party_name", "tax_code", "source_namespace"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"party_key", type text}, {"party_kind", type text}, {"party_code", type text}, {"party_name", type text}, {"tax_code", type text}, {"source_namespace", type text}}, "en-US"),
+				    Display = Table.AddColumn(Typed,"party_display",each (if [party_name] = null or Text.Trim([party_name]) = "" then "Chưa có tên" else [party_name]) & " [" & [party_key] & "]",type text)
+				in
+				    Display
+

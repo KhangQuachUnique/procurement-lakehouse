@@ -1,0 +1,90 @@
+table fact_supplier_daily
+	lineageTag: f444a5fc-da6a-5ad8-950a-3ad667a85a02
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: 0ea5f493-2159-5c9a-940e-288d4f1bf68b
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 640025e4-9701-5b90-a030-c19b8f0ef67a
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: ab8e3644-fb72-5b66-950e-49277b7a2210
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: 33e236e5-692b-5a39-8140-dfb73e512eda
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column currency_key
+		dataType: string
+		isHidden
+		lineageTag: 5403be8d-90d0-56bc-8b9b-63286d2cda79
+		summarizeBy: none
+		sourceColumn: currency_key
+
+	column party_key
+		dataType: string
+		isHidden
+		lineageTag: 4ccbdd93-1c16-5216-ac28-3791f6aa3961
+		summarizeBy: none
+		sourceColumn: party_key
+
+	column recipient_allocation_state
+		dataType: string
+		lineageTag: 6a028f6f-df81-529a-9041-e745f4d9cdf0
+		summarizeBy: none
+		sourceColumn: recipient_allocation_state
+
+	column award_scope_count
+		dataType: int64
+		isHidden
+		lineageTag: 4373254a-1d48-5246-a2f6-8a1b8e194a10
+		summarizeBy: none
+		sourceColumn: award_scope_count
+
+	column effective_award_scope_count
+		dataType: int64
+		isHidden
+		lineageTag: b42f5273-9fb6-5f11-8d06-2f2cfb50ac92
+		summarizeBy: none
+		sourceColumn: effective_award_scope_count
+
+	column eligible_amount_count
+		dataType: int64
+		isHidden
+		lineageTag: 289bfecc-7484-523e-a0fc-e133249917fb
+		summarizeBy: none
+		sourceColumn: eligible_amount_count
+
+	column award_amount_sum
+		dataType: double
+		isHidden
+		lineageTag: 1ed14757-51bd-5e46-b9a3-a2ff87e871dd
+		summarizeBy: none
+		sourceColumn: award_amount_sum
+
+	partition fact_supplier_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_supplier_daily", {"group_key", "report_date", "geography_key", "sector_key", "currency_key", "party_key", "recipient_allocation_state", "award_scope_count", "effective_award_scope_count", "eligible_amount_count", "award_amount_sum"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"currency_key", type text}, {"party_key", type text}, {"recipient_allocation_state", type text}, {"award_scope_count", Int64.Type}, {"effective_award_scope_count", Int64.Type}, {"eligible_amount_count", Int64.Type}, {"award_amount_sum", type number}}, "en-US")
+				in
+				    Typed
+

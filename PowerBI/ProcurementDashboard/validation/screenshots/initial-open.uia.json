@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Issues were found",
+    "type": "Window",
+    "automation_id": "ErrorDialog",
+    "rect": "(L991, T536, R1568, B903)"
+  },
+  {
+    "name": "ms-pbi://pbi.microsoft.com/Views/FloatingDialog/FloatingDialog.htm",
+    "type": "Pane",
+    "automation_id": "",
+    "rect": "(L992, T537, R1567, B902)"
+  },
+  {
+    "name": "Issues were found\r\n\r\n\r\n  There's a problem with the definition content in your Power BI Project.\r\nThe Measure '_Measures'['Thời gian trung bình'] has both FormatString property and FormatStringDefinition property defined which is not supported scenario.\r\n\r\n\r\n\r\n Copy details to clipboard \r\n\r\nSend a Frown\r\n\r\nClose",
+    "type": "Pane",
+    "automation_id": "modalDialog",
+    "rect": "(L989, T535, R1567, B902)"
+  },
+  {
+    "name": "Issues were found",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1027, T560, R1232, B590)"
+  },
+  {
+    "name": "Close",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L1527, T535, R1567, B568)"
+  },
+  {
+    "name": "There's a problem with the definition content in your Power BI Project.\r\nThe Measure '_Measures'['Thời gian trung bình'] has both FormatString property and FormatStringDefinition property defined which is not supported scenario.",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1027, T615, R1518, B741)"
+  },
+  {
+    "name": "Copy details to clipboard",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L1027, T779, R1529, B804)"
+  },
+  {
+    "name": "Copy details to clipboard",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1027, T779, R1207, B804)"
+  },
+  {
+    "name": "Close",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L1446, T831, R1529, B864)"
+  },
+  {
+    "name": "Close",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1468, T833, R1508, B860)"
+  },
+  {
+    "name": "ms-pbi.pbi.microsoft.com/minerva/reportView.html",
+    "type": "Pane",
+    "automation_id": "",
+    "rect": "(L0, T0, R2560, B1439)"
+  },
+  {
+    "name": "ms-pbi.pbi.microsoft.com/minerva/reportView.html - Web content",
+    "type": "Pane",
+    "automation_id": "",
+    "rect": "(L0, T0, R2560, B1440)"
+  },
+  {
+    "name": "System",
+    "type": "MenuBar",
+    "automation_id": "MenuBar",
+    "rect": "(L0, T0, R28, B28)"
+  },
+  {
+    "name": "System",
+    "type": "MenuItem",
+    "automation_id": "",
+    "rect": "(L0, T0, R28, B28)"
+  },
+  {
+    "name": "Minimize",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  },
+  {
+    "name": "Restore",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  },
+  {
+    "name": "Close",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  }
+]

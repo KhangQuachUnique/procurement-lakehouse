@@ -78,3 +78,5 @@ infra/docker/secrets/*
 
 # Contract performance ingestion working state
 /.tmp/contract-performance-dlt/
+
+PowerBI/export/

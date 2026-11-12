@@ -1,0 +1,4 @@
+[
+  {"name":"commands","dax":"SELECT * FROM $SYSTEM.DISCOVER_COMMANDS"},
+  {"name":"sessions","dax":"SELECT * FROM $SYSTEM.DISCOVER_SESSIONS"}
+]

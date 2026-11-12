@@ -1,0 +1,77 @@
+table fact_duration_daily
+	lineageTag: 4b4a4dd7-6eff-5858-a945-a80d89c3cb08
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: 75638907-86ab-5379-9f2f-07a413881529
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: b775806e-d2f5-53ea-9519-cf789afcbc03
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: e8e8f2a9-c91c-5336-a540-687b1d38a6bb
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: e003b318-c726-5084-9767-614c6c3830d7
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column metric_key
+		dataType: string
+		isHidden
+		lineageTag: 492dca04-7ce0-5d28-8f6d-093984026714
+		summarizeBy: none
+		sourceColumn: metric_key
+
+	column interval_count
+		dataType: int64
+		isHidden
+		lineageTag: 351595e8-c70b-55ce-b7ed-81db78e979af
+		summarizeBy: none
+		sourceColumn: interval_count
+
+	column excluded_sample_count
+		dataType: int64
+		isHidden
+		lineageTag: fd883af8-31de-58a4-9554-f9258ed7dbc8
+		summarizeBy: none
+		sourceColumn: excluded_sample_count
+
+	column duration_sum
+		dataType: double
+		isHidden
+		lineageTag: 07656659-07e3-5ec5-9a4e-b738eec64120
+		summarizeBy: none
+		sourceColumn: duration_sum
+
+	column sample_count
+		dataType: int64
+		isHidden
+		lineageTag: ca1a30cf-0384-5e4d-9773-3b94bb398c21
+		summarizeBy: none
+		sourceColumn: sample_count
+
+	partition fact_duration_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_duration_daily", {"group_key", "report_date", "sector_key", "method_key", "metric_key", "interval_count", "excluded_sample_count", "duration_sum", "sample_count"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"sector_key", type text}, {"method_key", type text}, {"metric_key", type text}, {"interval_count", Int64.Type}, {"excluded_sample_count", Int64.Type}, {"duration_sum", type number}, {"sample_count", Int64.Type}}, "en-US")
+				in
+				    Typed
+

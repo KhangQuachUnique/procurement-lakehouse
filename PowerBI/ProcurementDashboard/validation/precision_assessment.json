@@ -1,0 +1,160 @@
+{
+  "model_type": "double",
+  "reason": "Retain source six-decimal scale approximately without fixed-decimal four-place truncation or fixed-decimal aggregate overflow; money is displayed in billions with two decimals. Raw parquet remains exact.",
+  "limits": "IEEE 754 binary64 is approximate, about 15 significant decimal digits. Compare live DAX totals with exact SQL separately. Not an accounting ledger.",
+  "columns": [
+    {
+      "table": "dim_value_band",
+      "column": "min_amount",
+      "exact_decimal_sum": "0.000000",
+      "duckdb_double_sum": 0.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "0.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "dim_value_band",
+      "column": "max_amount",
+      "exact_decimal_sum": null,
+      "duckdb_double_sum": null,
+      "difference_in_source_units": null,
+      "max_value": null,
+      "min_value": null
+    },
+    {
+      "table": "fact_award_daily",
+      "column": "award_amount_sum",
+      "exact_decimal_sum": "3208826170076742.536300",
+      "duckdb_double_sum": 3208826170076743.5,
+      "difference_in_source_units": "0.963700",
+      "max_value": "778771967986280.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_bidding_competition_daily",
+      "column": "total_bid_amount",
+      "exact_decimal_sum": "180832016766697.526300",
+      "duckdb_double_sum": 180832016766697.47,
+      "difference_in_source_units": "0.056300",
+      "max_value": "127094829166206.515000",
+      "min_value": "53680000.000000"
+    },
+    {
+      "table": "fact_bidding_competition_daily",
+      "column": "total_discount_amount",
+      "exact_decimal_sum": "641815553215.897600",
+      "duckdb_double_sum": 641815553215.8976,
+      "difference_in_source_units": "0.000000",
+      "max_value": "215821443835.955400",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_bidding_competition_daily",
+      "column": "total_final_bid_amount",
+      "exact_decimal_sum": "180190201213481.628700",
+      "duckdb_double_sum": 180190201213481.62,
+      "difference_in_source_units": "0.008700",
+      "max_value": "127094829166206.515000",
+      "min_value": "53680000.000000"
+    },
+    {
+      "table": "fact_demand_daily",
+      "column": "planned_amount_sum",
+      "exact_decimal_sum": "6408346291734602.473400",
+      "duckdb_double_sum": 6408346291734602.0,
+      "difference_in_source_units": "0.473400",
+      "max_value": "64500983893970.000000",
+      "min_value": "1.000000"
+    },
+    {
+      "table": "fact_duration_daily",
+      "column": "duration_sum",
+      "exact_decimal_sum": "78933752.730000",
+      "duckdb_double_sum": 78933752.72999953,
+      "difference_in_source_units": "4.7E-7",
+      "max_value": "175905.940000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "descriptive_baseline_sum",
+      "exact_decimal_sum": "2437779552058148.872900",
+      "duckdb_double_sum": 2437779552058149.0,
+      "difference_in_source_units": "0.127100",
+      "max_value": "15124380568193.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "descriptive_award_sum",
+      "exact_decimal_sum": "3208076519700307.331900",
+      "duckdb_double_sum": 3208076519700309.0,
+      "difference_in_source_units": "1.668100",
+      "max_value": "778771487340280.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "descriptive_difference_sum",
+      "exact_decimal_sum": "-770296967642158.459000",
+      "duckdb_double_sum": -770296967642158.4,
+      "difference_in_source_units": "0.059000",
+      "max_value": "2459344615967.023400",
+      "min_value": "-778766071716693.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "verified_baseline_sum",
+      "exact_decimal_sum": "0.000000",
+      "duckdb_double_sum": 0.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "0.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "verified_award_sum",
+      "exact_decimal_sum": "0.000000",
+      "duckdb_double_sum": 0.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "0.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "verified_saving_sum",
+      "exact_decimal_sum": "0.000000",
+      "duckdb_double_sum": 0.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "0.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "contract_amount_sum",
+      "exact_decimal_sum": "104065729100.000000",
+      "duckdb_double_sum": 104065729100.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "13595794940.000000",
+      "min_value": "0.000000"
+    },
+    {
+      "table": "fact_savings_daily",
+      "column": "contract_saving_sum",
+      "exact_decimal_sum": "-2269923385.000000",
+      "duckdb_double_sum": -2269923385.0,
+      "difference_in_source_units": "0.000000",
+      "max_value": "2204256400.000000",
+      "min_value": "-2855405233.000000"
+    },
+    {
+      "table": "fact_supplier_daily",
+      "column": "award_amount_sum",
+      "exact_decimal_sum": "3208826170076742.536300",
+      "duckdb_double_sum": 3208826170076745.5,
+      "difference_in_source_units": "2.963700",
+      "max_value": "778767000778767.000000",
+      "min_value": "0.000000"
+    }
+  ]
+}

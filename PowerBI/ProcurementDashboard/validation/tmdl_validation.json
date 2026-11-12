@@ -1,0 +1,118 @@
+﻿{
+    "parser":  "Microsoft.AnalysisServices.Tabular.TmdlSerializer (installed Desktop)",
+    "dateTableMarked":  false,
+    "relationships":  37,
+    "tables":  [
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_currency",
+                       "columns":  4
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_date",
+                       "columns":  15
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_duration_metric",
+                       "columns":  4
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_geography",
+                       "columns":  11
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_party",
+                       "columns":  7
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_procurement_method",
+                       "columns":  8
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_progress_status",
+                       "columns":  4
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_sector",
+                       "columns":  5
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "dim_value_band",
+                       "columns":  7
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_award_daily",
+                       "columns":  10
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_bidding_competition_daily",
+                       "columns":  16
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_demand_daily",
+                       "columns":  9
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_duration_daily",
+                       "columns":  9
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_notice_daily",
+                       "columns":  8
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_savings_daily",
+                       "columns":  19
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_status_daily",
+                       "columns":  5
+                   },
+                   {
+                       "measures":  0,
+                       "partitions":  1,
+                       "name":  "fact_supplier_daily",
+                       "columns":  11
+                   },
+                   {
+                       "measures":  65,
+                       "partitions":  1,
+                       "name":  "_Measures",
+                       "columns":  1
+                   }
+               ],
+    "note":  "Parsing confirms syntax/metadata and inventory references, not DAX or Power Query execution.",
+    "compatibilityLevel":  1601,
+    "status":  "passed"
+}

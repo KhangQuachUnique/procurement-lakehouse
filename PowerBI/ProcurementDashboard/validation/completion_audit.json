@@ -1,0 +1,26 @@
+{
+  "checked_at_utc": "2026-11-12T10:22:13.044568+00:00",
+  "status": "delivered_with_documented_source_and_presentation_limits",
+  "missing_artifacts": [],
+  "checks": {
+    "static_validation.json": "passed",
+    "tmdl_validation.json": "passed",
+    "numeric_validation.json": "passed",
+    "group_validation.json": "passed",
+    "layout_validation.json": "passed",
+    "multipart_refresh_validation.json": "passed",
+    "page_capture_validation.json": "passed",
+    "source_integrity.json": "passed"
+  },
+  "partitions_ready": 18,
+  "source_errors_preserved": [
+    "Invalid PK/grain: fact_duration_daily",
+    "Broken relationship: {'fact': 'fact_duration_daily', 'foreign_key': 'report_date', 'dimension': 'dim_date', 'primary_key': 'date_key', 'nulls': 8015, 'orphans': 0}"
+  ],
+  "not_claimed": [
+    "Clean source data",
+    "Complete upstream lineage or common export snapshot",
+    "Exhaustive GUI/tooltip testing",
+    "Uniform vi-VN axis/table formatting on every Desktop locale"
+  ]
+}

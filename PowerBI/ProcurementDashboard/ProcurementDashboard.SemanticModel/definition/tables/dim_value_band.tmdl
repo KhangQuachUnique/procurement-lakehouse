@@ -1,0 +1,58 @@
+table dim_value_band
+	lineageTag: 4ba926ba-2bd7-5c2f-90e3-c94f9908af99
+
+	column band_key
+		dataType: string
+		isHidden
+		lineageTag: f5ffccde-448f-5397-8cff-461fb7744c2d
+		summarizeBy: none
+		sourceColumn: band_key
+
+	column currency_key
+		dataType: string
+		isHidden
+		lineageTag: 0cdfc92e-cf8f-520c-a2e6-686a0efcef3e
+		summarizeBy: none
+		sourceColumn: currency_key
+
+	column policy_version
+		dataType: string
+		lineageTag: abac60b1-44c0-509f-a649-f2069e43886e
+		summarizeBy: none
+		sourceColumn: policy_version
+
+	column min_amount
+		dataType: double
+		lineageTag: fb4e1ecf-f7d1-560e-ae75-d98c27a055dc
+		summarizeBy: none
+		sourceColumn: min_amount
+
+	column max_amount
+		dataType: double
+		lineageTag: c3fb61e1-5be4-564c-9712-be3d1135a108
+		summarizeBy: none
+		sourceColumn: max_amount
+
+	column band_label
+		dataType: string
+		lineageTag: 5dfd5b94-95fb-5669-a367-7092621749e3
+		summarizeBy: none
+		sourceColumn: band_label
+		sortByColumn: band_order
+
+	column band_order
+		dataType: int64
+		isHidden
+		lineageTag: ffe0eb59-2da7-508a-a067-59350183ff8c
+		summarizeBy: none
+		sourceColumn: band_order
+
+	partition dim_value_band = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_value_band", {"band_key", "currency_key", "policy_version", "min_amount", "max_amount", "band_label", "band_order"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"band_key", type text}, {"currency_key", type text}, {"policy_version", type text}, {"min_amount", type number}, {"max_amount", type number}, {"band_label", type text}, {"band_order", Int64.Type}}, "en-US")
+				in
+				    Typed
+

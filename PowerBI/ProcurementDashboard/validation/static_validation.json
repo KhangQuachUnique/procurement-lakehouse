@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "json_files_checked": 75,
+  "visuals_checked": 63,
+  "pages": [
+    "overview",
+    "savings",
+    "competition",
+    "duration"
+  ],
+  "errors": [],
+  "limits": [
+    "Static validation is not a Desktop render or refresh test.",
+    "TMDL parsing and engine execution recorded separately."
+  ]
+}

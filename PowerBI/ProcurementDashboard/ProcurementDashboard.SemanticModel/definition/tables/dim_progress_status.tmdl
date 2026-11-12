@@ -1,0 +1,38 @@
+table dim_progress_status
+	lineageTag: f121f96b-ba82-54ed-99e5-0639f027b4d2
+
+	column status_key
+		dataType: string
+		isHidden
+		lineageTag: fef51379-efb1-5282-a835-0264019554cf
+		summarizeBy: none
+		sourceColumn: status_key
+
+	column notice_observation_state
+		dataType: string
+		lineageTag: 033e8b68-96c1-5112-8e2e-2c639522498b
+		summarizeBy: none
+		sourceColumn: notice_observation_state
+
+	column award_observation_state
+		dataType: string
+		lineageTag: 714f5c89-c89e-57f2-98d7-34a1971e7b99
+		summarizeBy: none
+		sourceColumn: award_observation_state
+
+	column status_label
+		dataType: string
+		lineageTag: 44c69c10-c196-56cd-9c49-b3f17b4ebd11
+		summarizeBy: none
+		sourceColumn: status_label
+
+	partition dim_progress_status = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_progress_status", {"status_key", "notice_observation_state", "award_observation_state"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"status_key", type text}, {"notice_observation_state", type text}, {"award_observation_state", type text}}, "en-US"),
+				    Display = Table.AddColumn(Typed,"status_label",each "TB: " & (if [notice_observation_state]="observed" then "Đã thấy" else "Chưa thấy") & " | KQ: " & (if [award_observation_state]="observed" then "Đã thấy" else "Chưa thấy"), type text)
+				in
+				    Display
+

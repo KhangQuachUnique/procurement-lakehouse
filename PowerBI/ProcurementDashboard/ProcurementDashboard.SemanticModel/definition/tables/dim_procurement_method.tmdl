@@ -1,0 +1,61 @@
+table dim_procurement_method
+	lineageTag: 8546a335-1649-543b-b367-ae50114c560e
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: 66ecdaa7-5572-5562-a944-6f7c081b8348
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column mapping_version
+		dataType: string
+		lineageTag: 7544d468-a361-56a1-b3f6-ac3e28012f90
+		summarizeBy: none
+		sourceColumn: mapping_version
+
+	column bid_form_raw
+		dataType: string
+		lineageTag: 94dd181d-794d-5e89-80f0-f1293136b3f2
+		summarizeBy: none
+		sourceColumn: bid_form_raw
+
+	column bid_mode_raw
+		dataType: string
+		lineageTag: 8fb9387b-fcac-5d72-b6be-0026a8a91561
+		summarizeBy: none
+		sourceColumn: bid_mode_raw
+
+	column is_domestic
+		dataType: boolean
+		lineageTag: 0cc439e9-4160-5239-9da4-0358c6177cc6
+		summarizeBy: none
+		sourceColumn: is_domestic
+
+	column is_internet
+		dataType: boolean
+		lineageTag: 3f3e419b-f6a3-5211-8b47-b2495b762153
+		summarizeBy: none
+		sourceColumn: is_internet
+
+	column contract_type_raw
+		dataType: string
+		lineageTag: a0603f9e-8d4e-5cff-92df-d5132fb43f95
+		summarizeBy: none
+		sourceColumn: contract_type_raw
+
+	column method_category
+		dataType: string
+		lineageTag: 0ada6cca-7afd-5b32-a57d-94111a1b4be2
+		summarizeBy: none
+		sourceColumn: method_category
+
+	partition dim_procurement_method = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_procurement_method", {"method_key", "mapping_version", "bid_form_raw", "bid_mode_raw", "is_domestic", "is_internet", "contract_type_raw", "method_category"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"method_key", type text}, {"mapping_version", type text}, {"bid_form_raw", type text}, {"bid_mode_raw", type text}, {"is_domestic", type logical}, {"is_internet", type logical}, {"contract_type_raw", type text}, {"method_category", type text}}, "en-US")
+				in
+				    Typed
+

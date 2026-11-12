@@ -1,0 +1,24 @@
+{
+  "pages": [
+    {
+      "name": "overview",
+      "displayName": "Tổng quan",
+      "visuals": 15
+    },
+    {
+      "name": "savings",
+      "displayName": "Tiết kiệm và hợp đồng",
+      "visuals": 19
+    },
+    {
+      "name": "competition",
+      "displayName": "Cạnh tranh đấu thầu",
+      "visuals": 15
+    },
+    {
+      "name": "duration",
+      "displayName": "Thời gian và đơn vị tham gia",
+      "visuals": 14
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "https://developer.microsoft.com/json-schemas/fabric/pbip/pbipProperties/1.0.0/schema.json": "ceaec1e19ff71f74.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json": "b0f4d20273f04f46.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/semanticModel/definitionProperties/1.0.0/schema.json": "4e00ed342fd7963f.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/versionMetadata/1.0.0/schema.json": "bfc24a400e44c23b.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.0.0/schema.json": "df600a8b75aa0f70.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/filterConfiguration/1.2.0/schema-embedded.json": "e1f2137345d1cf93.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/semanticQuery/1.3.0/schema.json": "f1d7ab08cc345456.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/formattingObjectDefinitions/1.4.0/schema.json": "7985f86e688008f4.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json": "d978f94784533b37.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json": "ff91d2fd85c4b04e.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json": "a407d62e26c5d22a.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualConfiguration/2.1.0/schema-embedded.json": "168c9dad501e3974.json",
+  "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json": "f82466b90b564efb.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json": "49399db5ad128c60.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualConfiguration/2.3.0/schema-embedded.json": "41d8393d0998d7f5.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/formattingObjectDefinitions/1.5.0/schema.json": "03b94f622daec778.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/semanticQuery/1.4.0/schema.json": "0b9f8a866310d44d.json",
+  "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/filterConfiguration/1.3.0/schema-embedded.json": "93c8af806e239a81.json"
+}

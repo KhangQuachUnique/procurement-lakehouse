@@ -1,0 +1,2322 @@
+{
+  "audited_at_utc": "2026-11-12T09:51:30.460083+00:00",
+  "data_root": "D:\\Project\\procurement-lakehouse\\PowerBI\\export\\parquet",
+  "tables": {
+    "dim_currency": {
+      "files": [
+        {
+          "path": "dim_currency.parquet",
+          "bytes": 635,
+          "rows": 4,
+          "sha256": "a3702fb1edf8042c412e9b54bf3f076dadbecb7f8f1394391bf3b710574b2b6a",
+          "mtime_utc": "2026-11-11T10:36:08+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_code",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "is_supported",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "is_unknown",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "primary_key": "currency_key",
+      "grain": [
+        "currency_key"
+      ],
+      "rows": 4,
+      "distinct_pk": 4,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 4,
+        "currency_code__nulls": 0,
+        "currency_code__approx_distinct": 4,
+        "is_supported__nulls": 0,
+        "is_supported__approx_distinct": 2,
+        "is_unknown__nulls": 0,
+        "is_unknown__approx_distinct": 2
+      },
+      "categories": {
+        "currency_code": [
+          {
+            "currency_code": "EUR",
+            "rows": 1
+          },
+          {
+            "currency_code": "UNKNOWN",
+            "rows": 1
+          },
+          {
+            "currency_code": "VND",
+            "rows": 1
+          },
+          {
+            "currency_code": "USD",
+            "rows": 1
+          }
+        ]
+      }
+    },
+    "dim_date": {
+      "files": [
+        {
+          "path": "dim_date.parquet",
+          "bytes": 24374,
+          "rows": 2376,
+          "sha256": "bf35fd95af3732860464716f6e55cf3aab6b569a73aeaa4a721bdb09ce9da65c",
+          "mtime_utc": "2026-11-11T10:36:08+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "date_key",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "year",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "quarter",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "month",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "day",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "day_of_week",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "is_weekend",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "year_quarter",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "year_month",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "iso_year",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "iso_week",
+          "type": "int32",
+          "nullable": true
+        },
+        {
+          "name": "week_start_date",
+          "type": "date32[day]",
+          "nullable": true
+        }
+      ],
+      "primary_key": "date_key",
+      "grain": [
+        "date_key"
+      ],
+      "rows": 2376,
+      "distinct_pk": 2376,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "date_key__nulls": 0,
+        "date_key__approx_distinct": 2728,
+        "date_key__min": "1202-10-18",
+        "date_key__max": "2027-04-02",
+        "year__nulls": 0,
+        "year__approx_distinct": 21,
+        "year__min": 1202,
+        "year__max": 2027,
+        "quarter__nulls": 0,
+        "quarter__approx_distinct": 4,
+        "quarter__min": 1,
+        "quarter__max": 4,
+        "month__nulls": 0,
+        "month__approx_distinct": 13,
+        "month__min": 1,
+        "month__max": 12,
+        "day__nulls": 0,
+        "day__approx_distinct": 29,
+        "day__min": 1,
+        "day__max": 31,
+        "day_of_week__nulls": 0,
+        "day_of_week__approx_distinct": 7,
+        "day_of_week__min": 0,
+        "day_of_week__max": 6,
+        "is_weekend__nulls": 0,
+        "is_weekend__approx_distinct": 2,
+        "year_quarter__nulls": 0,
+        "year_quarter__approx_distinct": 48,
+        "year_month__nulls": 0,
+        "year_month__approx_distinct": 140,
+        "iso_year__nulls": 0,
+        "iso_year__approx_distinct": 21,
+        "iso_year__min": 1202,
+        "iso_year__max": 2027,
+        "iso_week__nulls": 0,
+        "iso_week__approx_distinct": 47,
+        "iso_week__min": 1,
+        "iso_week__max": 53,
+        "week_start_date__nulls": 0,
+        "week_start_date__approx_distinct": 392,
+        "week_start_date__min": "1202-10-14",
+        "week_start_date__max": "2027-03-29"
+      }
+    },
+    "dim_duration_metric": {
+      "files": [
+        {
+          "path": "dim_duration_metric.parquet",
+          "bytes": 904,
+          "rows": 7,
+          "sha256": "af4897fb7958e15f47af5fc8fd7b62ff8e195467e21d22f98a08d1029fc654f7",
+          "mtime_utc": "2026-11-11T10:36:08+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "metric_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "metric_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "duration_unit",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "primary_key": "metric_key",
+      "grain": [
+        "metric_key"
+      ],
+      "rows": 7,
+      "distinct_pk": 7,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "metric_key__nulls": 0,
+        "metric_key__approx_distinct": 6,
+        "metric_name__nulls": 0,
+        "metric_name__approx_distinct": 6,
+        "duration_unit__nulls": 0,
+        "duration_unit__approx_distinct": 2
+      },
+      "categories": {
+        "metric_name": [
+          {
+            "metric_name": "close_to_open_hours",
+            "rows": 1
+          },
+          {
+            "metric_name": "close_to_complete_award_days",
+            "rows": 1
+          },
+          {
+            "metric_name": "planned_to_actual_delay_days",
+            "rows": 1
+          },
+          {
+            "metric_name": "open_to_award_days",
+            "rows": 1
+          },
+          {
+            "metric_name": "plan_to_notice_days",
+            "rows": 1
+          },
+          {
+            "metric_name": "notice_to_close_hours",
+            "rows": 1
+          },
+          {
+            "metric_name": "close_to_first_award_days",
+            "rows": 1
+          }
+        ],
+        "duration_unit": [
+          {
+            "duration_unit": "days",
+            "rows": 5
+          },
+          {
+            "duration_unit": "hours",
+            "rows": 2
+          }
+        ]
+      }
+    },
+    "dim_geography": {
+      "files": [
+        {
+          "path": "dim_geography.parquet",
+          "bytes": 3924,
+          "rows": 165,
+          "sha256": "f002d600872f3e4a08aee957c92fe18db19306386ead42378843ff52ac70fc61",
+          "mtime_utc": "2026-11-11T10:36:08+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "geography_version",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "province_code",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "province_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "region_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "is_multi_geography",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "is_unknown",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "valid_from",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "valid_to",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "is_current",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "primary_key": "geography_key",
+      "grain": [
+        "geography_key"
+      ],
+      "rows": 165,
+      "distinct_pk": 165,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 174,
+        "geography_version__nulls": 0,
+        "geography_version__approx_distinct": 1,
+        "province_code__nulls": 2,
+        "province_code__approx_distinct": 169,
+        "province_name__nulls": 3,
+        "province_name__approx_distinct": 72,
+        "region_name__nulls": 100,
+        "region_name__approx_distinct": 9,
+        "is_multi_geography__nulls": 0,
+        "is_multi_geography__approx_distinct": 2,
+        "is_unknown__nulls": 0,
+        "is_unknown__approx_distinct": 2,
+        "valid_from__nulls": 165,
+        "valid_from__approx_distinct": 0,
+        "valid_from__min": null,
+        "valid_from__max": null,
+        "valid_to__nulls": 165,
+        "valid_to__approx_distinct": 0,
+        "valid_to__min": null,
+        "valid_to__max": null,
+        "is_current__nulls": 100,
+        "is_current__approx_distinct": 1
+      },
+      "categories": {
+        "geography_version": [
+          {
+            "geography_version": "v1",
+            "rows": 165
+          }
+        ]
+      }
+    },
+    "dim_party": {
+      "files": [
+        {
+          "path": "dim_party.parquet",
+          "bytes": 94200569,
+          "rows": 2077733,
+          "sha256": "8930b930b6ea2b9758d1d2077d0907330bfdf0e6fd47697c71b2e6172a692fd7",
+          "mtime_utc": "2026-11-11T10:36:10+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "party_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "party_kind",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "party_code",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "party_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "tax_code",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "source_namespace",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "primary_key": "party_key",
+      "grain": [
+        "party_key"
+      ],
+      "rows": 2077733,
+      "distinct_pk": 2077733,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "party_key__nulls": 0,
+        "party_key__approx_distinct": 2164987,
+        "party_kind__nulls": 0,
+        "party_kind__approx_distinct": 3,
+        "party_code__nulls": 1803664,
+        "party_code__approx_distinct": 249129,
+        "party_name__nulls": 0,
+        "party_name__approx_distinct": 371928,
+        "tax_code__nulls": 1946240,
+        "tax_code__approx_distinct": 100303,
+        "source_namespace__nulls": 0,
+        "source_namespace__approx_distinct": 4
+      }
+    },
+    "dim_procurement_method": {
+      "files": [
+        {
+          "path": "dim_procurement_method.parquet",
+          "bytes": 10846,
+          "rows": 420,
+          "sha256": "7ec300e12ab349f6b11ed5bc1645a34ceb8b4ca66b51f607001f56732d58f905",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "mapping_version",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "bid_form_raw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "bid_mode_raw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "is_domestic",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "is_internet",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "contract_type_raw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_category",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "primary_key": "method_key",
+      "grain": [
+        "method_key"
+      ],
+      "rows": 420,
+      "distinct_pk": 420,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 400,
+        "mapping_version__nulls": 0,
+        "mapping_version__approx_distinct": 1,
+        "bid_form_raw__nulls": 2,
+        "bid_form_raw__approx_distinct": 27,
+        "bid_mode_raw__nulls": 1,
+        "bid_mode_raw__approx_distinct": 4,
+        "is_domestic__nulls": 1,
+        "is_domestic__approx_distinct": 2,
+        "is_internet__nulls": 1,
+        "is_internet__approx_distinct": 2,
+        "contract_type_raw__nulls": 1,
+        "contract_type_raw__approx_distinct": 42,
+        "method_category__nulls": 0,
+        "method_category__approx_distinct": 28
+      },
+      "categories": {
+        "mapping_version": [
+          {
+            "mapping_version": "v1",
+            "rows": 420
+          }
+        ]
+      }
+    },
+    "dim_progress_status": {
+      "files": [
+        {
+          "path": "dim_progress_status.parquet",
+          "bytes": 1069,
+          "rows": 4,
+          "sha256": "58abb2c1a392e2b766c5e91e302aa99c5488a844caa6f817143e7745ffa2cca1",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "status_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "notice_observation_state",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "award_observation_state",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "primary_key": "status_key",
+      "grain": [
+        "status_key"
+      ],
+      "rows": 4,
+      "distinct_pk": 4,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "status_key__nulls": 0,
+        "status_key__approx_distinct": 4,
+        "notice_observation_state__nulls": 0,
+        "notice_observation_state__approx_distinct": 2,
+        "award_observation_state__nulls": 0,
+        "award_observation_state__approx_distinct": 2
+      }
+    },
+    "dim_sector": {
+      "files": [
+        {
+          "path": "dim_sector.parquet",
+          "bytes": 974,
+          "rows": 7,
+          "sha256": "a5b8589519f771b28a7670e02cbfa5ed5f1ff089366abac7127ef124804d7d90",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "taxonomy_version",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_code",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_group",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "primary_key": "sector_key",
+      "grain": [
+        "sector_key"
+      ],
+      "rows": 7,
+      "distinct_pk": 7,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 7,
+        "taxonomy_version__nulls": 0,
+        "taxonomy_version__approx_distinct": 1,
+        "sector_code__nulls": 0,
+        "sector_code__approx_distinct": 6,
+        "sector_name__nulls": 0,
+        "sector_name__approx_distinct": 7,
+        "sector_group__nulls": 7,
+        "sector_group__approx_distinct": 0
+      },
+      "categories": {
+        "taxonomy_version": [
+          {
+            "taxonomy_version": "v1",
+            "rows": 7
+          }
+        ]
+      }
+    },
+    "dim_value_band": {
+      "files": [
+        {
+          "path": "dim_value_band.parquet",
+          "bytes": 1133,
+          "rows": 1,
+          "sha256": "8e77697992846a11a618ef046cd10eefe5c8ef271c84820bcad8d474bc7c6681",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "band_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "policy_version",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "min_amount",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "max_amount",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "band_label",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "band_order",
+          "type": "int32",
+          "nullable": true
+        }
+      ],
+      "primary_key": "band_key",
+      "grain": [
+        "band_key"
+      ],
+      "rows": 1,
+      "distinct_pk": 1,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "band_key__nulls": 0,
+        "band_key__approx_distinct": 1,
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 1,
+        "policy_version__nulls": 0,
+        "policy_version__approx_distinct": 1,
+        "min_amount__nulls": 0,
+        "min_amount__approx_distinct": 1,
+        "min_amount__min": "0.000000",
+        "min_amount__max": "0.000000",
+        "min_amount__sum": "0.000000",
+        "min_amount__currency_rounding_max": "0.000000",
+        "min_amount__currency_rounding_total_bound": "0.000000",
+        "min_amount__negatives": 0,
+        "max_amount__nulls": 1,
+        "max_amount__approx_distinct": 0,
+        "max_amount__min": null,
+        "max_amount__max": null,
+        "max_amount__sum": null,
+        "max_amount__currency_rounding_max": null,
+        "max_amount__currency_rounding_total_bound": null,
+        "max_amount__negatives": 0,
+        "band_label__nulls": 0,
+        "band_label__approx_distinct": 1,
+        "band_order__nulls": 0,
+        "band_order__approx_distinct": 1,
+        "band_order__min": 99,
+        "band_order__max": 99
+      },
+      "categories": {
+        "policy_version": [
+          {
+            "policy_version": "v1",
+            "rows": 1
+          }
+        ]
+      }
+    },
+    "fact_award_daily": {
+      "files": [
+        {
+          "path": "fact_award_daily.parquet",
+          "bytes": 9591898,
+          "rows": 207680,
+          "sha256": "90b0e63e782a57a7918a70de3072e7ab8073e9fb91a2f8a67e54d5ba0e12d65c",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "award_scope_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "effective_award_scope_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "eligible_amount_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "award_amount_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "method_key",
+        "currency_key"
+      ],
+      "rows": 207680,
+      "distinct_pk": 207680,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 192194,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1434,
+        "report_date__min": "2022-09-16",
+        "report_date__max": "2026-03-08",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 98,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 163,
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 1,
+        "award_scope_count__nulls": 0,
+        "award_scope_count__approx_distinct": 1355,
+        "award_scope_count__min": 1,
+        "award_scope_count__max": 7111,
+        "effective_award_scope_count__nulls": 0,
+        "effective_award_scope_count__approx_distinct": 1156,
+        "effective_award_scope_count__min": 0,
+        "effective_award_scope_count__max": 5815,
+        "eligible_amount_count__nulls": 0,
+        "eligible_amount_count__approx_distinct": 1129,
+        "eligible_amount_count__min": 0,
+        "eligible_amount_count__max": 5739,
+        "award_amount_sum__nulls": 0,
+        "award_amount_sum__approx_distinct": 218905,
+        "award_amount_sum__min": "0.000000",
+        "award_amount_sum__max": "778771967986280.000000",
+        "award_amount_sum__sum": "3208826170076742.536300",
+        "award_amount_sum__currency_rounding_max": "0.000000",
+        "award_amount_sum__currency_rounding_total_bound": "0.000000",
+        "award_amount_sum__negatives": 0
+      }
+    },
+    "fact_bidding_competition_daily": {
+      "files": [
+        {
+          "path": "fact_bidding_competition_daily.parquet",
+          "bytes": 12026,
+          "rows": 120,
+          "sha256": "539636e25e16a9d939cea21ead0c1ca113b445b2ea456d1a49d96d5b3ff1bf88",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "value_band_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "opening_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "total_bidders",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "single_bidder_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "multi_bidder_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "tech_passed_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "tech_failed_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "discounted_bidder_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "total_bid_amount",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "total_discount_amount",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "total_final_bid_amount",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "method_key",
+        "value_band_key"
+      ],
+      "rows": 120,
+      "distinct_pk": 120,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 116,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 16,
+        "report_date__min": "2025-01-07",
+        "report_date__max": "2025-01-24",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 1,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 12,
+        "value_band_key__nulls": 0,
+        "value_band_key__approx_distinct": 1,
+        "opening_count__nulls": 0,
+        "opening_count__approx_distinct": 49,
+        "opening_count__min": 1,
+        "opening_count__max": 312,
+        "total_bidders__nulls": 0,
+        "total_bidders__approx_distinct": 64,
+        "total_bidders__min": 1,
+        "total_bidders__max": 1000,
+        "single_bidder_count__nulls": 0,
+        "single_bidder_count__approx_distinct": 39,
+        "single_bidder_count__min": 0,
+        "single_bidder_count__max": 164,
+        "multi_bidder_count__nulls": 0,
+        "multi_bidder_count__approx_distinct": 35,
+        "multi_bidder_count__min": 0,
+        "multi_bidder_count__max": 148,
+        "tech_passed_count__nulls": 0,
+        "tech_passed_count__approx_distinct": 52,
+        "tech_passed_count__min": 0,
+        "tech_passed_count__max": 350,
+        "tech_failed_count__nulls": 0,
+        "tech_failed_count__approx_distinct": 4,
+        "tech_failed_count__min": 0,
+        "tech_failed_count__max": 3,
+        "discounted_bidder_count__nulls": 0,
+        "discounted_bidder_count__approx_distinct": 28,
+        "discounted_bidder_count__min": 0,
+        "discounted_bidder_count__max": 66,
+        "total_bid_amount__nulls": 0,
+        "total_bid_amount__approx_distinct": 122,
+        "total_bid_amount__min": "53680000.000000",
+        "total_bid_amount__max": "127094829166206.515000",
+        "total_bid_amount__sum": "180832016766697.526300",
+        "total_bid_amount__currency_rounding_max": "0.000000",
+        "total_bid_amount__currency_rounding_total_bound": "0.000000",
+        "total_bid_amount__negatives": 0,
+        "total_discount_amount__nulls": 0,
+        "total_discount_amount__approx_distinct": 59,
+        "total_discount_amount__min": "0.000000",
+        "total_discount_amount__max": "215821443835.955400",
+        "total_discount_amount__sum": "641815553215.897600",
+        "total_discount_amount__currency_rounding_max": "0.000000",
+        "total_discount_amount__currency_rounding_total_bound": "0.000000",
+        "total_discount_amount__negatives": 0,
+        "total_final_bid_amount__nulls": 0,
+        "total_final_bid_amount__approx_distinct": 118,
+        "total_final_bid_amount__min": "53680000.000000",
+        "total_final_bid_amount__max": "127094829166206.515000",
+        "total_final_bid_amount__sum": "180190201213481.628700",
+        "total_final_bid_amount__currency_rounding_max": "0.000000",
+        "total_final_bid_amount__currency_rounding_total_bound": "0.000000",
+        "total_final_bid_amount__negatives": 0
+      }
+    },
+    "fact_demand_daily": {
+      "files": [
+        {
+          "path": "fact_demand_daily.parquet",
+          "bytes": 11527286,
+          "rows": 248558,
+          "sha256": "6b9a603cb21bc5742250a90e8614686cb3818943eb2a23365ce700754b29d466",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "value_band_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "package_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "eligible_amount_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "planned_amount_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "value_band_key",
+        "currency_key"
+      ],
+      "rows": 248558,
+      "distinct_pk": 248558,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 263943,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1467,
+        "report_date__min": "2022-09-16",
+        "report_date__max": "2026-07-16",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 103,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "value_band_key__nulls": 0,
+        "value_band_key__approx_distinct": 1,
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 1,
+        "package_count__nulls": 0,
+        "package_count__approx_distinct": 383,
+        "package_count__min": 1,
+        "package_count__max": 1004,
+        "eligible_amount_count__nulls": 0,
+        "eligible_amount_count__approx_distinct": 383,
+        "eligible_amount_count__min": 1,
+        "eligible_amount_count__max": 1004,
+        "planned_amount_sum__nulls": 0,
+        "planned_amount_sum__approx_distinct": 213608,
+        "planned_amount_sum__min": "1.000000",
+        "planned_amount_sum__max": "64500983893970.000000",
+        "planned_amount_sum__sum": "6408346291734602.473400",
+        "planned_amount_sum__currency_rounding_max": "0.000000",
+        "planned_amount_sum__currency_rounding_total_bound": "0.000000",
+        "planned_amount_sum__negatives": 0
+      }
+    },
+    "fact_duration_daily": {
+      "files": [
+        {
+          "path": "fact_duration_daily.parquet",
+          "bytes": 2538509,
+          "rows": 65421,
+          "sha256": "75dcd0150c8f0642e942bc553b79b04a07a1dec0ac219979dce40d40bab533e4",
+          "mtime_utc": "2026-11-11T10:36:14+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "metric_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "interval_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "excluded_sample_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "duration_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "sample_count",
+          "type": "int64",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "sector_key",
+        "method_key",
+        "metric_key"
+      ],
+      "rows": 65421,
+      "distinct_pk": 58241,
+      "null_pk": 0,
+      "duplicate_grains": 673,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 62242,
+        "report_date__nulls": 8015,
+        "report_date__approx_distinct": 1368,
+        "report_date__min": "2022-09-17",
+        "report_date__max": "2026-03-31",
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 140,
+        "metric_key__nulls": 0,
+        "metric_key__approx_distinct": 6,
+        "interval_count__nulls": 0,
+        "interval_count__approx_distinct": 801,
+        "interval_count__min": 1,
+        "interval_count__max": 7784,
+        "excluded_sample_count__nulls": 0,
+        "excluded_sample_count__approx_distinct": 751,
+        "excluded_sample_count__min": 0,
+        "excluded_sample_count__max": 7784,
+        "duration_sum__nulls": 0,
+        "duration_sum__approx_distinct": 17056,
+        "duration_sum__min": "0.000000",
+        "duration_sum__max": "175905.940000",
+        "duration_sum__sum": "78933752.730000",
+        "duration_sum__currency_rounding_max": "0.000000",
+        "duration_sum__currency_rounding_total_bound": "0.000000",
+        "duration_sum__negatives": 0,
+        "sample_count__nulls": 0,
+        "sample_count__approx_distinct": 436,
+        "sample_count__min": 0,
+        "sample_count__max": 561
+      }
+    },
+    "fact_notice_daily": {
+      "files": [
+        {
+          "path": "fact_notice_daily.parquet",
+          "bytes": 1364173,
+          "rows": 35022,
+          "sha256": "900ffd57ec00e7c0c6dd76a29392e989168714df615b5478ff289667cabef93d",
+          "mtime_utc": "2026-11-11T10:36:12+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "notice_family",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "notice_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "cancelled_notice_count",
+          "type": "int64",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "method_key",
+        "notice_family"
+      ],
+      "rows": 35022,
+      "distinct_pk": 35022,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 38420,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1339,
+        "report_date__min": "2022-09-17",
+        "report_date__max": "2026-03-08",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 1,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 147,
+        "notice_family__nulls": 0,
+        "notice_family__approx_distinct": 3,
+        "notice_count__nulls": 0,
+        "notice_count__approx_distinct": 325,
+        "notice_count__min": 1,
+        "notice_count__max": 539,
+        "cancelled_notice_count__nulls": 0,
+        "cancelled_notice_count__approx_distinct": 11,
+        "cancelled_notice_count__min": 0,
+        "cancelled_notice_count__max": 12
+      },
+      "categories": {
+        "notice_family": [
+          {
+            "notice_family": "standard",
+            "rows": 24967
+          },
+          {
+            "notice_family": "vk_adb",
+            "rows": 8969
+          },
+          {
+            "notice_family": "reoffer",
+            "rows": 1086
+          }
+        ]
+      }
+    },
+    "fact_savings_daily": {
+      "files": [
+        {
+          "path": "fact_savings_daily.parquet",
+          "bytes": 11422095,
+          "rows": 207680,
+          "sha256": "304c587e84dbf3751150de46ec856d00b98dfe27397b6d36b8ea41805dc7de5b",
+          "mtime_utc": "2026-11-11T10:36:14+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "method_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "value_band_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "scope_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "descriptive_sample_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "descriptive_baseline_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "descriptive_award_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "descriptive_difference_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "verified_sample_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "verified_baseline_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "verified_award_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "verified_saving_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "contract_sample_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "contract_amount_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        },
+        {
+          "name": "contract_saving_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "method_key",
+        "value_band_key",
+        "currency_key"
+      ],
+      "rows": 207680,
+      "distinct_pk": 207680,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 196086,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1434,
+        "report_date__min": "2022-09-16",
+        "report_date__max": "2026-03-08",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 98,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "method_key__nulls": 0,
+        "method_key__approx_distinct": 163,
+        "value_band_key__nulls": 0,
+        "value_band_key__approx_distinct": 1,
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 1,
+        "scope_count__nulls": 0,
+        "scope_count__approx_distinct": 1355,
+        "scope_count__min": 1,
+        "scope_count__max": 7111,
+        "descriptive_sample_count__nulls": 0,
+        "descriptive_sample_count__approx_distinct": 1016,
+        "descriptive_sample_count__min": 0,
+        "descriptive_sample_count__max": 5739,
+        "descriptive_baseline_sum__nulls": 0,
+        "descriptive_baseline_sum__approx_distinct": 191434,
+        "descriptive_baseline_sum__min": "0.000000",
+        "descriptive_baseline_sum__max": "15124380568193.000000",
+        "descriptive_baseline_sum__sum": "2437779552058148.872900",
+        "descriptive_baseline_sum__currency_rounding_max": "0.000000",
+        "descriptive_baseline_sum__currency_rounding_total_bound": "0.000000",
+        "descriptive_baseline_sum__negatives": 0,
+        "descriptive_award_sum__nulls": 0,
+        "descriptive_award_sum__approx_distinct": 218905,
+        "descriptive_award_sum__min": "0.000000",
+        "descriptive_award_sum__max": "778771487340280.000000",
+        "descriptive_award_sum__sum": "3208076519700307.331900",
+        "descriptive_award_sum__currency_rounding_max": "0.000000",
+        "descriptive_award_sum__currency_rounding_total_bound": "0.000000",
+        "descriptive_award_sum__negatives": 0,
+        "descriptive_difference_sum__nulls": 0,
+        "descriptive_difference_sum__approx_distinct": 74759,
+        "descriptive_difference_sum__min": "-778766071716693.000000",
+        "descriptive_difference_sum__max": "2459344615967.023400",
+        "descriptive_difference_sum__sum": "-770296967642158.459000",
+        "descriptive_difference_sum__currency_rounding_max": "0.000000",
+        "descriptive_difference_sum__currency_rounding_total_bound": "0.000000",
+        "descriptive_difference_sum__negatives": 1798,
+        "verified_sample_count__nulls": 0,
+        "verified_sample_count__approx_distinct": 1,
+        "verified_sample_count__min": 0,
+        "verified_sample_count__max": 0,
+        "verified_baseline_sum__nulls": 0,
+        "verified_baseline_sum__approx_distinct": 1,
+        "verified_baseline_sum__min": "0.000000",
+        "verified_baseline_sum__max": "0.000000",
+        "verified_baseline_sum__sum": "0.000000",
+        "verified_baseline_sum__currency_rounding_max": "0.000000",
+        "verified_baseline_sum__currency_rounding_total_bound": "0.000000",
+        "verified_baseline_sum__negatives": 0,
+        "verified_award_sum__nulls": 0,
+        "verified_award_sum__approx_distinct": 1,
+        "verified_award_sum__min": "0.000000",
+        "verified_award_sum__max": "0.000000",
+        "verified_award_sum__sum": "0.000000",
+        "verified_award_sum__currency_rounding_max": "0.000000",
+        "verified_award_sum__currency_rounding_total_bound": "0.000000",
+        "verified_award_sum__negatives": 0,
+        "verified_saving_sum__nulls": 0,
+        "verified_saving_sum__approx_distinct": 1,
+        "verified_saving_sum__min": "0.000000",
+        "verified_saving_sum__max": "0.000000",
+        "verified_saving_sum__sum": "0.000000",
+        "verified_saving_sum__currency_rounding_max": "0.000000",
+        "verified_saving_sum__currency_rounding_total_bound": "0.000000",
+        "verified_saving_sum__negatives": 0,
+        "contract_sample_count__nulls": 203693,
+        "contract_sample_count__approx_distinct": 14,
+        "contract_sample_count__min": 0,
+        "contract_sample_count__max": 43,
+        "contract_amount_sum__nulls": 203693,
+        "contract_amount_sum__approx_distinct": 83,
+        "contract_amount_sum__min": "0.000000",
+        "contract_amount_sum__max": "13595794940.000000",
+        "contract_amount_sum__sum": "104065729100.000000",
+        "contract_amount_sum__currency_rounding_max": "0.000000",
+        "contract_amount_sum__currency_rounding_total_bound": "0.000000",
+        "contract_amount_sum__negatives": 0,
+        "contract_saving_sum__nulls": 203693,
+        "contract_saving_sum__approx_distinct": 43,
+        "contract_saving_sum__min": "-2855405233.000000",
+        "contract_saving_sum__max": "2204256400.000000",
+        "contract_saving_sum__sum": "-2269923385.000000",
+        "contract_saving_sum__currency_rounding_max": "0.000000",
+        "contract_saving_sum__currency_rounding_total_bound": "0.000000",
+        "contract_saving_sum__negatives": 7
+      }
+    },
+    "fact_status_daily": {
+      "files": [
+        {
+          "path": "fact_status_daily.parquet",
+          "bytes": 814737,
+          "rows": 20901,
+          "sha256": "b5392d6eec9268b2bc662ff5ada7d4a2a123785fb6778f7494ba5cacad8d82f4",
+          "mtime_utc": "2026-11-11T10:36:16+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "status_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "package_count",
+          "type": "int64",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "status_key",
+        "sector_key"
+      ],
+      "rows": 20901,
+      "distinct_pk": 20901,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 21718,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1467,
+        "report_date__min": "2022-09-16",
+        "report_date__max": "2026-07-16",
+        "status_key__nulls": 0,
+        "status_key__approx_distinct": 4,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "package_count__nulls": 0,
+        "package_count__approx_distinct": 1433,
+        "package_count__min": 1,
+        "package_count__max": 2454
+      }
+    },
+    "fact_supplier_daily": {
+      "files": [
+        {
+          "path": "fact_supplier_daily.parquet",
+          "bytes": 72780016,
+          "rows": 1488397,
+          "sha256": "e9fcf561553f285929a83b2f8c0d21364f1cfc26e0101b2bd0b9790918a3689f",
+          "mtime_utc": "2026-11-11T10:36:14+00:00",
+          "created_by": "DuckDB version v1.5.5 (build d8cdaa33fd)",
+          "metadata": {}
+        }
+      ],
+      "columns": [
+        {
+          "name": "group_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "report_date",
+          "type": "date32[day]",
+          "nullable": true
+        },
+        {
+          "name": "geography_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "sector_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "currency_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "party_key",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "recipient_allocation_state",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "award_scope_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "effective_award_scope_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "eligible_amount_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "award_amount_sum",
+          "type": "decimal128(38, 6)",
+          "nullable": true
+        }
+      ],
+      "primary_key": "group_key",
+      "grain": [
+        "report_date",
+        "geography_key",
+        "sector_key",
+        "currency_key",
+        "party_key",
+        "recipient_allocation_state"
+      ],
+      "rows": 1488397,
+      "distinct_pk": 1488397,
+      "null_pk": 0,
+      "duplicate_grains": 0,
+      "column_profile": {
+        "group_key__nulls": 0,
+        "group_key__approx_distinct": 1693441,
+        "report_date__nulls": 0,
+        "report_date__approx_distinct": 1434,
+        "report_date__min": "2022-09-16",
+        "report_date__max": "2026-03-08",
+        "geography_key__nulls": 0,
+        "geography_key__approx_distinct": 98,
+        "sector_key__nulls": 0,
+        "sector_key__approx_distinct": 6,
+        "currency_key__nulls": 0,
+        "currency_key__approx_distinct": 1,
+        "party_key__nulls": 0,
+        "party_key__approx_distinct": 237080,
+        "recipient_allocation_state__nulls": 0,
+        "recipient_allocation_state__approx_distinct": 4,
+        "award_scope_count__nulls": 0,
+        "award_scope_count__approx_distinct": 574,
+        "award_scope_count__min": 1,
+        "award_scope_count__max": 1296,
+        "effective_award_scope_count__nulls": 0,
+        "effective_award_scope_count__approx_distinct": 311,
+        "effective_award_scope_count__min": 0,
+        "effective_award_scope_count__max": 474,
+        "eligible_amount_count__nulls": 0,
+        "eligible_amount_count__approx_distinct": 311,
+        "eligible_amount_count__min": 0,
+        "eligible_amount_count__max": 474,
+        "award_amount_sum__nulls": 0,
+        "award_amount_sum__approx_distinct": 813487,
+        "award_amount_sum__min": "0.000000",
+        "award_amount_sum__max": "778767000778767.000000",
+        "award_amount_sum__sum": "3208826170076742.536300",
+        "award_amount_sum__currency_rounding_max": "0.000000",
+        "award_amount_sum__currency_rounding_total_bound": "0.000000",
+        "award_amount_sum__negatives": 0
+      },
+      "categories": {
+        "recipient_allocation_state": [
+          {
+            "recipient_allocation_state": "single_recipient",
+            "rows": 1409650
+          },
+          {
+            "recipient_allocation_state": "unallocated_consortium",
+            "rows": 74163
+          },
+          {
+            "recipient_allocation_state": "no_winner",
+            "rows": 4524
+          },
+          {
+            "recipient_allocation_state": "independent_winners",
+            "rows": 60
+          }
+        ]
+      }
+    }
+  },
+  "relationships": [
+    {
+      "fact": "fact_award_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_award_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_award_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_award_daily",
+      "foreign_key": "method_key",
+      "dimension": "dim_procurement_method",
+      "primary_key": "method_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_award_daily",
+      "foreign_key": "currency_key",
+      "dimension": "dim_currency",
+      "primary_key": "currency_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_bidding_competition_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_bidding_competition_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_bidding_competition_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_bidding_competition_daily",
+      "foreign_key": "method_key",
+      "dimension": "dim_procurement_method",
+      "primary_key": "method_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_bidding_competition_daily",
+      "foreign_key": "value_band_key",
+      "dimension": "dim_value_band",
+      "primary_key": "band_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_demand_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_demand_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_demand_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_demand_daily",
+      "foreign_key": "currency_key",
+      "dimension": "dim_currency",
+      "primary_key": "currency_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_demand_daily",
+      "foreign_key": "value_band_key",
+      "dimension": "dim_value_band",
+      "primary_key": "band_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_duration_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 8015,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_duration_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_duration_daily",
+      "foreign_key": "method_key",
+      "dimension": "dim_procurement_method",
+      "primary_key": "method_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_duration_daily",
+      "foreign_key": "metric_key",
+      "dimension": "dim_duration_metric",
+      "primary_key": "metric_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_notice_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_notice_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_notice_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_notice_daily",
+      "foreign_key": "method_key",
+      "dimension": "dim_procurement_method",
+      "primary_key": "method_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "method_key",
+      "dimension": "dim_procurement_method",
+      "primary_key": "method_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "currency_key",
+      "dimension": "dim_currency",
+      "primary_key": "currency_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_savings_daily",
+      "foreign_key": "value_band_key",
+      "dimension": "dim_value_band",
+      "primary_key": "band_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_status_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_status_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_status_daily",
+      "foreign_key": "status_key",
+      "dimension": "dim_progress_status",
+      "primary_key": "status_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_supplier_daily",
+      "foreign_key": "report_date",
+      "dimension": "dim_date",
+      "primary_key": "date_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_supplier_daily",
+      "foreign_key": "geography_key",
+      "dimension": "dim_geography",
+      "primary_key": "geography_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_supplier_daily",
+      "foreign_key": "sector_key",
+      "dimension": "dim_sector",
+      "primary_key": "sector_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_supplier_daily",
+      "foreign_key": "currency_key",
+      "dimension": "dim_currency",
+      "primary_key": "currency_key",
+      "nulls": 0,
+      "orphans": 0
+    },
+    {
+      "fact": "fact_supplier_daily",
+      "foreign_key": "party_key",
+      "dimension": "dim_party",
+      "primary_key": "party_key",
+      "nulls": 0,
+      "orphans": 0
+    }
+  ],
+  "errors": [
+    "Invalid PK/grain: fact_duration_daily",
+    "Broken relationship: {'fact': 'fact_duration_daily', 'foreign_key': 'report_date', 'dimension': 'dim_date', 'primary_key': 'date_key', 'nulls': 8015, 'orphans': 0}"
+  ],
+  "caveats": [
+    "dim_date is not continuous and must not be marked as a standard date table. Preserve source dates; use explicit month/year grouping, not classic time-intelligence functions.",
+    "No export manifest/release ID supplied. File mtime is filesystem evidence, not an authoritative export timestamp. Cross-table atomic snapshot cannot be proven from absent metadata.",
+    "Date coverage may differ by fact event family; do not infer cohort conversion between daily facts."
+  ],
+  "date_dimension": {
+    "first_date": "1202-10-18",
+    "last_date": "2027-04-02",
+    "rows": 2376,
+    "expected_days": 301127,
+    "continuous": false,
+    "dates_before_2000": [
+      {
+        "date_key": "1202-10-18",
+        "year_month": "1202-10"
+      },
+      {
+        "date_key": "1984-04-13",
+        "year_month": "1984-04"
+      },
+      {
+        "date_key": "1989-09-28",
+        "year_month": "1989-09"
+      }
+    ]
+  },
+  "sample_dimensions": {
+    "dim_currency": [
+      {
+        "currency_key": "VND",
+        "currency_code": "VND",
+        "is_supported": true,
+        "is_unknown": false
+      },
+      {
+        "currency_key": "USD",
+        "currency_code": "USD",
+        "is_supported": true,
+        "is_unknown": false
+      },
+      {
+        "currency_key": "EUR",
+        "currency_code": "EUR",
+        "is_supported": true,
+        "is_unknown": false
+      },
+      {
+        "currency_key": "CUR_UNKNOWN",
+        "currency_code": "UNKNOWN",
+        "is_supported": false,
+        "is_unknown": true
+      }
+    ],
+    "dim_duration_metric": [
+      {
+        "metric_key": "close_to_open_hours",
+        "metric_name": "close_to_open_hours",
+        "duration_unit": "hours"
+      },
+      {
+        "metric_key": "open_to_award_days",
+        "metric_name": "open_to_award_days",
+        "duration_unit": "days"
+      },
+      {
+        "metric_key": "planned_to_actual_delay_days",
+        "metric_name": "planned_to_actual_delay_days",
+        "duration_unit": "days"
+      },
+      {
+        "metric_key": "plan_to_notice_days",
+        "metric_name": "plan_to_notice_days",
+        "duration_unit": "days"
+      },
+      {
+        "metric_key": "notice_to_close_hours",
+        "metric_name": "notice_to_close_hours",
+        "duration_unit": "hours"
+      },
+      {
+        "metric_key": "close_to_first_award_days",
+        "metric_name": "close_to_first_award_days",
+        "duration_unit": "days"
+      },
+      {
+        "metric_key": "close_to_complete_award_days",
+        "metric_name": "close_to_complete_award_days",
+        "duration_unit": "days"
+      }
+    ],
+    "dim_progress_status": [
+      {
+        "status_key": "STATUS_75b7b4f9c78be218ebe5f32449194071013db03cfafe6e6901b0016650e40eff",
+        "notice_observation_state": "observed",
+        "award_observation_state": "not_observed"
+      },
+      {
+        "status_key": "STATUS_17de8d982d9375f64e7f918fd3981368801ca27cc0417054ea5ebc92b49c5a3e",
+        "notice_observation_state": "observed",
+        "award_observation_state": "observed"
+      },
+      {
+        "status_key": "STATUS_c37ceda259e9dd8cac856aa1ba5e63e4cb08eba3446fe2b81fbcd2b0216a8e22",
+        "notice_observation_state": "not_observed",
+        "award_observation_state": "observed"
+      },
+      {
+        "status_key": "STATUS_d4e2659bca0fb2c99a7945c7b1d5e3ceddf6ca7faf4a603a205f1bf4a487584e",
+        "notice_observation_state": "not_observed",
+        "award_observation_state": "not_observed"
+      }
+    ],
+    "dim_sector": [
+      {
+        "sector_key": "SEC_KHAC",
+        "taxonomy_version": "v1",
+        "sector_code": "KHAC",
+        "sector_name": "KHAC",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_UNKNOWN",
+        "taxonomy_version": "v1",
+        "sector_code": "UNKNOWN",
+        "sector_name": "Chưa xác định",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_PTV",
+        "taxonomy_version": "v1",
+        "sector_code": "PTV",
+        "sector_name": "PTV",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_TV",
+        "taxonomy_version": "v1",
+        "sector_code": "TV",
+        "sector_name": "TV",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_HON_HOP",
+        "taxonomy_version": "v1",
+        "sector_code": "HON_HOP",
+        "sector_name": "HON_HOP",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_HH",
+        "taxonomy_version": "v1",
+        "sector_code": "HH",
+        "sector_name": "HH",
+        "sector_group": null
+      },
+      {
+        "sector_key": "SEC_XL",
+        "taxonomy_version": "v1",
+        "sector_code": "XL",
+        "sector_name": "XL",
+        "sector_group": null
+      }
+    ],
+    "dim_value_band": [
+      {
+        "band_key": "BAND_RAW",
+        "currency_key": "VND",
+        "policy_version": "v1",
+        "min_amount": "0.000000",
+        "max_amount": null,
+        "band_label": "Chưa phân nhóm quy mô",
+        "band_order": 99
+      }
+    ]
+  },
+  "reconciliations": {
+    "award_savings": [
+      {
+        "award_scopes": 2977346,
+        "savings_scopes": 2977346,
+        "award_amount": "3208826170076742.536300",
+        "descriptive_award": "3208076519700307.331900"
+      }
+    ],
+    "competition": [
+      {
+        "openings": 3859,
+        "single_count": 2228,
+        "multi_count": 1631,
+        "bidders": 9470,
+        "passed": 4877,
+        "failed": 19
+      }
+    ],
+    "allocation": [
+      {
+        "recipient_allocation_state": "unallocated_consortium",
+        "rows": 74163,
+        "scopes": 82355,
+        "amount": "68050964576101.909000"
+      },
+      {
+        "recipient_allocation_state": "no_winner",
+        "rows": 4524,
+        "scopes": 286421,
+        "amount": "0.000000"
+      },
+      {
+        "recipient_allocation_state": "independent_winners",
+        "rows": 60,
+        "scopes": 226,
+        "amount": "640053726586.000000"
+      },
+      {
+        "recipient_allocation_state": "single_recipient",
+        "rows": 1409650,
+        "scopes": 2608344,
+        "amount": "3140135151774054.627300"
+      }
+    ]
+  }
+}

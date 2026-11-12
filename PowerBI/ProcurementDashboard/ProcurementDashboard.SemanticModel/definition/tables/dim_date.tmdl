@@ -1,0 +1,138 @@
+table dim_date
+	lineageTag: 7a10bd5b-4afe-5fc8-aa5e-b1938d3e9358
+
+	column date_key
+		dataType: dateTime
+		isHidden
+		formatString: dd/MM/yyyy
+		lineageTag: b59dc1f4-a1b2-5393-a6ca-adc346b526d0
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column year
+		dataType: int64
+		lineageTag: 7d5af759-f9af-5526-8098-5ca71c867ff5
+		summarizeBy: none
+		sourceColumn: year
+
+	column quarter
+		dataType: int64
+		lineageTag: 64c29c7f-8a68-5b84-b0af-2a0bb522c698
+		summarizeBy: none
+		sourceColumn: quarter
+
+	column month
+		dataType: int64
+		lineageTag: e76bc864-badd-5856-8251-3518ff2c5d36
+		summarizeBy: none
+		sourceColumn: month
+
+	column day
+		dataType: int64
+		lineageTag: 4ec31373-07a4-56a4-b61e-263dfa7fad62
+		summarizeBy: none
+		sourceColumn: day
+
+	column day_of_week
+		dataType: int64
+		lineageTag: 95dcb53a-ad9d-5de9-b96f-37adda67316d
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+	column is_weekend
+		dataType: boolean
+		lineageTag: a634fe78-67e7-5dc1-bb2e-b964df6868a8
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+	column year_quarter
+		dataType: string
+		lineageTag: 12def667-5e17-5c39-adfa-ba4af0ff1150
+		summarizeBy: none
+		sourceColumn: year_quarter
+		sortByColumn: year_quarter_order
+
+	column year_month
+		dataType: string
+		lineageTag: 17a1415a-4b2f-59c9-a43f-31b022e308d8
+		summarizeBy: none
+		sourceColumn: year_month
+		sortByColumn: year_month_order
+
+	column iso_year
+		dataType: int64
+		lineageTag: aa9dffec-4c4e-5d0f-862c-d963348b6e90
+		summarizeBy: none
+		sourceColumn: iso_year
+
+	column iso_week
+		dataType: int64
+		lineageTag: 2aa7587e-6319-59d4-b105-e2df8c65ce1c
+		summarizeBy: none
+		sourceColumn: iso_week
+
+	column week_start_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 58b8fa11-a10d-5155-81d5-18fbb7dec563
+		summarizeBy: none
+		sourceColumn: week_start_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column year_month_order
+		dataType: int64
+		isHidden
+		lineageTag: 0a8a3d38-f3ba-591c-92c4-e4d082f9cfe4
+		summarizeBy: none
+		sourceColumn: year_month_order
+
+	column year_quarter_order
+		dataType: int64
+		isHidden
+		lineageTag: 333c21ff-422e-549f-86a0-bdcddf285287
+		summarizeBy: none
+		sourceColumn: year_quarter_order
+
+	column month_start
+		dataType: dateTime
+		formatString: MM/yyyy
+		lineageTag: a1387791-5463-5a1b-87a9-43457d03af28
+		summarizeBy: none
+		sourceColumn: month_start
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	hierarchy Lịch
+		lineageTag: 6624e7b6-81f6-5c79-a8ae-fb9fbb2c1254
+
+		level Năm
+			lineageTag: 30e898d4-231b-4bc0-8c2d-e0f29aae5e90
+			column: year
+
+		level Quý
+			lineageTag: 9c08317f-36f4-480e-8f50-5a207dd6d355
+			column: year_quarter
+
+		level Tháng
+			lineageTag: 71c209aa-7609-4ee5-882e-219b04dc340a
+			column: year_month
+
+		level Ngày
+			lineageTag: 52acad8f-4e58-4e24-b77e-8f5fb1d0c6a4
+			column: date_key
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_date", {"date_key", "year", "quarter", "month", "day", "day_of_week", "is_weekend", "year_quarter", "year_month", "iso_year", "iso_week", "week_start_date"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"date_key", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"day", Int64.Type}, {"day_of_week", Int64.Type}, {"is_weekend", type logical}, {"year_quarter", type text}, {"year_month", type text}, {"iso_year", Int64.Type}, {"iso_week", Int64.Type}, {"week_start_date", type date}}, "en-US"),
+				    MonthOrder = Table.AddColumn(Typed, "year_month_order", each [year]*100+[month], Int64.Type),
+				    QuarterOrder = Table.AddColumn(MonthOrder, "year_quarter_order", each [year]*10+[quarter], Int64.Type),
+				    MonthStart = Table.AddColumn(QuarterOrder, "month_start", each Date.StartOfMonth([date_key]), type date)
+				in
+				    MonthStart
+

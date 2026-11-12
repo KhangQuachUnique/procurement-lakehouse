@@ -1,0 +1,15 @@
+{
+  "status": "source_errors_preserved_with_explicit_analytic_boundary",
+  "undated_duration": {
+    "undated_rows": 8015,
+    "distinct_groups": 835,
+    "valid_samples": 0,
+    "duration_sum": "0.000000"
+  },
+  "dated_duration": {
+    "dated_rows": 57406,
+    "distinct_groups": 57406
+  },
+  "decision": "Import all rows unchanged. Keep group_key hidden; never use it as relationship key. Duration measures explicitly require a non-null report_date and one metric. Undated excluded counts are ambiguous because groups repeat; do not present them as unique sample counts.",
+  "source_repair_required": "Re-export duration with an unambiguous grain for missing-date observations; upstream snapshot provenance must be supplied to prove a common release."
+}

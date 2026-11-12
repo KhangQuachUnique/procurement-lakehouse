@@ -1,0 +1,12 @@
+﻿{
+    "fixture":  {
+                    "root":  "D:\\Project\\procurement-lakehouse\\PowerBI\\ProcurementDashboard\\validation\\multipart-fixture-b0d44806",
+                    "rows":  2376,
+                    "parts":  2
+                },
+    "restored":  true,
+    "distinct_dates":  2376,
+    "source_function":  "ReadParquetTable",
+    "rows":  2376,
+    "status":  "passed"
+}

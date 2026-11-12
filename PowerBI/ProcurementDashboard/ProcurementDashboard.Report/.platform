@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "ProcurementDashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a35ff4f7-69dc-4d07-b31e-212edf8502fd"
+  }
+}

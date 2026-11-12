@@ -1,0 +1,376 @@
+{
+  "status": "passed",
+  "queries_executed": 113,
+  "independently_compared": 46,
+  "engine_failures": [],
+  "comparisons": [
+    {
+      "name": "all/planned",
+      "status": "passed",
+      "expected": "6408346291734602.473400",
+      "actual": 6408346291734602,
+      "difference": "0.473400",
+      "tolerance": "5"
+    },
+    {
+      "name": "all/award",
+      "status": "passed",
+      "expected": "3208826170076742.536300",
+      "actual": 3208826170076745,
+      "difference": "2.463700",
+      "tolerance": "5"
+    },
+    {
+      "name": "all/saving",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "5"
+    },
+    {
+      "name": "all/baseline",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "5"
+    },
+    {
+      "name": "all/saving_rate",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "all/bidders_avg",
+      "status": "passed",
+      "expected": "2.454003627882871",
+      "actual": 2.454003627882871,
+      "difference": "0E-15",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "all/single_rate",
+      "status": "passed",
+      "expected": "0.5773516455040166",
+      "actual": 0.5773516455040166,
+      "difference": "0E-16",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "all/technical_rate",
+      "status": "passed",
+      "expected": "0.9961192810457516",
+      "actual": 0.9961192810457516,
+      "difference": "0E-16",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "all/supplier",
+      "status": "passed",
+      "expected": "3140135151774054.627300",
+      "actual": 3140135151774055,
+      "difference": "0.372700",
+      "tolerance": "5"
+    },
+    {
+      "name": "jan2025_hh/planned",
+      "status": "passed",
+      "expected": "31775015954008.000000",
+      "actual": 31775015954008,
+      "difference": "0.000000",
+      "tolerance": "5"
+    },
+    {
+      "name": "jan2025_hh/award",
+      "status": "passed",
+      "expected": "1299208444679.000000",
+      "actual": 1299208444679,
+      "difference": "0.000000",
+      "tolerance": "5"
+    },
+    {
+      "name": "jan2025_hh/saving",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "5"
+    },
+    {
+      "name": "jan2025_hh/baseline",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "5"
+    },
+    {
+      "name": "jan2025_hh/saving_rate",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "jan2025_hh/bidders_avg",
+      "status": "passed",
+      "expected": "2.9722222222222223",
+      "actual": 2.9722222222222223,
+      "difference": "0E-16",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "jan2025_hh/single_rate",
+      "status": "passed",
+      "expected": "0.47863247863247865",
+      "actual": 0.47863247863247865,
+      "difference": "0E-17",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "jan2025_hh/technical_rate",
+      "status": "passed",
+      "expected": "0.994392523364486",
+      "actual": 0.994392523364486,
+      "difference": "0E-15",
+      "tolerance": "0.0000000001"
+    },
+    {
+      "name": "jan2025_hh/supplier",
+      "status": "passed",
+      "expected": "1298705667129.000000",
+      "actual": 1298705667129,
+      "difference": "0.000000",
+      "tolerance": "5"
+    },
+    {
+      "name": "all/plan_to_notice_days",
+      "status": "passed",
+      "expected": "5.147189468469106",
+      "actual": 5.147189468469106,
+      "difference": "0E-15",
+      "tolerance": "0.000000001"
+    },
+    {
+      "name": "jan2025_hh/plan_to_notice_days",
+      "status": "passed",
+      "expected": "5.92204042348412",
+      "actual": 5.92204042348412,
+      "difference": "0E-14",
+      "tolerance": "0.000000001"
+    },
+    {
+      "name": "all/notice_to_close_hours",
+      "status": "passed",
+      "expected": "223.02683102558433",
+      "actual": 223.02683102558433,
+      "difference": "0E-14",
+      "tolerance": "0.000000001"
+    },
+    {
+      "name": "jan2025_hh/notice_to_close_hours",
+      "status": "passed",
+      "expected": "178.40404624277457",
+      "actual": 178.40404624277457,
+      "difference": "0E-14",
+      "tolerance": "0.000000001"
+    },
+    {
+      "name": "duration_no_metric",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "duration_zero_samples",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "duration_multi_metric",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "competition_empty",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "vnd_with_usd_filter",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "vnd_with_unknown_filter",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "zero_denominator",
+      "status": "passed",
+      "expected": null,
+      "actual": null,
+      "difference": null,
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_currency",
+      "status": "passed",
+      "expected": "4",
+      "actual": 4,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_date",
+      "status": "passed",
+      "expected": "2376",
+      "actual": 2376,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_duration_metric",
+      "status": "passed",
+      "expected": "7",
+      "actual": 7,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_geography",
+      "status": "passed",
+      "expected": "165",
+      "actual": 165,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_party",
+      "status": "passed",
+      "expected": "2077733",
+      "actual": 2077733,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_procurement_method",
+      "status": "passed",
+      "expected": "420",
+      "actual": 420,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_progress_status",
+      "status": "passed",
+      "expected": "4",
+      "actual": 4,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_sector",
+      "status": "passed",
+      "expected": "7",
+      "actual": 7,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/dim_value_band",
+      "status": "passed",
+      "expected": "1",
+      "actual": 1,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_award_daily",
+      "status": "passed",
+      "expected": "207680",
+      "actual": 207680,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_bidding_competition_daily",
+      "status": "passed",
+      "expected": "120",
+      "actual": 120,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_demand_daily",
+      "status": "passed",
+      "expected": "248558",
+      "actual": 248558,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_duration_daily",
+      "status": "passed",
+      "expected": "65421",
+      "actual": 65421,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_notice_daily",
+      "status": "passed",
+      "expected": "35022",
+      "actual": 35022,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_savings_daily",
+      "status": "passed",
+      "expected": "207680",
+      "actual": 207680,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_status_daily",
+      "status": "passed",
+      "expected": "20901",
+      "actual": 20901,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "rowcount/fact_supplier_daily",
+      "status": "passed",
+      "expected": "1488397",
+      "actual": 1488397,
+      "difference": "0",
+      "tolerance": "0"
+    }
+  ]
+}

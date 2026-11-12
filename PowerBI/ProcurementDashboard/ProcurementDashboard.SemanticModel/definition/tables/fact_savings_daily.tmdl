@@ -1,0 +1,147 @@
+table fact_savings_daily
+	lineageTag: e015a87f-e6ae-5787-b304-7ae50e087e61
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: 494c1fd7-35bd-547c-a893-3f2e5faa1f1c
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 56fe6876-3a1a-5ba9-b7c5-ccafde0d93a7
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: 1ae5e179-627d-5b5b-bb4e-42d44a9a7dfc
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: 1900d034-5ed2-5d8f-8af4-99aa65768808
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: 43718674-1a3c-5060-ae27-b5cbca66476c
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column value_band_key
+		dataType: string
+		isHidden
+		lineageTag: 1548194a-fd6e-5f6e-bdc9-6ee71357c1cd
+		summarizeBy: none
+		sourceColumn: value_band_key
+
+	column currency_key
+		dataType: string
+		isHidden
+		lineageTag: 22cc7dbf-cda0-5824-841f-c6c77aa6092c
+		summarizeBy: none
+		sourceColumn: currency_key
+
+	column scope_count
+		dataType: int64
+		isHidden
+		lineageTag: 8f00b0f0-7488-591f-9070-35dd837da59d
+		summarizeBy: none
+		sourceColumn: scope_count
+
+	column descriptive_sample_count
+		dataType: int64
+		isHidden
+		lineageTag: b4ec3773-17fc-5ac9-8cbd-aaa7d871e4e8
+		summarizeBy: none
+		sourceColumn: descriptive_sample_count
+
+	column descriptive_baseline_sum
+		dataType: double
+		isHidden
+		lineageTag: 47afd54e-b9fa-506e-b320-f64d5ee20ba5
+		summarizeBy: none
+		sourceColumn: descriptive_baseline_sum
+
+	column descriptive_award_sum
+		dataType: double
+		isHidden
+		lineageTag: 8b7daeeb-6032-51db-8731-0fc80a8bf425
+		summarizeBy: none
+		sourceColumn: descriptive_award_sum
+
+	column descriptive_difference_sum
+		dataType: double
+		isHidden
+		lineageTag: 39b5768c-7411-5901-ac94-e83412e3e947
+		summarizeBy: none
+		sourceColumn: descriptive_difference_sum
+
+	column verified_sample_count
+		dataType: int64
+		isHidden
+		lineageTag: 84a7b65d-4ebe-5004-99f9-9444da6776a5
+		summarizeBy: none
+		sourceColumn: verified_sample_count
+
+	column verified_baseline_sum
+		dataType: double
+		isHidden
+		lineageTag: 7aafac80-b34b-5526-b302-4fc9afb44375
+		summarizeBy: none
+		sourceColumn: verified_baseline_sum
+
+	column verified_award_sum
+		dataType: double
+		isHidden
+		lineageTag: f2644854-5ebd-5f84-ad3d-5a00bac40145
+		summarizeBy: none
+		sourceColumn: verified_award_sum
+
+	column verified_saving_sum
+		dataType: double
+		isHidden
+		lineageTag: 3ebad401-701f-5ee2-9a4b-a3c5286facee
+		summarizeBy: none
+		sourceColumn: verified_saving_sum
+
+	column contract_sample_count
+		dataType: int64
+		isHidden
+		lineageTag: 037c30f1-4cf4-57e7-8431-30ca20a39d3a
+		summarizeBy: none
+		sourceColumn: contract_sample_count
+
+	column contract_amount_sum
+		dataType: double
+		isHidden
+		lineageTag: 39f4a3c4-51ea-5625-a997-96c95de7ef54
+		summarizeBy: none
+		sourceColumn: contract_amount_sum
+
+	column contract_saving_sum
+		dataType: double
+		isHidden
+		lineageTag: b30c8ccf-e54d-51c9-85b9-f09281218c75
+		summarizeBy: none
+		sourceColumn: contract_saving_sum
+
+	partition fact_savings_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_savings_daily", {"group_key", "report_date", "geography_key", "sector_key", "method_key", "value_band_key", "currency_key", "scope_count", "descriptive_sample_count", "descriptive_baseline_sum", "descriptive_award_sum", "descriptive_difference_sum", "verified_sample_count", "verified_baseline_sum", "verified_award_sum", "verified_saving_sum", "contract_sample_count", "contract_amount_sum", "contract_saving_sum"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"method_key", type text}, {"value_band_key", type text}, {"currency_key", type text}, {"scope_count", Int64.Type}, {"descriptive_sample_count", Int64.Type}, {"descriptive_baseline_sum", type number}, {"descriptive_award_sum", type number}, {"descriptive_difference_sum", type number}, {"verified_sample_count", Int64.Type}, {"verified_baseline_sum", type number}, {"verified_award_sum", type number}, {"verified_saving_sum", type number}, {"contract_sample_count", Int64.Type}, {"contract_amount_sum", type number}, {"contract_saving_sum", type number}}, "en-US")
+				in
+				    Typed
+

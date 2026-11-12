@@ -1,0 +1,109 @@
+{
+  "checked_at_utc": "2026-11-12T10:22:12.995639+00:00",
+  "status": "passed",
+  "files": [
+    {
+      "table": "dim_currency",
+      "path": "dim_currency.parquet",
+      "sha256": "a3702fb1edf8042c412e9b54bf3f076dadbecb7f8f1394391bf3b710574b2b6a",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_date",
+      "path": "dim_date.parquet",
+      "sha256": "bf35fd95af3732860464716f6e55cf3aab6b569a73aeaa4a721bdb09ce9da65c",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_duration_metric",
+      "path": "dim_duration_metric.parquet",
+      "sha256": "af4897fb7958e15f47af5fc8fd7b62ff8e195467e21d22f98a08d1029fc654f7",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_geography",
+      "path": "dim_geography.parquet",
+      "sha256": "f002d600872f3e4a08aee957c92fe18db19306386ead42378843ff52ac70fc61",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_party",
+      "path": "dim_party.parquet",
+      "sha256": "8930b930b6ea2b9758d1d2077d0907330bfdf0e6fd47697c71b2e6172a692fd7",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_procurement_method",
+      "path": "dim_procurement_method.parquet",
+      "sha256": "7ec300e12ab349f6b11ed5bc1645a34ceb8b4ca66b51f607001f56732d58f905",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_progress_status",
+      "path": "dim_progress_status.parquet",
+      "sha256": "58abb2c1a392e2b766c5e91e302aa99c5488a844caa6f817143e7745ffa2cca1",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_sector",
+      "path": "dim_sector.parquet",
+      "sha256": "a5b8589519f771b28a7670e02cbfa5ed5f1ff089366abac7127ef124804d7d90",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "dim_value_band",
+      "path": "dim_value_band.parquet",
+      "sha256": "8e77697992846a11a618ef046cd10eefe5c8ef271c84820bcad8d474bc7c6681",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_award_daily",
+      "path": "fact_award_daily.parquet",
+      "sha256": "90b0e63e782a57a7918a70de3072e7ab8073e9fb91a2f8a67e54d5ba0e12d65c",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_bidding_competition_daily",
+      "path": "fact_bidding_competition_daily.parquet",
+      "sha256": "539636e25e16a9d939cea21ead0c1ca113b445b2ea456d1a49d96d5b3ff1bf88",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_demand_daily",
+      "path": "fact_demand_daily.parquet",
+      "sha256": "6b9a603cb21bc5742250a90e8614686cb3818943eb2a23365ce700754b29d466",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_duration_daily",
+      "path": "fact_duration_daily.parquet",
+      "sha256": "75dcd0150c8f0642e942bc553b79b04a07a1dec0ac219979dce40d40bab533e4",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_notice_daily",
+      "path": "fact_notice_daily.parquet",
+      "sha256": "900ffd57ec00e7c0c6dd76a29392e989168714df615b5478ff289667cabef93d",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_savings_daily",
+      "path": "fact_savings_daily.parquet",
+      "sha256": "304c587e84dbf3751150de46ec856d00b98dfe27397b6d36b8ea41805dc7de5b",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_status_daily",
+      "path": "fact_status_daily.parquet",
+      "sha256": "b5392d6eec9268b2bc662ff5ada7d4a2a123785fb6778f7494ba5cacad8d82f4",
+      "unchanged_since_profile": true
+    },
+    {
+      "table": "fact_supplier_daily",
+      "path": "fact_supplier_daily.parquet",
+      "sha256": "e9fcf561553f285929a83b2f8c0d21364f1cfc26e0101b2bd0b9790918a3689f",
+      "unchanged_since_profile": true
+    }
+  ],
+  "scope": "Hashes compared with the initial source profile; no source repair was performed."
+}

@@ -1,0 +1,36 @@
+{
+  "status": "passed",
+  "pages": [
+    {
+      "page": "overview",
+      "status": "captured",
+      "active_navigation_index": 0,
+      "file": "validation\\screenshots\\final-overview.png"
+    },
+    {
+      "page": "savings",
+      "status": "captured",
+      "active_navigation_index": 1,
+      "file": "validation\\screenshots\\final-savings.png"
+    },
+    {
+      "page": "competition",
+      "status": "captured",
+      "active_navigation_index": 2,
+      "file": "validation\\screenshots\\final-competition.png"
+    },
+    {
+      "page": "duration",
+      "status": "captured",
+      "active_navigation_index": 3,
+      "file": "validation\\screenshots\\final-duration.png"
+    },
+    {
+      "page": "overview",
+      "status": "captured",
+      "active_navigation_index": 0,
+      "file": "validation\\screenshots\\final-overview.png"
+    }
+  ],
+  "method": "Native Page Navigator Ctrl+click; window-specific foreground check; reviewer must inspect screenshots."
+}

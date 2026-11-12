@@ -1,0 +1,1202 @@
+[
+  {
+    "name": "ms-pbi.pbi.microsoft.com/minerva/reportView.html",
+    "type": "Pane",
+    "automation_id": "",
+    "rect": "(L0, T0, R2560, B1439)"
+  },
+  {
+    "name": "ms-pbi.pbi.microsoft.com/minerva/reportView.html - Web content",
+    "type": "Pane",
+    "automation_id": "",
+    "rect": "(L0, T0, R2560, B1440)"
+  },
+  {
+    "name": "Untitled - Power BI Desktop",
+    "type": "ToolBar",
+    "automation_id": "",
+    "rect": "(L0, T0, R2560, B43)"
+  },
+  {
+    "name": "Save",
+    "type": "Button",
+    "automation_id": "save",
+    "rect": "(L12, T0, R50, B38)"
+  },
+  {
+    "name": "Undo",
+    "type": "Button",
+    "automation_id": "undo",
+    "rect": "(L49, T0, R87, B38)"
+  },
+  {
+    "name": "Redo",
+    "type": "Button",
+    "automation_id": "redo",
+    "rect": "(L86, T0, R124, B38)"
+  },
+  {
+    "name": "Untitled - Power BI Desktop",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L126, T8, R310, B35)"
+  },
+  {
+    "name": "￼",
+    "type": "Edit",
+    "automation_id": "TellMe-SearchBox",
+    "rect": "(L1099, T8, R1538, B35)"
+  },
+  {
+    "name": "0 Suggestions available,",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1542, T29, R1728, B53)"
+  },
+  {
+    "name": "Ha Sinh Cung (23133009@st.hcmute.edu.vn) is signed in. Open for account details",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L2236, T0, R2395, B43)"
+  },
+  {
+    "name": "File",
+    "type": "TabItem",
+    "automation_id": "Ribbon-file",
+    "rect": "(L1, T42, R82, B82)"
+  },
+  {
+    "name": "Ribbon tabs",
+    "type": "Group",
+    "automation_id": "tablist",
+    "rect": "(L82, T42, R626, B82)"
+  },
+  {
+    "name": "Home",
+    "type": "TabItem",
+    "automation_id": "home",
+    "rect": "(L82, T42, R168, B82)"
+  },
+  {
+    "name": "Insert",
+    "type": "TabItem",
+    "automation_id": "insert",
+    "rect": "(L169, T42, R250, B82)"
+  },
+  {
+    "name": "Modeling",
+    "type": "TabItem",
+    "automation_id": "modeling",
+    "rect": "(L252, T42, R364, B82)"
+  },
+  {
+    "name": "View",
+    "type": "TabItem",
+    "automation_id": "view",
+    "rect": "(L365, T42, R440, B82)"
+  },
+  {
+    "name": "Optimize",
+    "type": "TabItem",
+    "automation_id": "optimize",
+    "rect": "(L441, T42, R549, B82)"
+  },
+  {
+    "name": "Help",
+    "type": "TabItem",
+    "automation_id": "help",
+    "rect": "(L551, T42, R625, B82)"
+  },
+  {
+    "name": "Share",
+    "type": "Button",
+    "automation_id": "odspShareFlyout",
+    "rect": "(L2448, T47, R2553, B78)"
+  },
+  {
+    "name": "Share",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2486, T52, R2524, B72)"
+  },
+  {
+    "name": "Share this document, and see who it's shared with.",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2499, T61, R2571, B242)"
+  },
+  {
+    "name": "Clipboard",
+    "type": "Group",
+    "automation_id": "clipboardGroupMlr-group",
+    "rect": "(L10, T87, R190, B200)"
+  },
+  {
+    "name": "Paste",
+    "type": "Button",
+    "automation_id": "paste",
+    "rect": "(L10, T90, R60, B181)"
+  },
+  {
+    "name": "Cut",
+    "type": "Button",
+    "automation_id": "cut",
+    "rect": "(L60, T87, R115, B118)"
+  },
+  {
+    "name": "Copy",
+    "type": "Button",
+    "automation_id": "copy",
+    "rect": "(L60, T117, R127, B148)"
+  },
+  {
+    "name": "Format painter",
+    "type": "Button",
+    "automation_id": "formatPainter",
+    "rect": "(L60, T147, R190, B178)"
+  },
+  {
+    "name": "Format painter",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L89, T152, R188, B172)"
+  },
+  {
+    "name": "Like the formatting of something in your document? Use Format painter to apply that look to other content. 1. Select content with formatting you like. 2. On the Home tab, choose Format painter. 3. Select something else to apply the formatting.",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L61, T161, R1942, B185)"
+  },
+  {
+    "name": "Clipboard",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L72, T183, R127, B199)"
+  },
+  {
+    "name": "Data",
+    "type": "Group",
+    "automation_id": "dataGroup-group",
+    "rect": "(L210, T87, R639, B200)"
+  },
+  {
+    "name": "Get data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L210, T90, R261, B181)"
+  },
+  {
+    "name": "Get data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L210, T90, R261, B136)"
+  },
+  {
+    "name": "Get data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L210, T135, R261, B181)"
+  },
+  {
+    "name": "Get",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L224, T135, R248, B156)"
+  },
+  {
+    "name": "data",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L213, T155, R243, B176)"
+  },
+  {
+    "name": "Excel workbook",
+    "type": "Button",
+    "automation_id": "getDataExcel",
+    "rect": "(L260, T90, R332, B181)"
+  },
+  {
+    "name": "OneLake ​​catalog",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L331, T90, R400, B181)"
+  },
+  {
+    "name": "OneLake ​​catalog",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L331, T90, R400, B136)"
+  },
+  {
+    "name": "OneLake catalog",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L331, T135, R400, B181)"
+  },
+  {
+    "name": "OneLake",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L336, T135, R395, B156)"
+  },
+  {
+    "name": "catalog",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L333, T155, R383, B176)"
+  },
+  {
+    "name": "SQL Server",
+    "type": "Button",
+    "automation_id": "getDataSQL",
+    "rect": "(L399, T90, R450, B181)"
+  },
+  {
+    "name": "Enter data",
+    "type": "Button",
+    "automation_id": "enterData",
+    "rect": "(L449, T90, R500, B181)"
+  },
+  {
+    "name": "Dataverse",
+    "type": "Button",
+    "automation_id": "getDataDataverse",
+    "rect": "(L499, T90, R570, B181)"
+  },
+  {
+    "name": "Recent sources",
+    "type": "Button",
+    "automation_id": "getDataRecent",
+    "rect": "(L569, T90, R639, B181)"
+  },
+  {
+    "name": "Recent",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L581, T135, R627, B156)"
+  },
+  {
+    "name": "sources",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L571, T155, R622, B176)"
+  },
+  {
+    "name": "Manage and connect to recent sources.",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L603, T91, R908, B115)"
+  },
+  {
+    "name": "Data",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L411, T183, R438, B199)"
+  },
+  {
+    "name": "Queries",
+    "type": "Group",
+    "automation_id": "queriesGroup-group",
+    "rect": "(L659, T87, R784, B200)"
+  },
+  {
+    "name": "Transform data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L659, T90, R731, B181)"
+  },
+  {
+    "name": "Transform data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L659, T90, R731, B136)"
+  },
+  {
+    "name": "Transform data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L659, T135, R731, B181)"
+  },
+  {
+    "name": "Transform",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L662, T135, R728, B156)"
+  },
+  {
+    "name": "data",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L672, T155, R703, B176)"
+  },
+  {
+    "name": "Refresh",
+    "type": "Button",
+    "automation_id": "refreshQueries",
+    "rect": "(L730, T90, R784, B181)"
+  },
+  {
+    "name": "Queries",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L700, T183, R743, B199)"
+  },
+  {
+    "name": "Insert",
+    "type": "Group",
+    "automation_id": "insertGroup-group",
+    "rect": "(L804, T87, R968, B200)"
+  },
+  {
+    "name": "New visual",
+    "type": "Button",
+    "automation_id": "insertVisual",
+    "rect": "(L804, T90, R855, B181)"
+  },
+  {
+    "name": "Text box",
+    "type": "Button",
+    "automation_id": "insertTextbox",
+    "rect": "(L854, T90, R905, B181)"
+  },
+  {
+    "name": "More visuals",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L904, T90, R968, B181)"
+  },
+  {
+    "name": "More visuals",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L904, T90, R968, B136)"
+  },
+  {
+    "name": "More visuals",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L904, T135, R968, B181)"
+  },
+  {
+    "name": "More",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L918, T135, R954, B156)"
+  },
+  {
+    "name": "visuals",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L906, T155, R951, B176)"
+  },
+  {
+    "name": "Insert",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L870, T183, R902, B199)"
+  },
+  {
+    "name": "Calculations",
+    "type": "Group",
+    "automation_id": "homeCalculationsGroup-group",
+    "rect": "(L988, T87, R1201, B200)"
+  },
+  {
+    "name": "New visual calculation",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L988, T90, R1079, B181)"
+  },
+  {
+    "name": "New visual calculation",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L988, T90, R1079, B136)"
+  },
+  {
+    "name": "New visual calculation",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L988, T135, R1079, B181)"
+  },
+  {
+    "name": "New visual",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L998, T135, R1070, B156)"
+  },
+  {
+    "name": "calculation",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L990, T155, R1062, B176)"
+  },
+  {
+    "name": "New measure",
+    "type": "Button",
+    "automation_id": "newMeasure",
+    "rect": "(L1078, T90, R1140, B181)"
+  },
+  {
+    "name": "Quick measure",
+    "type": "Button",
+    "automation_id": "newQuickMeasure",
+    "rect": "(L1139, T90, R1201, B181)"
+  },
+  {
+    "name": "Calculations",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1061, T183, R1128, B199)"
+  },
+  {
+    "name": "Sensitivity",
+    "type": "Group",
+    "automation_id": "informationProtectionGroup-group",
+    "rect": "(L1221, T87, R1293, B200)"
+  },
+  {
+    "name": "Sensitivity",
+    "type": "Button",
+    "automation_id": "classifyFlyout",
+    "rect": "(L1221, T90, R1293, B181)"
+  },
+  {
+    "name": "Sensitivity",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1223, T135, R1290, B156)"
+  },
+  {
+    "name": "Apply a label to classify the sensitivity of your report and protect its content.",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1256, T91, R1844, B115)"
+  },
+  {
+    "name": "Sensitivity",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1229, T183, R1285, B199)"
+  },
+  {
+    "name": "Share",
+    "type": "Group",
+    "automation_id": "shareGroup-group",
+    "rect": "(L1313, T87, R1366, B200)"
+  },
+  {
+    "name": "Publish",
+    "type": "Button",
+    "automation_id": "publish",
+    "rect": "(L1313, T90, R1366, B181)"
+  },
+  {
+    "name": "Share",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1323, T183, R1355, B199)"
+  },
+  {
+    "name": "Copilot",
+    "type": "Group",
+    "automation_id": "copilotGroup-group",
+    "rect": "(L1386, T87, R1530, B200)"
+  },
+  {
+    "name": "Prep data for AI",
+    "type": "Button",
+    "automation_id": "copilotToolingDialog",
+    "rect": "(L1386, T90, R1478, B181)"
+  },
+  {
+    "name": "Copilot",
+    "type": "Button",
+    "automation_id": "copilotPane",
+    "rect": "(L1477, T90, R1530, B181)"
+  },
+  {
+    "name": "Copilot",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1438, T183, R1479, B199)"
+  },
+  {
+    "name": "Switch ribbons",
+    "type": "Button",
+    "automation_id": "RibbonModeToggle",
+    "rect": "(L2535, T180, R2560, B200)"
+  },
+  {
+    "name": "Report view",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L0, T200, R50, B250)"
+  },
+  {
+    "name": "Table view",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L0, T250, R50, B300)"
+  },
+  {
+    "name": "Model view",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L0, T300, R50, B350)"
+  },
+  {
+    "name": "DAX query view",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L0, T350, R50, B400)"
+  },
+  {
+    "name": "TMDL View",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L0, T400, R50, B450)"
+  },
+  {
+    "name": "Show keyboard shortcuts",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L49, T198, R51, B222)"
+  },
+  {
+    "name": "Show keyboard shortcuts",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L49, T197, R248, B223)"
+  },
+  {
+    "name": "Show screen reader tips",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L49, T231, R51, B257)"
+  },
+  {
+    "name": "Show screen reader tips (opens in new tab)",
+    "type": "Hyperlink",
+    "automation_id": "",
+    "rect": "(L49, T230, R237, B256)"
+  },
+  {
+    "name": "Skip to main content",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L49, T267, R51, B290)"
+  },
+  {
+    "name": "Skip to main content",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L49, T265, R213, B292)"
+  },
+  {
+    "name": "Power BI Report",
+    "type": "Group",
+    "automation_id": "",
+    "rect": "(L122, T200, R2178, B1356)"
+  },
+  {
+    "name": "Power BI Report",
+    "type": "Text",
+    "automation_id": "defaultTitle",
+    "rect": "(L122, T200, R227, B341)"
+  },
+  {
+    "name": "Add data to your report",
+    "type": "Text",
+    "automation_id": "addDataToReport",
+    "rect": "(L934, T556, R1366, B621)"
+  },
+  {
+    "name": "Once loaded, your data will appear in the Data pane.",
+    "type": "Text",
+    "automation_id": "dataLoadInfo",
+    "rect": "(L770, T626, R1530, B683)"
+  },
+  {
+    "name": "Add data to your report Once loaded, your data will appear in the Data pane.",
+    "type": "List",
+    "automation_id": "",
+    "rect": "(L502, T720, R1798, B940)"
+  },
+  {
+    "name": "Import data from Excel",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L502, T720, R801, B940)"
+  },
+  {
+    "name": "Import data from Excel",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L523, T893, R725, B919)"
+  },
+  {
+    "name": "Import data from SQL Server",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L826, T720, R1125, B940)"
+  },
+  {
+    "name": "Import data from SQL Server",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L847, T893, R1100, B919)"
+  },
+  {
+    "name": "Paste data into a blank table",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L1150, T720, R1449, B940)"
+  },
+  {
+    "name": "Paste data into a blank table",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1170, T893, R1419, B919)"
+  },
+  {
+    "name": "Use sample data",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L1473, T720, R1772, B940)"
+  },
+  {
+    "name": "Use sample data",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1494, T893, R1639, B919)"
+  },
+  {
+    "name": "Get data from another source →",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L961, T958, R1339, B994)"
+  },
+  {
+    "name": "",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2265, T251, R2281, B267)"
+  },
+  {
+    "name": "Filters",
+    "type": "Text",
+    "automation_id": "outspace-pane-title",
+    "rect": "(L2259, T276, R2286, B331)"
+  },
+  {
+    "name": "Collapse or expand the filter pane while editing. This also determines how report readers see it",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L2260, T213, R2281, B234)"
+  },
+  {
+    "name": "Desktop layout",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L51, T1371, R106, B1405)"
+  },
+  {
+    "name": "Desktop layout",
+    "type": "Image",
+    "automation_id": "",
+    "rect": "(L66, T1371, R91, B1397)"
+  },
+  {
+    "name": "Mobile layout",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L106, T1371, R161, B1405)"
+  },
+  {
+    "name": "Mobile layout",
+    "type": "Image",
+    "automation_id": "",
+    "rect": "(L121, T1371, R146, B1397)"
+  },
+  {
+    "name": "Previous pages",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L161, T1366, R186, B1410)"
+  },
+  {
+    "name": "Next pages",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L186, T1366, R211, B1410)"
+  },
+  {
+    "name": "Page 1",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L211, T1366, R305, B1410)"
+  },
+  {
+    "name": "New page",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L305, T1366, R355, B1410)"
+  },
+  {
+    "name": "Visualizations",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L2301, T210, R2507, B237)"
+  },
+  {
+    "name": "Visualizations",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2301, T210, R2426, B237)"
+  },
+  {
+    "name": "Build visual",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2301, T247, R2379, B267)"
+  },
+  {
+    "name": "Build visual",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L2301, T272, R2342, B312)"
+  },
+  {
+    "name": "Format page",
+    "type": "TabItem",
+    "automation_id": "",
+    "rect": "(L2384, T272, R2424, B312)"
+  },
+  {
+    "name": "All visual types",
+    "type": "List",
+    "automation_id": "",
+    "rect": "(L2299, T338, R2509, B579)"
+  },
+  {
+    "name": "Stacked bar chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T338, R2332, B369)"
+  },
+  {
+    "name": "Stacked column chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T338, R2367, B369)"
+  },
+  {
+    "name": "Clustered bar chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T338, R2402, B369)"
+  },
+  {
+    "name": "Clustered column chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T338, R2437, B369)"
+  },
+  {
+    "name": "100% Stacked bar chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T338, R2472, B369)"
+  },
+  {
+    "name": "100% Stacked column chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T338, R2507, B369)"
+  },
+  {
+    "name": "Line chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T373, R2332, B404)"
+  },
+  {
+    "name": "Area chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T373, R2367, B404)"
+  },
+  {
+    "name": "Stacked area chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T373, R2402, B404)"
+  },
+  {
+    "name": "100% Stacked area chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T373, R2437, B404)"
+  },
+  {
+    "name": "Line and stacked column chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T373, R2472, B404)"
+  },
+  {
+    "name": "Line and clustered column chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T373, R2507, B404)"
+  },
+  {
+    "name": "Ribbon chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T408, R2332, B439)"
+  },
+  {
+    "name": "Waterfall chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T408, R2367, B439)"
+  },
+  {
+    "name": "Funnel",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T408, R2402, B439)"
+  },
+  {
+    "name": "Scatter chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T408, R2437, B439)"
+  },
+  {
+    "name": "Pie chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T408, R2472, B439)"
+  },
+  {
+    "name": "Donut chart",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T408, R2507, B439)"
+  },
+  {
+    "name": "Treemap",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T443, R2332, B474)"
+  },
+  {
+    "name": "Map",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T443, R2367, B474)"
+  },
+  {
+    "name": "Filled map",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T443, R2402, B474)"
+  },
+  {
+    "name": "Azure maps",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T443, R2437, B474)"
+  },
+  {
+    "name": "Gauge",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T443, R2472, B474)"
+  },
+  {
+    "name": "Card",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T443, R2507, B474)"
+  },
+  {
+    "name": "KPI",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T478, R2332, B509)"
+  },
+  {
+    "name": "Slicer",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T478, R2367, B509)"
+  },
+  {
+    "name": "Table",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T478, R2402, B509)"
+  },
+  {
+    "name": "Matrix",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T478, R2437, B509)"
+  },
+  {
+    "name": "R script visual",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T478, R2472, B509)"
+  },
+  {
+    "name": "Python visual",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T478, R2507, B509)"
+  },
+  {
+    "name": "Key influencers",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T513, R2332, B544)"
+  },
+  {
+    "name": "Decomposition tree",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T513, R2367, B544)"
+  },
+  {
+    "name": "Narrative",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T513, R2402, B544)"
+  },
+  {
+    "name": "Paginated report",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T513, R2437, B544)"
+  },
+  {
+    "name": "Button slicer",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T513, R2472, B544)"
+  },
+  {
+    "name": "Input slicer",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2476, T513, R2507, B544)"
+  },
+  {
+    "name": "Image",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T548, R2332, B579)"
+  },
+  {
+    "name": "ArcGIS for Power BI",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T548, R2367, B579)"
+  },
+  {
+    "name": "Power Apps for Power BI",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2371, T548, R2402, B579)"
+  },
+  {
+    "name": "Power Automate for Power BI",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2406, T548, R2437, B579)"
+  },
+  {
+    "name": "Get more visuals",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2441, T548, R2472, B579)"
+  },
+  {
+    "name": "All visual types",
+    "type": "List",
+    "automation_id": "",
+    "rect": "(L2299, T589, R2509, B620)"
+  },
+  {
+    "name": "Goals (Preview)",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2301, T589, R2332, B620)"
+  },
+  {
+    "name": "List Slicer (Preview)",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2336, T589, R2367, B620)"
+  },
+  {
+    "name": "ValuesAdd data fields here",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2291, T630, R2517, B706)"
+  },
+  {
+    "name": "Values",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2306, T637, R2349, B658)"
+  },
+  {
+    "name": "No data fields added. Add data fields here",
+    "type": "ListItem",
+    "automation_id": "",
+    "rect": "(L2300, T668, R2506, B696)"
+  },
+  {
+    "name": "Drill through",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2301, T705, R2517, B738)"
+  },
+  {
+    "name": "Cross-report",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2306, T744, R2390, B764)"
+  },
+  {
+    "name": "Cross-report",
+    "type": "Button",
+    "automation_id": "pbi-toggle-button-2-input",
+    "rect": "(L2447, T743, R2449, B745)"
+  },
+  {
+    "name": "Off",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2467, T747, R2483, B763)"
+  },
+  {
+    "name": "Keep all filters",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2306, T777, R2400, B798)"
+  },
+  {
+    "name": "Keep all filters",
+    "type": "Button",
+    "automation_id": "pbi-toggle-button-1-input",
+    "rect": "(L2447, T777, R2449, B779)"
+  },
+  {
+    "name": "On",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2455, T781, R2470, B797)"
+  },
+  {
+    "name": "Add drill-through fields here",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2307, T817, R2496, B838)"
+  },
+  {
+    "name": "Data",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L2527, T210, R2550, B1400)"
+  },
+  {
+    "name": "Data",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2525, T258, R2553, B301)"
+  },
+  {
+    "name": "Page 1 of 1",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L5, T1415, R80, B1436)"
+  },
+  {
+    "name": "Update available (click to download)",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L2315, T1415, R2555, B1436)"
+  },
+  {
+    "name": "Zoom Out",
+    "type": "Button",
+    "automation_id": "zoomOutButton",
+    "rect": "(L2049, T1413, R2067, B1433)"
+  },
+  {
+    "name": "Zoom In",
+    "type": "Button",
+    "automation_id": "zoomInButton",
+    "rect": "(L2191, T1413, R2216, B1433)"
+  },
+  {
+    "name": "Zoom level. Click to open the Zoom dialog box",
+    "type": "Button",
+    "automation_id": "zoomValueButton",
+    "rect": "(L2220, T1413, R2271, B1436)"
+  },
+  {
+    "name": "Fit to page",
+    "type": "Button",
+    "automation_id": "fitToPageButton",
+    "rect": "(L2277, T1415, R2298, B1436)"
+  },
+  {
+    "name": "Power BI Desktop",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L1221, T11, R1339, B31)"
+  },
+  {
+    "name": "Report Zoomed To 128%",
+    "type": "Text",
+    "automation_id": "",
+    "rect": "(L-12500, T200, R-12281, B227)"
+  },
+  {
+    "name": "System",
+    "type": "MenuBar",
+    "automation_id": "MenuBar",
+    "rect": "(L0, T0, R28, B28)"
+  },
+  {
+    "name": "System",
+    "type": "MenuItem",
+    "automation_id": "",
+    "rect": "(L0, T0, R28, B28)"
+  },
+  {
+    "name": "Minimize",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  },
+  {
+    "name": "Restore",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  },
+  {
+    "name": "Close",
+    "type": "Button",
+    "automation_id": "",
+    "rect": "(L0, T0, R0, B0)"
+  }
+]

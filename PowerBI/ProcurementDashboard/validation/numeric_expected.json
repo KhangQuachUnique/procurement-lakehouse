@@ -1,0 +1,254 @@
+[
+  {
+    "name": "all/planned",
+    "sql": "SELECT sum(planned_amount_sum) AS value FROM fact_demand_daily WHERE currency_key='VND' AND (TRUE)",
+    "value": "6408346291734602.473400",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "all/award",
+    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_award_daily WHERE currency_key='VND' AND (TRUE)",
+    "value": "3208826170076742.536300",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "all/saving",
+    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_saving_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
+    "value": null,
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "all/baseline",
+    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_baseline_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
+    "value": null,
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "all/saving_rate",
+    "sql": "SELECT sum(verified_saving_sum)/nullif(sum(verified_baseline_sum),0) AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
+    "value": null,
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "all/bidders_avg",
+    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
+    "value": "2.454003627882871",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "all/single_rate",
+    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
+    "value": "0.5773516455040166",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "all/technical_rate",
+    "sql": "SELECT sum(tech_passed_count)::DOUBLE/nullif(sum(tech_passed_count)+sum(tech_failed_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
+    "value": "0.9961192810457516",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "all/supplier",
+    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND (TRUE)",
+    "value": "3140135151774054.627300",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "jan2025_hh/planned",
+    "sql": "SELECT sum(planned_amount_sum) AS value FROM fact_demand_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "31775015954008.000000",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "jan2025_hh/award",
+    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_award_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "1299208444679.000000",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "jan2025_hh/saving",
+    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_saving_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": null,
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "jan2025_hh/baseline",
+    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_baseline_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": null,
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "jan2025_hh/saving_rate",
+    "sql": "SELECT sum(verified_saving_sum)/nullif(sum(verified_baseline_sum),0) AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": null,
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "jan2025_hh/bidders_avg",
+    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "2.9722222222222223",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "jan2025_hh/single_rate",
+    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "0.47863247863247865",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "jan2025_hh/technical_rate",
+    "sql": "SELECT sum(tech_passed_count)::DOUBLE/nullif(sum(tech_passed_count)+sum(tech_failed_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "0.994392523364486",
+    "absolute_tolerance": "0.0000000001"
+  },
+  {
+    "name": "jan2025_hh/supplier",
+    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "1298705667129.000000",
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "all/plan_to_notice_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='plan_to_notice_days' AND (TRUE)",
+    "value": "5.147189468469106",
+    "absolute_tolerance": "0.000000001"
+  },
+  {
+    "name": "jan2025_hh/plan_to_notice_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='plan_to_notice_days' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "5.92204042348412",
+    "absolute_tolerance": "0.000000001"
+  },
+  {
+    "name": "all/notice_to_close_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='notice_to_close_hours' AND (TRUE)",
+    "value": "223.02683102558433",
+    "absolute_tolerance": "0.000000001"
+  },
+  {
+    "name": "jan2025_hh/notice_to_close_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='notice_to_close_hours' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "178.40404624277457",
+    "absolute_tolerance": "0.000000001"
+  },
+  {
+    "name": "duration_no_metric",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "duration_zero_samples",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "duration_multi_metric",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "competition_empty",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "vnd_with_usd_filter",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "vnd_with_unknown_filter",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "zero_denominator",
+    "value": null,
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_currency",
+    "value": "4",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_date",
+    "value": "2376",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_duration_metric",
+    "value": "7",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_geography",
+    "value": "165",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_party",
+    "value": "2077733",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_procurement_method",
+    "value": "420",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_progress_status",
+    "value": "4",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_sector",
+    "value": "7",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/dim_value_band",
+    "value": "1",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_award_daily",
+    "value": "207680",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_bidding_competition_daily",
+    "value": "120",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_demand_daily",
+    "value": "248558",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_duration_daily",
+    "value": "65421",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_notice_daily",
+    "value": "35022",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_savings_daily",
+    "value": "207680",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_status_daily",
+    "value": "20901",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "rowcount/fact_supplier_daily",
+    "value": "1488397",
+    "absolute_tolerance": "0"
+  }
+]

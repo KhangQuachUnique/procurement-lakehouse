@@ -1,0 +1,241 @@
+﻿{
+    "port":  61699,
+    "tables":  [
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_currency",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_currency"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_date",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_date"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_duration_metric",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_duration_metric"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_geography",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_geography"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_party",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_party"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_procurement_method",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_procurement_method"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_progress_status",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_progress_status"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_sector",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_sector"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "dim_value_band",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "dim_value_band"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_award_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_award_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_bidding_competition_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_bidding_competition_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_demand_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_demand_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_duration_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_duration_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_notice_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_notice_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_savings_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_savings_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_status_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_status_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "fact_supplier_daily",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "fact_supplier_daily"
+                   },
+                   {
+                       "measures":  [
+
+                                    ],
+                       "partitions":  [
+                                          {
+                                              "error":  "",
+                                              "name":  "_Measures",
+                                              "state":  "Ready"
+                                          }
+                                      ],
+                       "name":  "_Measures"
+                   }
+               ],
+    "database":  "e08c23d7-9ff2-48d3-96c4-94dccc982bc0",
+    "id":  "e08c23d7-9ff2-48d3-96c4-94dccc982bc0"
+}

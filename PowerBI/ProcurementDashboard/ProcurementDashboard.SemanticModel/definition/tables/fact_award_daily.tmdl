@@ -1,0 +1,84 @@
+table fact_award_daily
+	lineageTag: 506c6642-f44a-5dd6-b54b-48109cdcc0f4
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: fa7762d4-3958-5408-9d56-1ed1a99c8a3d
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 0a69ef50-cced-549a-aa58-8ffe1a393b15
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: bb13026f-4a49-52f1-8b6c-b6c99fce6f9d
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: 3f1d49a9-023b-5546-a700-bf29a0d8638d
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column method_key
+		dataType: string
+		isHidden
+		lineageTag: dcdf481d-8536-5f4a-8757-f718f803d785
+		summarizeBy: none
+		sourceColumn: method_key
+
+	column currency_key
+		dataType: string
+		isHidden
+		lineageTag: 41a747f5-e63a-5841-aa84-a17b830f32e0
+		summarizeBy: none
+		sourceColumn: currency_key
+
+	column award_scope_count
+		dataType: int64
+		isHidden
+		lineageTag: a2380bf5-1197-530f-b1ed-5e6bd44dd041
+		summarizeBy: none
+		sourceColumn: award_scope_count
+
+	column effective_award_scope_count
+		dataType: int64
+		isHidden
+		lineageTag: c625e049-5b7c-50f5-a19e-1606a8dec3af
+		summarizeBy: none
+		sourceColumn: effective_award_scope_count
+
+	column eligible_amount_count
+		dataType: int64
+		isHidden
+		lineageTag: ae99d6b6-aa8f-5fc1-b989-8090558b0c41
+		summarizeBy: none
+		sourceColumn: eligible_amount_count
+
+	column award_amount_sum
+		dataType: double
+		isHidden
+		lineageTag: ab8a6156-083a-531e-9156-e5c18951427a
+		summarizeBy: none
+		sourceColumn: award_amount_sum
+
+	partition fact_award_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_award_daily", {"group_key", "report_date", "geography_key", "sector_key", "method_key", "currency_key", "award_scope_count", "effective_award_scope_count", "eligible_amount_count", "award_amount_sum"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"method_key", type text}, {"currency_key", type text}, {"award_scope_count", Int64.Type}, {"effective_award_scope_count", Int64.Type}, {"eligible_amount_count", Int64.Type}, {"award_amount_sum", type number}}, "en-US")
+				in
+				    Typed
+

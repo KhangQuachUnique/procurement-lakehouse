@@ -1,0 +1,19 @@
+expression DataRoot = "D:/Project/procurement-lakehouse/PowerBI/export/parquet" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 36f73539-1011-55cb-910a-680ba979646e
+
+expression ReadParquetTable =
+		(tableName as text, expectedColumns as list) as table =>
+		let
+		    Root = Text.TrimEnd(Text.Replace(DataRoot, "\", "/"), "/") & "/",
+		    Files = Folder.Files(DataRoot),
+		    Selected = Table.SelectRows(Files, each Text.Lower([Extension]) = ".parquet" and
+		        ([Name] = tableName & ".parquet" or List.Contains(Text.Split(Text.Range(Text.Replace([Folder Path], "\", "/"), Text.Length(Root)), "/"), tableName))),
+		    Ordered = Table.Sort(Selected, {{"Folder Path", Order.Ascending}, {"Name", Order.Ascending}}),
+		    Parts = if Table.RowCount(Ordered) = 0 then error Error.Record("MissingTable", tableName, DataRoot)
+		        else List.Transform(Table.ToRecords(Ordered), each Parquet.Document(File.Contents([Folder Path] & [Name]))),
+		    Checked = List.Transform(Parts, each if List.Sort(Table.ColumnNames(_)) <> List.Sort(expectedColumns)
+		        then error Error.Record("SchemaMismatch", tableName, Table.ColumnNames(_)) else _),
+		    Combined = Table.Combine(Checked)
+		in Combined
+	lineageTag: 10aba097-27cd-5f13-b964-ea6d0465155c
+

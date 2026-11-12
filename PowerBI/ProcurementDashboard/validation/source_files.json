@@ -1,0 +1,53 @@
+{
+  "dim_currency": [
+    "dim_currency.parquet"
+  ],
+  "dim_date": [
+    "dim_date.parquet"
+  ],
+  "dim_duration_metric": [
+    "dim_duration_metric.parquet"
+  ],
+  "dim_geography": [
+    "dim_geography.parquet"
+  ],
+  "dim_party": [
+    "dim_party.parquet"
+  ],
+  "dim_procurement_method": [
+    "dim_procurement_method.parquet"
+  ],
+  "dim_progress_status": [
+    "dim_progress_status.parquet"
+  ],
+  "dim_sector": [
+    "dim_sector.parquet"
+  ],
+  "dim_value_band": [
+    "dim_value_band.parquet"
+  ],
+  "fact_award_daily": [
+    "fact_award_daily.parquet"
+  ],
+  "fact_bidding_competition_daily": [
+    "fact_bidding_competition_daily.parquet"
+  ],
+  "fact_demand_daily": [
+    "fact_demand_daily.parquet"
+  ],
+  "fact_duration_daily": [
+    "fact_duration_daily.parquet"
+  ],
+  "fact_notice_daily": [
+    "fact_notice_daily.parquet"
+  ],
+  "fact_savings_daily": [
+    "fact_savings_daily.parquet"
+  ],
+  "fact_status_daily": [
+    "fact_status_daily.parquet"
+  ],
+  "fact_supplier_daily": [
+    "fact_supplier_daily.parquet"
+  ]
+}

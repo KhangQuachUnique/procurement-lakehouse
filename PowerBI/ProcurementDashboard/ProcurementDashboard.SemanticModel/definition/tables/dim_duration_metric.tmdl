@@ -1,0 +1,38 @@
+table dim_duration_metric
+	lineageTag: 65621755-dbbc-5664-bcb9-bf3f725737e6
+
+	column metric_key
+		dataType: string
+		isHidden
+		lineageTag: 64760ab6-0bcb-5c1d-aadd-6b558c141e13
+		summarizeBy: none
+		sourceColumn: metric_key
+
+	column metric_name
+		dataType: string
+		lineageTag: 122cfdbc-1d0c-5435-8cfe-cc4be9163abc
+		summarizeBy: none
+		sourceColumn: metric_name
+
+	column duration_unit
+		dataType: string
+		lineageTag: 25cc107b-b31a-57d8-bf31-3a350dd7f6f1
+		summarizeBy: none
+		sourceColumn: duration_unit
+
+	column metric_label
+		dataType: string
+		lineageTag: 675a2a55-078f-555b-95a9-97077549c130
+		summarizeBy: none
+		sourceColumn: metric_label
+
+	partition dim_duration_metric = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_duration_metric", {"metric_key", "metric_name", "duration_unit"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"metric_key", type text}, {"metric_name", type text}, {"duration_unit", type text}}, "en-US"),
+				    Display = Table.AddColumn(Typed,"metric_label",each Record.FieldOrDefault([close_to_open_hours="Đóng thầu → mở thầu", open_to_award_days="Mở thầu → kết quả", planned_to_actual_delay_days="Độ trễ so với kế hoạch", plan_to_notice_days="Kế hoạch → thông báo", notice_to_close_hours="Thông báo → đóng thầu", close_to_first_award_days="Đóng thầu → kết quả đầu", close_to_complete_award_days="Đóng thầu → kết quả đầy đủ"], [metric_key], [metric_name]),type text)
+				in
+				    Display
+

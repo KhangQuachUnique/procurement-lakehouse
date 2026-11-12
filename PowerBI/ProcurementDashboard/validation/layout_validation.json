@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "scenario": "17 independent single-file logical tables",
+      "status": "passed"
+    },
+    {
+      "scenario": "nested multi-part table, no assumed part filename",
+      "status": "passed"
+    },
+    {
+      "scenario": "mixed schema parts rejected",
+      "status": "passed"
+    },
+    {
+      "scenario": "unmapped layout rejected",
+      "status": "passed"
+    },
+    {
+      "scenario": "missing logical table rejected",
+      "status": "passed"
+    }
+  ],
+  "limits": "Tests Python discovery. Actual Power Query multi-part refresh must be exercised independently; production source currently has one part per logical table."
+}

@@ -1,0 +1,49 @@
+table fact_status_daily
+	lineageTag: 98ef8bb9-07d0-5438-a3fa-7e686d781cfa
+
+	column group_key
+		dataType: string
+		isHidden
+		lineageTag: 6329b331-e220-5e35-a5e2-f96048dcf367
+		summarizeBy: none
+		sourceColumn: group_key
+
+	column report_date
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 20dc6dc8-2e19-5c6f-ba78-8c7b4f26de1d
+		summarizeBy: none
+		sourceColumn: report_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column status_key
+		dataType: string
+		isHidden
+		lineageTag: 2246c9a0-1e39-5f85-9646-797ffecc9c16
+		summarizeBy: none
+		sourceColumn: status_key
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: faa1f87a-9a3a-51b2-8480-fd15ee917c4d
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column package_count
+		dataType: int64
+		isHidden
+		lineageTag: 0e69048d-1b46-53c6-8ae5-b1f3f9b9c144
+		summarizeBy: none
+		sourceColumn: package_count
+
+	partition fact_status_daily = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("fact_status_daily", {"group_key", "report_date", "status_key", "sector_key", "package_count"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"status_key", type text}, {"sector_key", type text}, {"package_count", Int64.Type}}, "en-US")
+				in
+				    Typed
+

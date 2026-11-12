@@ -1,0 +1,98 @@
+[
+  {
+    "name": "top10_geography",
+    "group_column": "province_display",
+    "sql": "SELECT concat_ws(' · ',d.province_name,d.geography_version,d.province_code) AS label,sum(f.award_amount_sum) AS amount FROM fact_award_daily f JOIN dim_geography d USING(geography_key) WHERE f.currency_key='VND' GROUP BY ALL ORDER BY amount DESC,label ASC LIMIT 10",
+    "expected": [
+      {
+        "label": "Chưa xác định · v1",
+        "amount": "2908867677771713.013100"
+      },
+      {
+        "label": "Tỉnh Ninh Bình · v1 · 117",
+        "amount": "31621635194456.800000"
+      },
+      {
+        "label": "Thành phố Hà Nội · v1 · 101",
+        "amount": "26360636681631.999800"
+      },
+      {
+        "label": "Thành phố Hà Nội · v1 · 01",
+        "amount": "24710293107437.077700"
+      },
+      {
+        "label": "Thành phố Hồ Chí Minh · v1 · 79",
+        "amount": "14740707097288.978400"
+      },
+      {
+        "label": "TP. Hồ Chí Minh · v1 · 701",
+        "amount": "12649892645276.665500"
+      },
+      {
+        "label": "Thành phố Hải Phòng · v1 · 31",
+        "amount": "5383933194942.500000"
+      },
+      {
+        "label": "Tỉnh Quảng Ninh · v1 · 225",
+        "amount": "5298880063682.268800"
+      },
+      {
+        "label": "Tỉnh Đồng Nai · v1 · 713",
+        "amount": "5287930027994.696600"
+      },
+      {
+        "label": "Đa địa bàn chưa phân bổ · v1",
+        "amount": "5018398654796.210000"
+      }
+    ],
+    "absolute_tolerance": "5"
+  },
+  {
+    "name": "top10_supplier",
+    "group_column": "party_display",
+    "sql": "SELECT CASE WHEN d.party_name IS NULL OR trim(d.party_name)='' THEN 'Chưa có tên' ELSE d.party_name END || ' [' || d.party_key || ']' AS label,sum(f.award_amount_sum) AS amount FROM fact_supplier_daily f JOIN dim_party d USING(party_key) WHERE f.currency_key='VND' AND f.recipient_allocation_state='single_recipient' GROUP BY ALL ORDER BY amount DESC,label ASC LIMIT 10",
+    "expected": [
+      {
+        "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XUÂN TÙNG [PARTY:vn6000903919]",
+        "amount": "778794166020716.000000"
+      },
+      {
+        "label": "CÔNG TY CỔ PHẦN XÂY DỰNG HẠ TẦNG ĐẠI PHONG [PARTY:vn0600333201]",
+        "amount": "64378170412603.000000"
+      },
+      {
+        "label": "CÔNG TY TNHH MTV TƯ VẤN XÂY DỰNG PHÚ THÀNH [PARTY:vn2700938028]",
+        "amount": "28748725894958.000000"
+      },
+      {
+        "label": "CÔNG TY TNHH MỘT THÀNH VIÊN DƯỢC LIỆU TW2 [PARTY:vn0103053042]",
+        "amount": "27727430669865.750000"
+      },
+      {
+        "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XÂY LẮP PHƯỚC THÀNH [PARTY:vn4300359252]",
+        "amount": "25679697801471.000000"
+      },
+      {
+        "label": "CÔNG TY CỔ PHẦN DƯỢC LIỆU TRUNG ƯƠNG 2 [PARTY:vn0302597576]",
+        "amount": "25596801520652.000000"
+      },
+      {
+        "label": "CÔNG TY CỔ PHẦN ĐẦU TƯ - PHÁT TRIỂN TÂM SINH NGHĨA [PARTY:vn0304374871]",
+        "amount": "18941916770000.000000"
+      },
+      {
+        "label": "CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ HÀ NỘI [PARTY:vn0100109699]",
+        "amount": "12597809739686.380000"
+      },
+      {
+        "label": "CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC [PARTY:vn0301140748]",
+        "amount": "11849275370007.448000"
+      },
+      {
+        "label": "CÔNG TY TNHH DƯỢC PHẨM GIGAMED [PARTY:vn0316417470]",
+        "amount": "10271856514758.000000"
+      }
+    ],
+    "absolute_tolerance": "5"
+  }
+]

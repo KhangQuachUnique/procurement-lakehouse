@@ -1,0 +1,379 @@
+table _Measures
+	lineageTag: 03652dbd-b1d9-5b6d-a37e-49e4eba27af6
+
+	/// Số gói kế hoạch
+	measure 'Số gói kế hoạch' = SUM(fact_demand_daily[package_count])
+		formatString: #,0
+		displayFolder: Tổng quan
+		lineageTag: 08413c7f-49ed-5728-9a72-5464a72f7ad0
+
+	/// fact_demand_daily[planned_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0.
+	measure 'Giá trị kế hoạch VNĐ' = CALCULATE(IF(SUM(fact_demand_daily[eligible_amount_count]) > 0, SUM(fact_demand_daily[planned_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tổng quan
+		lineageTag: d28de25b-70c5-56ca-b34a-9cf0a0744877
+
+	/// Giá trị kế hoạch · tỷ VNĐ
+	measure 'Giá trị kế hoạch · tỷ VNĐ' = DIVIDE([Giá trị kế hoạch VNĐ], 1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tổng quan
+		lineageTag: 1e6b7ebc-f734-5e0a-81d4-f1dc5bad736b
+
+	/// Số thông báo
+	measure 'Số thông báo' = SUM(fact_notice_daily[notice_count])
+		formatString: #,0
+		displayFolder: Thông báo
+		lineageTag: 25a64715-98f0-59fd-a6aa-9840e6d46b51
+
+	/// Thông báo hủy
+	measure 'Thông báo hủy' = SUM(fact_notice_daily[cancelled_notice_count])
+		formatString: #,0
+		displayFolder: Thông báo
+		lineageTag: dd9d1049-79e4-55b4-b210-e5e504322ef2
+
+	/// Số thông báo hủy / số thông báo trong cùng họ notice_family, ngày và lĩnh vực.
+	measure 'Tỷ lệ thông báo hủy' = DIVIDE([Thông báo hủy], [Số thông báo])
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Thông báo
+		lineageTag: 9a40a6b8-9071-5e8e-bb03-ecdac55ae56e
+
+	/// Số lượt trúng thầu
+	measure 'Số lượt trúng thầu' = SUM(fact_award_daily[award_scope_count])
+		formatString: #,0
+		displayFolder: Trúng thầu
+		lineageTag: b996386f-4fa5-5727-8c14-4b46390069b6
+
+	/// Số lượt trúng thầu hiệu lực
+	measure 'Số lượt trúng thầu hiệu lực' = SUM(fact_award_daily[effective_award_scope_count])
+		formatString: #,0
+		displayFolder: Trúng thầu
+		lineageTag: 9b733654-4c5f-58ef-a934-52a9671dd04b
+
+	/// Số mẫu giá trúng hợp lệ
+	measure 'Số mẫu giá trúng hợp lệ' = SUM(fact_award_daily[eligible_amount_count])
+		formatString: #,0
+		displayFolder: Trúng thầu
+		lineageTag: efe2eae4-679f-5392-8a25-dfcefc536b70
+
+	/// fact_award_daily[award_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0.
+	measure 'Giá trị trúng thầu VNĐ' = CALCULATE(IF(SUM(fact_award_daily[eligible_amount_count]) > 0, SUM(fact_award_daily[award_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Trúng thầu
+		lineageTag: e0585747-a0e3-594c-bf74-763d2a30b9c9
+
+	/// Giá trị trúng thầu · tỷ VNĐ
+	measure 'Giá trị trúng thầu · tỷ VNĐ' = DIVIDE([Giá trị trúng thầu VNĐ], 1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Trúng thầu
+		lineageTag: c734088e-a246-5e41-a9e5-04684ed7e6cb
+
+	/// fact_savings_daily[verified_sample_count]; chỉ VND, không quy đổi ngoại tệ.
+	measure 'Số mẫu xác minh' = CALCULATE(SUM(fact_savings_daily[verified_sample_count]), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0
+		displayFolder: Tiết kiệm
+		lineageTag: 5d0bd55f-db15-5431-86e6-b92a531ddc60
+
+	/// fact_savings_daily[verified_baseline_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0.
+	measure 'Dự toán xác minh VNĐ' = CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_baseline_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: 00b71cd8-1c00-58ea-9570-fc0a28e8ae76
+
+	/// Dự toán xác minh · tỷ VNĐ
+	measure 'Dự toán xác minh · tỷ VNĐ' = DIVIDE([Dự toán xác minh VNĐ],1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: 5d7335d5-e5bd-5449-89a2-9f482b85cab3
+
+	/// fact_savings_daily[verified_award_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0.
+	measure 'Giá trúng xác minh VNĐ' = CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_award_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: ce9610a6-fce0-52bc-9deb-b426b6cba0cf
+
+	/// Giá trúng xác minh · tỷ VNĐ
+	measure 'Giá trúng xác minh · tỷ VNĐ' = DIVIDE([Giá trúng xác minh VNĐ],1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: facd7d41-783f-5ea3-a235-4220f1cbb466
+
+	/// fact_savings_daily[verified_saving_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0.
+	measure 'Tiết kiệm xác minh VNĐ' = CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_saving_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: 9103264d-03ff-527c-b6ff-054f7132281e
+
+	/// Tiết kiệm xác minh · tỷ VNĐ
+	measure 'Tiết kiệm xác minh · tỷ VNĐ' = DIVIDE([Tiết kiệm xác minh VNĐ],1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Tiết kiệm
+		lineageTag: 7a0d6a12-1fec-508d-a722-b878ab6a0ee5
+
+	/// Tổng tiết kiệm / tổng dự toán, cùng tập mẫu verified và VND; không phải trung bình tỷ lệ theo dòng.
+	measure 'Tỷ lệ tiết kiệm xác minh' = DIVIDE([Tiết kiệm xác minh VNĐ], [Dự toán xác minh VNĐ])
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Tiết kiệm
+		lineageTag: 568e06da-18d4-55e3-8b6e-b2bbb6355234
+
+	/// fact_savings_daily[contract_sample_count]; chỉ VND, không quy đổi ngoại tệ.
+	measure 'Số mẫu hợp đồng' = CALCULATE(SUM(fact_savings_daily[contract_sample_count]), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0
+		displayFolder: Hợp đồng
+		lineageTag: e72e01cf-6f09-5891-81e3-7247d6c94778
+
+	/// fact_savings_daily[contract_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi contract_sample_count>0.
+	measure 'Giá trị hợp đồng VNĐ' = CALCULATE(IF(SUM(fact_savings_daily[contract_sample_count]) > 0, SUM(fact_savings_daily[contract_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Hợp đồng
+		lineageTag: 810d15f3-94d5-5752-ba6e-ef7916408df3
+
+	/// Giá trị hợp đồng · tỷ VNĐ
+	measure 'Giá trị hợp đồng · tỷ VNĐ' = DIVIDE([Giá trị hợp đồng VNĐ],1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Hợp đồng
+		lineageTag: dfd6dcb9-23c9-5cae-ab7c-8d96d458bc9d
+
+	/// fact_savings_daily[contract_saving_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi contract_sample_count>0.
+	measure 'Tiết kiệm hợp đồng VNĐ' = CALCULATE(IF(SUM(fact_savings_daily[contract_sample_count]) > 0, SUM(fact_savings_daily[contract_saving_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Hợp đồng
+		lineageTag: e5c93ed4-04ac-5b50-86af-a3d995279482
+
+	/// Tiết kiệm hợp đồng · tỷ VNĐ
+	measure 'Tiết kiệm hợp đồng · tỷ VNĐ' = DIVIDE([Tiết kiệm hợp đồng VNĐ],1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Hợp đồng
+		lineageTag: 668fa369-79dc-5b36-8f3e-3f3eb322bdc5
+
+	/// Số lượt mở thầu
+	measure 'Số lượt mở thầu' = SUM(fact_bidding_competition_daily[opening_count])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: d9c2284c-22b7-5f3d-b30b-0caaed2e9bba
+
+	/// Tổng lượt nhà thầu
+	measure 'Tổng lượt nhà thầu' = SUM(fact_bidding_competition_daily[total_bidders])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: f6577b2e-279a-5cf0-93b7-c8c0b132290c
+
+	/// Gói một nhà thầu
+	measure 'Gói một nhà thầu' = SUM(fact_bidding_competition_daily[single_bidder_count])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: 8755cd8c-23a9-5e5c-864b-85bfa10000fe
+
+	/// Gói nhiều nhà thầu
+	measure 'Gói nhiều nhà thầu' = SUM(fact_bidding_competition_daily[multi_bidder_count])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: b5262dff-49d0-5028-ad0c-9ba573f03dea
+
+	/// Hồ sơ đạt kỹ thuật
+	measure 'Hồ sơ đạt kỹ thuật' = SUM(fact_bidding_competition_daily[tech_passed_count])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: bb29c276-975e-594b-9ef2-b4eb5c6edc76
+
+	/// Hồ sơ không đạt kỹ thuật
+	measure 'Hồ sơ không đạt kỹ thuật' = SUM(fact_bidding_competition_daily[tech_failed_count])
+		formatString: #,0
+		displayFolder: Cạnh tranh
+		lineageTag: 2cffd7bd-04eb-523a-9121-03bce31eb46c
+
+	/// Lượt nhà thầu / lượt mở thầu; không phải số đơn vị duy nhất.
+	measure 'Nhà thầu bình quân' = DIVIDE([Tổng lượt nhà thầu], [Số lượt mở thầu])
+		formatString: 0.00
+		displayFolder: Cạnh tranh
+		lineageTag: 4f2762a9-6180-537e-ab8a-e0ccf810f63b
+
+	/// Tỷ lệ một nhà thầu
+	measure 'Tỷ lệ một nhà thầu' = DIVIDE([Gói một nhà thầu], [Số lượt mở thầu])
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Cạnh tranh
+		lineageTag: e849a4a8-2112-55c6-8db0-200e493b26cc
+
+	/// Trong các hồ sơ có kết quả đạt/không đạt; hồ sơ chưa có kết quả không thuộc mẫu số.
+	measure 'Tỷ lệ đạt kỹ thuật' = DIVIDE([Hồ sơ đạt kỹ thuật], [Hồ sơ đạt kỹ thuật]+[Hồ sơ không đạt kỹ thuật])
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Cạnh tranh
+		lineageTag: f59d8699-62b8-5320-a9a0-330040dfc651
+
+	/// Chỉ một metric và report_date không trống. Dòng thiếu ngày được giữ trong nguồn nhưng tách khỏi KPI này.
+	measure 'Số mẫu thời gian hợp lệ' = IF(HASONEVALUE(dim_duration_metric[metric_key]), CALCULATE(SUM(fact_duration_daily[sample_count]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))))
+		formatString: #,0
+		displayFolder: Thời gian
+		lineageTag: 7a8cd935-f89b-5118-a4f3-f1d2e62a6917
+
+	/// Chỉ một metric và report_date không trống. Dòng thiếu ngày được giữ trong nguồn nhưng tách khỏi KPI này.
+	measure 'Số mẫu bị loại có ngày' = IF(HASONEVALUE(dim_duration_metric[metric_key]), CALCULATE(SUM(fact_duration_daily[excluded_sample_count]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))))
+		formatString: #,0
+		displayFolder: Thời gian
+		lineageTag: f2404635-8199-5cfa-b4e0-5c373e9efe85
+
+	/// Tổng duration_sum / tổng sample_count trên các dòng có ngày, đúng một metric.
+	measure 'Thời gian trung bình' = IF(HASONEVALUE(dim_duration_metric[metric_key]), DIVIDE(CALCULATE(SUM(fact_duration_daily[duration_sum]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))), [Số mẫu thời gian hợp lệ]))
+		displayFolder: Thời gian
+		lineageTag: 484fce7a-56c7-501c-aaa7-be147e03cf90
+
+		formatStringDefinition = IF(SELECTEDVALUE(dim_duration_metric[duration_unit]) = "hours", "0.0 ""giờ""", "0.0 ""ngày""")
+
+	/// Đơn vị thời gian
+	measure 'Đơn vị thời gian' = SWITCH(SELECTEDVALUE(dim_duration_metric[duration_unit]), "hours", "giờ", "days", "ngày", BLANK())
+		displayFolder: Thời gian
+		lineageTag: 82c0bfc5-5b15-50e7-a8ac-3c3cabc9dc49
+
+	/// Metric và đơn vị
+	measure 'Metric và đơn vị' = IF(HASONEVALUE(dim_duration_metric[metric_key]), SELECTEDVALUE(dim_duration_metric[metric_label]) & " · " & [Đơn vị thời gian], "Chọn đúng một chỉ số")
+		displayFolder: Thời gian
+		lineageTag: 65f452e2-f743-5c56-a0fc-073649494b7a
+
+	/// Tiêu đề thời gian
+	measure 'Tiêu đề thời gian' = "Thời gian trung bình (" & COALESCE([Đơn vị thời gian], "chọn 1 metric") & ")"
+		displayFolder: Thời gian
+		lineageTag: af89f6f9-475f-5d50-85c8-7a3ba7054355
+
+	/// Số dòng thô thiếu ngày; có grain lặp, không diễn giải thành số mẫu duy nhất. Bỏ qua lọc ngày vì không có ngày để gán.
+	measure 'Dòng duration thiếu ngày' = CALCULATE(COUNTROWS(fact_duration_daily), REMOVEFILTERS(dim_date), ISBLANK(fact_duration_daily[report_date]))
+		formatString: #,0
+		displayFolder: Chất lượng
+		lineageTag: d1b1d070-e501-5bad-aa96-fe63124e34cc
+
+	/// Trạng thái quan sát thông báo/kết quả, không phải tiến độ thực hiện.
+	measure 'Số gói theo trạng thái' = SUM(fact_status_daily[package_count])
+		formatString: #,0
+		displayFolder: Trạng thái
+		lineageTag: 6c9224f2-d139-5adb-a206-a390eb53bcbc
+
+	/// Chỉ VND, single_recipient, giá trị eligible. Không chia giá trị liên danh hoặc nhiều người nhận cho từng đơn vị.
+	measure 'Giá trị phân bổ đơn VNĐ' = CALCULATE(CALCULATE(IF(SUM(fact_supplier_daily[eligible_amount_count]) > 0, SUM(fact_supplier_daily[award_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = "VND")), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state] = "single_recipient"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Đơn vị
+		lineageTag: 445f72f1-2c48-5e92-b6da-920f8fb9513e
+
+	/// Giá trị phân bổ · tỷ VNĐ
+	measure 'Giá trị phân bổ · tỷ VNĐ' = DIVIDE([Giá trị phân bổ đơn VNĐ], 1000000000)
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Đơn vị
+		lineageTag: 46fe9c85-134d-527a-b065-ce0b48b7aea7
+
+	/// Ghi chú thời gian
+	measure 'Ghi chú thời gian' = "Dòng thiếu ngày của metric (không nằm trong KPI): " & FORMAT(COALESCE([Dòng duration thiếu ngày],0), "#,0", "vi-VN") & ". Chỉ số theo ngày không bao gồm các dòng này."
+		displayFolder: Chất lượng
+		lineageTag: 3489757e-e2f3-52a8-893d-6230eefd3917
+
+	/// Phạm vi cạnh tranh
+	measure 'Phạm vi cạnh tranh' = VAR a = MIN(fact_bidding_competition_daily[report_date]) VAR b = MAX(fact_bidding_competition_daily[report_date]) RETURN IF(ISBLANK(a), "Không có dữ liệu cạnh tranh trong bộ lọc hiện tại", "Dữ liệu quan sát: " & FORMAT(a,"dd/MM/yyyy") & " – " & FORMAT(b,"dd/MM/yyyy"))
+		displayFolder: Cạnh tranh
+		lineageTag: 024db8c7-e0d2-5ebd-81a6-c36df014ea57
+
+	/// Tình trạng mẫu xác minh
+	measure 'Tình trạng mẫu xác minh' = IF(COALESCE([Số mẫu xác minh],0)=0, "Chỉ VND · chưa có mẫu verified hợp lệ trong phạm vi chọn; các chỉ số tiết kiệm để trống.", "Chỉ VND · tiết kiệm tính trên tập mẫu verified; hợp đồng có tập mẫu riêng.")
+		displayFolder: Chất lượng
+		lineageTag: af7a6863-c4b1-517c-addc-5dc5cd309fa7
+
+	/// Chỉ dùng trên card; measure số gốc [Giá trị kế hoạch · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Giá trị kế hoạch · tỷ VNĐ' = IF(ISBLANK([Giá trị kế hoạch · tỷ VNĐ]), "—", FORMAT([Giá trị kế hoạch · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 8d08e565-a2ad-5bd1-b1c5-62891a25ce07
+
+	/// Chỉ dùng trên card; measure số gốc [Giá trị trúng thầu · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Giá trị trúng thầu · tỷ VNĐ' = IF(ISBLANK([Giá trị trúng thầu · tỷ VNĐ]), "—", FORMAT([Giá trị trúng thầu · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: f493c47a-3575-5b57-ae60-36dd4aa48c27
+
+	/// Chỉ dùng trên card; measure số gốc [Tiết kiệm xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Tiết kiệm xác minh · tỷ VNĐ' = IF(ISBLANK([Tiết kiệm xác minh · tỷ VNĐ]), "—", FORMAT([Tiết kiệm xác minh · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 88317732-05db-5389-b554-4bdaefed2bc4
+
+	/// Chỉ dùng trên card; measure số gốc [Tỷ lệ tiết kiệm xác minh] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Tỷ lệ tiết kiệm xác minh' = IF(ISBLANK([Tỷ lệ tiết kiệm xác minh]), "—", FORMAT([Tỷ lệ tiết kiệm xác minh], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 38e6a125-5b02-507c-9667-9a830306761b
+
+	/// Chỉ dùng trên card; measure số gốc [Dự toán xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Dự toán xác minh · tỷ VNĐ' = IF(ISBLANK([Dự toán xác minh · tỷ VNĐ]), "—", FORMAT([Dự toán xác minh · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 650c0aab-fa85-5662-a09c-c7f584a4cabc
+
+	/// Chỉ dùng trên card; measure số gốc [Giá trúng xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Giá trúng xác minh · tỷ VNĐ' = IF(ISBLANK([Giá trúng xác minh · tỷ VNĐ]), "—", FORMAT([Giá trúng xác minh · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 7d7842f7-7c83-52e0-8e74-057045a4af49
+
+	/// Chỉ dùng trên card; measure số gốc [Số mẫu xác minh] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Số mẫu xác minh' = IF(ISBLANK([Số mẫu xác minh]), "—", FORMAT([Số mẫu xác minh], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 73a8a305-ddd4-5ed4-8a61-0b87b3a67c4f
+
+	/// Chỉ dùng trên card; measure số gốc [Số mẫu hợp đồng] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Số mẫu hợp đồng' = IF(ISBLANK([Số mẫu hợp đồng]), "—", FORMAT([Số mẫu hợp đồng], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 92636245-8d52-5a4f-8728-fb4846da571e
+
+	/// Chỉ dùng trên card; measure số gốc [Giá trị hợp đồng · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Giá trị hợp đồng · tỷ VNĐ' = IF(ISBLANK([Giá trị hợp đồng · tỷ VNĐ]), "—", FORMAT([Giá trị hợp đồng · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 2e13e303-b407-5a6e-88e5-a6ecaebf3f3d
+
+	/// Chỉ dùng trên card; measure số gốc [Tiết kiệm hợp đồng · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Tiết kiệm hợp đồng · tỷ VNĐ' = IF(ISBLANK([Tiết kiệm hợp đồng · tỷ VNĐ]), "—", FORMAT([Tiết kiệm hợp đồng · tỷ VNĐ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 41e7c75b-44cd-547b-8ad0-bfa30e1bda68
+
+	/// Chỉ dùng trên card; measure số gốc [Số lượt mở thầu] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Số lượt mở thầu' = IF(ISBLANK([Số lượt mở thầu]), "—", FORMAT([Số lượt mở thầu], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 0a8a2bab-3c13-5569-b7d0-16b2a84b9789
+
+	/// Chỉ dùng trên card; measure số gốc [Nhà thầu bình quân] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Nhà thầu bình quân' = IF(ISBLANK([Nhà thầu bình quân]), "—", FORMAT([Nhà thầu bình quân], "0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 6b5dac7e-6e06-542b-82fe-3d4e4e378683
+
+	/// Chỉ dùng trên card; measure số gốc [Tỷ lệ một nhà thầu] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Tỷ lệ một nhà thầu' = IF(ISBLANK([Tỷ lệ một nhà thầu]), "—", FORMAT([Tỷ lệ một nhà thầu], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 38914034-da3b-5f32-8038-44faace2fa9f
+
+	/// Chỉ dùng trên card; measure số gốc [Tỷ lệ đạt kỹ thuật] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Tỷ lệ đạt kỹ thuật' = IF(ISBLANK([Tỷ lệ đạt kỹ thuật]), "—", FORMAT([Tỷ lệ đạt kỹ thuật], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 87f5ec71-f8d6-55a2-b003-a8fc6948b618
+
+	/// Chỉ dùng trên card; measure số gốc [Thời gian trung bình] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Thời gian trung bình' = IF(ISBLANK([Thời gian trung bình]), "—", FORMAT([Thời gian trung bình], "0.0", "vi-VN") & " " & [Đơn vị thời gian])
+		displayFolder: Hiển thị
+		lineageTag: 6927d7e6-f2d9-581d-ad01-90dd25efd62e
+
+	/// Chỉ dùng trên card; measure số gốc [Số mẫu thời gian hợp lệ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Số mẫu thời gian hợp lệ' = IF(ISBLANK([Số mẫu thời gian hợp lệ]), "—", FORMAT([Số mẫu thời gian hợp lệ], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 1bcbd448-a315-5204-bec5-8cf9610ab5fb
+
+	/// Chỉ dùng trên card; measure số gốc [Số mẫu bị loại có ngày] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang.
+	measure 'Hiển thị · Số mẫu bị loại có ngày' = IF(ISBLANK([Số mẫu bị loại có ngày]), "—", FORMAT([Số mẫu bị loại có ngày], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: 03371fb4-30c2-53a0-8b68-0fc94ac0ca13
+
+	/// Nhãn trình bày từ party_kind, không thay đổi dữ liệu gốc.
+	measure 'Loại đơn vị' = VAR v=SELECTEDVALUE(dim_party[party_kind]) RETURN SWITCH(v,"ORGANIZATION","Tổ chức","PERSON","Cá nhân","CONSORTIUM","Liên danh",v)
+		displayFolder: Đơn vị
+		lineageTag: 8ac50e87-2be5-5974-8287-ae5679489c4b
+
+	/// Nhãn trình bày; bảng chỉ xét trạng thái single_recipient.
+	measure 'Phân bổ đơn vị' = CALCULATE(SWITCH(SELECTEDVALUE(fact_supplier_daily[recipient_allocation_state]),"single_recipient","Nhận đơn",BLANK()), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]="single_recipient"))
+		displayFolder: Đơn vị
+		lineageTag: 6d90b0bd-e8d8-5bb1-9c07-208dfe38df5b
+
+	column _placeholder
+		dataType: int64
+		isHidden
+		lineageTag: 1f2f2e38-5ecc-45a5-b883-27e3f851204f
+		sourceColumn: _placeholder
+
+	partition _Measures = m
+		mode: import
+		source = #table(type table [_placeholder = Int64.Type], {{0}})
+

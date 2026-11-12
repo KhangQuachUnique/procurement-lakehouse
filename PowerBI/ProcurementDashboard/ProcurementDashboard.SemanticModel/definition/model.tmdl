@@ -1,0 +1,32 @@
+model Model
+	culture: vi-VN
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+
+annotation PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table dim_currency
+ref table dim_date
+ref table dim_duration_metric
+ref table dim_geography
+ref table dim_party
+ref table dim_procurement_method
+ref table dim_progress_status
+ref table dim_sector
+ref table dim_value_band
+ref table fact_award_daily
+ref table fact_bidding_competition_daily
+ref table fact_demand_daily
+ref table fact_duration_daily
+ref table fact_notice_daily
+ref table fact_savings_daily
+ref table fact_status_daily
+ref table fact_supplier_daily
+ref table _Measures
+
+ref cultureInfo vi-VN
+

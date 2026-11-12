@@ -1,0 +1,37 @@
+table dim_currency
+	lineageTag: 52aa7114-cd85-5748-912d-35c2b5687b74
+
+	column currency_key
+		dataType: string
+		isHidden
+		lineageTag: f03c342a-8dd6-5fc3-97cb-461c39bf9652
+		summarizeBy: none
+		sourceColumn: currency_key
+
+	column currency_code
+		dataType: string
+		lineageTag: e6de1b4f-9bb8-529e-8443-71c50ba1ed86
+		summarizeBy: none
+		sourceColumn: currency_code
+
+	column is_supported
+		dataType: boolean
+		lineageTag: 15a4a587-5f47-5245-8b06-fdbd5f11aa26
+		summarizeBy: none
+		sourceColumn: is_supported
+
+	column is_unknown
+		dataType: boolean
+		lineageTag: 59194137-75b6-5b4d-bec5-1725a2106f8e
+		summarizeBy: none
+		sourceColumn: is_unknown
+
+	partition dim_currency = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_currency", {"currency_key", "currency_code", "is_supported", "is_unknown"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"currency_key", type text}, {"currency_code", type text}, {"is_supported", type logical}, {"is_unknown", type logical}}, "en-US")
+				in
+				    Typed
+

@@ -1,0 +1,43 @@
+table dim_sector
+	lineageTag: d8da90b5-97bb-527c-935e-84cd31cd29eb
+
+	column sector_key
+		dataType: string
+		isHidden
+		lineageTag: d520dcf7-0c22-593e-8d4b-d47ccc36687e
+		summarizeBy: none
+		sourceColumn: sector_key
+
+	column taxonomy_version
+		dataType: string
+		lineageTag: ae880adc-54db-520e-b980-e699b924919f
+		summarizeBy: none
+		sourceColumn: taxonomy_version
+
+	column sector_code
+		dataType: string
+		lineageTag: d4be61d4-4220-52be-97c1-54e2a7527a7b
+		summarizeBy: none
+		sourceColumn: sector_code
+
+	column sector_name
+		dataType: string
+		lineageTag: 1346859a-337d-54a9-9d09-2c43f25a5881
+		summarizeBy: none
+		sourceColumn: sector_name
+
+	column sector_group
+		dataType: string
+		lineageTag: cd951a92-59ab-5c08-b64f-f4aa3f52d156
+		summarizeBy: none
+		sourceColumn: sector_group
+
+	partition dim_sector = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_sector", {"sector_key", "taxonomy_version", "sector_code", "sector_name", "sector_group"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"sector_key", type text}, {"taxonomy_version", type text}, {"sector_code", type text}, {"sector_name", type text}, {"sector_group", type text}}, "en-US")
+				in
+				    Typed
+

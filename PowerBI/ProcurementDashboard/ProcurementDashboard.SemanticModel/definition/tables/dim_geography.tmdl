@@ -1,0 +1,86 @@
+table dim_geography
+	lineageTag: 9cb8a4e5-94d9-5a70-a1ba-d2522c82a00b
+
+	column geography_key
+		dataType: string
+		isHidden
+		lineageTag: 93cd9405-42f5-508c-b947-3dae25906396
+		summarizeBy: none
+		sourceColumn: geography_key
+
+	column geography_version
+		dataType: string
+		lineageTag: 658aa63b-dc62-5d03-bd83-4c94de746d99
+		summarizeBy: none
+		sourceColumn: geography_version
+
+	column province_code
+		dataType: string
+		lineageTag: 4437c46d-4f3f-5a85-b135-ea4ba3225977
+		summarizeBy: none
+		sourceColumn: province_code
+
+	column province_name
+		dataType: string
+		lineageTag: 745319be-e62b-51fa-9145-b1761b858203
+		summarizeBy: none
+		sourceColumn: province_name
+
+	column region_name
+		dataType: string
+		lineageTag: 625e1b92-8049-5d72-9b08-5664a68a39f9
+		summarizeBy: none
+		sourceColumn: region_name
+
+	column is_multi_geography
+		dataType: boolean
+		lineageTag: 8f5a07f4-857b-5934-91dd-657f81710e58
+		summarizeBy: none
+		sourceColumn: is_multi_geography
+
+	column is_unknown
+		dataType: boolean
+		lineageTag: 6f311f70-6341-56fc-b044-e31772ccb7fe
+		summarizeBy: none
+		sourceColumn: is_unknown
+
+	column valid_from
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 8520b0f0-f510-57fe-bc0e-84f1e04470e7
+		summarizeBy: none
+		sourceColumn: valid_from
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column valid_to
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 70839477-e08e-5b2b-8de1-d70f8978c755
+		summarizeBy: none
+		sourceColumn: valid_to
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column is_current
+		dataType: boolean
+		lineageTag: 5b829774-2f08-5897-9126-ae0bc0541b85
+		summarizeBy: none
+		sourceColumn: is_current
+
+	column province_display
+		dataType: string
+		lineageTag: 71a1c043-8833-5961-8dc3-4c6caa3919e1
+		summarizeBy: none
+		sourceColumn: province_display
+
+	partition dim_geography = m
+		mode: import
+		source =
+				let
+				    Source = ReadParquetTable("dim_geography", {"geography_key", "geography_version", "province_code", "province_name", "region_name", "is_multi_geography", "is_unknown", "valid_from", "valid_to", "is_current"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"geography_key", type text}, {"geography_version", type text}, {"province_code", type text}, {"province_name", type text}, {"region_name", type text}, {"is_multi_geography", type logical}, {"is_unknown", type logical}, {"valid_from", type date}, {"valid_to", type date}, {"is_current", type logical}}, "en-US"),
+				    Display = Table.AddColumn(Typed,"province_display",each Text.Combine({[province_name],[geography_version],[province_code]}," · "), type text)
+				in
+				    Display
+
