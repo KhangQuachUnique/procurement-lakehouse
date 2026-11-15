@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "fd1c5107870e59e8a2d2",
   "position": {
-    "x": 336,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 7,
-    "tabOrder": 7
+    "x": 378,
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 9,
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chỉ một metric và report_date không trống. Dòng thiếu ngày được giữ trong nguồn nhưng tách khỏi KPI này.'"
+                  "Value": "'Mẫu thời gian'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Số mẫu thời gian hợp lệ'"
+                  "Value": "'Mẫu thời gian'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Số mẫu thời gian hợp lệ"
+                  "Property": "Hiển thị · Mẫu thời gian"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Số mẫu thời gian hợp lệ",
-              "nativeQueryRef": "Hiển thị · Số mẫu thời gian hợp lệ"
+              "queryRef": "_Measures.Hiển thị · Mẫu thời gian",
+              "nativeQueryRef": "Hiển thị · Mẫu thời gian"
             }
           ]
         }

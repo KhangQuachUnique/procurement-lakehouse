@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "400631fb93265de8a4ff",
   "position": {
-    "x": 648,
-    "y": 96,
-    "z": 5,
-    "height": 64,
-    "width": 608,
-    "tabOrder": 5
+    "x": 720,
+    "y": 132,
+    "z": 7,
+    "height": 56,
+    "width": 324,
+    "tabOrder": 7
   },
   "visual": {
     "visualType": "slicer",
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chỉ số thời gian · chọn một'"
+                  "Value": "'Chỉ số · chọn một'"
                 }
               }
             },

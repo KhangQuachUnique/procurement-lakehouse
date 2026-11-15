@@ -4,7 +4,16 @@
         "name":  "all/planned",
         "rows":  [
                      {
-                         "[value]":  6408346291734602
+                         "[value]":  5305409387853474
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/packages",
+        "rows":  [
+                     {
+                         "[value]":  2278458
                      }
                  ]
     },
@@ -13,16 +22,16 @@
         "name":  "all/award",
         "rows":  [
                      {
-                         "[value]":  3208826170076745
+                         "[value]":  2162473397657600.5
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "all/saving",
+        "name":  "all/award_scopes",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  2830625
                      }
                  ]
     },
@@ -31,16 +40,43 @@
         "name":  "all/baseline",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  2310709089758264.5
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "all/saving_rate",
+        "name":  "all/difference",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  148984188291219.31
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/difference_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.064475527859201576
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/verified_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/contract_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
                      }
                  ]
     },
@@ -49,7 +85,7 @@
         "name":  "all/bidders_avg",
         "rows":  [
                      {
-                         "[value]":  2.4540036278828712
+                         "[value]":  2.0048008489134981
                      }
                  ]
     },
@@ -58,106 +94,25 @@
         "name":  "all/single_rate",
         "rows":  [
                      {
-                         "[value]":  0.57735164550401663
+                         "[value]":  0.616135433490479
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "all/technical_rate",
+        "name":  "all/discount_count_rate",
         "rows":  [
                      {
-                         "[value]":  0.99611928104575165
+                         "[value]":  0.088833860302004353
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "all/supplier",
+        "name":  "all/technical_issues",
         "rows":  [
                      {
-                         "[value]":  3140135151774055
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/planned",
-        "rows":  [
-                     {
-                         "[value]":  31775015954008
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/award",
-        "rows":  [
-                     {
-                         "[value]":  1299208444679
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/saving",
-        "rows":  [
-                     {
-                         "[value]":  null
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/baseline",
-        "rows":  [
-                     {
-                         "[value]":  null
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/saving_rate",
-        "rows":  [
-                     {
-                         "[value]":  null
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/bidders_avg",
-        "rows":  [
-                     {
-                         "[value]":  2.9722222222222223
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/single_rate",
-        "rows":  [
-                     {
-                         "[value]":  0.47863247863247865
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/technical_rate",
-        "rows":  [
-                     {
-                         "[value]":  0.994392523364486
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/supplier",
-        "rows":  [
-                     {
-                         "[value]":  1298705667129
+                         "[value]":  26191
                      }
                  ]
     },
@@ -166,16 +121,7 @@
         "name":  "all/plan_to_notice_days",
         "rows":  [
                      {
-                         "[value]":  5.1471894684691062
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/plan_to_notice_days",
-        "rows":  [
-                     {
-                         "[value]":  5.92204042348412
+                         "[value]":  16.404098097447619
                      }
                  ]
     },
@@ -184,7 +130,358 @@
         "name":  "all/notice_to_close_hours",
         "rows":  [
                      {
-                         "[value]":  223.02683102558433
+                         "[value]":  237.98200466976473
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/close_to_first_award_days",
+        "rows":  [
+                     {
+                         "[value]":  28.614371133073224
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/close_to_open_hours",
+        "rows":  [
+                     {
+                         "[value]":  26.912471204188481
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/open_to_award_days",
+        "rows":  [
+                     {
+                         "[value]":  28.355559409526336
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/supplier",
+        "rows":  [
+                     {
+                         "[value]":  2098726.4454360874
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "all/people",
+        "rows":  [
+                     {
+                         "[value]":  160481
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/planned",
+        "rows":  [
+                     {
+                         "[value]":  1886526167109524.8
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/packages",
+        "rows":  [
+                     {
+                         "[value]":  712344
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/award",
+        "rows":  [
+                     {
+                         "[value]":  823331435460804.5
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/award_scopes",
+        "rows":  [
+                     {
+                         "[value]":  1038199
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/baseline",
+        "rows":  [
+                     {
+                         "[value]":  882229224164924.5
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/difference",
+        "rows":  [
+                     {
+                         "[value]":  58913893021246.031
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/difference_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.066778441937253977
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/verified_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/contract_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/bidders_avg",
+        "rows":  [
+                     {
+                         "[value]":  2.3140472470667186
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/single_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.55008335867297187
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/discount_count_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.084882619747794444
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/technical_issues",
+        "rows":  [
+                     {
+                         "[value]":  5169
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/plan_to_notice_days",
+        "rows":  [
+                     {
+                         "[value]":  17.84200080373326
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/notice_to_close_hours",
+        "rows":  [
+                     {
+                         "[value]":  262.37209199100045
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/close_to_first_award_days",
+        "rows":  [
+                     {
+                         "[value]":  29.0558501093021
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/close_to_open_hours",
+        "rows":  [
+                     {
+                         "[value]":  31.11300468695935
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/open_to_award_days",
+        "rows":  [
+                     {
+                         "[value]":  28.701959187743029
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/supplier",
+        "rows":  [
+                     {
+                         "[value]":  776769.1550082243
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/people",
+        "rows":  [
+                     {
+                         "[value]":  88231
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/planned",
+        "rows":  [
+                     {
+                         "[value]":  31773399746008
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/packages",
+        "rows":  [
+                     {
+                         "[value]":  7104
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/award",
+        "rows":  [
+                     {
+                         "[value]":  21175018807327.9
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/award_scopes",
+        "rows":  [
+                     {
+                         "[value]":  49268
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/baseline",
+        "rows":  [
+                     {
+                         "[value]":  22770437006184
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/difference",
+        "rows":  [
+                     {
+                         "[value]":  1595517401166.0991
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/difference_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.070069687320133037
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/verified_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/contract_samples",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/bidders_avg",
+        "rows":  [
+                     {
+                         "[value]":  3.14767547857794
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/single_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.487693710118505
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/discount_count_rate",
+        "rows":  [
+                     {
+                         "[value]":  0.024037069215175209
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/technical_issues",
+        "rows":  [
+                     {
+                         "[value]":  3
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/plan_to_notice_days",
+        "rows":  [
+                     {
+                         "[value]":  17.397435897435898
                      }
                  ]
     },
@@ -193,7 +490,52 @@
         "name":  "jan2025_hh/notice_to_close_hours",
         "rows":  [
                      {
-                         "[value]":  178.40404624277457
+                         "[value]":  219.42231043710973
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/close_to_first_award_days",
+        "rows":  [
+                     {
+                         "[value]":  27.225196463654225
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/close_to_open_hours",
+        "rows":  [
+                     {
+                         "[value]":  26.267985414767548
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/open_to_award_days",
+        "rows":  [
+                     {
+                         "[value]":  26.778082875686469
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/supplier",
+        "rows":  [
+                     {
+                         "[value]":  20508.3506246227
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/people",
+        "rows":  [
+                     {
+                         "[value]":  5296
                      }
                  ]
     },
@@ -208,7 +550,7 @@
     },
     {
         "status":  "passed",
-        "name":  "duration_zero_samples",
+        "name":  "duration_multi",
         "rows":  [
                      {
                          "[value]":  null
@@ -217,7 +559,7 @@
     },
     {
         "status":  "passed",
-        "name":  "duration_multi_metric",
+        "name":  "empty_month",
         "rows":  [
                      {
                          "[value]":  null
@@ -226,7 +568,7 @@
     },
     {
         "status":  "passed",
-        "name":  "competition_empty",
+        "name":  "usd",
         "rows":  [
                      {
                          "[value]":  null
@@ -235,7 +577,7 @@
     },
     {
         "status":  "passed",
-        "name":  "vnd_with_usd_filter",
+        "name":  "unknown_currency",
         "rows":  [
                      {
                          "[value]":  null
@@ -244,16 +586,7 @@
     },
     {
         "status":  "passed",
-        "name":  "vnd_with_unknown_filter",
-        "rows":  [
-                     {
-                         "[value]":  null
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "zero_denominator",
+        "name":  "empty_money",
         "rows":  [
                      {
                          "[value]":  null
@@ -265,103 +598,67 @@
         "name":  "compile/Số gói kế hoạch",
         "rows":  [
                      {
-                         "[value]":  2701133
+                         "[value]":  2278458
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị kế hoạch VNĐ",
+        "name":  "compile/Mẫu giá kế hoạch",
         "rows":  [
                      {
-                         "[value]":  6408346291734602
+                         "[value]":  2278458
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị kế hoạch · tỷ VNĐ",
+        "name":  "compile/Lượt kết quả",
         "rows":  [
                      {
-                         "[value]":  6408346.2917346023
+                         "[value]":  2830625
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số thông báo",
+        "name":  "compile/Lượt kết quả hiệu lực",
         "rows":  [
                      {
-                         "[value]":  564461
+                         "[value]":  2550919
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Thông báo hủy",
+        "name":  "compile/Mẫu giá trúng",
         "rows":  [
                      {
-                         "[value]":  1608
+                         "[value]":  2481689
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tỷ lệ thông báo hủy",
+        "name":  "compile/Mẫu mô tả",
         "rows":  [
                      {
-                         "[value]":  0.0028487353422114196
+                         "[value]":  2481363
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số lượt trúng thầu",
+        "name":  "compile/Phạm vi so sánh",
         "rows":  [
                      {
-                         "[value]":  2977346
+                         "[value]":  2830625
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số lượt trúng thầu hiệu lực",
-        "rows":  [
-                     {
-                         "[value]":  2687148
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Số mẫu giá trúng hợp lệ",
-        "rows":  [
-                     {
-                         "[value]":  2616986
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Giá trị trúng thầu VNĐ",
-        "rows":  [
-                     {
-                         "[value]":  3208826170076745
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Giá trị trúng thầu · tỷ VNĐ",
-        "rows":  [
-                     {
-                         "[value]":  3208826.1700767451
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Số mẫu xác minh",
+        "name":  "compile/Mẫu xác minh",
         "rows":  [
                      {
                          "[value]":  0
@@ -370,163 +667,208 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Dự toán xác minh VNĐ",
+        "name":  "compile/Mẫu hợp đồng",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  0
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Dự toán xác minh · tỷ VNĐ",
+        "name":  "compile/Lượt mở thầu",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  427841
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trúng xác minh VNĐ",
+        "name":  "compile/Lượt nhà thầu",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  857736
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trúng xác minh · tỷ VNĐ",
+        "name":  "compile/Lượt một nhà thầu",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  263608
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tiết kiệm xác minh VNĐ",
+        "name":  "compile/Lượt nhiều nhà thầu",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  164233
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tiết kiệm xác minh · tỷ VNĐ",
+        "name":  "compile/Lượt có giảm giá",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  76196
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tỷ lệ tiết kiệm xác minh",
+        "name":  "compile/Thông báo",
         "rows":  [
                      {
-                         "[value]":  null
+                         "[value]":  557218
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số mẫu hợp đồng",
+        "name":  "compile/Thông báo hủy quan sát",
         "rows":  [
                      {
-                         "[value]":  311
+                         "[value]":  1419
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị hợp đồng VNĐ",
+        "name":  "compile/Gói theo trạng thái quan sát",
         "rows":  [
                      {
-                         "[value]":  104065729100
+                         "[value]":  2278458
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị hợp đồng · tỷ VNĐ",
+        "name":  "compile/Kế hoạch VND",
         "rows":  [
                      {
-                         "[value]":  104.0657291
+                         "[value]":  5305409387853474
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tiết kiệm hợp đồng VNĐ",
+        "name":  "compile/Kế hoạch · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  -2269923385
+                         "[value]":  5305409.3878534744
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tiết kiệm hợp đồng · tỷ VNĐ",
+        "name":  "compile/Trúng thầu VND",
         "rows":  [
                      {
-                         "[value]":  -2.269923385
+                         "[value]":  2162473397657600.5
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số lượt mở thầu",
+        "name":  "compile/Trúng thầu · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  3859
+                         "[value]":  2162473.3976576007
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tổng lượt nhà thầu",
+        "name":  "compile/Dự toán mô tả VND",
         "rows":  [
                      {
-                         "[value]":  9470
+                         "[value]":  2310709089758264.5
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Gói một nhà thầu",
+        "name":  "compile/Dự toán mô tả · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  2228
+                         "[value]":  2310709.0897582644
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Gói nhiều nhà thầu",
+        "name":  "compile/Giá trúng mô tả VND",
         "rows":  [
                      {
-                         "[value]":  1631
+                         "[value]":  2161724901467045.3
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hồ sơ đạt kỹ thuật",
+        "name":  "compile/Giá trúng mô tả · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  4877
+                         "[value]":  2161724.9014670453
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hồ sơ không đạt kỹ thuật",
+        "name":  "compile/Chênh lệch mô tả VND",
         "rows":  [
                      {
-                         "[value]":  19
+                         "[value]":  148984188291219.31
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Chênh lệch mô tả · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  148984.18829121933
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Kế hoạch bình quân · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  2.328508749274059
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Độ phủ giá trúng",
+        "rows":  [
+                     {
+                         "[value]":  0.97286076116097764
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Tỷ lệ chênh lệch mô tả",
+        "rows":  [
+                     {
+                         "[value]":  0.064475527859201576
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Độ phủ mẫu mô tả",
+        "rows":  [
+                     {
+                         "[value]":  0.87661311547803045
                      }
                  ]
     },
@@ -535,7 +877,7 @@
         "name":  "compile/Nhà thầu bình quân",
         "rows":  [
                      {
-                         "[value]":  2.4540036278828712
+                         "[value]":  2.0048008489134981
                      }
                  ]
     },
@@ -544,22 +886,40 @@
         "name":  "compile/Tỷ lệ một nhà thầu",
         "rows":  [
                      {
-                         "[value]":  0.57735164550401663
+                         "[value]":  0.616135433490479
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tỷ lệ đạt kỹ thuật",
+        "name":  "compile/Tỷ lệ nhiều nhà thầu",
         "rows":  [
                      {
-                         "[value]":  0.99611928104575165
+                         "[value]":  0.38386456650952105
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số mẫu thời gian hợp lệ",
+        "name":  "compile/Tỷ lệ lượt có giảm giá",
+        "rows":  [
+                     {
+                         "[value]":  0.088833860302004353
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Tỷ lệ hủy quan sát",
+        "rows":  [
+                     {
+                         "[value]":  0.0025465796151595962
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Mẫu thời gian",
         "rows":  [
                      {
                          "[value]":  null
@@ -568,7 +928,7 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Số mẫu bị loại có ngày",
+        "name":  "compile/Mẫu thời gian bị loại",
         "rows":  [
                      {
                          "[value]":  null
@@ -577,7 +937,25 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Thời gian trung bình",
+        "name":  "compile/Khoảng thời gian",
+        "rows":  [
+                     {
+                         "[value]":  null
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Thời gian bình quân",
+        "rows":  [
+                     {
+                         "[value]":  null
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Tỷ lệ mẫu bị loại",
         "rows":  [
                      {
                          "[value]":  null
@@ -595,82 +973,73 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Metric và đơn vị",
+        "name":  "compile/Người nhận · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  "Chọn đúng một chỉ số"
+                         "[value]":  2098726.4454360874
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tiêu đề thời gian",
+        "name":  "compile/Số khóa người nhận",
         "rows":  [
                      {
-                         "[value]":  "Thời gian trung bình (chọn 1 metric)"
+                         "[value]":  160481
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Dòng duration thiếu ngày",
+        "name":  "compile/Lượt nhận đơn",
         "rows":  [
                      {
-                         "[value]":  8015
+                         "[value]":  2470593
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Số gói theo trạng thái",
+        "name":  "compile/Phân bổ · tỷ VND",
         "rows":  [
                      {
-                         "[value]":  2701133
+                         "[value]":  2162473.3976576
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị phân bổ đơn VNĐ",
+        "name":  "compile/Phân bổ · số lượt",
         "rows":  [
                      {
-                         "[value]":  3140135151774055
+                         "[value]":  2830625
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Giá trị phân bổ · tỷ VNĐ",
+        "name":  "compile/Tỷ trọng Top 10 người nhận",
         "rows":  [
                      {
-                         "[value]":  3140135.1517740549
+                         "[value]":  0.059002913261773947
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Ghi chú thời gian",
+        "name":  "compile/Nhóm kỹ thuật cần xác minh",
         "rows":  [
                      {
-                         "[value]":  "Dòng thiếu ngày của metric (không nằm trong KPI): 8.015. Chỉ số theo ngày không bao gồm các dòng này."
+                         "[value]":  26191
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Loại đơn vị",
+        "name":  "compile/Nhóm tiền dự thầu lệch",
         "rows":  [
                      {
-                         "[value]":  null
-                     }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Phân bổ đơn vị",
-        "rows":  [
-                     {
-                         "[value]":  "Nhận đơn"
+                         "[value]":  50
                      }
                  ]
     },
@@ -679,76 +1048,148 @@
         "name":  "compile/Phạm vi cạnh tranh",
         "rows":  [
                      {
-                         "[value]":  "Dữ liệu quan sát: 07/01/2025 – 24/01/2025"
+                         "[value]":  "Quan sát: 23/09/2022 – 31/12/2025"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Tình trạng mẫu xác minh",
+        "name":  "compile/Dòng · demand",
         "rows":  [
                      {
-                         "[value]":  "Chỉ VND · chưa có mẫu verified hợp lệ trong phạm vi chọn; các chỉ số tiết kiệm để trống."
+                         "[value]":  473211
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Giá trị kế hoạch · tỷ VNĐ",
+        "name":  "compile/Dòng · award",
         "rows":  [
                      {
-                         "[value]":  "6.408.346,29"
+                         "[value]":  431979
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Giá trị trúng thầu · tỷ VNĐ",
+        "name":  "compile/Dòng · savings",
         "rows":  [
                      {
-                         "[value]":  "3.208.826,17"
+                         "[value]":  574693
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Tiết kiệm xác minh · tỷ VNĐ",
+        "name":  "compile/Dòng · bidding_competition",
         "rows":  [
                      {
-                         "[value]":  "—"
+                         "[value]":  241978
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Tỷ lệ tiết kiệm xác minh",
+        "name":  "compile/Dòng · duration",
         "rows":  [
                      {
-                         "[value]":  "—"
+                         "[value]":  156434
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Dự toán xác minh · tỷ VNĐ",
+        "name":  "compile/Dòng · supplier",
         "rows":  [
                      {
-                         "[value]":  "—"
+                         "[value]":  1472830
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Giá trúng xác minh · tỷ VNĐ",
+        "name":  "compile/Dòng · notice",
         "rows":  [
                      {
-                         "[value]":  "—"
+                         "[value]":  245782
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Số mẫu xác minh",
+        "name":  "compile/Dòng · status",
+        "rows":  [
+                     {
+                         "[value]":  19773
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Số gói kế hoạch",
+        "rows":  [
+                     {
+                         "[value]":  "2.278.458"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu giá kế hoạch",
+        "rows":  [
+                     {
+                         "[value]":  "2.278.458"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Lượt kết quả",
+        "rows":  [
+                     {
+                         "[value]":  "2.830.625"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Lượt kết quả hiệu lực",
+        "rows":  [
+                     {
+                         "[value]":  "2.550.919"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu giá trúng",
+        "rows":  [
+                     {
+                         "[value]":  "2.481.689"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu mô tả",
+        "rows":  [
+                     {
+                         "[value]":  "2.481.363"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Phạm vi so sánh",
+        "rows":  [
+                     {
+                         "[value]":  "2.830.625"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu xác minh",
         "rows":  [
                      {
                          "[value]":  "0"
@@ -757,37 +1198,208 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Số mẫu hợp đồng",
+        "name":  "compile/Hiển thị · Mẫu hợp đồng",
         "rows":  [
                      {
-                         "[value]":  "311"
+                         "[value]":  "0"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Giá trị hợp đồng · tỷ VNĐ",
+        "name":  "compile/Hiển thị · Lượt mở thầu",
         "rows":  [
                      {
-                         "[value]":  "104,07"
+                         "[value]":  "427.841"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Tiết kiệm hợp đồng · tỷ VNĐ",
+        "name":  "compile/Hiển thị · Lượt nhà thầu",
         "rows":  [
                      {
-                         "[value]":  "(2,27)"
+                         "[value]":  "857.736"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Số lượt mở thầu",
+        "name":  "compile/Hiển thị · Lượt một nhà thầu",
         "rows":  [
                      {
-                         "[value]":  "3.859"
+                         "[value]":  "263.608"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Lượt nhiều nhà thầu",
+        "rows":  [
+                     {
+                         "[value]":  "164.233"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Lượt có giảm giá",
+        "rows":  [
+                     {
+                         "[value]":  "76.196"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Thông báo",
+        "rows":  [
+                     {
+                         "[value]":  "557.218"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Thông báo hủy quan sát",
+        "rows":  [
+                     {
+                         "[value]":  "1.419"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Gói theo trạng thái quan sát",
+        "rows":  [
+                     {
+                         "[value]":  "2.278.458"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Kế hoạch VND",
+        "rows":  [
+                     {
+                         "[value]":  "5.305.409.387.853.470,00"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Kế hoạch · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "5.305.409,39"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Trúng thầu VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.162.473.397.657.600,00"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Trúng thầu · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.162.473,40"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dự toán mô tả VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.310.709.089.758.260,00"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dự toán mô tả · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.310.709,09"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Giá trúng mô tả VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.161.724.901.467.050,00"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Giá trúng mô tả · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.161.724,90"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Chênh lệch mô tả VND",
+        "rows":  [
+                     {
+                         "[value]":  "148.984.188.291.219,00"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Chênh lệch mô tả · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "148.984,19"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Kế hoạch bình quân · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2,33"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Độ phủ giá trúng",
+        "rows":  [
+                     {
+                         "[value]":  "97,29%"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ lệ chênh lệch mô tả",
+        "rows":  [
+                     {
+                         "[value]":  "6,45%"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Độ phủ mẫu mô tả",
+        "rows":  [
+                     {
+                         "[value]":  "87,66%"
                      }
                  ]
     },
@@ -796,7 +1408,7 @@
         "name":  "compile/Hiển thị · Nhà thầu bình quân",
         "rows":  [
                      {
-                         "[value]":  "2,45"
+                         "[value]":  "2,00"
                      }
                  ]
     },
@@ -805,22 +1417,40 @@
         "name":  "compile/Hiển thị · Tỷ lệ một nhà thầu",
         "rows":  [
                      {
-                         "[value]":  "57,74%"
+                         "[value]":  "61,61%"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Tỷ lệ đạt kỹ thuật",
+        "name":  "compile/Hiển thị · Tỷ lệ nhiều nhà thầu",
         "rows":  [
                      {
-                         "[value]":  "99,61%"
+                         "[value]":  "38,39%"
                      }
                  ]
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Thời gian trung bình",
+        "name":  "compile/Hiển thị · Tỷ lệ lượt có giảm giá",
+        "rows":  [
+                     {
+                         "[value]":  "8,88%"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ lệ hủy quan sát",
+        "rows":  [
+                     {
+                         "[value]":  "0,25%"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu thời gian",
         "rows":  [
                      {
                          "[value]":  "—"
@@ -829,7 +1459,7 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Số mẫu thời gian hợp lệ",
+        "name":  "compile/Hiển thị · Mẫu thời gian bị loại",
         "rows":  [
                      {
                          "[value]":  "—"
@@ -838,10 +1468,172 @@
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Số mẫu bị loại có ngày",
+        "name":  "compile/Hiển thị · Khoảng thời gian",
         "rows":  [
                      {
                          "[value]":  "—"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Thời gian bình quân",
+        "rows":  [
+                     {
+                         "[value]":  "—"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ lệ mẫu bị loại",
+        "rows":  [
+                     {
+                         "[value]":  "—"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Người nhận · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.098.726,45"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Số khóa người nhận",
+        "rows":  [
+                     {
+                         "[value]":  "160.481"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Lượt nhận đơn",
+        "rows":  [
+                     {
+                         "[value]":  "2.470.593"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Phân bổ · tỷ VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.162.473,40"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Phân bổ · số lượt",
+        "rows":  [
+                     {
+                         "[value]":  "2.830.625"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ trọng Top 10 người nhận",
+        "rows":  [
+                     {
+                         "[value]":  "5,90%"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Nhóm kỹ thuật cần xác minh",
+        "rows":  [
+                     {
+                         "[value]":  "26.191"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Nhóm tiền dự thầu lệch",
+        "rows":  [
+                     {
+                         "[value]":  "50"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · demand",
+        "rows":  [
+                     {
+                         "[value]":  "473.211"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · award",
+        "rows":  [
+                     {
+                         "[value]":  "431.979"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · savings",
+        "rows":  [
+                     {
+                         "[value]":  "574.693"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · bidding_competition",
+        "rows":  [
+                     {
+                         "[value]":  "241.978"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · duration",
+        "rows":  [
+                     {
+                         "[value]":  "156.434"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · supplier",
+        "rows":  [
+                     {
+                         "[value]":  "1.472.830"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · notice",
+        "rows":  [
+                     {
+                         "[value]":  "245.782"
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Dòng · status",
+        "rows":  [
+                     {
+                         "[value]":  "19.773"
                      }
                  ]
     },
@@ -859,7 +1651,7 @@
         "name":  "rowcount/dim_date",
         "rows":  [
                      {
-                         "[value]":  2376
+                         "[value]":  1461
                      }
                  ]
     },
@@ -877,7 +1669,7 @@
         "name":  "rowcount/dim_geography",
         "rows":  [
                      {
-                         "[value]":  165
+                         "[value]":  65
                      }
                  ]
     },
@@ -886,7 +1678,7 @@
         "name":  "rowcount/dim_party",
         "rows":  [
                      {
-                         "[value]":  2077733
+                         "[value]":  390948
                      }
                  ]
     },
@@ -895,7 +1687,7 @@
         "name":  "rowcount/dim_procurement_method",
         "rows":  [
                      {
-                         "[value]":  420
+                         "[value]":  389
                      }
                  ]
     },
@@ -922,7 +1714,7 @@
         "name":  "rowcount/dim_value_band",
         "rows":  [
                      {
-                         "[value]":  1
+                         "[value]":  7
                      }
                  ]
     },
@@ -931,7 +1723,7 @@
         "name":  "rowcount/fact_award_daily",
         "rows":  [
                      {
-                         "[value]":  207680
+                         "[value]":  431979
                      }
                  ]
     },
@@ -940,7 +1732,7 @@
         "name":  "rowcount/fact_bidding_competition_daily",
         "rows":  [
                      {
-                         "[value]":  120
+                         "[value]":  241978
                      }
                  ]
     },
@@ -949,7 +1741,7 @@
         "name":  "rowcount/fact_demand_daily",
         "rows":  [
                      {
-                         "[value]":  248558
+                         "[value]":  473211
                      }
                  ]
     },
@@ -958,7 +1750,7 @@
         "name":  "rowcount/fact_duration_daily",
         "rows":  [
                      {
-                         "[value]":  65421
+                         "[value]":  156434
                      }
                  ]
     },
@@ -967,7 +1759,7 @@
         "name":  "rowcount/fact_notice_daily",
         "rows":  [
                      {
-                         "[value]":  35022
+                         "[value]":  245782
                      }
                  ]
     },
@@ -976,7 +1768,7 @@
         "name":  "rowcount/fact_savings_daily",
         "rows":  [
                      {
-                         "[value]":  207680
+                         "[value]":  574693
                      }
                  ]
     },
@@ -985,7 +1777,7 @@
         "name":  "rowcount/fact_status_daily",
         "rows":  [
                      {
-                         "[value]":  20901
+                         "[value]":  19773
                      }
                  ]
     },
@@ -994,7 +1786,25 @@
         "name":  "rowcount/fact_supplier_daily",
         "rows":  [
                      {
-                         "[value]":  1488397
+                         "[value]":  1472830
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "top10/2023",
+        "rows":  [
+                     {
+                         "[value]":  0.063582436639779541
+                     }
+                 ]
+    },
+    {
+        "status":  "passed",
+        "name":  "top10/2025",
+        "rows":  [
+                     {
+                         "[value]":  0.077498522378867785
                      }
                  ]
     },
@@ -1003,44 +1813,44 @@
         "name":  "top10_geography",
         "rows":  [
                      {
-                         "[amount]":  2908867677771715,
-                         "dim_geography[province_display]":  "Chưa xác định · v1"
+                         "[amount]":  426990052774613.06,
+                         "dim_geography[province_name]":  "Thành phố Hà Nội"
                      },
                      {
-                         "[amount]":  31621635194456.8,
-                         "dim_geography[province_display]":  "Tỉnh Ninh Bình · v1 · 117"
+                         "[amount]":  252509727049199.69,
+                         "dim_geography[province_name]":  "Thành phố Hồ Chí Minh"
                      },
                      {
-                         "[amount]":  26360636681631.996,
-                         "dim_geography[province_display]":  "Thành phố Hà Nội · v1 · 101"
+                         "[amount]":  117237124458307.64,
+                         "dim_geography[province_name]":  "Đa địa bàn chưa phân bổ"
                      },
                      {
-                         "[amount]":  24710293107437.078,
-                         "dim_geography[province_display]":  "Thành phố Hà Nội · v1 · 01"
+                         "[amount]":  93937916515168.047,
+                         "dim_geography[province_name]":  "Chưa xác định"
                      },
                      {
-                         "[amount]":  14740707097288.979,
-                         "dim_geography[province_display]":  "Thành phố Hồ Chí Minh · v1 · 79"
+                         "[amount]":  65682892775040.563,
+                         "dim_geography[province_name]":  "Tỉnh Quảng Ninh"
                      },
                      {
-                         "[amount]":  12649892645276.666,
-                         "dim_geography[province_display]":  "TP. Hồ Chí Minh · v1 · 701"
+                         "[amount]":  56213502051728.414,
+                         "dim_geography[province_name]":  "Tỉnh Thanh Hóa"
                      },
                      {
-                         "[amount]":  5383933194942.5,
-                         "dim_geography[province_display]":  "Thành phố Hải Phòng · v1 · 31"
+                         "[amount]":  53644682426054.852,
+                         "dim_geography[province_name]":  "Thành phố Hải Phòng"
                      },
                      {
-                         "[amount]":  5298880063682.2676,
-                         "dim_geography[province_display]":  "Tỉnh Quảng Ninh · v1 · 225"
+                         "[amount]":  51960992207278.734,
+                         "dim_geography[province_name]":  "Tỉnh Nghệ An"
                      },
                      {
-                         "[amount]":  5287930027994.6973,
-                         "dim_geography[province_display]":  "Tỉnh Đồng Nai · v1 · 713"
+                         "[amount]":  47336399364680.445,
+                         "dim_geography[province_name]":  "Tỉnh Hưng Yên"
                      },
                      {
-                         "[amount]":  5018398654796.21,
-                         "dim_geography[province_display]":  "Đa địa bàn chưa phân bổ · v1"
+                         "[amount]":  43581763524298.664,
+                         "dim_geography[province_name]":  "Tỉnh Đồng Nai"
                      }
                  ]
     },
@@ -1049,44 +1859,44 @@
         "name":  "top10_supplier",
         "rows":  [
                      {
-                         "[amount]":  778794166020716,
-                         "dim_party[party_display]":  "CÔNG TY TNHH MỘT THÀNH VIÊN XUÂN TÙNG [PARTY:vn6000903919]"
-                     },
-                     {
-                         "[amount]":  64378170412603,
-                         "dim_party[party_display]":  "CÔNG TY CỔ PHẦN XÂY DỰNG HẠ TẦNG ĐẠI PHONG [PARTY:vn0600333201]"
-                     },
-                     {
-                         "[amount]":  28748725894957.996,
-                         "dim_party[party_display]":  "CÔNG TY TNHH MTV TƯ VẤN XÂY DỰNG PHÚ THÀNH [PARTY:vn2700938028]"
-                     },
-                     {
-                         "[amount]":  27727430669865.75,
+                         "[amount]":  25231.461118587751,
                          "dim_party[party_display]":  "CÔNG TY TNHH MỘT THÀNH VIÊN DƯỢC LIỆU TW2 [PARTY:vn0103053042]"
                      },
                      {
-                         "[amount]":  25679697801471,
-                         "dim_party[party_display]":  "CÔNG TY TNHH MỘT THÀNH VIÊN XÂY LẮP PHƯỚC THÀNH [PARTY:vn4300359252]"
-                     },
-                     {
-                         "[amount]":  25596801520652,
+                         "[amount]":  24229.188238825,
                          "dim_party[party_display]":  "CÔNG TY CỔ PHẦN DƯỢC LIỆU TRUNG ƯƠNG 2 [PARTY:vn0302597576]"
                      },
                      {
-                         "[amount]":  18941916770000,
-                         "dim_party[party_display]":  "CÔNG TY CỔ PHẦN ĐẦU TƯ - PHÁT TRIỂN TÂM SINH NGHĨA [PARTY:vn0304374871]"
-                     },
-                     {
-                         "[amount]":  12597809739686.381,
+                         "[amount]":  11789.17567535038,
                          "dim_party[party_display]":  "CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ HÀ NỘI [PARTY:vn0100109699]"
                      },
                      {
-                         "[amount]":  11849275370007.449,
+                         "[amount]":  11009.838721192449,
                          "dim_party[party_display]":  "CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC [PARTY:vn0301140748]"
                      },
                      {
-                         "[amount]":  10271856514758,
+                         "[amount]":  9973.6157003501521,
+                         "dim_party[party_display]":  "CÔNG TY CỔ PHẦN PHÁT TRIỂN CÔNG NGHỆ VIỄN THÔNG TIN HỌC SUN VIỆT [PARTY:vn0302246183]"
+                     },
+                     {
+                         "[amount]":  9527.712890344,
                          "dim_party[party_display]":  "CÔNG TY TNHH DƯỢC PHẨM GIGAMED [PARTY:vn0316417470]"
+                     },
+                     {
+                         "[amount]":  9141.3568939356119,
+                         "dim_party[party_display]":  "TỔNG CÔNG TY KINH TẾ KỸ THUẬT CÔNG NGHIỆP QUỐC PHÒNG [PARTY:vn0100283055]"
+                     },
+                     {
+                         "[amount]":  8569.0599164210125,
+                         "dim_party[party_display]":  "TỔNG CÔNG TY XÂY DỰNG TRƯỜNG SƠN [PARTY:vn0100512273]"
+                     },
+                     {
+                         "[amount]":  7568.083479250241,
+                         "dim_party[party_display]":  "CÔNG TY TNHH THIẾT BỊ MINH TÂM [PARTY:vn0101268476]"
+                     },
+                     {
+                         "[amount]":  6791.481786,
+                         "dim_party[party_display]":  "Doanh nghiệp tư nhân xây dựng Xuân Trường [PARTY:vn2700113605]"
                      }
                  ]
     }

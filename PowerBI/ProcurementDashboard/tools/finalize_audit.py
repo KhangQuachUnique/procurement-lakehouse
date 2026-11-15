@@ -35,8 +35,8 @@ def main():
     missing = [name for name in required if not (ROOT / name).is_file()]
     checks = {name: read(name)['status'] for name in [
         'static_validation.json', 'tmdl_validation.json', 'numeric_validation.json',
-        'group_validation.json', 'layout_validation.json', 'multipart_refresh_validation.json',
-        'page_capture_validation.json', 'source_integrity.json']}
+        'group_validation.json',
+        'page_capture_validation.json', 'interaction_validation.json', 'source_integrity.json']}
     partitions = [p for t in read('engine_state.json')['tables'] for p in t['partitions']]
     ready = all(p['state'] == 'Ready' and not p['error'] for p in partitions)
     good = intact and not missing and ready and all(s == 'passed' for s in checks.values())
@@ -62,8 +62,8 @@ def main():
         'Cardinality có hậu tố `approx_distinct` là ước lượng; kiểm tra PK/grain dùng COUNT DISTINCT chính xác.\n\n'
         '| Bảng | Số dòng | Phạm vi ngày nguồn |\n|---|---:|---|\n' + '\n'.join(rows) + '\n\n'
         'Có đủ 17 bảng, tổng ' + f"{sum(t['rows'] for t in profile['tables'].values()):,}" + ' dòng. '
-        'Không phát hiện FK mồ côi; 8.015 FK ngày null thuộc duration được giữ nguyên. '
-        'Dimension PK duy nhất, không null. Grain duration thiếu ngày có lỗi; xem [chính sách xử lý](source_issue_policy.json).\n\n'
+        'Không phát hiện FK mồ côi hoặc FK ngày null trong các fact mới. '
+        'PK và grain duy nhất, không null. Lịch model lọc về 1.461 ngày 2022–2025; nguồn lịch gốc giữ nguyên.\n\n'
         'Parquet không có manifest/release ID/thời điểm xuất đáng tin cậy để chứng minh một snapshot chung. '
         'Thời gian sửa file không được dùng làm bằng chứng thời điểm xuất. '
         'Hash cuối khớp hash khảo sát: [source_integrity.json](source_integrity.json).\n', encoding='utf-8')

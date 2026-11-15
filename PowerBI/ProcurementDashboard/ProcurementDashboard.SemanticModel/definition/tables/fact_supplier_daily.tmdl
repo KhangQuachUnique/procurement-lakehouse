@@ -79,12 +79,19 @@ table fact_supplier_daily
 		summarizeBy: none
 		sourceColumn: award_amount_sum
 
+	column allocation_label
+		dataType: string
+		lineageTag: 8c04e8f8-0744-5aee-bd23-64dd2c3450d9
+		summarizeBy: none
+		sourceColumn: allocation_label
+
 	partition fact_supplier_daily = m
 		mode: import
 		source =
 				let
 				    Source = ReadParquetTable("fact_supplier_daily", {"group_key", "report_date", "geography_key", "sector_key", "currency_key", "party_key", "recipient_allocation_state", "award_scope_count", "effective_award_scope_count", "eligible_amount_count", "award_amount_sum"}),
-				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"currency_key", type text}, {"party_key", type text}, {"recipient_allocation_state", type text}, {"award_scope_count", Int64.Type}, {"effective_award_scope_count", Int64.Type}, {"eligible_amount_count", Int64.Type}, {"award_amount_sum", type number}}, "en-US")
+				    Typed = Table.TransformColumnTypes(Source, {{"group_key", type text}, {"report_date", type date}, {"geography_key", type text}, {"sector_key", type text}, {"currency_key", type text}, {"party_key", type text}, {"recipient_allocation_state", type text}, {"award_scope_count", Int64.Type}, {"effective_award_scope_count", Int64.Type}, {"eligible_amount_count", Int64.Type}, {"award_amount_sum", type number}}, "en-US"),
+				    Display = Table.AddColumn(Typed,"allocation_label",each Record.FieldOrDefault([single_recipient="Một người nhận",unallocated_consortium="Liên danh chưa phân bổ",independent_winners="Nhiều người nhận độc lập",no_winner="Chưa có người trúng"], [recipient_allocation_state], [recipient_allocation_state]),type text)
 				in
-				    Typed
+				    Display
 

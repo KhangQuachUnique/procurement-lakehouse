@@ -12,19 +12,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "province_display"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Địa phương · phiên bản": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.giá_trị_trúng_thầu__tỷ_vnđ": {
 			      "Definition": {
@@ -33,19 +21,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Giá trị trúng thầu · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Trúng thầu · tỷ VNĐ": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.giá_trị_kế_hoạch__tỷ_vnđ": {
 			      "Definition": {
@@ -54,19 +30,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Giá trị kế hoạch · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Kế hoạch · tỷ VNĐ": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.dự_toán_xác_minh__tỷ_vnđ": {
 			      "Definition": {
@@ -75,19 +39,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Dự toán xác minh · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Dự toán": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.tỷ_lệ_tiết_kiệm_xác_minh": {
 			      "Definition": {
@@ -96,19 +48,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Tỷ lệ tiết kiệm xác minh"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Tỷ lệ": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.giá_trúng_xác_minh__tỷ_vnđ": {
 			      "Definition": {
@@ -117,19 +57,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Giá trúng xác minh · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Giá trúng": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.tiết_kiệm_xác_minh__tỷ_vnđ": {
 			      "Definition": {
@@ -138,19 +66,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Tiết kiệm xác minh · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Tiết kiệm": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.giá_trị_phân_bổ__tỷ_vnđ": {
 			      "Definition": {
@@ -159,19 +75,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Giá trị phân bổ · tỷ VNĐ"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Tỷ VNĐ": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "dim_procurement_method.method_category": {
 			      "Definition": {
@@ -232,6 +136,216 @@ cultureInfo vi-VN
 			        }
 			      },
 			      "State": "Generated"
+			    },
+			    "dim_sector.sector_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_sector",
+			          "ConceptualProperty": "sector_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lĩnh vực": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dim_geography.province_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_geography",
+			          "ConceptualProperty": "province_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Địa phương": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dim_date.year_month": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_date",
+			          "ConceptualProperty": "year_month"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tháng": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dim_value_band.band_label": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_value_band",
+			          "ConceptualProperty": "band_label"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Quy mô gói": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "fact_supplier_daily.allocation_label": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "fact_supplier_daily",
+			          "ConceptualProperty": "allocation_label"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Trạng thái phân bổ": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "fact_notice_daily.notice_family": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "fact_notice_daily",
+			          "ConceptualProperty": "notice_family"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Họ thông báo": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_measures.dòng__demand": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Dòng · demand"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Nhu cầu": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_measures.dòng__award": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Dòng · award"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Kết quả": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_measures.dòng__bidding_competition": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Dòng · bidding_competition"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Cạnh tranh": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_measures.dòng__duration": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Dòng · duration"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Thời gian": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
 			    }
 			  }
 			}

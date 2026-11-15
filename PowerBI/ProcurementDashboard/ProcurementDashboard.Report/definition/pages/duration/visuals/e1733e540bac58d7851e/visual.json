@@ -3,11 +3,11 @@
   "name": "e1733e540bac58d7851e",
   "position": {
     "x": 24,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 6,
-    "tabOrder": 6
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 8,
+    "tabOrder": 8
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tổng duration_sum / tổng sample_count trên các dòng có ngày, đúng một metric.'"
+                  "Value": "'Thời gian bình quân'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Thời gian trung bình'"
+                  "Value": "'Thời gian bình quân'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Thời gian trung bình"
+                  "Property": "Hiển thị · Thời gian bình quân"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Thời gian trung bình",
-              "nativeQueryRef": "Hiển thị · Thời gian trung bình"
+              "queryRef": "_Measures.Hiển thị · Thời gian bình quân",
+              "nativeQueryRef": "Hiển thị · Thời gian bình quân"
             }
           ]
         }

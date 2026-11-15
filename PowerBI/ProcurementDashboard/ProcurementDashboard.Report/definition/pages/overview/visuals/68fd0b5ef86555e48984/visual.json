@@ -3,56 +3,32 @@
   "name": "68fd0b5ef86555e48984",
   "position": {
     "x": 24,
-    "y": 692,
-    "width": 1232,
-    "height": 20,
-    "z": 14,
-    "tabOrder": 14
+    "y": 850,
+    "width": 1392,
+    "height": 30,
+    "z": 15,
+    "tabOrder": 15
   },
   "visual": {
-    "visualType": "card",
+    "visualType": "textbox",
     "objects": {
-      "labels": [
+      "general": [
         {
           "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#64748B'"
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Chênh lệch là mô tả dự toán–giá trúng, chưa xác minh thuế/phạm vi. Không có mẫu tiết kiệm xác minh hoặc hợp đồng.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#64748B"
                     }
                   }
-                }
+                ]
               }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
+            ]
           }
         }
       ]
@@ -157,28 +133,6 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Tình trạng mẫu xác minh"
-                }
-              },
-              "queryRef": "_Measures.Tình trạng mẫu xác minh",
-              "nativeQueryRef": "Tình trạng mẫu xác minh"
-            }
-          ]
-        }
-      }
     }
   }
 }

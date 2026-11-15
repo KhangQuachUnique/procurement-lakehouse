@@ -3,11 +3,11 @@
   "name": "572d049efb1d5492b099",
   "position": {
     "x": 24,
-    "y": 692,
-    "width": 1232,
-    "height": 20,
-    "z": 18,
-    "tabOrder": 18
+    "y": 850,
+    "width": 1392,
+    "height": 30,
+    "z": 16,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Giá trị chưa có mẫu hợp lệ để trống. Tỷ lệ tiết kiệm = tổng tiết kiệm / tổng dự toán xác minh, không lấy trung bình tỷ lệ.",
+                    "value": "Tỷ lệ tính từ tổng cùng mẫu, không bình quân tỷ lệ. Verified và hợp đồng chưa có mẫu; không dựng KPI tiền bằng 0.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "9pt",
+                      "fontSize": "10pt",
                       "color": "#64748B"
                     }
                   }

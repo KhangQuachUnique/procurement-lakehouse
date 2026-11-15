@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "e82800dbed9e58548af1",
   "position": {
-    "x": 336,
-    "y": 96,
-    "z": 4,
-    "height": 64,
-    "width": 296,
-    "tabOrder": 4
+    "x": 372,
+    "y": 132,
+    "z": 5,
+    "height": 56,
+    "width": 324,
+    "tabOrder": 5
   },
   "visual": {
     "visualType": "slicer",
@@ -28,7 +28,8 @@
               },
               "queryRef": "dim_sector.sector_name",
               "nativeQueryRef": "sector_name",
-              "active": true
+              "active": true,
+              "displayName": "Lĩnh vực"
             }
           ]
         }

@@ -3,11 +3,11 @@
   "name": "37e6bdb401635e76adb5",
   "position": {
     "x": 24,
-    "y": 692,
-    "width": 1232,
-    "height": 20,
-    "z": 14,
-    "tabOrder": 14
+    "y": 850,
+    "width": 1392,
+    "height": 30,
+    "z": 16,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Một nhà thầu là chỉ báo mức độ cạnh tranh, không kết luận sai phạm. Tỷ lệ đạt chỉ xét hồ sơ có kết quả đạt/không đạt.",
+                    "value": "Một nhà thầu là chỉ báo để rà soát, không kết luận sai phạm. Không gán tiền tệ VND cho các trường tiền cạnh tranh.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "9pt",
+                      "fontSize": "10pt",
                       "color": "#64748B"
                     }
                   }

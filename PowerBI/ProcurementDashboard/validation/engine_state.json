@@ -1,5 +1,5 @@
 ﻿{
-    "port":  61699,
+    "port":  52451,
     "tables":  [
                    {
                        "measures":  [
@@ -236,6 +236,6 @@
                        "name":  "_Measures"
                    }
                ],
-    "database":  "e08c23d7-9ff2-48d3-96c4-94dccc982bc0",
-    "id":  "e08c23d7-9ff2-48d3-96c4-94dccc982bc0"
+    "database":  "7277fee4-6722-4ae2-84a1-fa70ae06f190",
+    "id":  "7277fee4-6722-4ae2-84a1-fa70ae06f190"
 }

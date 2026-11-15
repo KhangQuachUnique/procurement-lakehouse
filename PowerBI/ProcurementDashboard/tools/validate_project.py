@@ -50,7 +50,7 @@ def main():
                 for v in x: walk(v)
         walk(j)
         pos=j['position']
-        if min(pos['x'],pos['y'])<0 or pos['x']+pos['width']>1280 or pos['y']+pos['height']>720: errors.append(f'{p}: canvas overflow')
+        if min(pos['x'],pos['y'])<0 or pos['x']+pos['width']>1440 or pos['y']+pos['height']>900: errors.append(f'{p}: canvas overflow')
     theme_schema=json.loads((contracts/'theme-schema.json').read_text(encoding='utf-8-sig'))
     theme=json.loads((PROJECT/'theme.json').read_text(encoding='utf-8'))
     errors += [f'Theme {list(e.path)}: {e.message}' for e in jsonschema.Draft7Validator(theme_schema).iter_errors(theme)]
@@ -71,13 +71,18 @@ def main():
         actual={v['visual']['query']['queryState']['Values']['projections'][0]['queryRef'] for v in slicers}
         if expected-actual: errors.append(f'{page}: missing required slicers {expected-actual}')
         if any(r['source'] not in names or r['target'] not in names for r in pd['visualInteractions']): errors.append(f'{page}: missing interaction target')
+        unsupported = ['T? l? ??t k? thu?t', 'H? s? ??t k? thu?t', 'total_bid_amount', 'total_final_bid_amount', 'verified_saving_sum', 'contract_amount_sum']
         for v in docs:
-            if v['visual']['visualType']=='slicer' and v['visual']['query']['queryState']['Values']['projections'][0]['queryRef'].startswith('dim_duration_metric.'):
-                for target in docs:
-                    if target['visual']['visualType']=='tableEx':
-                        rule=next(r for r in pd['visualInteractions'] if r['source']==v['name'] and r['target']==target['name'])
-                        if rule['type']!='NoFilter': errors.append('Metric must not filter supplier table')
-    assert len(order)==4
+            if v['visual']['visualType'] == 'textbox':
+                continue
+            data = json.dumps(v, ensure_ascii=False)
+            for term in unsupported:
+                if term in data:
+                    errors.append(f'{page}: unsupported source metric {term}')
+        if not any(v['visual'].get('objects',{}).get('general') for v in slicers if 'dim_date.year_month' in json.dumps(v)):
+            errors.append(f'{page}: missing default month selection')
+    expected_pages=['overview','demand','awards','savings','competition','duration','suppliers','quality']
+    if order != expected_pages: errors.append(f'Unexpected pages: {order}')
     outcome={'status':'passed' if not errors else 'failed','json_files_checked':len(checks),'visuals_checked':visuals,'pages':order,'errors':errors,
         'limits':['Static validation is not a Desktop render or refresh test.','TMDL parsing and engine execution recorded separately.']}
     save(PROJECT/'validation/static_validation.json',outcome)

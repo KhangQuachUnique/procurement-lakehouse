@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "name": "baseline_all",
+      "measure": "Kế hoạch · tỷ VND",
+      "expected_rendered": "5.305.409,39",
+      "actual_rendered": "5.305.409,39",
+      "status": "passed"
+    },
+    {
+      "name": "sector_filter",
+      "measure": "Kế hoạch · tỷ VND",
+      "expected_rendered": "1.803.618,67",
+      "actual_rendered": "1.803.618,67",
+      "status": "passed"
+    },
+    {
+      "name": "sector_sync",
+      "measure": "Lượt mở thầu",
+      "expected_rendered": "170.156",
+      "actual_rendered": "170.156",
+      "status": "passed"
+    },
+    {
+      "name": "hours_metric",
+      "measure": "Thời gian bình quân",
+      "expected_rendered": "238,0 giờ",
+      "actual_rendered": "238,0 giờ",
+      "status": "passed"
+    },
+    {
+      "name": "empty_month",
+      "measure": "Nhà thầu bình quân",
+      "expected_rendered": "—",
+      "actual_rendered": "—",
+      "status": "passed"
+    },
+    {
+      "name": "reset2025",
+      "measure": "Kế hoạch · tỷ VND",
+      "expected_rendered": "1.886.526,17",
+      "actual_rendered": "1.886.526,17",
+      "status": "passed"
+    }
+  ],
+  "method": "Actual slicer mouse input at inspected UIA rectangles; rendered card accessible names compared with SQL; default state restored."
+}

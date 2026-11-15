@@ -1,108 +1,66 @@
-# Phân tích mua sắm công Việt Nam
+# Dashboard mua sắm công — Gold V3
 
-Dự án Power BI cục bộ gồm 17 bảng Parquet, bảng `_Measures`, 37 quan hệ một chiều và bốn trang báo cáo. Mở [ProcurementDashboard.pbip](ProcurementDashboard.pbip) bằng Power BI Desktop. Không cần Power BI Service, DuckDB server hoặc custom visual để sử dụng báo cáo.
+Đã thay nội dung trong dự án [ProcurementDashboard.pbip](ProcurementDashboard.pbip) bằng 8 trang dùng dữ liệu mới ở `PowerBI/export/parquet`. Không tạo dự án PBIP khác. Xem [đặc tả](../../docs/dashboard-gold-v3-design.md) và [nghiệm thu](validation/acceptance.md).
 
-## Mở và refresh
+## Các trang có thể làm từ dữ liệu thực tế
 
-1. Dùng Power BI Desktop hỗ trợ PBIP, TMDL và PBIR. Bản phát triển được kiểm tra với Desktop **2.154.956.0**; trạng thái kiểm chứng thực tế nằm trong `validation/`.
-2. Mở `ProcurementDashboard.pbip`. Report tham chiếu semantic model bằng đường dẫn tương đối.
-3. Nếu chuyển máy: vào **Transform data → Edit parameters**, đổi `DataRoot` thành thư mục chứa nguồn Parquet.
-4. Chọn **Home → Refresh**. Lần đầu chưa có cache, report có thể hiện trống trước khi refresh hoàn tất. Chờ nạp cả bảng đơn vị có hơn hai triệu dòng.
-5. Nhấn Save để lưu dữ liệu cache cục bộ. `.pbi/` là dữ liệu máy cá nhân, không đưa vào Git.
-
-Nguồn mặc định: `D:/Project/procurement-lakehouse/PowerBI/export/parquet`.
-
-Mỗi bảng logic có thể là `table_name.parquet` hoặc gồm nhiều file trong thư mục có tên `table_name` dưới `DataRoot`, bao gồm thư mục con. Hàm `ReadParquetTable` đọc riêng từng bảng, kiểm tra tên cột rồi nối các part cùng bảng. Không trộn schema của các fact/dimension. Công cụ khảo sát từ chối file không xác định được bảng hoặc layout mơ hồ; nếu nguồn dùng tên khác, cần cấu hình ánh xạ có căn cứ trước khi sinh lại. Schema và kiểu của các part được kiểm tra bởi công cụ khảo sát; Power Query gán kiểu tường minh và dừng khi chuyển kiểu lỗi.
-
-## Đọc báo cáo
-
-| Trang | Nội dung | Phạm vi |
-|---|---|---|
-| Tổng quan | Kế hoạch, trúng thầu, tiết kiệm, địa phương, trạng thái | Measures tiền chỉ VND; các fact theo ngày sự kiện riêng |
-| Tiết kiệm và hợp đồng | Dự toán/giá trúng/tiết kiệm cùng tập verified; hợp đồng riêng | Không nối hợp đồng khác tập mẫu vào waterfall |
-| Cạnh tranh đấu thầu | Mở thầu, lượt nhà thầu, một/nhiều nhà thầu, kỹ thuật | Export hiện có chỉ từ 07–24/01/2025 |
-| Thời gian và đơn vị tham gia | Một metric thời gian và Top 10 đơn vị nhận đơn | Hai khu vực phân tích riêng; metric không lọc đơn vị |
-
-Slicer tháng và lĩnh vực đồng bộ giữa các trang. Chọn tháng không có dữ liệu cạnh tranh sẽ cho kết quả trống, không phải bằng 0. Biểu đồ không tự lọc chéo nhau; slicer là cách lọc chủ động để tránh suy diễn quan hệ giữa các fact. Bộ chọn metric single-select chỉ tác động khu vực thời gian.
-
-Tiền trên report dùng tỷ VNĐ, hai chữ số thập phân; số tiền chưa đủ mẫu hợp lệ để trống. Locale model là `vi-VN`; tùy thiết lập Desktop, cần kiểm tra dấu phân cách thực tế. Tháng và quý có khóa sắp xếp qua các năm. Địa phương giữ phiên bản lịch sử; không tự lọc `is_current` hoặc gộp toàn bộ thành 63 tỉnh/thành.
-
-Card dùng các measures trình bày `Hiển thị · ...` để bảo đảm dấu phân cách `vi-VN` và dấu “—”. Measures số gốc được giữ riêng cho biểu đồ/tính toán. Trục và ô số native vẫn có thể theo locale của Desktop (máy kiểm tra dùng dấu phẩy hàng nghìn và dấu chấm thập phân); đơn vị được ghi rõ. Điều này được ghi trong nghiệm thu, không xem định dạng card là bằng chứng toàn bộ visual đã dùng cùng locale.
-
-## Định nghĩa KPI
-
-| Nhóm | Định nghĩa |
+| Trang | Nội dung |
 |---|---|
-| Kế hoạch | Tổng `planned_amount_sum` có mẫu giá hợp lệ; số gói từ `package_count` |
-| Trúng thầu | Tổng `award_amount_sum`; số lượt từ `award_scope_count`, không phải nhà thầu duy nhất |
-| Tiết kiệm xác minh | Các tổng `verified_*`; tỷ lệ = tổng tiết kiệm / tổng dự toán, cùng mẫu xác minh và VND |
-| Hợp đồng | Tổng các trường `contract_*` khi có `contract_sample_count`; chưa tạo tỷ lệ vì thiếu dự toán cùng mẫu được chứng minh |
-| Nhà thầu bình quân | Tổng `total_bidders` / tổng `opening_count`; đây là lượt tham gia |
-| Một nhà thầu | Tổng `single_bidder_count` / tổng `opening_count` |
-| Đạt kỹ thuật | `tech_passed_count` / (`tech_passed_count` + `tech_failed_count`); chỉ hồ sơ có kết quả |
-| Thời gian | `SUM(duration_sum)` / `SUM(sample_count)` cho đúng một metric và dòng có `report_date` |
-| Mẫu bị loại có ngày | Tổng `excluded_sample_count` chỉ trên dòng có ngày và một metric |
-| Đơn vị nhận đơn | Giá trị VND có mẫu hợp lệ, chỉ `single_recipient`; không chia tiền liên danh/nhiều người nhận |
-| Trạng thái | Tổng `package_count` theo trạng thái quan sát thông báo/kết quả; không phải tiến độ thực hiện |
+| Tổng quan | Kế hoạch, kết quả, chênh lệch mô tả, lĩnh vực và địa phương |
+| Nhu cầu thị trường | Số gói, tiền kế hoạch và cơ cấu quy mô |
+| Kết quả lựa chọn | Lượt kết quả, hiệu lực, tiền và độ phủ giá |
+| Chênh lệch mô tả | Dự toán và giá trúng cùng mẫu descriptive; tỷ lệ và mẫu |
+| Cạnh tranh cơ bản | Lượt mở, lượt tham gia, một/nhiều nhà thầu và lượt có giảm giá |
+| Thời gian quy trình | Năm metric, bình quân có trọng số và mẫu bị loại |
+| Đơn vị nhận thầu | Top 10 single_recipient, số khóa, lượt nhận và trạng thái phân bổ |
+| Chất lượng dữ liệu | Coverage tháng, trạng thái quan sát, thông báo, mẫu và hạn chế |
 
-Các tỷ lệ dùng `DIVIDE` và để BLANK khi mẫu số bằng 0. Measures thời gian để BLANK nếu bỏ chọn hoặc có nhiều metric. Không tự quy đổi ngoại tệ. Bộ lọc USD/UNKNOWN giao với measure VND cho BLANK.
+## Mở và sử dụng
 
-## Giới hạn nguồn và quyết định mô hình
+1. Mở PBIP bằng Power BI Desktop hỗ trợ PBIR/TMDL. Môi trường kiểm tra có bản 2.154.956.0.
+2. Khi chuyển máy, sửa tham số `DataRoot` đến thư mục Parquet. Một bảng có thể là một file hoặc nhiều part trong thư mục cùng tên bảng.
+3. Refresh nếu chưa có cache và Save. Dữ liệu `.pbi/` chỉ dùng cục bộ, không đưa vào Git.
+4. Mặc định chọn 12 tháng năm 2025. Có thể bỏ chọn và xem các tháng 2022–2025. Tháng/lĩnh vực đồng bộ giữa các trang; slicer khác chỉ tại trang có chiều hỗ trợ.
+5. Trong chế độ chỉnh sửa Desktop, dùng Ctrl+click Page Navigator. Biểu đồ không tự lọc chéo; dùng slicer để lọc chủ động.
 
-- **Duration có lỗi grain:** 8.015 dòng thiếu `report_date`, chỉ có 835 `group_key` khác nhau; tổng mẫu hợp lệ và duration trên các dòng này bằng 0. Các dòng có ngày có khóa duy nhất. Toàn bộ dòng nguồn vẫn được import; không deduplicate, không gán ngày giả và không nối bằng `group_key`. Measures theo ngày loại tường minh nhóm thiếu ngày. Không trình bày tổng mẫu bị loại thiếu ngày như số mẫu duy nhất vì grain lặp chưa giải quyết được. Cần xuất lại nguồn duration với grain không mơ hồ để phục hồi chỉ số này. Bằng chứng trong `source_profile.json` và `source_issue_policy.json`; lỗi nguồn vẫn được ghi, không đổi thành “nguồn sạch”.
-- **Provenance chưa đủ:** Parquet không có export manifest/release ID. `mtime` chỉ là thời gian filesystem; không chứng minh thời điểm xuất hay snapshot chung. Phạm vi ngày giữa các fact khác nhau và được giữ nguyên.
-- **Bảng ngày không liên tục:** `dim_date` có 2.376 ngày, từ 18/10/1202 đến 02/04/2027; có ngày ngoại lệ năm 1202, 1984 và 1989. Không đánh dấu bảng ngày chuẩn khi không đáp ứng tính liên tục. Giữ nguyên các khóa để không làm mất liên kết nguồn; hierarchy và nhóm tháng vẫn dùng được. Chưa cung cấp YTD/YoY hoặc tự lấp ngày thiếu. Generator chỉ đánh dấu bảng ngày nếu kiểm tra thực tế thấy không null, duy nhất và liên tục.
-- **Schema upstream khác export:** schema repository không chứa đầy đủ bảng cạnh tranh và các trường hợp đồng bổ sung của export hiện tại. Không dùng schema cũ để loại những trường nguồn hiện có hoặc khẳng định đã truy được toàn bộ lineage. Các trường bổ sung được giữ, nhưng không tự tạo tỷ lệ hợp đồng hay đơn vị tiền tệ cho bảng cạnh tranh thiếu `currency_key`.
-- **Số tiền gần đúng:** nguồn là DECIMAL(38,6), model dùng binary64 (`double`). Không chọn Fixed Decimal vì giới hạn bốn chữ số thập phân và nguy cơ tràn tổng lớn. Giữ nguyên Parquet chính xác; report là công cụ phân tích, không phải sổ kế toán. `precision_assessment.json` ghi phạm vi và chênh lệch tổng sau ép kiểu; `numeric_validation.json` đối chiếu DAX với tổng SQL nguồn.
-- **Đơn vị:** `recipient_allocation_state` phân biệt single recipient, liên danh chưa phân bổ, nhiều người nhận và không có người nhận. Chỉ Top 10 người nhận đơn; không suy diễn tỷ lệ chia tiền. `party_display` kèm khóa để tránh gộp hai đơn vị trùng tên.
-- **Phạm vi lọc:** duration không có địa lý; supplier không có phương thức. Không tạo quan hệ suy diễn hoặc slicer chung cho các trường này.
+Tiền là tỷ VND. Card dùng vi-VN; trục/bảng native có thể theo locale Desktop. Không đủ mẫu hiện dấu “—”, không tự thay bằng 0. Lịch model chỉ giữ 1.461 ngày 2022–2025; Parquet không bị sửa. Không cung cấp YoY/YTD vì fact 2022 chỉ bắt đầu từ tháng 9.
 
-Định dạng được chọn: PBIP 1.0, `definition.pbir` 4.0, `definition.pbism` 4.2, PBIR metadata 2.0.0, report schema 3.0.0, page 2.0.0, visualContainer 2.1.0 khi sinh và 2.9.0 cho một số visual sau khi Desktop lưu, TOM compatibility level 1601. Theme được sao chép vào RegisteredResources và được report tham chiếu.
+## Giới hạn đã áp dụng
 
-## Chạy kiểm tra
+- Verified và hợp đồng đều chưa có mẫu, không dựng KPI tiền/tỷ lệ. Descriptive chưa phải tiết kiệm được xác minh thuế/phạm vi.
+- Bỏ KPI kỹ thuật vì 26.191 nhóm có tổng đạt/trượt lớn hơn lượt nhà thầu. Bỏ tiền cạnh tranh vì thiếu currency và 50 nhóm không khớp phép trừ giảm giá.
+- Duration chỉ dùng plan_to_notice_days, notice_to_close_hours, close_to_first_award_days, close_to_open_hours và open_to_award_days. Bỏ mốc đầy đủ trùng dữ liệu và độ lệch kế hoạch chưa rõ dấu.
+- Single_recipient có mẫu tiền hợp lệ và party_kind khác UNKNOWN là tập dùng cho xếp hạng; không chia tiền liên danh. Khóa nguồn phân biệt đơn vị trùng tên, chưa chứng minh pháp nhân duy nhất.
+- Không có thời điểm xuất/release ID đủ chứng minh snapshot chung. Ngày cuối sự kiện không phải ngày ingest. Observed không phải tiến độ hợp đồng.
+- Nguồn DECIMAL(38,6) giữ nguyên; model double phục vụ phân tích, không thay sổ kế toán. Sai số được đối chiếu SQL–DAX.
 
-Từ workspace, dùng Python có `duckdb`, `pyarrow`, `jsonschema`; kiểm tra giao diện cần thêm `pywinauto`, `pillow`, Windows và Desktop.
+## Kiểm tra và sinh lại
 
-```powershell
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\profile_sources.py
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\prepare_numeric_checks.py
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\prepare_group_checks.py
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\assess_precision.py
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\validate_project.py
-powershell -NoProfile -ExecutionPolicy Bypass -File PowerBI\ProcurementDashboard\tools\validate_tmdl.ps1
-```
-
-`profile_sources.py` trả mã lỗi nếu nguồn còn lỗi PK/grain/null FK; đây là phát hiện thực tế, không được bỏ qua. `source_issue_policy.json` mô tả ranh giới phân tích được bảo vệ và yêu cầu sửa nguồn. Không đổi mã lỗi profiler thành pass chỉ vì report có thể mở.
-
-Khi Desktop đã refresh xong, lấy cổng engine của đúng dự án rồi chạy bộ DAX chỉ đọc:
+Đóng cửa sổ dự án trước khi sinh lại vì generator thay toàn bộ các trang được quản lý. Ảnh tạm, fixture, script khảo sát và bản sao trước lần thay mới đã được dọn; chỉ giữ bộ sinh/kiểm tra đang dùng và bằng chứng nghiệm thu hiện hành.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File PowerBI\ProcurementDashboard\tools\engine_check.ps1 -Port <cong-engine> -QueriesFile PowerBI\ProcurementDashboard\validation\dax_queries.json
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\compare_numeric.py
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\compare_groups.py
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/profile_sources.py
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/build_project.py
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/validate_project.py
+powershell -NoProfile -ExecutionPolicy Bypass -File PowerBI/ProcurementDashboard/tools/validate_tmdl.ps1
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/prepare_numeric_checks.py
 ```
 
-Không tái sử dụng một cổng cũ sau khi đóng Desktop. `engine_check.ps1` chỉ làm mới dữ liệu nếu truyền `-Refresh`; mặc định kiểm tra trạng thái và chạy query đọc.
-
-Sinh lại dự án chỉ sau khi đóng Desktop hoặc xử lý rõ thay đổi đang mở:
+Sau khi mở Desktop, dùng cổng engine của đúng cửa sổ dự án:
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 PowerBI\ProcurementDashboard\tools\build_project.py
+powershell -NoProfile -ExecutionPolicy Bypass -File PowerBI/ProcurementDashboard/tools/engine_check.ps1 -Port <port> -Refresh -QueriesFile PowerBI/ProcurementDashboard/validation/dax_queries.json
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/compare_numeric.py
 ```
 
-Generator ghi lại các file do nó quản lý; không dùng sau khi chỉnh tay report nếu chưa lưu bản thay đổi cần giữ.
+Không dùng lại cổng của phiên Desktop đã đóng. Static/TMDL không thay thế refresh, DAX và xem giao diện thật.
 
-## Bằng chứng nghiệm thu
+## Kiểm tra tương tác và giao diện
 
-- `source_profile.json`, `source_files.json`: inventory, hash, metadata, PK/grain/FK, phạm vi ngày và loại dữ liệu.
-- `source_issue_policy.json`: lỗi nguồn được giữ và ranh giới của measures duration.
-- `precision_assessment.json`: phạm vi và giới hạn số thập phân.
-- `static_validation.json`: schema JSON/theme, binding, bố cục, slicer bắt buộc và tương tác metric.
-- `tmdl_validation.json`: parser TMDL thật của Desktop; không đồng nghĩa đã thực thi M/DAX.
-- `numeric_expected.json`, `dax_queries.json`, `dax_results.json`, `numeric_validation.json`: SQL nguồn, DAX thực thi và đối chiếu.
-- `engine_state.json`: trạng thái partition tại thời điểm kiểm tra; `NoData` không chứng minh refresh thành công.
-- `screenshots/`: ảnh và UI Automation từ cửa sổ Desktop; các ảnh `initial-*`/`*-state` có thể là bằng chứng lỗi hoặc quá trình phát triển, không phải kết quả cuối.
+```powershell
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/verify_interactions.py --pid <PID-Desktop>
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/capture_pages.py --pid <PID-Desktop>
+.\.venv\Scripts\python.exe -X utf8 PowerBI/ProcurementDashboard/tools/finalize_audit.py
+```
 
-Trạng thái cuối cùng được ghi trong `validation/acceptance.md`. Không gọi dashboard đã hoàn thiện trực quan chỉ dựa trên schema hoặc tọa độ.
-
-Tham chiếu chính thức: [PBIP](https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-overview), [report/PBIR](https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-report), [semantic model](https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-dataset). Schema Microsoft đã tải vào `validation/contracts/` để kiểm tra lại không cần mạng.
+Kiểm tra tương tác dùng chuột/bàn phím trên đúng cửa sổ dự án, đối chiếu card với SQL, rồi khôi phục năm 2025. Không chuyển sang ứng dụng khác trong lúc chạy. Bộ kiểm tra dừng nếu mất foreground. Thư mục `tools/` chỉ giữ công cụ xây dựng, xác minh và điều khiển Desktop đang dùng; `validation/` giữ bằng chứng cuối và schema cần để kiểm tra offline.

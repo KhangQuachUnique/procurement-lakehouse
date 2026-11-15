@@ -3,11 +3,11 @@
   "name": "9679de0c20025f94b9ed",
   "position": {
     "x": 24,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 6,
-    "tabOrder": 6
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 8,
+    "tabOrder": 8
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dự toán xác minh · tỷ VNĐ'"
+                  "Value": "'Dự toán mô tả · tỷ VND'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dự toán xác minh · tỷ VNĐ'"
+                  "Value": "'Dự toán mô tả · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Dự toán xác minh · tỷ VNĐ"
+                  "Property": "Hiển thị · Dự toán mô tả · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Dự toán xác minh · tỷ VNĐ",
-              "nativeQueryRef": "Hiển thị · Dự toán xác minh · tỷ VNĐ"
+              "queryRef": "_Measures.Hiển thị · Dự toán mô tả · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Dự toán mô tả · tỷ VND"
             }
           ]
         }

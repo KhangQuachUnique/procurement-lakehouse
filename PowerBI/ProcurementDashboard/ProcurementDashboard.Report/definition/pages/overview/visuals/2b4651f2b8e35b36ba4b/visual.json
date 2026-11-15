@@ -3,11 +3,11 @@
   "name": "2b4651f2b8e35b36ba4b",
   "position": {
     "x": 24,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 6,
-    "tabOrder": 6
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 7,
+    "tabOrder": 7
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị kế hoạch · tỷ VNĐ'"
+                  "Value": "'Kế hoạch · tỷ VND'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị kế hoạch · tỷ VNĐ'"
+                  "Value": "'Kế hoạch · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Giá trị kế hoạch · tỷ VNĐ"
+                  "Property": "Hiển thị · Kế hoạch · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Giá trị kế hoạch · tỷ VNĐ",
-              "nativeQueryRef": "Hiển thị · Giá trị kế hoạch · tỷ VNĐ"
+              "queryRef": "_Measures.Hiển thị · Kế hoạch · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Kế hoạch · tỷ VND"
             }
           ]
         }

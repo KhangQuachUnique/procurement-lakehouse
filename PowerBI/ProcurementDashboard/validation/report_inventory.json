@@ -3,22 +3,42 @@
     {
       "name": "overview",
       "displayName": "Tổng quan",
-      "visuals": 15
+      "visuals": 16
+    },
+    {
+      "name": "demand",
+      "displayName": "Nhu cầu thị trường",
+      "visuals": 17
+    },
+    {
+      "name": "awards",
+      "displayName": "Kết quả lựa chọn",
+      "visuals": 17
     },
     {
       "name": "savings",
-      "displayName": "Tiết kiệm và hợp đồng",
-      "visuals": 19
+      "displayName": "Chênh lệch mô tả",
+      "visuals": 17
     },
     {
       "name": "competition",
-      "displayName": "Cạnh tranh đấu thầu",
-      "visuals": 15
+      "displayName": "Cạnh tranh cơ bản",
+      "visuals": 17
     },
     {
       "name": "duration",
-      "displayName": "Thời gian và đơn vị tham gia",
-      "visuals": 14
+      "displayName": "Thời gian quy trình",
+      "visuals": 17
+    },
+    {
+      "name": "suppliers",
+      "displayName": "Đơn vị nhận thầu",
+      "visuals": 15
+    },
+    {
+      "name": "quality",
+      "displayName": "Chất lượng dữ liệu",
+      "visuals": 15
     }
   ]
 }

@@ -3,9 +3,9 @@
   "name": "b9be2cd2361f53039772",
   "position": {
     "x": 24,
-    "y": 18,
+    "y": 12,
     "width": 620,
-    "height": 22,
+    "height": 20,
     "z": 0,
     "tabOrder": 0
   },
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Phân tích mua sắm công Việt Nam",
+                    "value": "MUA SẮM CÔNG VIỆT NAM  /  GOLD V3",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "11pt",
+                      "fontSize": "10pt",
                       "color": "#64748B"
                     }
                   }

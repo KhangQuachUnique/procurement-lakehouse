@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "f0d05f72ea195f99ba1c",
   "position": {
-    "x": 960,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 9,
-    "tabOrder": 9
+    "x": 1086,
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 10,
+    "tabOrder": 10
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tổng tiết kiệm / tổng dự toán, cùng tập mẫu verified và VND; không phải trung bình tỷ lệ theo dòng.'"
+                  "Value": "'Chênh lệch mô tả · tỷ VND'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tỷ lệ tiết kiệm xác minh'"
+                  "Value": "'Chênh lệch mô tả · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Tỷ lệ tiết kiệm xác minh"
+                  "Property": "Hiển thị · Chênh lệch mô tả · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Tỷ lệ tiết kiệm xác minh",
-              "nativeQueryRef": "Hiển thị · Tỷ lệ tiết kiệm xác minh"
+              "queryRef": "_Measures.Hiển thị · Chênh lệch mô tả · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Chênh lệch mô tả · tỷ VND"
             }
           ]
         }

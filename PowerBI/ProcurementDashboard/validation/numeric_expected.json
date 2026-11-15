@@ -1,254 +1,512 @@
 [
   {
     "name": "all/planned",
-    "sql": "SELECT sum(planned_amount_sum) AS value FROM fact_demand_daily WHERE currency_key='VND' AND (TRUE)",
-    "value": "6408346291734602.473400",
-    "absolute_tolerance": "5"
+    "sql": "SELECT sum(planned_amount_sum) FROM fact_demand_daily WHERE TRUE",
+    "value": "5305409387853473.336900",
+    "absolute_tolerance": "5305.409387853473336900"
+  },
+  {
+    "name": "all/packages",
+    "sql": "SELECT sum(package_count) FROM fact_demand_daily WHERE TRUE",
+    "value": "2278458",
+    "absolute_tolerance": "0"
   },
   {
     "name": "all/award",
-    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_award_daily WHERE currency_key='VND' AND (TRUE)",
-    "value": "3208826170076742.536300",
-    "absolute_tolerance": "5"
+    "sql": "SELECT sum(award_amount_sum) FROM fact_award_daily WHERE TRUE",
+    "value": "2162473397657600.321100",
+    "absolute_tolerance": "2162.473397657600321100"
   },
   {
-    "name": "all/saving",
-    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_saving_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
-    "value": null,
-    "absolute_tolerance": "5"
+    "name": "all/award_scopes",
+    "sql": "SELECT sum(award_scope_count) FROM fact_award_daily WHERE TRUE",
+    "value": "2830625",
+    "absolute_tolerance": "0"
   },
   {
     "name": "all/baseline",
-    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_baseline_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
-    "value": null,
-    "absolute_tolerance": "5"
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_baseline_sum) END FROM fact_savings_daily WHERE TRUE",
+    "value": "2310709089758264.442500",
+    "absolute_tolerance": "2310.709089758264442500"
   },
   {
-    "name": "all/saving_rate",
-    "sql": "SELECT sum(verified_saving_sum)/nullif(sum(verified_baseline_sum),0) AS value FROM fact_savings_daily WHERE currency_key='VND' AND (TRUE)",
-    "value": null,
-    "absolute_tolerance": "0.0000000001"
+    "name": "all/difference",
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_difference_sum) END FROM fact_savings_daily WHERE TRUE",
+    "value": "148984188291219.325800",
+    "absolute_tolerance": "148.984188291219325800"
+  },
+  {
+    "name": "all/difference_rate",
+    "sql": "SELECT sum(descriptive_difference_sum)/nullif(sum(descriptive_baseline_sum),0) FROM fact_savings_daily WHERE TRUE",
+    "value": "0.06447552785920158",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "all/verified_samples",
+    "sql": "SELECT sum(verified_sample_count) FROM fact_savings_daily WHERE TRUE",
+    "value": "0",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "all/contract_samples",
+    "sql": "SELECT sum(contract_sample_count) FROM fact_savings_daily WHERE TRUE",
+    "value": "0",
+    "absolute_tolerance": "0"
   },
   {
     "name": "all/bidders_avg",
-    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
-    "value": "2.454003627882871",
-    "absolute_tolerance": "0.0000000001"
+    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE TRUE",
+    "value": "2.004800848913498",
+    "absolute_tolerance": "1E-9"
   },
   {
     "name": "all/single_rate",
-    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
-    "value": "0.5773516455040166",
-    "absolute_tolerance": "0.0000000001"
+    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE TRUE",
+    "value": "0.616135433490479",
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "all/technical_rate",
-    "sql": "SELECT sum(tech_passed_count)::DOUBLE/nullif(sum(tech_passed_count)+sum(tech_failed_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (TRUE)",
-    "value": "0.9961192810457516",
-    "absolute_tolerance": "0.0000000001"
+    "name": "all/discount_count_rate",
+    "sql": "SELECT sum(discounted_bidder_count)::DOUBLE/nullif(sum(total_bidders),0) FROM fact_bidding_competition_daily WHERE TRUE",
+    "value": "0.08883386030200435",
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "all/supplier",
-    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND (TRUE)",
-    "value": "3140135151774054.627300",
-    "absolute_tolerance": "5"
-  },
-  {
-    "name": "jan2025_hh/planned",
-    "sql": "SELECT sum(planned_amount_sum) AS value FROM fact_demand_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "31775015954008.000000",
-    "absolute_tolerance": "5"
-  },
-  {
-    "name": "jan2025_hh/award",
-    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_award_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "1299208444679.000000",
-    "absolute_tolerance": "5"
-  },
-  {
-    "name": "jan2025_hh/saving",
-    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_saving_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": null,
-    "absolute_tolerance": "5"
-  },
-  {
-    "name": "jan2025_hh/baseline",
-    "sql": "SELECT CASE WHEN sum(verified_sample_count)>0 THEN sum(verified_baseline_sum) END AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": null,
-    "absolute_tolerance": "5"
-  },
-  {
-    "name": "jan2025_hh/saving_rate",
-    "sql": "SELECT sum(verified_saving_sum)/nullif(sum(verified_baseline_sum),0) AS value FROM fact_savings_daily WHERE currency_key='VND' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": null,
-    "absolute_tolerance": "0.0000000001"
-  },
-  {
-    "name": "jan2025_hh/bidders_avg",
-    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "2.9722222222222223",
-    "absolute_tolerance": "0.0000000001"
-  },
-  {
-    "name": "jan2025_hh/single_rate",
-    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "0.47863247863247865",
-    "absolute_tolerance": "0.0000000001"
-  },
-  {
-    "name": "jan2025_hh/technical_rate",
-    "sql": "SELECT sum(tech_passed_count)::DOUBLE/nullif(sum(tech_passed_count)+sum(tech_failed_count),0) AS value FROM fact_bidding_competition_daily WHERE TRUE AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "0.994392523364486",
-    "absolute_tolerance": "0.0000000001"
-  },
-  {
-    "name": "jan2025_hh/supplier",
-    "sql": "SELECT sum(award_amount_sum) AS value FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "1298705667129.000000",
-    "absolute_tolerance": "5"
+    "name": "all/technical_issues",
+    "sql": "SELECT count(*) filter(where tech_passed_count+tech_failed_count>total_bidders) FROM fact_bidding_competition_daily WHERE TRUE",
+    "value": "26191",
+    "absolute_tolerance": "0"
   },
   {
     "name": "all/plan_to_notice_days",
-    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='plan_to_notice_days' AND (TRUE)",
-    "value": "5.147189468469106",
-    "absolute_tolerance": "0.000000001"
-  },
-  {
-    "name": "jan2025_hh/plan_to_notice_days",
-    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='plan_to_notice_days' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "5.92204042348412",
-    "absolute_tolerance": "0.000000001"
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='plan_to_notice_days' AND (TRUE)",
+    "value": "16.40409809744762",
+    "absolute_tolerance": "1E-9"
   },
   {
     "name": "all/notice_to_close_hours",
-    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='notice_to_close_hours' AND (TRUE)",
-    "value": "223.02683102558433",
-    "absolute_tolerance": "0.000000001"
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='notice_to_close_hours' AND (TRUE)",
+    "value": "237.98200466976473",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "all/close_to_first_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_first_award_days' AND (TRUE)",
+    "value": "28.614371133073224",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "all/close_to_open_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_open_hours' AND (TRUE)",
+    "value": "26.91247120418848",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "all/open_to_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='open_to_award_days' AND (TRUE)",
+    "value": "28.355559409526336",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "all/supplier",
+    "sql": "SELECT sum(award_amount_sum)/1000000000 FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (TRUE)",
+    "value": "2098726.4454360884",
+    "absolute_tolerance": "0.0000020987264454360884"
+  },
+  {
+    "name": "all/people",
+    "sql": "SELECT count(distinct party_key) FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (TRUE)",
+    "value": "160481",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/planned",
+    "sql": "SELECT sum(planned_amount_sum) FROM fact_demand_daily WHERE year(report_date)=2025",
+    "value": "1886526167109524.940000",
+    "absolute_tolerance": "1886.526167109524940000"
+  },
+  {
+    "name": "year2025/packages",
+    "sql": "SELECT sum(package_count) FROM fact_demand_daily WHERE year(report_date)=2025",
+    "value": "712344",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/award",
+    "sql": "SELECT sum(award_amount_sum) FROM fact_award_daily WHERE year(report_date)=2025",
+    "value": "823331435460804.586100",
+    "absolute_tolerance": "823.331435460804586100"
+  },
+  {
+    "name": "year2025/award_scopes",
+    "sql": "SELECT sum(award_scope_count) FROM fact_award_daily WHERE year(report_date)=2025",
+    "value": "1038199",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/baseline",
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_baseline_sum) END FROM fact_savings_daily WHERE year(report_date)=2025",
+    "value": "882229224164924.598000",
+    "absolute_tolerance": "882.229224164924598000"
+  },
+  {
+    "name": "year2025/difference",
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_difference_sum) END FROM fact_savings_daily WHERE year(report_date)=2025",
+    "value": "58913893021246.011900",
+    "absolute_tolerance": "58.913893021246011900"
+  },
+  {
+    "name": "year2025/difference_rate",
+    "sql": "SELECT sum(descriptive_difference_sum)/nullif(sum(descriptive_baseline_sum),0) FROM fact_savings_daily WHERE year(report_date)=2025",
+    "value": "0.06677844193725395",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/verified_samples",
+    "sql": "SELECT sum(verified_sample_count) FROM fact_savings_daily WHERE year(report_date)=2025",
+    "value": "0",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/contract_samples",
+    "sql": "SELECT sum(contract_sample_count) FROM fact_savings_daily WHERE year(report_date)=2025",
+    "value": "0",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/bidders_avg",
+    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE year(report_date)=2025",
+    "value": "2.3140472470667186",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/single_rate",
+    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE year(report_date)=2025",
+    "value": "0.5500833586729719",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/discount_count_rate",
+    "sql": "SELECT sum(discounted_bidder_count)::DOUBLE/nullif(sum(total_bidders),0) FROM fact_bidding_competition_daily WHERE year(report_date)=2025",
+    "value": "0.08488261974779444",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/technical_issues",
+    "sql": "SELECT count(*) filter(where tech_passed_count+tech_failed_count>total_bidders) FROM fact_bidding_competition_daily WHERE year(report_date)=2025",
+    "value": "5169",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "year2025/plan_to_notice_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='plan_to_notice_days' AND (year(report_date)=2025)",
+    "value": "17.84200080373326",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/notice_to_close_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='notice_to_close_hours' AND (year(report_date)=2025)",
+    "value": "262.37209199100045",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/close_to_first_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_first_award_days' AND (year(report_date)=2025)",
+    "value": "29.0558501093021",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/close_to_open_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_open_hours' AND (year(report_date)=2025)",
+    "value": "31.11300468695935",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/open_to_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='open_to_award_days' AND (year(report_date)=2025)",
+    "value": "28.70195918774303",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "year2025/supplier",
+    "sql": "SELECT sum(award_amount_sum)/1000000000 FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (year(report_date)=2025)",
+    "value": "776769.1550082244",
+    "absolute_tolerance": "7.767691550082244E-7"
+  },
+  {
+    "name": "year2025/people",
+    "sql": "SELECT count(distinct party_key) FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (year(report_date)=2025)",
+    "value": "88231",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/planned",
+    "sql": "SELECT sum(planned_amount_sum) FROM fact_demand_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "31773399746008.000000",
+    "absolute_tolerance": "31.773399746008000000"
+  },
+  {
+    "name": "jan2025_hh/packages",
+    "sql": "SELECT sum(package_count) FROM fact_demand_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "7104",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/award",
+    "sql": "SELECT sum(award_amount_sum) FROM fact_award_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "21175018807327.901000",
+    "absolute_tolerance": "21.175018807327901000"
+  },
+  {
+    "name": "jan2025_hh/award_scopes",
+    "sql": "SELECT sum(award_scope_count) FROM fact_award_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "49268",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/baseline",
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_baseline_sum) END FROM fact_savings_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "22770437006184.000000",
+    "absolute_tolerance": "22.770437006184000000"
+  },
+  {
+    "name": "jan2025_hh/difference",
+    "sql": "SELECT CASE WHEN sum(descriptive_sample_count)>0 THEN sum(descriptive_difference_sum) END FROM fact_savings_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "1595517401166.099000",
+    "absolute_tolerance": "1.595517401166099000"
+  },
+  {
+    "name": "jan2025_hh/difference_rate",
+    "sql": "SELECT sum(descriptive_difference_sum)/nullif(sum(descriptive_baseline_sum),0) FROM fact_savings_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "0.07006968732013304",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/verified_samples",
+    "sql": "SELECT sum(verified_sample_count) FROM fact_savings_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "0",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/contract_samples",
+    "sql": "SELECT sum(contract_sample_count) FROM fact_savings_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "0",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/bidders_avg",
+    "sql": "SELECT sum(total_bidders)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "3.14767547857794",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/single_rate",
+    "sql": "SELECT sum(single_bidder_count)::DOUBLE/nullif(sum(opening_count),0) FROM fact_bidding_competition_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "0.487693710118505",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/discount_count_rate",
+    "sql": "SELECT sum(discounted_bidder_count)::DOUBLE/nullif(sum(total_bidders),0) FROM fact_bidding_competition_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "0.02403706921517521",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/technical_issues",
+    "sql": "SELECT count(*) filter(where tech_passed_count+tech_failed_count>total_bidders) FROM fact_bidding_competition_daily WHERE report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH'",
+    "value": "3",
+    "absolute_tolerance": "0"
+  },
+  {
+    "name": "jan2025_hh/plan_to_notice_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='plan_to_notice_days' AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "17.397435897435898",
+    "absolute_tolerance": "1E-9"
   },
   {
     "name": "jan2025_hh/notice_to_close_hours",
-    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE report_date IS NOT NULL AND metric_key='notice_to_close_hours' AND (report_date BETWEEN DATE '2025-01-01' AND DATE '2025-01-31' AND sector_key='SEC_HH')",
-    "value": "178.40404624277457",
-    "absolute_tolerance": "0.000000001"
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='notice_to_close_hours' AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "219.42231043710973",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/close_to_first_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_first_award_days' AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "27.225196463654225",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/close_to_open_hours",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='close_to_open_hours' AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "26.267985414767548",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/open_to_award_days",
+    "sql": "SELECT sum(duration_sum)/nullif(sum(sample_count),0) FROM fact_duration_daily WHERE metric_key='open_to_award_days' AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "26.77808287568647",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "jan2025_hh/supplier",
+    "sql": "SELECT sum(award_amount_sum)/1000000000 FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "20508.3506246227",
+    "absolute_tolerance": "2.05083506246227E-8"
+  },
+  {
+    "name": "jan2025_hh/people",
+    "sql": "SELECT count(distinct party_key) FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND (report_date between date '2025-01-01' and date '2025-01-31' AND sector_key='SEC_HH')",
+    "value": "5296",
+    "absolute_tolerance": "0"
   },
   {
     "name": "duration_no_metric",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "duration_zero_samples",
+    "name": "duration_multi",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "duration_multi_metric",
+    "name": "empty_month",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "competition_empty",
+    "name": "usd",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "vnd_with_usd_filter",
+    "name": "unknown_currency",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
-    "name": "vnd_with_unknown_filter",
+    "name": "empty_money",
+    "sql": null,
     "value": null,
-    "absolute_tolerance": "0"
-  },
-  {
-    "name": "zero_denominator",
-    "value": null,
-    "absolute_tolerance": "0"
+    "absolute_tolerance": "1E-9"
   },
   {
     "name": "rowcount/dim_currency",
+    "sql": "SELECT count(*) FROM dim_currency",
     "value": "4",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_date",
-    "value": "2376",
+    "sql": "SELECT count(*) FROM dim_date WHERE date_key BETWEEN DATE '2022-01-01' AND DATE '2025-12-31'",
+    "value": "1461",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_duration_metric",
+    "sql": "SELECT count(*) FROM dim_duration_metric",
     "value": "7",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_geography",
-    "value": "165",
+    "sql": "SELECT count(*) FROM dim_geography",
+    "value": "65",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_party",
-    "value": "2077733",
+    "sql": "SELECT count(*) FROM dim_party",
+    "value": "390948",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_procurement_method",
-    "value": "420",
+    "sql": "SELECT count(*) FROM dim_procurement_method",
+    "value": "389",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_progress_status",
+    "sql": "SELECT count(*) FROM dim_progress_status",
     "value": "4",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_sector",
+    "sql": "SELECT count(*) FROM dim_sector",
     "value": "7",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/dim_value_band",
-    "value": "1",
+    "sql": "SELECT count(*) FROM dim_value_band",
+    "value": "7",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_award_daily",
-    "value": "207680",
+    "sql": "SELECT count(*) FROM fact_award_daily",
+    "value": "431979",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_bidding_competition_daily",
-    "value": "120",
+    "sql": "SELECT count(*) FROM fact_bidding_competition_daily",
+    "value": "241978",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_demand_daily",
-    "value": "248558",
+    "sql": "SELECT count(*) FROM fact_demand_daily",
+    "value": "473211",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_duration_daily",
-    "value": "65421",
+    "sql": "SELECT count(*) FROM fact_duration_daily",
+    "value": "156434",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_notice_daily",
-    "value": "35022",
+    "sql": "SELECT count(*) FROM fact_notice_daily",
+    "value": "245782",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_savings_daily",
-    "value": "207680",
+    "sql": "SELECT count(*) FROM fact_savings_daily",
+    "value": "574693",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_status_daily",
-    "value": "20901",
+    "sql": "SELECT count(*) FROM fact_status_daily",
+    "value": "19773",
     "absolute_tolerance": "0"
   },
   {
     "name": "rowcount/fact_supplier_daily",
-    "value": "1488397",
+    "sql": "SELECT count(*) FROM fact_supplier_daily",
+    "value": "1472830",
     "absolute_tolerance": "0"
+  },
+  {
+    "name": "top10/2023",
+    "sql": "WITH parties AS (SELECT party_key,sum(award_amount_sum)/1000000000 AS v FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND year(report_date)=2023 GROUP BY 1), top_people AS (SELECT * FROM parties ORDER BY v DESC,party_key LIMIT 10) SELECT (SELECT sum(v) FROM top_people)/(SELECT sum(v) FROM parties)",
+    "value": "0.06358243663977978",
+    "absolute_tolerance": "1E-9"
+  },
+  {
+    "name": "top10/2025",
+    "sql": "WITH parties AS (SELECT party_key,sum(award_amount_sum)/1000000000 AS v FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND year(report_date)=2025 GROUP BY 1), top_people AS (SELECT * FROM parties ORDER BY v DESC,party_key LIMIT 10) SELECT (SELECT sum(v) FROM top_people)/(SELECT sum(v) FROM parties)",
+    "value": "0.07749852237886808",
+    "absolute_tolerance": "1E-9"
   }
 ]

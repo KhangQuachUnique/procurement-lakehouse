@@ -1,6 +1,6 @@
 ﻿{
     "parser":  "Microsoft.AnalysisServices.Tabular.TmdlSerializer (installed Desktop)",
-    "dateTableMarked":  false,
+    "dateTableMarked":  true,
     "relationships":  37,
     "tables":  [
                    {
@@ -103,10 +103,10 @@
                        "measures":  0,
                        "partitions":  1,
                        "name":  "fact_supplier_daily",
-                       "columns":  11
+                       "columns":  12
                    },
                    {
-                       "measures":  65,
+                       "measures":  116,
                        "partitions":  1,
                        "name":  "_Measures",
                        "columns":  1

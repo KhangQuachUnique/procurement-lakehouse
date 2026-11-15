@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-11-12T10:22:12.995639+00:00",
+  "checked_at_utc": "2026-11-15T09:32:23.132464+00:00",
   "status": "passed",
   "files": [
     {
@@ -11,97 +11,97 @@
     {
       "table": "dim_date",
       "path": "dim_date.parquet",
-      "sha256": "bf35fd95af3732860464716f6e55cf3aab6b569a73aeaa4a721bdb09ce9da65c",
+      "sha256": "77a539fa865b5ab14695cc90b710e808c1ff427683838e2c29227e63f6c9b66c",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_duration_metric",
       "path": "dim_duration_metric.parquet",
-      "sha256": "af4897fb7958e15f47af5fc8fd7b62ff8e195467e21d22f98a08d1029fc654f7",
+      "sha256": "71c23db2a55cb6556769da16464299db86e47e1e65d5fdc7b433b7d4aceb6927",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_geography",
       "path": "dim_geography.parquet",
-      "sha256": "f002d600872f3e4a08aee957c92fe18db19306386ead42378843ff52ac70fc61",
+      "sha256": "8af65ae0426c719cdbfd130f4c8570dfc05d642cf28ecae3114e228b7ac3c476",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_party",
       "path": "dim_party.parquet",
-      "sha256": "8930b930b6ea2b9758d1d2077d0907330bfdf0e6fd47697c71b2e6172a692fd7",
+      "sha256": "cd298be37c400dd9c8781d43f375fcabf6eaf06bb10a84fa6a5a5cb132fdc7cd",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_procurement_method",
       "path": "dim_procurement_method.parquet",
-      "sha256": "7ec300e12ab349f6b11ed5bc1645a34ceb8b4ca66b51f607001f56732d58f905",
+      "sha256": "fabdae277228badcf00326576cbd5ff7f5faa8813029c315314875eb7885a235",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_progress_status",
       "path": "dim_progress_status.parquet",
-      "sha256": "58abb2c1a392e2b766c5e91e302aa99c5488a844caa6f817143e7745ffa2cca1",
+      "sha256": "3fae0bac8a6e10924d9404de758798904aa2e2afa9faf0d48dcae45501f464fc",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_sector",
       "path": "dim_sector.parquet",
-      "sha256": "a5b8589519f771b28a7670e02cbfa5ed5f1ff089366abac7127ef124804d7d90",
+      "sha256": "c17a824961cb5ddd891f322ee4621b6a75bdd1433bc7dc00394acb0ac7405f94",
       "unchanged_since_profile": true
     },
     {
       "table": "dim_value_band",
       "path": "dim_value_band.parquet",
-      "sha256": "8e77697992846a11a618ef046cd10eefe5c8ef271c84820bcad8d474bc7c6681",
+      "sha256": "aa4ac4353a8e55fa024cfdb507a693c21f73495a74d945427e547c1ef4e4ba19",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_award_daily",
       "path": "fact_award_daily.parquet",
-      "sha256": "90b0e63e782a57a7918a70de3072e7ab8073e9fb91a2f8a67e54d5ba0e12d65c",
+      "sha256": "ec81b6f732e7efbf90fcf97321bafe9853a606832c4d143e0a71f26a83dacadb",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_bidding_competition_daily",
       "path": "fact_bidding_competition_daily.parquet",
-      "sha256": "539636e25e16a9d939cea21ead0c1ca113b445b2ea456d1a49d96d5b3ff1bf88",
+      "sha256": "4876cde2bd60b4286ca3f90dfdd69e772cd118dfe4f440bc0853631b191af2dc",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_demand_daily",
       "path": "fact_demand_daily.parquet",
-      "sha256": "6b9a603cb21bc5742250a90e8614686cb3818943eb2a23365ce700754b29d466",
+      "sha256": "42df8bfce3e8ba72e580336224f22800967a1a0e61da8a2eb0beb10274bfb986",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_duration_daily",
       "path": "fact_duration_daily.parquet",
-      "sha256": "75dcd0150c8f0642e942bc553b79b04a07a1dec0ac219979dce40d40bab533e4",
+      "sha256": "eb000644db452bb7d3d440c6450d8434493ad3c9b0886638f018df16d7fabbbe",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_notice_daily",
       "path": "fact_notice_daily.parquet",
-      "sha256": "900ffd57ec00e7c0c6dd76a29392e989168714df615b5478ff289667cabef93d",
+      "sha256": "60cf2f56594ff65679d9b36b06a7fb4c11567fa0fda84efed8e9501370b534fa",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_savings_daily",
       "path": "fact_savings_daily.parquet",
-      "sha256": "304c587e84dbf3751150de46ec856d00b98dfe27397b6d36b8ea41805dc7de5b",
+      "sha256": "86950ac525b9a33eab290e3514509a6b7485932f2203186fbfff6988d44359cd",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_status_daily",
       "path": "fact_status_daily.parquet",
-      "sha256": "b5392d6eec9268b2bc662ff5ada7d4a2a123785fb6778f7494ba5cacad8d82f4",
+      "sha256": "b78b8192eb93951d6906f21bd2a34bfade855ff4d9858cc96d714544df4e1a58",
       "unchanged_since_profile": true
     },
     {
       "table": "fact_supplier_daily",
       "path": "fact_supplier_daily.parquet",
-      "sha256": "e9fcf561553f285929a83b2f8c0d21364f1cfc26e0101b2bd0b9790918a3689f",
+      "sha256": "bad56111011dbe5b7f8e4f65fb36838029ff3a6d41a052d03762745a38d18f6d",
       "unchanged_since_profile": true
     }
   ],

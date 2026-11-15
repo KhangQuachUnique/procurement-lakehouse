@@ -6,86 +6,86 @@
       "status": "passed",
       "actual": [
         {
-          "label": "Chưa xác định · v1",
-          "amount": 2908867677771715
+          "label": "Thành phố Hà Nội",
+          "amount": 426990052774613.06
         },
         {
-          "label": "Tỉnh Ninh Bình · v1 · 117",
-          "amount": 31621635194456.8
+          "label": "Thành phố Hồ Chí Minh",
+          "amount": 252509727049199.7
         },
         {
-          "label": "Thành phố Hà Nội · v1 · 101",
-          "amount": 26360636681631.996
+          "label": "Đa địa bàn chưa phân bổ",
+          "amount": 117237124458307.64
         },
         {
-          "label": "Thành phố Hà Nội · v1 · 01",
-          "amount": 24710293107437.08
+          "label": "Chưa xác định",
+          "amount": 93937916515168.05
         },
         {
-          "label": "Thành phố Hồ Chí Minh · v1 · 79",
-          "amount": 14740707097288.979
+          "label": "Tỉnh Quảng Ninh",
+          "amount": 65682892775040.56
         },
         {
-          "label": "TP. Hồ Chí Minh · v1 · 701",
-          "amount": 12649892645276.666
+          "label": "Tỉnh Thanh Hóa",
+          "amount": 56213502051728.414
         },
         {
-          "label": "Thành phố Hải Phòng · v1 · 31",
-          "amount": 5383933194942.5
+          "label": "Thành phố Hải Phòng",
+          "amount": 53644682426054.85
         },
         {
-          "label": "Tỉnh Quảng Ninh · v1 · 225",
-          "amount": 5298880063682.268
+          "label": "Tỉnh Nghệ An",
+          "amount": 51960992207278.734
         },
         {
-          "label": "Tỉnh Đồng Nai · v1 · 713",
-          "amount": 5287930027994.697
+          "label": "Tỉnh Hưng Yên",
+          "amount": 47336399364680.445
         },
         {
-          "label": "Đa địa bàn chưa phân bổ · v1",
-          "amount": 5018398654796.21
+          "label": "Tỉnh Đồng Nai",
+          "amount": 43581763524298.664
         }
       ],
       "expected": [
         {
-          "label": "Chưa xác định · v1",
-          "amount": "2908867677771713.013100"
+          "label": "Thành phố Hà Nội",
+          "amount": "426990052774613.069700"
         },
         {
-          "label": "Tỉnh Ninh Bình · v1 · 117",
-          "amount": "31621635194456.800000"
+          "label": "Thành phố Hồ Chí Minh",
+          "amount": "252509727049199.647000"
         },
         {
-          "label": "Thành phố Hà Nội · v1 · 101",
-          "amount": "26360636681631.999800"
+          "label": "Đa địa bàn chưa phân bổ",
+          "amount": "117237124458307.599200"
         },
         {
-          "label": "Thành phố Hà Nội · v1 · 01",
-          "amount": "24710293107437.077700"
+          "label": "Chưa xác định",
+          "amount": "93937916515168.060700"
         },
         {
-          "label": "Thành phố Hồ Chí Minh · v1 · 79",
-          "amount": "14740707097288.978400"
+          "label": "Tỉnh Quảng Ninh",
+          "amount": "65682892775040.598200"
         },
         {
-          "label": "TP. Hồ Chí Minh · v1 · 701",
-          "amount": "12649892645276.665500"
+          "label": "Tỉnh Thanh Hóa",
+          "amount": "56213502051728.419400"
         },
         {
-          "label": "Thành phố Hải Phòng · v1 · 31",
-          "amount": "5383933194942.500000"
+          "label": "Thành phố Hải Phòng",
+          "amount": "53644682426054.864300"
         },
         {
-          "label": "Tỉnh Quảng Ninh · v1 · 225",
-          "amount": "5298880063682.268800"
+          "label": "Tỉnh Nghệ An",
+          "amount": "51960992207278.726000"
         },
         {
-          "label": "Tỉnh Đồng Nai · v1 · 713",
-          "amount": "5287930027994.696600"
+          "label": "Tỉnh Hưng Yên",
+          "amount": "47336399364680.449800"
         },
         {
-          "label": "Đa địa bàn chưa phân bổ · v1",
-          "amount": "5018398654796.210000"
+          "label": "Tỉnh Đồng Nai",
+          "amount": "43581763524298.658200"
         }
       ]
     },
@@ -94,86 +94,86 @@
       "status": "passed",
       "actual": [
         {
-          "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XUÂN TÙNG [PARTY:vn6000903919]",
-          "amount": 778794166020716
-        },
-        {
-          "label": "CÔNG TY CỔ PHẦN XÂY DỰNG HẠ TẦNG ĐẠI PHONG [PARTY:vn0600333201]",
-          "amount": 64378170412603
-        },
-        {
-          "label": "CÔNG TY TNHH MTV TƯ VẤN XÂY DỰNG PHÚ THÀNH [PARTY:vn2700938028]",
-          "amount": 28748725894957.996
-        },
-        {
           "label": "CÔNG TY TNHH MỘT THÀNH VIÊN DƯỢC LIỆU TW2 [PARTY:vn0103053042]",
-          "amount": 27727430669865.75
-        },
-        {
-          "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XÂY LẮP PHƯỚC THÀNH [PARTY:vn4300359252]",
-          "amount": 25679697801471
+          "amount": 25231.46111858775
         },
         {
           "label": "CÔNG TY CỔ PHẦN DƯỢC LIỆU TRUNG ƯƠNG 2 [PARTY:vn0302597576]",
-          "amount": 25596801520652
-        },
-        {
-          "label": "CÔNG TY CỔ PHẦN ĐẦU TƯ - PHÁT TRIỂN TÂM SINH NGHĨA [PARTY:vn0304374871]",
-          "amount": 18941916770000
+          "amount": 24229.188238825
         },
         {
           "label": "CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ HÀ NỘI [PARTY:vn0100109699]",
-          "amount": 12597809739686.38
+          "amount": 11789.17567535038
         },
         {
           "label": "CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC [PARTY:vn0301140748]",
-          "amount": 11849275370007.45
+          "amount": 11009.83872119245
+        },
+        {
+          "label": "CÔNG TY CỔ PHẦN PHÁT TRIỂN CÔNG NGHỆ VIỄN THÔNG TIN HỌC SUN VIỆT [PARTY:vn0302246183]",
+          "amount": 9973.615700350152
         },
         {
           "label": "CÔNG TY TNHH DƯỢC PHẨM GIGAMED [PARTY:vn0316417470]",
-          "amount": 10271856514758
+          "amount": 9527.712890344
+        },
+        {
+          "label": "TỔNG CÔNG TY KINH TẾ KỸ THUẬT CÔNG NGHIỆP QUỐC PHÒNG [PARTY:vn0100283055]",
+          "amount": 9141.356893935612
+        },
+        {
+          "label": "TỔNG CÔNG TY XÂY DỰNG TRƯỜNG SƠN [PARTY:vn0100512273]",
+          "amount": 8569.059916421013
+        },
+        {
+          "label": "CÔNG TY TNHH THIẾT BỊ MINH TÂM [PARTY:vn0101268476]",
+          "amount": 7568.083479250241
+        },
+        {
+          "label": "Doanh nghiệp tư nhân xây dựng Xuân Trường [PARTY:vn2700113605]",
+          "amount": 6791.481786
         }
       ],
       "expected": [
         {
-          "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XUÂN TÙNG [PARTY:vn6000903919]",
-          "amount": "778794166020716.000000"
-        },
-        {
-          "label": "CÔNG TY CỔ PHẦN XÂY DỰNG HẠ TẦNG ĐẠI PHONG [PARTY:vn0600333201]",
-          "amount": "64378170412603.000000"
-        },
-        {
-          "label": "CÔNG TY TNHH MTV TƯ VẤN XÂY DỰNG PHÚ THÀNH [PARTY:vn2700938028]",
-          "amount": "28748725894958.000000"
-        },
-        {
           "label": "CÔNG TY TNHH MỘT THÀNH VIÊN DƯỢC LIỆU TW2 [PARTY:vn0103053042]",
-          "amount": "27727430669865.750000"
-        },
-        {
-          "label": "CÔNG TY TNHH MỘT THÀNH VIÊN XÂY LẮP PHƯỚC THÀNH [PARTY:vn4300359252]",
-          "amount": "25679697801471.000000"
+          "amount": 25231.46111858775
         },
         {
           "label": "CÔNG TY CỔ PHẦN DƯỢC LIỆU TRUNG ƯƠNG 2 [PARTY:vn0302597576]",
-          "amount": "25596801520652.000000"
-        },
-        {
-          "label": "CÔNG TY CỔ PHẦN ĐẦU TƯ - PHÁT TRIỂN TÂM SINH NGHĨA [PARTY:vn0304374871]",
-          "amount": "18941916770000.000000"
+          "amount": 24229.188238825
         },
         {
           "label": "CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ HÀ NỘI [PARTY:vn0100109699]",
-          "amount": "12597809739686.380000"
+          "amount": 11789.175675350381
         },
         {
           "label": "CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC [PARTY:vn0301140748]",
-          "amount": "11849275370007.448000"
+          "amount": 11009.838721192447
+        },
+        {
+          "label": "CÔNG TY CỔ PHẦN PHÁT TRIỂN CÔNG NGHỆ VIỄN THÔNG TIN HỌC SUN VIỆT [PARTY:vn0302246183]",
+          "amount": 9973.61570035015
         },
         {
           "label": "CÔNG TY TNHH DƯỢC PHẨM GIGAMED [PARTY:vn0316417470]",
-          "amount": "10271856514758.000000"
+          "amount": 9527.712890344
+        },
+        {
+          "label": "TỔNG CÔNG TY KINH TẾ KỸ THUẬT CÔNG NGHIỆP QUỐC PHÒNG [PARTY:vn0100283055]",
+          "amount": 9141.356893935612
+        },
+        {
+          "label": "TỔNG CÔNG TY XÂY DỰNG TRƯỜNG SƠN [PARTY:vn0100512273]",
+          "amount": 8569.059916421013
+        },
+        {
+          "label": "CÔNG TY TNHH THIẾT BỊ MINH TÂM [PARTY:vn0101268476]",
+          "amount": 7568.083479250241
+        },
+        {
+          "label": "Doanh nghiệp tư nhân xây dựng Xuân Trường [PARTY:vn2700113605]",
+          "amount": 6791.481786
         }
       ]
     }

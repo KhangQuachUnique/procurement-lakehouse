@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "e8cc7e0d41065c55abdf",
   "position": {
-    "x": 336,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 7,
-    "tabOrder": 7
+    "x": 378,
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 8,
+    "tabOrder": 8
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị trúng thầu · tỷ VNĐ'"
+                  "Value": "'Tổng fact_demand_daily[package_count] trong phạm vi chọn; không phải số dòng tổng hợp.'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị trúng thầu · tỷ VNĐ'"
+                  "Value": "'Số gói kế hoạch'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Giá trị trúng thầu · tỷ VNĐ"
+                  "Property": "Hiển thị · Số gói kế hoạch"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Giá trị trúng thầu · tỷ VNĐ",
-              "nativeQueryRef": "Hiển thị · Giá trị trúng thầu · tỷ VNĐ"
+              "queryRef": "_Measures.Hiển thị · Số gói kế hoạch",
+              "nativeQueryRef": "Hiển thị · Số gói kế hoạch"
             }
           ]
         }

@@ -2,57 +2,33 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "a4a710b1fa0b52978c2d",
   "position": {
-    "x": 648,
-    "y": 100,
-    "width": 608,
+    "x": 712,
+    "y": 16,
+    "width": 704,
     "height": 56,
-    "z": 5,
-    "tabOrder": 5
+    "z": 2,
+    "tabOrder": 2
   },
   "visual": {
-    "visualType": "card",
+    "visualType": "textbox",
     "objects": {
-      "labels": [
+      "general": [
         {
           "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#64748B'"
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Lượt tham gia, không phải nhà thầu duy nhất.\nLoại khỏi báo cáo KPI kỹ thuật và tiền dự thầu chưa xác minh.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#64748B"
                     }
                   }
-                }
+                ]
               }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
+            ]
           }
         }
       ]
@@ -157,28 +133,6 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Phạm vi cạnh tranh"
-                }
-              },
-              "queryRef": "_Measures.Phạm vi cạnh tranh",
-              "nativeQueryRef": "Phạm vi cạnh tranh"
-            }
-          ]
-        }
-      }
     }
   }
 }

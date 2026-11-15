@@ -3,9 +3,9 @@
   "name": "22741fa1200c5d6f9388",
   "position": {
     "x": 24,
-    "y": 42,
-    "width": 620,
-    "height": 42,
+    "y": 32,
+    "width": 640,
+    "height": 44,
     "z": 1,
     "tabOrder": 1
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Thời gian và đơn vị tham gia",
+                    "value": "Thời gian quy trình",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "23pt",

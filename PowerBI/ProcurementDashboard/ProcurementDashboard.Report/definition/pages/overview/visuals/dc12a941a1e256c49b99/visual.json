@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "dc12a941a1e256c49b99",
   "position": {
-    "x": 688,
-    "y": 32,
-    "width": 568,
-    "height": 48,
-    "z": 2,
-    "tabOrder": 2
+    "x": 24,
+    "y": 80,
+    "width": 1392,
+    "height": 40,
+    "z": 3,
+    "tabOrder": 3
   },
   "visual": {
     "visualType": "pageNavigator",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "10D"
                 }
               }
             }

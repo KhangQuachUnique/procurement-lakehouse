@@ -3,10 +3,10 @@
   "name": "7903c7879f5f588eade8",
   "position": {
     "x": 24,
-    "y": 484,
+    "y": 308,
     "z": 12,
-    "height": 196,
-    "width": 608,
+    "height": 248,
+    "width": 684,
     "tabOrder": 12
   },
   "visual": {
@@ -42,25 +42,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Số lượt mở thầu"
+                  "Property": "Lượt mở thầu"
                 }
               },
-              "queryRef": "_Measures.Số lượt mở thầu",
-              "nativeQueryRef": "Số lượt mở thầu"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Gói một nhà thầu"
-                }
-              },
-              "queryRef": "_Measures.Gói một nhà thầu",
-              "nativeQueryRef": "Gói một nhà thầu"
+              "queryRef": "_Measures.Lượt mở thầu",
+              "nativeQueryRef": "Lượt mở thầu"
             }
           ]
         },
@@ -167,14 +153,7 @@
                 }
               }
             },
-            "start": {
-              "expr": {
-                "Literal": {
-                  "Value": "0D"
-                }
-              }
-            },
-            "end": {
+            "labelDisplayUnits": {
               "expr": {
                 "Literal": {
                   "Value": "1D"
@@ -363,5 +342,51 @@
         }
       ]
     }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "64e251e883a0ee3839b7",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_date"
+              }
+            },
+            "Property": "month_start"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "09c69dd20aaa012c047c",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Tỷ lệ một nhà thầu"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "dbe48510d789154c548e",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Lượt mở thầu"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

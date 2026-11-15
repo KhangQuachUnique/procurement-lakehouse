@@ -1,12 +1,16 @@
 {
   "status": "passed",
-  "json_files_checked": 75,
-  "visuals_checked": 63,
+  "json_files_checked": 147,
+  "visuals_checked": 131,
   "pages": [
     "overview",
+    "demand",
+    "awards",
     "savings",
     "competition",
-    "duration"
+    "duration",
+    "suppliers",
+    "quality"
   ],
   "errors": [],
   "limits": [

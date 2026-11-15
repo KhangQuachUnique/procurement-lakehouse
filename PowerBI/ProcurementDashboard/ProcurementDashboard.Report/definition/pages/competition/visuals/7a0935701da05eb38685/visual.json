@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "7a0935701da05eb38685",
   "position": {
-    "x": 336,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 7,
-    "tabOrder": 7
+    "x": 378,
+    "y": 204,
+    "width": 330,
+    "height": 84,
+    "z": 9,
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Lượt nhà thầu / lượt mở thầu; không phải số đơn vị duy nhất.'"
+                  "Value": "'Nhà thầu bình quân'"
                 }
               }
             }

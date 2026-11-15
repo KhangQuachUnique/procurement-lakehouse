@@ -26,7 +26,7 @@
         "year_quarter_order": "int64",
         "month_start": "dateTime"
       },
-      "marked_date_table": false
+      "marked_date_table": true
     },
     "dim_duration_metric": {
       "columns": {
@@ -218,7 +218,8 @@
         "award_scope_count": "int64",
         "effective_award_scope_count": "int64",
         "eligible_amount_count": "int64",
-        "award_amount_sum": "double"
+        "award_amount_sum": "double",
+        "allocation_label": "string"
       }
     }
   },
@@ -226,218 +227,248 @@
     "Số gói kế hoạch": {
       "dax": "SUM(fact_demand_daily[package_count])",
       "format": "#,0",
-      "folder": "Tổng quan",
-      "description": "Số gói kế hoạch"
+      "folder": "Số lượng",
+      "description": "Tổng fact_demand_daily[package_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Giá trị kế hoạch VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_demand_daily[eligible_amount_count]) > 0, SUM(fact_demand_daily[planned_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tổng quan",
-      "description": "fact_demand_daily[planned_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0."
-    },
-    "Giá trị kế hoạch · tỷ VNĐ": {
-      "dax": "DIVIDE([Giá trị kế hoạch VNĐ], 1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tổng quan",
-      "description": "Giá trị kế hoạch · tỷ VNĐ"
-    },
-    "Số thông báo": {
-      "dax": "SUM(fact_notice_daily[notice_count])",
+    "Mẫu giá kế hoạch": {
+      "dax": "SUM(fact_demand_daily[eligible_amount_count])",
       "format": "#,0",
-      "folder": "Thông báo",
-      "description": "Số thông báo"
+      "folder": "Số lượng",
+      "description": "Tổng fact_demand_daily[eligible_amount_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Thông báo hủy": {
-      "dax": "SUM(fact_notice_daily[cancelled_notice_count])",
-      "format": "#,0",
-      "folder": "Thông báo",
-      "description": "Thông báo hủy"
-    },
-    "Tỷ lệ thông báo hủy": {
-      "dax": "DIVIDE([Thông báo hủy], [Số thông báo])",
-      "format": "0.00%;(0.00%);0.00%",
-      "folder": "Thông báo",
-      "description": "Số thông báo hủy / số thông báo trong cùng họ notice_family, ngày và lĩnh vực."
-    },
-    "Số lượt trúng thầu": {
+    "Lượt kết quả": {
       "dax": "SUM(fact_award_daily[award_scope_count])",
       "format": "#,0",
-      "folder": "Trúng thầu",
-      "description": "Số lượt trúng thầu"
+      "folder": "Số lượng",
+      "description": "Tổng fact_award_daily[award_scope_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Số lượt trúng thầu hiệu lực": {
+    "Lượt kết quả hiệu lực": {
       "dax": "SUM(fact_award_daily[effective_award_scope_count])",
       "format": "#,0",
-      "folder": "Trúng thầu",
-      "description": "Số lượt trúng thầu hiệu lực"
+      "folder": "Số lượng",
+      "description": "Tổng fact_award_daily[effective_award_scope_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Số mẫu giá trúng hợp lệ": {
+    "Mẫu giá trúng": {
       "dax": "SUM(fact_award_daily[eligible_amount_count])",
       "format": "#,0",
-      "folder": "Trúng thầu",
-      "description": "Số mẫu giá trúng hợp lệ"
+      "folder": "Số lượng",
+      "description": "Tổng fact_award_daily[eligible_amount_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Giá trị trúng thầu VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_award_daily[eligible_amount_count]) > 0, SUM(fact_award_daily[award_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Trúng thầu",
-      "description": "fact_award_daily[award_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0."
-    },
-    "Giá trị trúng thầu · tỷ VNĐ": {
-      "dax": "DIVIDE([Giá trị trúng thầu VNĐ], 1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Trúng thầu",
-      "description": "Giá trị trúng thầu · tỷ VNĐ"
-    },
-    "Số mẫu xác minh": {
-      "dax": "CALCULATE(SUM(fact_savings_daily[verified_sample_count]), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+    "Mẫu mô tả": {
+      "dax": "SUM(fact_savings_daily[descriptive_sample_count])",
       "format": "#,0",
-      "folder": "Tiết kiệm",
-      "description": "fact_savings_daily[verified_sample_count]; chỉ VND, không quy đổi ngoại tệ."
+      "folder": "Số lượng",
+      "description": "Tổng fact_savings_daily[descriptive_sample_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Dự toán xác minh VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_baseline_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "fact_savings_daily[verified_baseline_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0."
-    },
-    "Dự toán xác minh · tỷ VNĐ": {
-      "dax": "DIVIDE([Dự toán xác minh VNĐ],1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "Dự toán xác minh · tỷ VNĐ"
-    },
-    "Giá trúng xác minh VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_award_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "fact_savings_daily[verified_award_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0."
-    },
-    "Giá trúng xác minh · tỷ VNĐ": {
-      "dax": "DIVIDE([Giá trúng xác minh VNĐ],1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "Giá trúng xác minh · tỷ VNĐ"
-    },
-    "Tiết kiệm xác minh VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_savings_daily[verified_sample_count]) > 0, SUM(fact_savings_daily[verified_saving_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "fact_savings_daily[verified_saving_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi verified_sample_count>0."
-    },
-    "Tiết kiệm xác minh · tỷ VNĐ": {
-      "dax": "DIVIDE([Tiết kiệm xác minh VNĐ],1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Tiết kiệm",
-      "description": "Tiết kiệm xác minh · tỷ VNĐ"
-    },
-    "Tỷ lệ tiết kiệm xác minh": {
-      "dax": "DIVIDE([Tiết kiệm xác minh VNĐ], [Dự toán xác minh VNĐ])",
-      "format": "0.00%;(0.00%);0.00%",
-      "folder": "Tiết kiệm",
-      "description": "Tổng tiết kiệm / tổng dự toán, cùng tập mẫu verified và VND; không phải trung bình tỷ lệ theo dòng."
-    },
-    "Số mẫu hợp đồng": {
-      "dax": "CALCULATE(SUM(fact_savings_daily[contract_sample_count]), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+    "Phạm vi so sánh": {
+      "dax": "SUM(fact_savings_daily[scope_count])",
       "format": "#,0",
-      "folder": "Hợp đồng",
-      "description": "fact_savings_daily[contract_sample_count]; chỉ VND, không quy đổi ngoại tệ."
+      "folder": "Số lượng",
+      "description": "Tổng fact_savings_daily[scope_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Giá trị hợp đồng VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_savings_daily[contract_sample_count]) > 0, SUM(fact_savings_daily[contract_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Hợp đồng",
-      "description": "fact_savings_daily[contract_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi contract_sample_count>0."
+    "Mẫu xác minh": {
+      "dax": "SUM(fact_savings_daily[verified_sample_count])",
+      "format": "#,0",
+      "folder": "Số lượng",
+      "description": "Tổng fact_savings_daily[verified_sample_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Giá trị hợp đồng · tỷ VNĐ": {
-      "dax": "DIVIDE([Giá trị hợp đồng VNĐ],1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Hợp đồng",
-      "description": "Giá trị hợp đồng · tỷ VNĐ"
+    "Mẫu hợp đồng": {
+      "dax": "SUM(fact_savings_daily[contract_sample_count])",
+      "format": "#,0",
+      "folder": "Số lượng",
+      "description": "Tổng fact_savings_daily[contract_sample_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Tiết kiệm hợp đồng VNĐ": {
-      "dax": "CALCULATE(IF(SUM(fact_savings_daily[contract_sample_count]) > 0, SUM(fact_savings_daily[contract_saving_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Hợp đồng",
-      "description": "fact_savings_daily[contract_saving_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi contract_sample_count>0."
-    },
-    "Tiết kiệm hợp đồng · tỷ VNĐ": {
-      "dax": "DIVIDE([Tiết kiệm hợp đồng VNĐ],1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Hợp đồng",
-      "description": "Tiết kiệm hợp đồng · tỷ VNĐ"
-    },
-    "Số lượt mở thầu": {
+    "Lượt mở thầu": {
       "dax": "SUM(fact_bidding_competition_daily[opening_count])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Số lượt mở thầu"
+      "folder": "Số lượng",
+      "description": "Tổng fact_bidding_competition_daily[opening_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Tổng lượt nhà thầu": {
+    "Lượt nhà thầu": {
       "dax": "SUM(fact_bidding_competition_daily[total_bidders])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Tổng lượt nhà thầu"
+      "folder": "Số lượng",
+      "description": "Tổng fact_bidding_competition_daily[total_bidders] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Gói một nhà thầu": {
+    "Lượt một nhà thầu": {
       "dax": "SUM(fact_bidding_competition_daily[single_bidder_count])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Gói một nhà thầu"
+      "folder": "Số lượng",
+      "description": "Tổng fact_bidding_competition_daily[single_bidder_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Gói nhiều nhà thầu": {
+    "Lượt nhiều nhà thầu": {
       "dax": "SUM(fact_bidding_competition_daily[multi_bidder_count])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Gói nhiều nhà thầu"
+      "folder": "Số lượng",
+      "description": "Tổng fact_bidding_competition_daily[multi_bidder_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Hồ sơ đạt kỹ thuật": {
-      "dax": "SUM(fact_bidding_competition_daily[tech_passed_count])",
+    "Lượt có giảm giá": {
+      "dax": "SUM(fact_bidding_competition_daily[discounted_bidder_count])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Hồ sơ đạt kỹ thuật"
+      "folder": "Số lượng",
+      "description": "Tổng fact_bidding_competition_daily[discounted_bidder_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Hồ sơ không đạt kỹ thuật": {
-      "dax": "SUM(fact_bidding_competition_daily[tech_failed_count])",
+    "Thông báo": {
+      "dax": "SUM(fact_notice_daily[notice_count])",
       "format": "#,0",
-      "folder": "Cạnh tranh",
-      "description": "Hồ sơ không đạt kỹ thuật"
+      "folder": "Số lượng",
+      "description": "Tổng fact_notice_daily[notice_count] trong phạm vi chọn; không phải số dòng tổng hợp."
+    },
+    "Thông báo hủy quan sát": {
+      "dax": "SUM(fact_notice_daily[cancelled_notice_count])",
+      "format": "#,0",
+      "folder": "Số lượng",
+      "description": "Tổng fact_notice_daily[cancelled_notice_count] trong phạm vi chọn; không phải số dòng tổng hợp."
+    },
+    "Gói theo trạng thái quan sát": {
+      "dax": "SUM(fact_status_daily[package_count])",
+      "format": "#,0",
+      "folder": "Số lượng",
+      "description": "Tổng fact_status_daily[package_count] trong phạm vi chọn; không phải số dòng tổng hợp."
+    },
+    "Kế hoạch VND": {
+      "dax": "CALCULATE(IF(SUM(fact_demand_daily[eligible_amount_count]) > 0, SUM(fact_demand_daily[planned_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "fact_demand_daily[planned_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0."
+    },
+    "Kế hoạch · tỷ VND": {
+      "dax": "DIVIDE([Kế hoạch VND], 1000000000)",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "Kế hoạch · tỷ VND"
+    },
+    "Trúng thầu VND": {
+      "dax": "CALCULATE(IF(SUM(fact_award_daily[eligible_amount_count]) > 0, SUM(fact_award_daily[award_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "fact_award_daily[award_amount_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi eligible_amount_count>0."
+    },
+    "Trúng thầu · tỷ VND": {
+      "dax": "DIVIDE([Trúng thầu VND], 1000000000)",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "Trúng thầu · tỷ VND"
+    },
+    "Dự toán mô tả VND": {
+      "dax": "CALCULATE(IF(SUM(fact_savings_daily[descriptive_sample_count]) > 0, SUM(fact_savings_daily[descriptive_baseline_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "fact_savings_daily[descriptive_baseline_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi descriptive_sample_count>0."
+    },
+    "Dự toán mô tả · tỷ VND": {
+      "dax": "DIVIDE([Dự toán mô tả VND], 1000000000)",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "Dự toán mô tả · tỷ VND"
+    },
+    "Giá trúng mô tả VND": {
+      "dax": "CALCULATE(IF(SUM(fact_savings_daily[descriptive_sample_count]) > 0, SUM(fact_savings_daily[descriptive_award_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "fact_savings_daily[descriptive_award_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi descriptive_sample_count>0."
+    },
+    "Giá trúng mô tả · tỷ VND": {
+      "dax": "DIVIDE([Giá trúng mô tả VND], 1000000000)",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "Giá trúng mô tả · tỷ VND"
+    },
+    "Chênh lệch mô tả VND": {
+      "dax": "CALCULATE(IF(SUM(fact_savings_daily[descriptive_sample_count]) > 0, SUM(fact_savings_daily[descriptive_difference_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "fact_savings_daily[descriptive_difference_sum]; chỉ VND, không quy đổi ngoại tệ. Chỉ hiển thị khi descriptive_sample_count>0."
+    },
+    "Chênh lệch mô tả · tỷ VND": {
+      "dax": "DIVIDE([Chênh lệch mô tả VND], 1000000000)",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Giá trị",
+      "description": "Chênh lệch mô tả · tỷ VND"
+    },
+    "Kế hoạch bình quân · tỷ VND": {
+      "dax": "DIVIDE([Kế hoạch · tỷ VND], [Mẫu giá kế hoạch])",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Kế hoạch bình quân · tỷ VND"
+    },
+    "Độ phủ giá trúng": {
+      "dax": "DIVIDE([Mẫu giá trúng], [Lượt kết quả hiệu lực])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Độ phủ giá trúng"
+    },
+    "Tỷ lệ chênh lệch mô tả": {
+      "dax": "DIVIDE([Chênh lệch mô tả VND], [Dự toán mô tả VND])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Tỷ lệ chênh lệch mô tả"
+    },
+    "Độ phủ mẫu mô tả": {
+      "dax": "DIVIDE([Mẫu mô tả], [Phạm vi so sánh])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Độ phủ mẫu mô tả"
     },
     "Nhà thầu bình quân": {
-      "dax": "DIVIDE([Tổng lượt nhà thầu], [Số lượt mở thầu])",
+      "dax": "DIVIDE([Lượt nhà thầu], [Lượt mở thầu])",
       "format": "0.00",
-      "folder": "Cạnh tranh",
-      "description": "Lượt nhà thầu / lượt mở thầu; không phải số đơn vị duy nhất."
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Nhà thầu bình quân"
     },
     "Tỷ lệ một nhà thầu": {
-      "dax": "DIVIDE([Gói một nhà thầu], [Số lượt mở thầu])",
+      "dax": "DIVIDE([Lượt một nhà thầu], [Lượt mở thầu])",
       "format": "0.00%;(0.00%);0.00%",
-      "folder": "Cạnh tranh",
+      "folder": "Tỷ lệ và bình quân",
       "description": "Tỷ lệ một nhà thầu"
     },
-    "Tỷ lệ đạt kỹ thuật": {
-      "dax": "DIVIDE([Hồ sơ đạt kỹ thuật], [Hồ sơ đạt kỹ thuật]+[Hồ sơ không đạt kỹ thuật])",
+    "Tỷ lệ nhiều nhà thầu": {
+      "dax": "DIVIDE([Lượt nhiều nhà thầu], [Lượt mở thầu])",
       "format": "0.00%;(0.00%);0.00%",
-      "folder": "Cạnh tranh",
-      "description": "Trong các hồ sơ có kết quả đạt/không đạt; hồ sơ chưa có kết quả không thuộc mẫu số."
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Tỷ lệ nhiều nhà thầu"
     },
-    "Số mẫu thời gian hợp lệ": {
-      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), CALCULATE(SUM(fact_duration_daily[sample_count]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))))",
+    "Tỷ lệ lượt có giảm giá": {
+      "dax": "DIVIDE([Lượt có giảm giá], [Lượt nhà thầu])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Tỷ lệ lượt có giảm giá"
+    },
+    "Tỷ lệ hủy quan sát": {
+      "dax": "DIVIDE([Thông báo hủy quan sát], [Thông báo])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Tỷ lệ và bình quân",
+      "description": "Tỷ lệ hủy quan sát"
+    },
+    "Mẫu thời gian": {
+      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), SUM(fact_duration_daily[sample_count]))",
       "format": "#,0",
       "folder": "Thời gian",
-      "description": "Chỉ một metric và report_date không trống. Dòng thiếu ngày được giữ trong nguồn nhưng tách khỏi KPI này."
+      "description": "Mẫu thời gian"
     },
-    "Số mẫu bị loại có ngày": {
-      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), CALCULATE(SUM(fact_duration_daily[excluded_sample_count]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))))",
+    "Mẫu thời gian bị loại": {
+      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), SUM(fact_duration_daily[excluded_sample_count]))",
       "format": "#,0",
       "folder": "Thời gian",
-      "description": "Chỉ một metric và report_date không trống. Dòng thiếu ngày được giữ trong nguồn nhưng tách khỏi KPI này."
+      "description": "Mẫu thời gian bị loại"
     },
-    "Thời gian trung bình": {
-      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), DIVIDE(CALCULATE(SUM(fact_duration_daily[duration_sum]), KEEPFILTERS(NOT ISBLANK(fact_duration_daily[report_date]))), [Số mẫu thời gian hợp lệ]))",
+    "Khoảng thời gian": {
+      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), SUM(fact_duration_daily[interval_count]))",
+      "format": "#,0",
+      "folder": "Thời gian",
+      "description": "Khoảng thời gian"
+    },
+    "Thời gian bình quân": {
+      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), DIVIDE(SUM(fact_duration_daily[duration_sum]), [Mẫu thời gian]))",
       "format": "0.0",
       "folder": "Thời gian",
-      "description": "Tổng duration_sum / tổng sample_count trên các dòng có ngày, đúng một metric."
+      "description": "Thời gian bình quân"
+    },
+    "Tỷ lệ mẫu bị loại": {
+      "dax": "DIVIDE([Mẫu thời gian bị loại], [Khoảng thời gian])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Thời gian",
+      "description": "Tỷ lệ mẫu bị loại"
     },
     "Đơn vị thời gian": {
       "dax": "SWITCH(SELECTEDVALUE(dim_duration_metric[duration_unit]), \"hours\", \"giờ\", \"days\", \"ngày\", BLANK())",
@@ -445,173 +476,449 @@
       "folder": "Thời gian",
       "description": "Đơn vị thời gian"
     },
-    "Metric và đơn vị": {
-      "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), SELECTEDVALUE(dim_duration_metric[metric_label]) & \" · \" & [Đơn vị thời gian], \"Chọn đúng một chỉ số\")",
-      "format": null,
-      "folder": "Thời gian",
-      "description": "Metric và đơn vị"
+    "Người nhận · tỷ VND": {
+      "dax": "CALCULATE(IF(SUM(fact_supplier_daily[eligible_amount_count])>0, DIVIDE(SUM(fact_supplier_daily[award_amount_sum]),1000000000)), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Người nhận",
+      "description": "Người nhận · tỷ VND"
     },
-    "Tiêu đề thời gian": {
-      "dax": "\"Thời gian trung bình (\" & COALESCE([Đơn vị thời gian], \"chọn 1 metric\") & \")\"",
-      "format": null,
-      "folder": "Thời gian",
-      "description": "Tiêu đề thời gian"
+    "Số khóa người nhận": {
+      "dax": "CALCULATE(DISTINCTCOUNT(fact_supplier_daily[party_key]), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "#,0",
+      "folder": "Người nhận",
+      "description": "Số khóa người nhận"
     },
-    "Dòng duration thiếu ngày": {
-      "dax": "CALCULATE(COUNTROWS(fact_duration_daily), REMOVEFILTERS(dim_date), ISBLANK(fact_duration_daily[report_date]))",
+    "Lượt nhận đơn": {
+      "dax": "CALCULATE(SUM(fact_supplier_daily[award_scope_count]), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "#,0",
+      "folder": "Người nhận",
+      "description": "Lượt nhận đơn"
+    },
+    "Phân bổ · tỷ VND": {
+      "dax": "CALCULATE(IF(SUM(fact_supplier_daily[eligible_amount_count])>0, DIVIDE(SUM(fact_supplier_daily[award_amount_sum]),1000000000)), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Người nhận",
+      "description": "Phân bổ · tỷ VND"
+    },
+    "Phân bổ · số lượt": {
+      "dax": "SUM(fact_supplier_daily[award_scope_count])",
+      "format": "#,0",
+      "folder": "Người nhận",
+      "description": "Phân bổ · số lượt"
+    },
+    "Tỷ trọng Top 10 người nhận": {
+      "dax": "VAR People = CALCULATETABLE(VALUES(dim_party[party_key]), REMOVEFILTERS(dim_party)) VAR Ranked = TOPN(10, ADDCOLUMNS(People, \"_value\", CALCULATE([Người nhận · tỷ VND])), [_value], DESC, dim_party[party_key], ASC) RETURN DIVIDE(SUMX(Ranked, [_value]), CALCULATE([Người nhận · tỷ VND], REMOVEFILTERS(dim_party)))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Người nhận",
+      "description": "Tỷ trọng Top 10 người nhận"
+    },
+    "Nhóm kỹ thuật cần xác minh": {
+      "dax": "COUNTROWS(FILTER(fact_bidding_competition_daily, fact_bidding_competition_daily[tech_passed_count]+fact_bidding_competition_daily[tech_failed_count]>fact_bidding_competition_daily[total_bidders]))",
       "format": "#,0",
       "folder": "Chất lượng",
-      "description": "Số dòng thô thiếu ngày; có grain lặp, không diễn giải thành số mẫu duy nhất. Bỏ qua lọc ngày vì không có ngày để gán."
+      "description": "Nhóm kỹ thuật cần xác minh"
     },
-    "Số gói theo trạng thái": {
-      "dax": "SUM(fact_status_daily[package_count])",
+    "Nhóm tiền dự thầu lệch": {
+      "dax": "COUNTROWS(FILTER(fact_bidding_competition_daily, ABS(fact_bidding_competition_daily[total_bid_amount]-fact_bidding_competition_daily[total_discount_amount]-fact_bidding_competition_daily[total_final_bid_amount])>0.01))",
       "format": "#,0",
-      "folder": "Trạng thái",
-      "description": "Trạng thái quan sát thông báo/kết quả, không phải tiến độ thực hiện."
-    },
-    "Giá trị phân bổ đơn VNĐ": {
-      "dax": "CALCULATE(CALCULATE(IF(SUM(fact_supplier_daily[eligible_amount_count]) > 0, SUM(fact_supplier_daily[award_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\")), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state] = \"single_recipient\"))",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Đơn vị",
-      "description": "Chỉ VND, single_recipient, giá trị eligible. Không chia giá trị liên danh hoặc nhiều người nhận cho từng đơn vị."
-    },
-    "Giá trị phân bổ · tỷ VNĐ": {
-      "dax": "DIVIDE([Giá trị phân bổ đơn VNĐ], 1000000000)",
-      "format": "#,0.00;(#,0.00);0.00",
-      "folder": "Đơn vị",
-      "description": "Giá trị phân bổ · tỷ VNĐ"
-    },
-    "Ghi chú thời gian": {
-      "dax": "\"Dòng thiếu ngày của metric (không nằm trong KPI): \" & FORMAT(COALESCE([Dòng duration thiếu ngày],0), \"#,0\", \"vi-VN\") & \". Chỉ số theo ngày không bao gồm các dòng này.\"",
-      "format": null,
       "folder": "Chất lượng",
-      "description": "Ghi chú thời gian"
-    },
-    "Loại đơn vị": {
-      "dax": "VAR v=SELECTEDVALUE(dim_party[party_kind]) RETURN SWITCH(v,\"ORGANIZATION\",\"Tổ chức\",\"PERSON\",\"Cá nhân\",\"CONSORTIUM\",\"Liên danh\",v)",
-      "format": null,
-      "folder": "Đơn vị",
-      "description": "Nhãn trình bày từ party_kind, không thay đổi dữ liệu gốc."
-    },
-    "Phân bổ đơn vị": {
-      "dax": "CALCULATE(SWITCH(SELECTEDVALUE(fact_supplier_daily[recipient_allocation_state]),\"single_recipient\",\"Nhận đơn\",BLANK()), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"))",
-      "format": null,
-      "folder": "Đơn vị",
-      "description": "Nhãn trình bày; bảng chỉ xét trạng thái single_recipient."
+      "description": "Số nhóm lệch trên 0,01 đơn vị tiền nguồn sau chuyển double; không phải chênh lệch đã quy đổi VND."
     },
     "Phạm vi cạnh tranh": {
-      "dax": "VAR a = MIN(fact_bidding_competition_daily[report_date]) VAR b = MAX(fact_bidding_competition_daily[report_date]) RETURN IF(ISBLANK(a), \"Không có dữ liệu cạnh tranh trong bộ lọc hiện tại\", \"Dữ liệu quan sát: \" & FORMAT(a,\"dd/MM/yyyy\") & \" – \" & FORMAT(b,\"dd/MM/yyyy\"))",
-      "format": null,
-      "folder": "Cạnh tranh",
-      "description": "Phạm vi cạnh tranh"
-    },
-    "Tình trạng mẫu xác minh": {
-      "dax": "IF(COALESCE([Số mẫu xác minh],0)=0, \"Chỉ VND · chưa có mẫu verified hợp lệ trong phạm vi chọn; các chỉ số tiết kiệm để trống.\", \"Chỉ VND · tiết kiệm tính trên tập mẫu verified; hợp đồng có tập mẫu riêng.\")",
+      "dax": "VAR a=MIN(fact_bidding_competition_daily[report_date]) VAR z=MAX(fact_bidding_competition_daily[report_date]) RETURN IF(ISBLANK(a), \"Không có dữ liệu trong phạm vi chọn\", \"Quan sát: \" & FORMAT(a,\"dd/MM/yyyy\") & \" – \" & FORMAT(z,\"dd/MM/yyyy\"))",
       "format": null,
       "folder": "Chất lượng",
-      "description": "Tình trạng mẫu xác minh"
+      "description": "Phạm vi cạnh tranh"
     },
-    "Hiển thị · Giá trị kế hoạch · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Giá trị kế hoạch · tỷ VNĐ]), \"—\", FORMAT([Giá trị kế hoạch · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Dòng · demand": {
+      "dax": "COUNTROWS(fact_demand_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · award": {
+      "dax": "COUNTROWS(fact_award_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · savings": {
+      "dax": "COUNTROWS(fact_savings_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · bidding_competition": {
+      "dax": "COUNTROWS(fact_bidding_competition_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · duration": {
+      "dax": "COUNTROWS(fact_duration_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · supplier": {
+      "dax": "COUNTROWS(fact_supplier_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · notice": {
+      "dax": "COUNTROWS(fact_notice_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Dòng · status": {
+      "dax": "COUNTROWS(fact_status_daily)",
+      "format": "#,0",
+      "folder": "Độ phủ",
+      "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Hiển thị · Số gói kế hoạch": {
+      "dax": "IF(ISBLANK([Số gói kế hoạch]), \"—\", FORMAT([Số gói kế hoạch], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Giá trị kế hoạch · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Số gói kế hoạch"
     },
-    "Hiển thị · Giá trị trúng thầu · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Giá trị trúng thầu · tỷ VNĐ]), \"—\", FORMAT([Giá trị trúng thầu · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Mẫu giá kế hoạch": {
+      "dax": "IF(ISBLANK([Mẫu giá kế hoạch]), \"—\", FORMAT([Mẫu giá kế hoạch], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Giá trị trúng thầu · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu giá kế hoạch"
     },
-    "Hiển thị · Tiết kiệm xác minh · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Tiết kiệm xác minh · tỷ VNĐ]), \"—\", FORMAT([Tiết kiệm xác minh · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Lượt kết quả": {
+      "dax": "IF(ISBLANK([Lượt kết quả]), \"—\", FORMAT([Lượt kết quả], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Tiết kiệm xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Lượt kết quả"
     },
-    "Hiển thị · Tỷ lệ tiết kiệm xác minh": {
-      "dax": "IF(ISBLANK([Tỷ lệ tiết kiệm xác minh]), \"—\", FORMAT([Tỷ lệ tiết kiệm xác minh], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+    "Hiển thị · Lượt kết quả hiệu lực": {
+      "dax": "IF(ISBLANK([Lượt kết quả hiệu lực]), \"—\", FORMAT([Lượt kết quả hiệu lực], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Tỷ lệ tiết kiệm xác minh] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Lượt kết quả hiệu lực"
     },
-    "Hiển thị · Dự toán xác minh · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Dự toán xác minh · tỷ VNĐ]), \"—\", FORMAT([Dự toán xác minh · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Mẫu giá trúng": {
+      "dax": "IF(ISBLANK([Mẫu giá trúng]), \"—\", FORMAT([Mẫu giá trúng], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Dự toán xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu giá trúng"
     },
-    "Hiển thị · Giá trúng xác minh · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Giá trúng xác minh · tỷ VNĐ]), \"—\", FORMAT([Giá trúng xác minh · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Mẫu mô tả": {
+      "dax": "IF(ISBLANK([Mẫu mô tả]), \"—\", FORMAT([Mẫu mô tả], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Giá trúng xác minh · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu mô tả"
     },
-    "Hiển thị · Số mẫu xác minh": {
-      "dax": "IF(ISBLANK([Số mẫu xác minh]), \"—\", FORMAT([Số mẫu xác minh], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Phạm vi so sánh": {
+      "dax": "IF(ISBLANK([Phạm vi so sánh]), \"—\", FORMAT([Phạm vi so sánh], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Số mẫu xác minh] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Phạm vi so sánh"
     },
-    "Hiển thị · Số mẫu hợp đồng": {
-      "dax": "IF(ISBLANK([Số mẫu hợp đồng]), \"—\", FORMAT([Số mẫu hợp đồng], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Mẫu xác minh": {
+      "dax": "IF(ISBLANK([Mẫu xác minh]), \"—\", FORMAT([Mẫu xác minh], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Số mẫu hợp đồng] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu xác minh"
     },
-    "Hiển thị · Giá trị hợp đồng · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Giá trị hợp đồng · tỷ VNĐ]), \"—\", FORMAT([Giá trị hợp đồng · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Mẫu hợp đồng": {
+      "dax": "IF(ISBLANK([Mẫu hợp đồng]), \"—\", FORMAT([Mẫu hợp đồng], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Giá trị hợp đồng · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu hợp đồng"
     },
-    "Hiển thị · Tiết kiệm hợp đồng · tỷ VNĐ": {
-      "dax": "IF(ISBLANK([Tiết kiệm hợp đồng · tỷ VNĐ]), \"—\", FORMAT([Tiết kiệm hợp đồng · tỷ VNĐ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+    "Hiển thị · Lượt mở thầu": {
+      "dax": "IF(ISBLANK([Lượt mở thầu]), \"—\", FORMAT([Lượt mở thầu], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Tiết kiệm hợp đồng · tỷ VNĐ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Lượt mở thầu"
     },
-    "Hiển thị · Số lượt mở thầu": {
-      "dax": "IF(ISBLANK([Số lượt mở thầu]), \"—\", FORMAT([Số lượt mở thầu], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Lượt nhà thầu": {
+      "dax": "IF(ISBLANK([Lượt nhà thầu]), \"—\", FORMAT([Lượt nhà thầu], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Số lượt mở thầu] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Lượt nhà thầu"
+    },
+    "Hiển thị · Lượt một nhà thầu": {
+      "dax": "IF(ISBLANK([Lượt một nhà thầu]), \"—\", FORMAT([Lượt một nhà thầu], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Lượt một nhà thầu"
+    },
+    "Hiển thị · Lượt nhiều nhà thầu": {
+      "dax": "IF(ISBLANK([Lượt nhiều nhà thầu]), \"—\", FORMAT([Lượt nhiều nhà thầu], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Lượt nhiều nhà thầu"
+    },
+    "Hiển thị · Lượt có giảm giá": {
+      "dax": "IF(ISBLANK([Lượt có giảm giá]), \"—\", FORMAT([Lượt có giảm giá], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Lượt có giảm giá"
+    },
+    "Hiển thị · Thông báo": {
+      "dax": "IF(ISBLANK([Thông báo]), \"—\", FORMAT([Thông báo], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Thông báo"
+    },
+    "Hiển thị · Thông báo hủy quan sát": {
+      "dax": "IF(ISBLANK([Thông báo hủy quan sát]), \"—\", FORMAT([Thông báo hủy quan sát], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Thông báo hủy quan sát"
+    },
+    "Hiển thị · Gói theo trạng thái quan sát": {
+      "dax": "IF(ISBLANK([Gói theo trạng thái quan sát]), \"—\", FORMAT([Gói theo trạng thái quan sát], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Gói theo trạng thái quan sát"
+    },
+    "Hiển thị · Kế hoạch VND": {
+      "dax": "IF(ISBLANK([Kế hoạch VND]), \"—\", FORMAT([Kế hoạch VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Kế hoạch VND"
+    },
+    "Hiển thị · Kế hoạch · tỷ VND": {
+      "dax": "IF(ISBLANK([Kế hoạch · tỷ VND]), \"—\", FORMAT([Kế hoạch · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Kế hoạch · tỷ VND"
+    },
+    "Hiển thị · Trúng thầu VND": {
+      "dax": "IF(ISBLANK([Trúng thầu VND]), \"—\", FORMAT([Trúng thầu VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Trúng thầu VND"
+    },
+    "Hiển thị · Trúng thầu · tỷ VND": {
+      "dax": "IF(ISBLANK([Trúng thầu · tỷ VND]), \"—\", FORMAT([Trúng thầu · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Trúng thầu · tỷ VND"
+    },
+    "Hiển thị · Dự toán mô tả VND": {
+      "dax": "IF(ISBLANK([Dự toán mô tả VND]), \"—\", FORMAT([Dự toán mô tả VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dự toán mô tả VND"
+    },
+    "Hiển thị · Dự toán mô tả · tỷ VND": {
+      "dax": "IF(ISBLANK([Dự toán mô tả · tỷ VND]), \"—\", FORMAT([Dự toán mô tả · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dự toán mô tả · tỷ VND"
+    },
+    "Hiển thị · Giá trúng mô tả VND": {
+      "dax": "IF(ISBLANK([Giá trúng mô tả VND]), \"—\", FORMAT([Giá trúng mô tả VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Giá trúng mô tả VND"
+    },
+    "Hiển thị · Giá trúng mô tả · tỷ VND": {
+      "dax": "IF(ISBLANK([Giá trúng mô tả · tỷ VND]), \"—\", FORMAT([Giá trúng mô tả · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Giá trúng mô tả · tỷ VND"
+    },
+    "Hiển thị · Chênh lệch mô tả VND": {
+      "dax": "IF(ISBLANK([Chênh lệch mô tả VND]), \"—\", FORMAT([Chênh lệch mô tả VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Chênh lệch mô tả VND"
+    },
+    "Hiển thị · Chênh lệch mô tả · tỷ VND": {
+      "dax": "IF(ISBLANK([Chênh lệch mô tả · tỷ VND]), \"—\", FORMAT([Chênh lệch mô tả · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Chênh lệch mô tả · tỷ VND"
+    },
+    "Hiển thị · Kế hoạch bình quân · tỷ VND": {
+      "dax": "IF(ISBLANK([Kế hoạch bình quân · tỷ VND]), \"—\", FORMAT([Kế hoạch bình quân · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Kế hoạch bình quân · tỷ VND"
+    },
+    "Hiển thị · Độ phủ giá trúng": {
+      "dax": "IF(ISBLANK([Độ phủ giá trúng]), \"—\", FORMAT([Độ phủ giá trúng], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Độ phủ giá trúng"
+    },
+    "Hiển thị · Tỷ lệ chênh lệch mô tả": {
+      "dax": "IF(ISBLANK([Tỷ lệ chênh lệch mô tả]), \"—\", FORMAT([Tỷ lệ chênh lệch mô tả], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Tỷ lệ chênh lệch mô tả"
+    },
+    "Hiển thị · Độ phủ mẫu mô tả": {
+      "dax": "IF(ISBLANK([Độ phủ mẫu mô tả]), \"—\", FORMAT([Độ phủ mẫu mô tả], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Độ phủ mẫu mô tả"
     },
     "Hiển thị · Nhà thầu bình quân": {
       "dax": "IF(ISBLANK([Nhà thầu bình quân]), \"—\", FORMAT([Nhà thầu bình quân], \"0.00\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Nhà thầu bình quân] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Nhà thầu bình quân"
     },
     "Hiển thị · Tỷ lệ một nhà thầu": {
       "dax": "IF(ISBLANK([Tỷ lệ một nhà thầu]), \"—\", FORMAT([Tỷ lệ một nhà thầu], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Tỷ lệ một nhà thầu] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Tỷ lệ một nhà thầu"
     },
-    "Hiển thị · Tỷ lệ đạt kỹ thuật": {
-      "dax": "IF(ISBLANK([Tỷ lệ đạt kỹ thuật]), \"—\", FORMAT([Tỷ lệ đạt kỹ thuật], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+    "Hiển thị · Tỷ lệ nhiều nhà thầu": {
+      "dax": "IF(ISBLANK([Tỷ lệ nhiều nhà thầu]), \"—\", FORMAT([Tỷ lệ nhiều nhà thầu], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Tỷ lệ đạt kỹ thuật] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Tỷ lệ nhiều nhà thầu"
     },
-    "Hiển thị · Thời gian trung bình": {
-      "dax": "IF(ISBLANK([Thời gian trung bình]), \"—\", FORMAT([Thời gian trung bình], \"0.0\", \"vi-VN\") & \" \" & [Đơn vị thời gian])",
+    "Hiển thị · Tỷ lệ lượt có giảm giá": {
+      "dax": "IF(ISBLANK([Tỷ lệ lượt có giảm giá]), \"—\", FORMAT([Tỷ lệ lượt có giảm giá], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Thời gian trung bình] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Tỷ lệ lượt có giảm giá"
     },
-    "Hiển thị · Số mẫu thời gian hợp lệ": {
-      "dax": "IF(ISBLANK([Số mẫu thời gian hợp lệ]), \"—\", FORMAT([Số mẫu thời gian hợp lệ], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Tỷ lệ hủy quan sát": {
+      "dax": "IF(ISBLANK([Tỷ lệ hủy quan sát]), \"—\", FORMAT([Tỷ lệ hủy quan sát], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Số mẫu thời gian hợp lệ] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Tỷ lệ hủy quan sát"
     },
-    "Hiển thị · Số mẫu bị loại có ngày": {
-      "dax": "IF(ISBLANK([Số mẫu bị loại có ngày]), \"—\", FORMAT([Số mẫu bị loại có ngày], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Mẫu thời gian": {
+      "dax": "IF(ISBLANK([Mẫu thời gian]), \"—\", FORMAT([Mẫu thời gian], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Chỉ dùng trên card; measure số gốc [Số mẫu bị loại có ngày] dùng cho tính toán và biểu đồ. Dấu phân cách vi-VN; chưa có dữ liệu hiển thị dấu gạch ngang."
+      "description": "Hiển thị · Mẫu thời gian"
+    },
+    "Hiển thị · Mẫu thời gian bị loại": {
+      "dax": "IF(ISBLANK([Mẫu thời gian bị loại]), \"—\", FORMAT([Mẫu thời gian bị loại], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Mẫu thời gian bị loại"
+    },
+    "Hiển thị · Khoảng thời gian": {
+      "dax": "IF(ISBLANK([Khoảng thời gian]), \"—\", FORMAT([Khoảng thời gian], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Khoảng thời gian"
+    },
+    "Hiển thị · Thời gian bình quân": {
+      "dax": "IF(ISBLANK([Thời gian bình quân]), \"—\", FORMAT([Thời gian bình quân], \"0.0\", \"vi-VN\") & \" \" & [Đơn vị thời gian])",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Thời gian bình quân"
+    },
+    "Hiển thị · Tỷ lệ mẫu bị loại": {
+      "dax": "IF(ISBLANK([Tỷ lệ mẫu bị loại]), \"—\", FORMAT([Tỷ lệ mẫu bị loại], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Tỷ lệ mẫu bị loại"
+    },
+    "Hiển thị · Người nhận · tỷ VND": {
+      "dax": "IF(ISBLANK([Người nhận · tỷ VND]), \"—\", FORMAT([Người nhận · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Người nhận · tỷ VND"
+    },
+    "Hiển thị · Số khóa người nhận": {
+      "dax": "IF(ISBLANK([Số khóa người nhận]), \"—\", FORMAT([Số khóa người nhận], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Số khóa người nhận"
+    },
+    "Hiển thị · Lượt nhận đơn": {
+      "dax": "IF(ISBLANK([Lượt nhận đơn]), \"—\", FORMAT([Lượt nhận đơn], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Lượt nhận đơn"
+    },
+    "Hiển thị · Phân bổ · tỷ VND": {
+      "dax": "IF(ISBLANK([Phân bổ · tỷ VND]), \"—\", FORMAT([Phân bổ · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Phân bổ · tỷ VND"
+    },
+    "Hiển thị · Phân bổ · số lượt": {
+      "dax": "IF(ISBLANK([Phân bổ · số lượt]), \"—\", FORMAT([Phân bổ · số lượt], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Phân bổ · số lượt"
+    },
+    "Hiển thị · Tỷ trọng Top 10 người nhận": {
+      "dax": "IF(ISBLANK([Tỷ trọng Top 10 người nhận]), \"—\", FORMAT([Tỷ trọng Top 10 người nhận], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Tỷ trọng Top 10 người nhận"
+    },
+    "Hiển thị · Nhóm kỹ thuật cần xác minh": {
+      "dax": "IF(ISBLANK([Nhóm kỹ thuật cần xác minh]), \"—\", FORMAT([Nhóm kỹ thuật cần xác minh], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Nhóm kỹ thuật cần xác minh"
+    },
+    "Hiển thị · Nhóm tiền dự thầu lệch": {
+      "dax": "IF(ISBLANK([Nhóm tiền dự thầu lệch]), \"—\", FORMAT([Nhóm tiền dự thầu lệch], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Nhóm tiền dự thầu lệch"
+    },
+    "Hiển thị · Dòng · demand": {
+      "dax": "IF(ISBLANK([Dòng · demand]), \"—\", FORMAT([Dòng · demand], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · demand"
+    },
+    "Hiển thị · Dòng · award": {
+      "dax": "IF(ISBLANK([Dòng · award]), \"—\", FORMAT([Dòng · award], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · award"
+    },
+    "Hiển thị · Dòng · savings": {
+      "dax": "IF(ISBLANK([Dòng · savings]), \"—\", FORMAT([Dòng · savings], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · savings"
+    },
+    "Hiển thị · Dòng · bidding_competition": {
+      "dax": "IF(ISBLANK([Dòng · bidding_competition]), \"—\", FORMAT([Dòng · bidding_competition], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · bidding_competition"
+    },
+    "Hiển thị · Dòng · duration": {
+      "dax": "IF(ISBLANK([Dòng · duration]), \"—\", FORMAT([Dòng · duration], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · duration"
+    },
+    "Hiển thị · Dòng · supplier": {
+      "dax": "IF(ISBLANK([Dòng · supplier]), \"—\", FORMAT([Dòng · supplier], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · supplier"
+    },
+    "Hiển thị · Dòng · notice": {
+      "dax": "IF(ISBLANK([Dòng · notice]), \"—\", FORMAT([Dòng · notice], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · notice"
+    },
+    "Hiển thị · Dòng · status": {
+      "dax": "IF(ISBLANK([Dòng · status]), \"—\", FORMAT([Dòng · status], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Dòng · status"
     }
   },
   "relationships": 37

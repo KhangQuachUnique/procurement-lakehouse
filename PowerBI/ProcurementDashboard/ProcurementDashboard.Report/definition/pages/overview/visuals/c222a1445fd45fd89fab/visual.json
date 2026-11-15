@@ -1,16 +1,38 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "c222a1445fd45fd89fab",
   "position": {
-    "x": 648,
-    "y": 176,
-    "width": 296,
-    "height": 80,
-    "z": 8,
-    "tabOrder": 8
+    "x": 732,
+    "y": 204,
+    "z": 9,
+    "height": 84,
+    "width": 330,
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Trúng thầu · tỷ VND"
+                }
+              },
+              "queryRef": "_Measures.Hiển thị · Trúng thầu · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Trúng thầu · tỷ VND"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "labels": [
         {
@@ -18,7 +40,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "24D"
+                  "Value": "22D"
                 }
               }
             },
@@ -155,7 +177,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tiết kiệm xác minh · tỷ VNĐ'"
+                  "Value": "'Trúng thầu · tỷ VND'"
                 }
               }
             }
@@ -175,7 +197,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tiết kiệm xác minh · tỷ VNĐ'"
+                  "Value": "'Trúng thầu · tỷ VND'"
                 }
               }
             },
@@ -214,28 +236,24 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Hiển thị · Tiết kiệm xác minh · tỷ VNĐ"
-                }
-              },
-              "queryRef": "_Measures.Hiển thị · Tiết kiệm xác minh · tỷ VNĐ",
-              "nativeQueryRef": "Hiển thị · Tiết kiệm xác minh · tỷ VNĐ"
-            }
-          ]
-        }
-      }
     }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "cee8eaee06413a9937eb",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Hiển thị · Trúng thầu · tỷ VND"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }
