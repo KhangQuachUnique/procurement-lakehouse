@@ -30,7 +30,7 @@ def project(db, plan, *, retain_accepted=True):
                     "week_start_date": "date_trunc('week',date_key)::DATE",
                     "valid_from": "NULL::DATE",
                     "valid_to": "NULL::DATE",
-                    "is_current": "NULL::BOOLEAN",
+                    "is_current": "TRUE::BOOLEAN",
                 }.get(col.name, col.name)
             )
         db.execute(f"INSERT INTO dimensions.{name} SELECT {','.join(fields)} FROM business.{name}")

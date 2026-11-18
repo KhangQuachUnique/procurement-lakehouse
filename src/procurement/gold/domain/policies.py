@@ -159,3 +159,82 @@ def apply(db, plan):
                   AND p.planned_package_amount>=? AND (? IS NULL OR p.planned_package_amount<?)""",
                     [row.key, row.currency_key, row.min_amount, row.max_amount, row.max_amount],
                 )
+                if fact == "fact_savings_daily":
+                    db.execute(
+                        """UPDATE changes.fact_savings_daily
+                        SET value_band_key=?
+                        WHERE value_band_key='BAND_RAW' AND currency_key=?
+                          AND coalesce(nullif(descriptive_baseline_sum, 0), nullif(descriptive_award_sum, 0)) >= ?
+                          AND (? IS NULL OR coalesce(nullif(descriptive_baseline_sum, 0), nullif(descriptive_award_sum, 0)) < ?)""",
+                        [row.key, row.currency_key, row.min_amount, row.max_amount, row.max_amount],
+                    )
+                elif fact == "fact_bidding_competition_daily" and row.currency_key == "VND":
+                    db.execute(
+                        """UPDATE changes.fact_bidding_competition_daily
+                        SET value_band_key=?
+                        WHERE value_band_key='BAND_RAW'
+                          AND total_bid_amount > 0
+                          AND total_bid_amount >= ?
+                          AND (? IS NULL OR total_bid_amount < ?)""",
+                        [row.key, row.min_amount, row.max_amount, row.max_amount],
+                    )
+
+
+DEFAULT_VALUE_BANDS: tuple[ValueBand, ...] = (
+    ValueBand(
+        band_key="UNDER_100M",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("0"),
+        max_amount=Decimal("100000000"),
+        band_label="Dưới 100 triệu VND",
+        band_order=1,
+    ),
+    ValueBand(
+        band_key="100M_TO_500M",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("100000000"),
+        max_amount=Decimal("500000000"),
+        band_label="Từ 100 triệu đến dưới 500 triệu VND",
+        band_order=2,
+    ),
+    ValueBand(
+        band_key="500M_TO_5B",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("500000000"),
+        max_amount=Decimal("5000000000"),
+        band_label="Từ 500 triệu đến dưới 5 tỷ VND",
+        band_order=3,
+    ),
+    ValueBand(
+        band_key="5B_TO_20B",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("5000000000"),
+        max_amount=Decimal("20000000000"),
+        band_label="Từ 5 tỷ đến dưới 20 tỷ VND",
+        band_order=4,
+    ),
+    ValueBand(
+        band_key="20B_TO_100B",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("20000000000"),
+        max_amount=Decimal("100000000000"),
+        band_label="Từ 20 tỷ đến dưới 100 tỷ VND",
+        band_order=5,
+    ),
+    ValueBand(
+        band_key="OVER_100B",
+        currency_key="VND",
+        policy_version="v1",
+        min_amount=Decimal("100000000000"),
+        max_amount=None,
+        band_label="Từ 100 tỷ VND trở lên",
+        band_order=6,
+    ),
+)
+
+DEFAULT_REFERENCE_POLICY = ReferencePolicy(value_bands=DEFAULT_VALUE_BANDS)

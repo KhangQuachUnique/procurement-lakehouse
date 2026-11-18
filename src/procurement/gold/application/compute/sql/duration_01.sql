@@ -5,13 +5,21 @@ SELECT
     -- owner. A nullable demand-side key cannot be retracted from
     -- the incremental contribution ledger on a later correction.
     MIN(n.package_key) AS package_key,
-    MIN(dem.sector_key) AS sector_key,
-    MIN(dem.method_key) AS method_key,
-    MIN(dem.package_value_band_key) AS package_value_band_key,
-    MIN(dem.investor_party_key) AS investor_party_key,
-    MIN(dem.procurer_party_key) AS procurer_party_key,
-    MIN(dem.reporting_geography_key) AS reporting_geography_key,
-    MIN(dem.location_set_key) AS location_set_key,
+    COALESCE(MIN(dem.sector_key), MIN(n.sector_key)) AS sector_key,
+    COALESCE(MIN(dem.method_key), MIN(n.method_key)) AS method_key,
+    COALESCE(MIN(dem.package_value_band_key), MIN(n.package_value_band_key)) AS package_value_band_key,
+    COALESCE(MIN(dem.investor_party_key), MIN(n.investor_party_key)) AS investor_party_key,
+    COALESCE(MIN(dem.procurer_party_key), MIN(n.procurer_party_key)) AS procurer_party_key,
+    COALESCE(
+        MIN(CASE WHEN dem.reporting_geography_key != 'GEO_UNKNOWN' THEN dem.reporting_geography_key END),
+        MIN(n.reporting_geography_key),
+        MIN(dem.reporting_geography_key)
+    ) AS reporting_geography_key,
+    COALESCE(
+        MIN(CASE WHEN dem.location_set_key != 'LOC_SET:UNKNOWN' THEN dem.location_set_key END),
+        MIN(n.location_set_key),
+        MIN(dem.location_set_key)
+    ) AS location_set_key,
     MIN(dem.package_published_date_key) AS plan_ref_date,
     MIN(n.published_date_key) AS first_notice_date,
     MIN(n.published_at) AS first_notice_published_at,

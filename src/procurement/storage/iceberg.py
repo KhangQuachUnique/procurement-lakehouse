@@ -189,3 +189,42 @@ def connect(
     except BaseException:
         db.close()
         raise
+
+
+def purge_iceberg_namespaces(
+    target_namespaces: list[str],
+    config: IcebergConfig | None = None,
+) -> list[tuple[str, int]]:
+    """Drop all tables (with purgeRequested=true) and namespaces from Iceberg REST Catalog."""
+    import contextlib
+    from urllib.parse import quote
+
+    if config is None:
+        from procurement.common.settings import settings
+
+        config = settings.iceberg_config()
+
+    purged_summary: list[tuple[str, int]] = []
+    with contextlib.suppress(Exception), RestCatalog(config) as cat:
+        ns_res = cat.request("GET", "namespaces") or {}
+        existing_namespaces = [
+            ".".join(ns) if isinstance(ns, list) else str(ns)
+            for ns in ns_res.get("namespaces", [])
+        ]
+        for ns in target_namespaces:
+            if ns not in existing_namespaces:
+                continue
+            t_res = cat.request("GET", f"namespaces/{quote(ns)}/tables") or {}
+            tables = [t["name"] for t in t_res.get("identifiers", [])]
+            dropped_count = 0
+            for tbl in tables:
+                with contextlib.suppress(Exception):
+                    cat.request(
+                        "DELETE",
+                        f"namespaces/{quote(ns)}/tables/{quote(tbl)}?purgeRequested=true",
+                    )
+                    dropped_count += 1
+            with contextlib.suppress(Exception):
+                cat.request("DELETE", f"namespaces/{quote(ns)}")
+            purged_summary.append((ns, dropped_count))
+    return purged_summary

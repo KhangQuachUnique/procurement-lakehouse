@@ -25,6 +25,135 @@ if TYPE_CHECKING:
     from procurement.storage.iceberg import IcebergConfig
 
 
+class SharedIcebergBatchBuffer:
+    """Thread-safe byte-bounded accumulator that flushes Arrow batches across 1 shared DuckDB connection."""
+
+    def __init__(
+        self,
+        iceberg_db: Any,
+        iceberg_catalog: Any,
+        namespace: str,
+        *,
+        existing_dates: set[str] | None = None,
+        change_journal: Any = None,
+        max_buffer_bytes: int = 512 * 1024 * 1024,
+        max_days: int = 0,
+    ) -> None:
+        import threading
+
+        self.iceberg_db = iceberg_db
+        self.iceberg_catalog = iceberg_catalog
+        self.namespace = namespace
+        self.existing_dates: set[str] = existing_dates if existing_dates is not None else set()
+        self.change_journal = change_journal
+        self.max_buffer_bytes = max(1, max_buffer_bytes)
+        self.max_days = max_days
+        self._lock = threading.Lock()
+        self.batch_buffer: dict[str, list[pa.Table]] = defaultdict(list)
+        self.buffered_entries: list[dict[str, Any]] = []
+        self.current_bytes: int = 0
+
+    def has_date(self, day_str: str) -> bool:
+        with self._lock:
+            return day_str in self.existing_dates
+
+    def add_day(
+        self,
+        entry: dict[str, Any],
+        tables_with_data: dict[str, Any],
+        *,
+        force_flush: bool = False,
+    ) -> None:
+        with self._lock:
+            for t_name, t_val in tables_with_data.items():
+                tbl = (
+                    t_val
+                    if isinstance(t_val, pa.Table)
+                    else (pa.Table.from_pylist(t_val) if t_val else None)
+                )
+                if tbl is not None:
+                    self.batch_buffer[t_name].append(tbl)
+                    self.current_bytes += tbl.nbytes
+            self.buffered_entries.append(entry)
+            should_flush = (
+                force_flush
+                or self.current_bytes >= self.max_buffer_bytes
+                or (self.max_days > 0 and len(self.buffered_entries) >= self.max_days)
+            )
+            if should_flush:
+                self._flush_locked()
+
+    def flush(self) -> None:
+        with self._lock:
+            self._flush_locked()
+
+    def _flush_locked(self) -> None:
+        if not self.batch_buffer:
+            self.buffered_entries.clear()
+            self.current_bytes = 0
+            return
+        from procurement.silver.application.warehouse import stage_partition
+        from procurement.silver.domain.schema import get_primary_key
+
+        has_existing_days = any(
+            str(b.get("date")) in self.existing_dates for b in self.buffered_entries
+        )
+        can_skip_delete = (not has_existing_days) and (self.change_journal is None)
+
+        merged_tables: dict[str, pa.Table] = {}
+        for t_name in list(self.batch_buffer.keys()):
+            t_list = self.batch_buffer.pop(t_name)
+            non_empty = [t for t in t_list if len(t) > 0]
+            first_fallback = t_list[0] if t_list else None
+            del t_list
+            if non_empty:
+                combined = pa.concat_tables(non_empty) if len(non_empty) > 1 else non_empty[0]
+                del non_empty
+                if can_skip_delete and len(combined) > 1:
+                    pk_col = get_primary_key(t_name)
+                    if pk_col and pk_col in combined.column_names:
+                        col_vals = combined[pk_col].to_pylist()
+                        seen_idx = {v: idx for idx, v in enumerate(col_vals) if v is not None}
+                        if len(seen_idx) < len(col_vals):
+                            combined = combined.take(sorted(seen_idx.values()))
+                        del col_vals, seen_idx
+                merged_tables[t_name] = combined
+            elif first_fallback is not None:
+                merged_tables[t_name] = first_fallback
+
+        if merged_tables and self.iceberg_db is not None and self.iceberg_catalog is not None:
+            staged_res = stage_partition(
+                self.iceberg_db,
+                self.iceberg_catalog,
+                namespace=self.namespace,
+                tables=merged_tables,
+                partition_date=None,
+                release_id=None,
+                change_journal=self.change_journal,
+                skip_delete=can_skip_delete,
+                ensure_views_after=False,
+                pop_tables=True,
+            )
+            for b_entry in self.buffered_entries:
+                b_entry["iceberg"] = staged_res
+                if b_entry.get("date"):
+                    self.existing_dates.add(str(b_entry["date"]))
+
+        merged_tables.clear()
+        self.batch_buffer.clear()
+        self.buffered_entries.clear()
+        self.current_bytes = 0
+        try:
+            import ctypes
+            import gc
+
+            pa.default_memory_pool().release_unused()
+            gc.collect()
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        except Exception:  # noqa: BLE001, S110
+            pass
+
+
 class ProcessSilverService(ProcessSilverUseCase):
     """Hexagonal use case implementation for Silver candidate generation and Iceberg publication."""
 
@@ -38,10 +167,12 @@ class ProcessSilverService(ProcessSilverUseCase):
         change_journal=None,
         readiness_evidence=False,
         iceberg_namespace="silver",
-        iceberg_memory_limit="4GB",
+        iceberg_memory_limit="1536MB",
         iceberg_threads=2,
         direct_iceberg_only: bool = False,
         batch_size: int = 15,
+        batch_mb: int = 512,
+        shared_writer: SharedIcebergBatchBuffer | None = None,
     ) -> None:
         self.bronze_repo = bronze_repo
         self.silver_repo = silver_repo
@@ -53,6 +184,8 @@ class ProcessSilverService(ProcessSilverUseCase):
         self.readiness_evidence = readiness_evidence
         self.direct_iceberg_only = direct_iceberg_only
         self.batch_size = max(1, batch_size)
+        self.batch_mb = max(16, batch_mb)
+        self.shared_writer = shared_writer
         from procurement.storage.iceberg import identifier
 
         self.iceberg_namespace = identifier(iceberg_namespace)
@@ -120,10 +253,15 @@ class ProcessSilverService(ProcessSilverUseCase):
         except Exception:  # noqa: BLE001
             partitions_by_date = {}
 
+        owns_iceberg_conn = False
         iceberg_db = None
         iceberg_catalog = None
-        existing_iceberg_dates: set[str] = set()
-        if self.iceberg_config is not None:
+        active_writer: SharedIcebergBatchBuffer | None = self.shared_writer
+
+        if active_writer is not None:
+            iceberg_db = active_writer.iceberg_db
+            iceberg_catalog = active_writer.iceberg_catalog
+        elif self.iceberg_config is not None:
             from procurement.silver.application.warehouse import ensure_silver_tables, ensure_views
             from procurement.storage.iceberg import RestCatalog, connect, identifier
 
@@ -140,6 +278,7 @@ class ProcessSilverService(ProcessSilverUseCase):
                     max_memory=self.iceberg_memory_limit,
                     threads=self.iceberg_threads,
                 )
+                owns_iceberg_conn = True
                 ensure_silver_tables(
                     iceberg_db,
                     iceberg_catalog,
@@ -148,20 +287,31 @@ class ProcessSilverService(ProcessSilverUseCase):
                 )
                 ensure_views(iceberg_db, namespace=self.iceberg_namespace)
 
-                if skip_existing:
-                    try:
-                        clean_ns = identifier(self.iceberg_namespace)
-                        res_tag = self.contract.resource
-                        query = f"""
-                            SELECT DISTINCT CAST(source_date AS VARCHAR)
-                            FROM lake.{clean_ns}.observation
-                            WHERE resource = '{res_tag}'
-                              AND source_date BETWEEN DATE '{start_date.isoformat()}' AND DATE '{end_date.isoformat()}'
-                        """
-                        obs_rows = iceberg_db.execute(query).fetchall()
-                        existing_iceberg_dates = {str(r[0]) for r in obs_rows if r[0]}
-                    except Exception:
-                        existing_iceberg_dates = set()
+                existing_iceberg_dates: set[str] = set()
+                try:
+                    clean_ns = identifier(self.iceberg_namespace)
+                    res_tag = self.contract.resource
+                    query = f"""
+                        SELECT DISTINCT CAST(source_date AS VARCHAR)
+                        FROM lake.{clean_ns}.observation
+                        WHERE resource = '{res_tag}'
+                          AND source_date BETWEEN DATE '{start_date.isoformat()}' AND DATE '{end_date.isoformat()}'
+                    """
+                    obs_rows = iceberg_db.execute(query).fetchall()
+                    existing_iceberg_dates = {str(r[0]) for r in obs_rows if r[0]}
+                except Exception:
+                    existing_iceberg_dates = set()
+
+                if active_batch_size > 1:
+                    active_writer = SharedIcebergBatchBuffer(
+                        iceberg_db,
+                        iceberg_catalog,
+                        self.iceberg_namespace,
+                        existing_dates=existing_iceberg_dates,
+                        change_journal=self.change_journal,
+                        max_buffer_bytes=self.batch_mb * 1024 * 1024,
+                        max_days=active_batch_size,
+                    )
             except Exception as exc:
                 if iceberg_db is not None:
                     import contextlib
@@ -172,40 +322,6 @@ class ProcessSilverService(ProcessSilverUseCase):
                     f"Iceberg initialization failed for {self.contract.resource}; publication was requested"
                 ) from exc
 
-        batch_buffer: dict[str, list[pa.Table]] = defaultdict(list)
-        buffered_entries: list[dict[str, Any]] = []
-
-        def flush_batch() -> None:
-            nonlocal batch_buffer, buffered_entries
-            if not batch_buffer:
-                buffered_entries.clear()
-                return
-            merged_tables = {}
-            for t_name, t_list in batch_buffer.items():
-                non_empty = [t for t in t_list if len(t) > 0]
-                if non_empty:
-                    merged_tables[t_name] = pa.concat_tables(non_empty)
-                elif t_list:
-                    merged_tables[t_name] = t_list[0]
-
-            if merged_tables and iceberg_db is not None and iceberg_catalog is not None:
-                from procurement.silver.application.warehouse import stage_partition
-
-                staged_res = stage_partition(
-                    iceberg_db,
-                    iceberg_catalog,
-                    namespace=self.iceberg_namespace,
-                    tables=merged_tables,
-                    partition_date=None,
-                    release_id=None,
-                    change_journal=self.change_journal,
-                )
-                for b_entry in buffered_entries:
-                    b_entry["iceberg"] = staged_res
-            batch_buffer.clear()
-            buffered_entries.clear()
-            save_report()
-
         try:
             day = start_date
             while day <= end_date:
@@ -214,7 +330,7 @@ class ProcessSilverService(ProcessSilverUseCase):
 
                 is_already_staged = False
                 if skip_existing:
-                    if day_str in existing_iceberg_dates:
+                    if active_writer is not None and active_writer.has_date(day_str):
                         is_already_staged = True
                     elif hasattr(self.silver_repo, "partition_exists") and all(
                         self.silver_repo.partition_exists(prefix, day, names)
@@ -299,17 +415,20 @@ class ProcessSilverService(ProcessSilverUseCase):
                             )
 
                     tables = assemble(transformed)
+                    del transformed
                     quality = validate(tables)
                     if self.contract.resource == "contract_performance" and (
                         quality["quarantined"] or quality["blocking_issues"]
                     ):
                         raise ValueError("Contract execution Silver has blocking quality issues")
 
-                    # Validate and cast typed schemas via SQL contract
-                    output = {
-                        name: typed_arrow_rows(name, tables[name])
-                        for name in self.contract.output_tables
-                    }
+                    # Validate and cast typed schemas via SQL contract, freeing Python dicts table-by-table
+                    output = {}
+                    for name in self.contract.output_tables:
+                        rows = tables.pop(name, [])
+                        output[name] = typed_arrow_rows(name, rows)
+                        del rows
+                    del tables
 
                     paths = {}
                     if not self.direct_iceberg_only:
@@ -342,15 +461,9 @@ class ProcessSilverService(ProcessSilverUseCase):
                             for gov_name in ("quality_issue", "quarantine"):
                                 if gov_name in output:
                                     tables_with_data[gov_name] = output[gov_name]
+                        del output
 
-                        if active_batch_size > 1:
-                            for t_name, t_val in tables_with_data.items():
-                                if isinstance(t_val, pa.Table):
-                                    batch_buffer[t_name].append(t_val)
-                                elif t_val:
-                                    batch_buffer[t_name].append(pa.Table.from_pylist(t_val))
-                            buffered_entries.append(entry)
-                        else:
+                        if active_batch_size <= 1 or active_writer is None:
                             from procurement.silver.application.warehouse import stage_partition
 
                             if tables_with_data:
@@ -366,6 +479,10 @@ class ProcessSilverService(ProcessSilverUseCase):
                             else:
                                 iceberg_staged = {}
                             entry["iceberg"] = iceberg_staged
+                            del tables_with_data
+                    else:
+                        del output
+                        tables_with_data = None
 
                     entry.update(
                         status="needs_review"
@@ -382,13 +499,9 @@ class ProcessSilverService(ProcessSilverUseCase):
                         ],
                     )
 
-                    if active_batch_size > 1 and batch_buffer:
-                        next_day = day + timedelta(days=1)
-                        is_end_of_range = (day == end_date)
-                        is_end_of_month = (day.month != next_day.month)
-                        is_batch_full = (len(buffered_entries) >= active_batch_size)
-                        if is_end_of_range or is_end_of_month or is_batch_full:
-                            flush_batch()
+                    if active_batch_size > 1 and active_writer is not None and tables_with_data is not None:
+                        active_writer.add_day(entry, tables_with_data)
+                        del tables_with_data
                     if self.readiness_evidence and entry["status"] == "completed":
                         if iceberg_catalog is None:
                             raise ValueError(
@@ -414,7 +527,8 @@ class ProcessSilverService(ProcessSilverUseCase):
                     )
 
                 report["days"].append(entry)
-                save_report()
+                if active_batch_size <= 1 or entry["status"] == "failed":
+                    save_report()
 
                 if on_progress:
                     on_progress(entry)
@@ -434,8 +548,8 @@ class ProcessSilverService(ProcessSilverUseCase):
 
                 day += timedelta(days=1)
 
-            if active_batch_size > 1:
-                flush_batch()
+            if active_batch_size > 1 and active_writer is not None and self.shared_writer is None:
+                active_writer.flush()
 
             statuses = {e["status"] for e in report["days"]}
             report["status"] = (
@@ -447,7 +561,11 @@ class ProcessSilverService(ProcessSilverUseCase):
             )
 
             # Pin final batch snapshot per output table
-            if report["status"] in ("completed", "needs_review") and iceberg_catalog is not None:
+            if (
+                owns_iceberg_conn
+                and report["status"] in ("completed", "needs_review")
+                and iceberg_catalog is not None
+            ):
                 for clean_name in self.contract.output_tables:
                     try:
                         table_info = iceberg_catalog.table(self.iceberg_namespace, clean_name)
@@ -460,16 +578,17 @@ class ProcessSilverService(ProcessSilverUseCase):
                     except Exception:  # noqa: BLE001, S110 — snapshot pinning is best effort
                         pass
         finally:
-            if iceberg_db is not None:
-                try:
-                    from procurement.silver.application.warehouse import ensure_views
+            if owns_iceberg_conn:
+                if iceberg_db is not None:
+                    try:
+                        from procurement.silver.application.warehouse import ensure_views
 
-                    ensure_views(iceberg_db, namespace=self.iceberg_namespace)
-                except Exception:  # noqa: BLE001, S110 — views are recreated by query sessions
-                    pass
-                iceberg_db.close()
-            if iceberg_catalog is not None:
-                iceberg_catalog.close()
+                        ensure_views(iceberg_db, namespace=self.iceberg_namespace)
+                    except Exception:  # noqa: BLE001, S110 — views are recreated by query sessions
+                        pass
+                    iceberg_db.close()
+                if iceberg_catalog is not None:
+                    iceberg_catalog.close()
 
         save_report()
         return report
@@ -478,4 +597,4 @@ class ProcessSilverService(ProcessSilverUseCase):
 # Backward compatibility alias
 ProcessNoticeService = ProcessSilverService
 
-__all__ = ["ProcessNoticeService", "ProcessSilverService"]
+__all__ = ["ProcessNoticeService", "ProcessSilverService", "SharedIcebergBatchBuffer"]

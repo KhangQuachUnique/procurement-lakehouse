@@ -10,8 +10,24 @@ SELECT DISTINCT
     'SEC_' || COALESCE(NULLIF(TRIM(bid_field), ''), 'UNKNOWN'),
     '{p5}',
     COALESCE(NULLIF(TRIM(bid_field), ''), 'UNKNOWN'),
-    COALESCE(NULLIF(TRIM(bid_field), ''), 'Chưa xác định'),
-    NULL
+    CASE UPPER(COALESCE(NULLIF(TRIM(bid_field), ''), 'UNKNOWN'))
+        WHEN 'HH' THEN 'Hàng hóa'
+        WHEN 'XL' THEN 'Xây lắp'
+        WHEN 'TV' THEN 'Tư vấn'
+        WHEN 'PTV' THEN 'Phi tư vấn'
+        WHEN 'HON_HOP' THEN 'Hỗn hợp'
+        WHEN 'UNKNOWN' THEN 'Chưa xác định'
+        ELSE COALESCE(NULLIF(TRIM(bid_field), ''), 'Chưa xác định')
+    END,
+    CASE UPPER(COALESCE(NULLIF(TRIM(bid_field), ''), 'UNKNOWN'))
+        WHEN 'HH' THEN 'Mua sắm hàng hóa'
+        WHEN 'XL' THEN 'Đầu tư xây dựng'
+        WHEN 'TV' THEN 'Dịch vụ tư vấn'
+        WHEN 'PTV' THEN 'Dịch vụ phi tư vấn'
+        WHEN 'HON_HOP' THEN 'Đa lĩnh vực'
+        WHEN 'UNKNOWN' THEN NULL
+        ELSE 'Chưa phân nhóm'
+    END
 FROM (SELECT bid_field FROM {p6} UNION SELECT bid_field FROM {p7}) observed
 WHERE NOT EXISTS (
     SELECT 1 FROM {p8}dim_sector s

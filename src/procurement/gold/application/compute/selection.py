@@ -43,6 +43,39 @@ def execute(conn, context):
     else:
         execute_sql(conn, "selection_03.sql", {})
 
+    rel_not_loc = getattr(context, "rel_not_loc", "")
+    if rel_not_loc:
+        conn.execute(f"""
+            CREATE TEMP TABLE _gtmp_notice_geography AS
+            SELECT
+                nl.revision_id,
+                CASE
+                    WHEN BOOL_OR(COALESCE(pm.is_multi, FALSE)) THEN 2
+                    ELSE COUNT(DISTINCT COALESCE(pm.canonical_code, CASE WHEN pm.raw_code IS NULL THEN UPPER(TRIM(nl.province_code)) ELSE NULL END))
+                END AS prov_count,
+                MIN(COALESCE(pm.canonical_code, CASE WHEN pm.raw_code IS NULL THEN UPPER(TRIM(nl.province_code)) ELSE NULL END)) AS single_province_code,
+                COALESCE(
+                    string_agg(
+                        DISTINCT COALESCE(pm.canonical_code, CASE WHEN pm.raw_code IS NULL THEN UPPER(TRIM(nl.province_code)) ELSE NULL END),
+                        ',' ORDER BY COALESCE(pm.canonical_code, CASE WHEN pm.raw_code IS NULL THEN UPPER(TRIM(nl.province_code)) ELSE NULL END)
+                    ),
+                    CASE WHEN BOOL_OR(COALESCE(pm.is_multi, FALSE)) THEN 'MULTI_824' ELSE 'UNKNOWN' END
+                ) AS loc_hash
+            FROM {rel_not_loc} nl
+            LEFT JOIN _gtmp_province_map pm ON UPPER(TRIM(nl.province_code)) = pm.raw_code
+            WHERE nl.province_code IS NOT NULL AND TRIM(nl.province_code) != ''
+            GROUP BY nl.revision_id
+        """)
+    else:
+        conn.execute("""
+            CREATE TEMP TABLE _gtmp_notice_geography (
+                revision_id VARCHAR,
+                prov_count BIGINT,
+                single_province_code VARCHAR,
+                loc_hash VARCHAR
+            )
+        """)
+
     if rel_plan:
         plan_obs_join = (
             f"LEFT JOIN {rel_obs} o ON pl.observation_id = o.observation_id" if rel_obs else ""

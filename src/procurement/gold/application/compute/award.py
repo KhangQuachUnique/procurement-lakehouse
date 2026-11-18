@@ -15,7 +15,7 @@ def execute(conn, context):
 
     execute_sql(conn, "award_03.sql", {})
 
-    execute_sql(conn, "award_04.sql", {})
+    execute_sql(conn, "award_04.sql", {"p0": schema_prefix, "p1": release_id})
 
     execute_sql(
         conn,

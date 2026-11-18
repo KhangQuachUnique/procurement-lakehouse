@@ -45,6 +45,7 @@ def test_gold_facts_specs_and_lineage_dependencies():
         "gold_fact_duration_daily",
         "gold_fact_supplier_daily",
         "gold_fact_status_daily",
+        "gold_fact_bidding_competition_daily",
     }
     assert set(fact_map.keys()) == expected_facts
 

@@ -429,3 +429,100 @@ def test_existing_watch_state_is_reseeded_after_phase_upgrade(tmp_path):
     upgraded = watch.WatchStore(path)
     assert upgraded.db.execute("SELECT count(*) FROM seeds").fetchone()[0] == 0
     upgraded.close()
+
+
+def test_seed_and_check_use_postgres_metadata_service(monkeypatch, store):
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from procurement import bootstrap
+    from procurement.metadata.models import CommitFileDescriptor, PartitionIdentity
+
+    tbmt_commit = uuid4()
+    opening_commit = uuid4()
+    refreshed = False
+
+    class FakeMetadataService:
+        def list_committed_dates(self, source, resource):
+            return [DAY] if resource == "notify_contractor" else []
+
+        def get_snapshot(self, partitions):
+            views = []
+            for ident in partitions:
+                if ident.resource == "notify_contractor" and ident.source_date == DAY:
+                    commit = SimpleNamespace(id=tbmt_commit, record_count=1)
+                    files = (
+                        CommitFileDescriptor(
+                            commit_id=tbmt_commit,
+                            file_number=1,
+                            table_name="notify_contractor_standard_detail",
+                            bucket="procurement-lakehouse",
+                            object_key="tbmt.parquet",
+                            row_count=1,
+                            size_bytes=10,
+                            sha256="a" * 64,
+                            schema_version=1,
+                        ),
+                    )
+                elif (
+                    refreshed
+                    and ident.resource == "bid_opening"
+                    and ident.source_date == DAY
+                ):
+                    commit = SimpleNamespace(id=opening_commit, record_count=1)
+                    files = (
+                        CommitFileDescriptor(
+                            commit_id=opening_commit,
+                            file_number=1,
+                            table_name="bid_opening_detail",
+                            bucket="procurement-lakehouse",
+                            object_key="opening.parquet",
+                            row_count=1,
+                            size_bytes=10,
+                            sha256="b" * 64,
+                            schema_version=1,
+                        ),
+                    )
+                else:
+                    commit = None
+                    files = ()
+                views.append(
+                    SimpleNamespace(
+                        partition=SimpleNamespace(identity=PartitionIdentity(ident.source, ident.resource, ident.source_date)),
+                        commit=commit,
+                        files=files,
+                    )
+                )
+            return views
+
+    monkeypatch.setattr(bootstrap, "get_metadata_service", lambda: FakeMetadataService())
+    monkeypatch.setattr(watch, "read_quality_contexts", lambda *_: [])
+    monkeypatch.setattr(
+        watch,
+        "iter_committed_records",
+        lambda *_, **__: iter(
+            [
+                (
+                    "notify_contractor_standard_detail",
+                    {"source_date": DAY, "source_id": "IB1", "source_version": "00", "payload": {}},
+                )
+            ]
+        ),
+    )
+    monkeypatch.setattr(watch, "notice_context", lambda *_: CTX)
+    monkeypatch.setattr(watch, "opening_states", lambda *_: {(CTX["id"], "IB1", "00"): "complete"} if refreshed else {})
+
+    seeded = watch.seed(None, store, now=NOW)
+    assert seeded["pending"] == 1 and seeded["captured"] == 0
+
+    class Client:
+        def post(self, *_args, **_kwargs):
+            return {"page": {"totalElements": 1, "content": [CTX]}}
+
+    def run_day(*_args, **_kwargs):
+        nonlocal refreshed
+        refreshed = True
+        return str(opening_commit)
+
+    checked = watch.check(None, store, Client(), now=NOW, run_day=run_day)
+    assert checked["captured"] == 1 and checked["pending"] == 0

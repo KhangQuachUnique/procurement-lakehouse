@@ -153,16 +153,39 @@ def plan_components(
 
 def select_batch(db, batch, source="frozen"):
     identifier(source)
+    has_batch_nodes = db.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog=current_database() AND table_schema='graph' AND table_name='batch_nodes'"
+    ).fetchone()[0]
+    if not has_batch_nodes:
+        db.execute("""
+            CREATE TABLE graph.batch_nodes AS
+            SELECT
+                b.batch,
+                split_part(i.node, ':', 1) AS table_name,
+                substr(i.node, strpos(i.node, ':') + 1) AS entity_id
+            FROM graph.impacted i
+            JOIN graph.batches b USING (component)
+            ORDER BY b.batch, table_name
+        """)
     db.execute("DROP SCHEMA IF EXISTS scoped CASCADE")
     db.execute("CREATE SCHEMA scoped")
     for name in ROOTS:
         db.execute(
-            f"CREATE TABLE scoped.{name} AS SELECT * FROM {source}.{name} WHERE '{name}:'||entity_id IN (SELECT node FROM graph.impacted JOIN graph.batches USING(component) WHERE batch=?)",
-            [batch],
+            f"CREATE TABLE scoped.{name} AS SELECT * FROM {source}.{name} "
+            f"WHERE entity_id IN (SELECT entity_id FROM graph.batch_nodes WHERE batch=? AND table_name=?)",
+            [batch, name],
         )
     for child, parent in CHILDREN.items():
         db.execute(
             f"CREATE TABLE scoped.{child} AS SELECT * FROM {source}.{child} WHERE revision_id IN (SELECT revision_id FROM scoped.{parent})"
+        )
+    has_not_loc = db.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog=current_database() AND table_schema=? AND table_name='notice_location'",
+        [source],
+    ).fetchone()[0]
+    if has_not_loc:
+        db.execute(
+            f"CREATE TABLE scoped.notice_location AS SELECT * FROM {source}.notice_location WHERE revision_id IN (SELECT revision_id FROM scoped.notice_revision)"
         )
     ids = " UNION ".join("SELECT observation_id FROM scoped." + n for n in ROOTS)
     db.execute(

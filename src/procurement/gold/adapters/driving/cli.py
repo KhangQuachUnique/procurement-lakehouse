@@ -19,6 +19,7 @@ from rich.progress import (
 )
 from rich.table import Table
 
+from procurement.common.settings import settings
 from procurement.gold.application.reconciliation import reconcile_gold
 from procurement.gold.application.state import StateStore
 from procurement.gold.application.warehouse import ensure_gold_tables, promote_views, seed_geography
@@ -146,9 +147,9 @@ def materialize_history(
 
 @app.command("ensure-tables")
 def cmd_ensure_tables(
-    namespace: str = typer.Option("gold", help="Target Iceberg namespace in catalog 'lake'"),
+    namespace: str = typer.Option(settings.GOLD_TARGET_NAMESPACE, help="Target Iceberg namespace in catalog 'lake'"),
 ):
-    """Provision all 16 tables in lake.{namespace} with monthly partitioning on facts."""
+    """Provision all 17 tables in lake.{namespace} with monthly partitioning on facts."""
     from procurement.common.settings import Settings
     from procurement.storage.iceberg import RestCatalog, connect
 
@@ -160,7 +161,7 @@ def cmd_ensure_tables(
 
 @app.command("seed-geography")
 def cmd_seed_geography(
-    namespace: str = typer.Option("gold", help="Target Iceberg namespace in catalog 'lake'"),
+    namespace: str = typer.Option(settings.GOLD_TARGET_NAMESPACE, help="Target Iceberg namespace in catalog 'lake'"),
 ):
     """Seed dim_geography with the authoritative 63 provinces dictionary."""
     from procurement.common.settings import Settings
@@ -174,7 +175,7 @@ def cmd_seed_geography(
 
 @app.command("promote")
 def cmd_promote(
-    source_namespace: str = typer.Option("gold_v2", help="Source physical namespace in catalog 'lake'"),
+    source_namespace: str = typer.Option(settings.GOLD_TARGET_NAMESPACE, help="Source physical namespace in catalog 'lake'"),
     target_schema: str = typer.Option("gold", help="Target schema for zero-copy views"),
 ):
     """Promote physical lake.{source_namespace}.* tables to zero-copy views in {target_schema}.*."""
@@ -214,7 +215,7 @@ def _display_gold_summary(
         summary_table.add_row(fact_name, f"{cnt:,}", grain_str)
 
     summary_table.add_section()
-    summary_table.add_row("[bold white]Total Fact Records[/]", f"[bold green]{total_facts:,}[/]", "[bold green]7 Fact Cohorts[/]")
+    summary_table.add_row("[bold white]Total Fact Records[/]", f"[bold green]{total_facts:,}[/]", "[bold green]8 Fact Cohorts[/]")
 
     timing_table = Table(title="Execution Latency Breakdown", show_header=True, header_style="bold sky_blue2")
     timing_table.add_column("Pipeline Stage", style="white")
@@ -241,8 +242,8 @@ def cmd_run(
     month: str | None = typer.Option(None, "--month", "-m", help="Target month (YYYY-MM) to process"),
     start_date: str | None = typer.Option(None, "--start-date", help="Start date (YYYY-MM-DD) for range"),
     end_date: str | None = typer.Option(None, "--end-date", help="End date (YYYY-MM-DD) for range"),
-    silver_namespace: str = typer.Option("silver", help="Source Silver namespace in catalog 'lake'"),
-    gold_namespace: str = typer.Option("gold", help="Target Gold namespace in catalog 'lake'"),
+    silver_namespace: str = typer.Option(settings.SILVER_TARGET_NAMESPACE, help="Source Silver namespace in catalog 'lake'"),
+    gold_namespace: str = typer.Option(settings.GOLD_TARGET_NAMESPACE, help="Target Gold namespace in catalog 'lake'"),
     memory_limit: str = typer.Option("4GB", help="DuckDB memory limit"),
     threads: int = typer.Option(4, help="DuckDB execution threads"),
 ):
@@ -264,7 +265,7 @@ def cmd_run(
     console.print(
         Panel(
             f"[bold]Batch Gold Dimensional Pipeline Execution[/]\n"
-            f"Architecture: [bold cyan]Conformed Star Schema (10 Dimensions + 7 Facts)[/]\n"
+            f"Architecture: [bold cyan]Conformed Star Schema (9 Dimensions + 8 Facts)[/]\n"
             f"Source: [bold green]lake.{silver_namespace}.*[/] ➔ Target: [bold gold1]lake.{gold_namespace}.*[/]\n"
             f"Date Scope: [bold yellow]{scope_label}[/]\n"
             f"Engine: [bold sky_blue2]DuckDB Vectorized + Apache Iceberg Format v2[/]\n"
@@ -416,6 +417,80 @@ def cmd_reconcile(
             raise typer.Exit(code=1)
         else:
             console.rule("[bold green]✔ All Financial Balances & Foreign Key Constraints Verified![/]")
+
+
+@app.command("reset")
+@app.command("delete", hidden=True)
+@app.command("purge", hidden=True)
+def cmd_reset(
+    namespace: str | None = typer.Option(
+        None,
+        "--namespace",
+        "-n",
+        help="Specific Gold Iceberg namespace to delete (e.g. 'gold_v3'). Defaults to all gold* namespaces.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation prompt.",
+    ),
+):
+    """Delete Gold Iceberg namespaces and S3 storage data."""
+    import contextlib
+
+    from procurement.cli.silver import get_storage
+    from procurement.storage.iceberg import purge_iceberg_namespaces
+
+    target_ns_list = (
+        [namespace]
+        if namespace
+        else list(dict.fromkeys(["gold", "gold_v2", "gold_v3", settings.GOLD_TARGET_NAMESPACE]))
+    )
+
+    if not force:
+        console.print()
+        console.print(
+            Panel(
+                f"[bold red]WARNING: Gold Data Deletion Request[/]\n\n"
+                f"  • Target Namespaces: [bold yellow]{', '.join(target_ns_list)}[/]\n"
+                f"  • Iceberg Purge    : [bold cyan]Enabled (purgeRequested=true)[/]",
+                title="[bold yellow]Confirm Gold Reset[/]",
+                border_style="red",
+            )
+        )
+        if not typer.confirm("Are you sure you want to permanently delete the selected Gold data?", default=False):
+            console.print("[yellow]Operation cancelled. No data was deleted.[/]\n")
+            raise typer.Exit(code=0)
+
+    purged_iceberg = purge_iceberg_namespaces(target_ns_list)
+    fs, bucket = get_storage()
+    cleaned_s3: list[tuple[str, int]] = []
+    for ns in target_ns_list:
+        prefix = f"{bucket}/{ns}"
+        if fs.exists(prefix):
+            all_files = fs.find(prefix)
+            file_count = len(all_files)
+            if all_files:
+                fs.rm(all_files)
+            with contextlib.suppress(Exception):
+                fs.rm(prefix, recursive=True)
+            cleaned_s3.append((f"s3://{prefix}", file_count))
+
+    if purged_iceberg or cleaned_s3:
+        summary = Table(title="Gold Reset Summary", show_header=True, header_style="bold gold1")
+        summary.add_column("Target", style="cyan")
+        summary.add_column("Type", style="white")
+        summary.add_column("Removed", justify="right", style="green")
+        for ns, tbl_count in purged_iceberg:
+            summary.add_row(f"lake.{ns}", "Iceberg Namespace", f"{tbl_count} tables")
+        for s3_uri, f_count in cleaned_s3:
+            summary.add_row(s3_uri, "S3 Prefix", f"{f_count} files")
+        console.print()
+        console.print(Panel(summary, border_style="green"))
+        console.print("[bold green]✔ Gold reset completed successfully.[/]\n")
+    else:
+        console.print("[yellow]No existing Gold data found to delete.[/]\n")
 
 
 def main():

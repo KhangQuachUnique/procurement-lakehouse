@@ -35,13 +35,27 @@ def execute(conn, context):
     rel_contract_rev = getattr(context, "rel_contract_rev", None) or "frozen.contract_revision"
     conn.execute(f"""
         CREATE TEMP TABLE _gtmp_contract_savings AS
+        WITH matched_contracts AS (
+            SELECT r.revision_id AS result_revision_id, c.entity_id AS contract_entity_id, c.price_after_tax
+            FROM {rel_contract_rev} c
+            JOIN _gtmp_cand_result r ON c.result_source_id = r.bid_id
+            WHERE c.price_after_tax > 0 AND c.result_source_id IS NOT NULL
+            UNION
+            SELECT r.revision_id AS result_revision_id, c.entity_id AS contract_entity_id, c.price_after_tax
+            FROM {rel_contract_rev} c
+            JOIN _gtmp_cand_result r ON c.result_source_id = r.result_id
+            WHERE c.price_after_tax > 0 AND c.result_source_id IS NOT NULL
+            UNION
+            SELECT r.revision_id AS result_revision_id, c.entity_id AS contract_entity_id, c.price_after_tax
+            FROM {rel_contract_rev} c
+            JOIN _gtmp_cand_result r ON c.notice_no = r.notify_no
+            WHERE c.price_after_tax > 0 AND c.notice_no IS NOT NULL
+        )
         SELECT
-            r.revision_id AS result_revision_id,
-            SUM(c.price_after_tax) AS contract_price
-        FROM {rel_contract_rev} c
-        JOIN _gtmp_cand_result r ON c.result_source_id = r.bid_id OR c.notice_no = r.notify_no
-        WHERE c.price_after_tax > 0
-        GROUP BY r.revision_id
+            result_revision_id,
+            SUM(price_after_tax) AS contract_price
+        FROM matched_contracts
+        GROUP BY result_revision_id
     """)
 
     execute_sql(

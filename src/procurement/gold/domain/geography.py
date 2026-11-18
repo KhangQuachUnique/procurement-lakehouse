@@ -1,8 +1,9 @@
 """Authoritative 63 Provinces of Vietnam and Economic Regions Dictionary.
 
-Normalizes both GSO 2-digit numeric codes ('01', '79', '48'...) and 3-letter alphanumeric
-telecom/postal codes ('HNI', 'HCM', 'DNG'...) into canonical 63 provinces with official
-economic regions, eliminating the 108 fragmented pairs found in raw procurement data.
+Normalizes GSO 2-digit numeric codes ('01', '79', '48'...), Muasamcong 3-digit numeric
+codes ('101', '701', '501'...), and 3-letter alphanumeric codes ('HNI', 'HCM', 'DNG'...)
+into canonical 63 provinces with official economic regions, eliminating fragmented
+duplicate geography keys in Gold dimensions and facts.
 """
 
 import re
@@ -146,6 +147,85 @@ for alias, target_gso in _SPECIAL_ALIASES.items():
     _CODE_LOOKUP[alias.upper()] = p_info
     _NAME_LOOKUP[_clean_key(alias)] = p_info
 
+# Muasamcong 3-digit numeric province codes ('101'..'823') -> canonical short_code
+MUASAMCONG_3DIGIT_CODES: dict[str, str] = {
+    "101": "HNI",
+    "103": "HPG",
+    "107": "HDG",
+    "109": "HYN",
+    "111": "HNM",
+    "113": "NDH",
+    "115": "TBH",
+    "117": "NBH",
+    "201": "HGG",
+    "203": "CBG",
+    "205": "LCI",
+    "207": "BKN",
+    "209": "LSON",
+    "211": "TQG",
+    "213": "YBN",
+    "215": "TNN",
+    "217": "PTO",
+    "219": "VPH",
+    "221": "BGG",
+    "223": "BNH",
+    "225": "QNH",
+    "301": "DBN",
+    "302": "LCH",
+    "303": "SLA",
+    "305": "HBH",
+    "401": "THA",
+    "403": "NAN",
+    "405": "HTH",
+    "407": "QBH",
+    "409": "QTI",
+    "411": "TTH",
+    "501": "DNG",
+    "503": "QNM",
+    "505": "QNI",
+    "507": "BDH",
+    "509": "PYN",
+    "511": "KHA",
+    "601": "KTM",
+    "603": "GLI",
+    "605": "DLC",
+    "606": "DKN",
+    "701": "HCM",
+    "703": "LDG",
+    "705": "NTH",
+    "707": "BPC",
+    "709": "TNH",
+    "711": "BDG",
+    "713": "DNI",
+    "715": "BTH",
+    "717": "VTU",
+    "801": "LAN",
+    "803": "DTH",
+    "805": "AGG",
+    "807": "TGG",
+    "809": "VLG",
+    "811": "BTE",
+    "813": "KGG",
+    "815": "CTO",
+    "816": "HGG2",
+    "817": "TVH",
+    "819": "STG",
+    "821": "BLU",
+    "823": "CMU",
+}
+for msc_code, short_code in MUASAMCONG_3DIGIT_CODES.items():
+    _CODE_LOOKUP[msc_code] = _CODE_LOOKUP[short_code]
+
+# Special non-province Muasamcong codes:
+# '824' = Toàn quốc (Nationwide -> multi-geography)
+# '825' = Ngoài lãnh thổ Việt Nam (Outside Vietnam -> unknown/unallocated)
+# '999' = 999 (Placeholder -> unknown)
+SPECIAL_GEOGRAPHY_CODES: dict[str, str] = {
+    "824": "GEO_MULTI_UNALLOCATED",
+    "825": "GEO_UNKNOWN",
+    "999": "GEO_UNKNOWN",
+}
+
 
 def normalize_province(code_or_name: str | None) -> ProvinceInfo | None:
     """Normalize any province code, short abbreviation, or name into canonical ProvinceInfo."""
@@ -209,3 +289,87 @@ def get_geography_records() -> list[dict[str, any]]:
         "is_unknown": True,
     })
     return records
+
+
+def get_province_code_mapping_rows() -> list[tuple[str, str | None, str, str, str, bool, bool]]:
+    """Return (raw_code, canonical_code, geography_key, province_name, region_name, is_multi, is_unknown) tuples."""
+    rows: dict[str, tuple[str, str | None, str, str, str, bool, bool]] = {}
+    for raw_code, p in _CODE_LOOKUP.items():
+        key = raw_code.upper().strip()
+        rows[key] = (
+            key,
+            p.short_code,
+            f"GEO_{p.short_code}",
+            p.name,
+            p.region,
+            False,
+            False,
+        )
+    rows["824"] = (
+        "824",
+        None,
+        "GEO_MULTI_UNALLOCATED",
+        "Đa địa bàn chưa phân bổ",
+        "Đa vùng",
+        True,
+        False,
+    )
+    for unk_code in ("825", "999", "UNKNOWN"):
+        rows[unk_code] = (
+            unk_code,
+            None,
+            "GEO_UNKNOWN",
+            "Chưa xác định",
+            "Chưa xác định",
+            False,
+            True,
+        )
+    return list(rows.values())
+
+
+def ensure_province_map_table(conn) -> None:
+    """Create and populate _gtmp_province_map and _gtmp_canonical_geography in DuckDB."""
+    conn.execute("""
+        CREATE OR REPLACE TEMP TABLE _gtmp_province_map (
+            raw_code VARCHAR PRIMARY KEY,
+            canonical_code VARCHAR,
+            geography_key VARCHAR,
+            province_name VARCHAR,
+            region_name VARCHAR,
+            is_multi BOOLEAN,
+            is_unknown BOOLEAN
+        )
+    """)
+    map_rows = get_province_code_mapping_rows()
+    conn.executemany(
+        "INSERT INTO _gtmp_province_map VALUES (?, ?, ?, ?, ?, ?, ?)",
+        map_rows,
+    )
+    conn.execute("""
+        CREATE OR REPLACE TEMP TABLE _gtmp_canonical_geography (
+            geography_key VARCHAR PRIMARY KEY,
+            geography_version VARCHAR,
+            province_code VARCHAR,
+            province_name VARCHAR,
+            region_name VARCHAR,
+            is_multi_geography BOOLEAN,
+            is_unknown BOOLEAN
+        )
+    """)
+    geo_rows = [
+        (
+            r["geography_key"],
+            r["geography_version"],
+            r["province_code"],
+            r["province_name"],
+            r["region_name"],
+            r["is_multi_geography"],
+            r["is_unknown"],
+        )
+        for r in get_geography_records()
+    ]
+    conn.executemany(
+        "INSERT INTO _gtmp_canonical_geography VALUES (?, ?, ?, ?, ?, ?, ?)",
+        geo_rows,
+    )
+

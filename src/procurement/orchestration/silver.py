@@ -17,6 +17,7 @@ from dagster import (
     MetadataValue,
     OpExecutionContext,
     RetryPolicy,
+    asset,
     job,
     multi_asset,
     op,
@@ -105,6 +106,17 @@ SILVER_GROUPS: tuple[SilverResourceGroup, ...] = (
             SilverTableSpec(
                 "notice_reoffer_submission", "Tender reoffer submissions and price quotes"
             ),
+        ),
+    ),
+    SilverResourceGroup(
+        resource_name="bid_opening",
+        upstream_bronze_name="bronze_bid_opening",
+        primary_revision_table="opening_revision",
+        tables=(
+            SilverTableSpec("opening_revision", "Bid opening records (bien ban mo thau)"),
+            SilverTableSpec("opening_phase", "Bid opening phases (dot mo thau)"),
+            SilverTableSpec("opening_submission", "Submitted bids at bid opening"),
+            SilverTableSpec("opening_lot_submission", "Submitted lot-level bids at bid opening"),
         ),
     ),
     SilverResourceGroup(
@@ -337,7 +349,57 @@ def build_silver_multi_asset(group: SilverResourceGroup):
     return silver_multi_asset
 
 
-silver_assets = [build_silver_multi_asset(group) for group in SILVER_GROUPS]
+class LinkageIndexConfig(Config):
+    """Runtime configuration for Silver Union-Find linkage_index materialization."""
+
+    namespace: str = settings.SILVER_TARGET_NAMESPACE
+    mode: str = "full"
+    memory_limit: str = "2GB"
+    threads: int = 4
+
+
+@asset(
+    name="silver_linkage_index",
+    group_name="silver",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
+    retry_policy=RetryPolicy(max_retries=0),
+    deps=[
+        AssetKey("silver_project_revision"),
+        AssetKey("silver_plan_revision"),
+        AssetKey("silver_package_revision"),
+        AssetKey("silver_notice_revision"),
+        AssetKey("silver_opening_revision"),
+        AssetKey("silver_result_revision"),
+    ],
+    description="Cross-resource Union-Find connected component index (lake.{namespace}.linkage_index) for O(1) Gold upstream linking.",
+)
+def silver_linkage_index(context: AssetExecutionContext, config: LinkageIndexConfig):
+    from procurement.silver.application.linkage_index import run_linkage_index
+
+    target_date = context.partition_key
+    res = run_linkage_index(
+        namespace=config.namespace,
+        mode=config.mode,
+        start_date=target_date,
+        end_date=target_date,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    return MaterializeResult(
+        metadata={
+            "namespace": config.namespace,
+            "mode": str(res.get("mode", config.mode)),
+            "nodes": int(res.get("nodes", 0)),
+            "edges": int(res.get("edges", 0)),
+            "components": int(res.get("components", 0)),
+            "rows": int(res.get("rows", 0)),
+            "wall_time_s": MetadataValue.float(float(res.get("wall_time_s", 0.0))),
+        }
+    )
+
+
+silver_assets = [*[build_silver_multi_asset(group) for group in SILVER_GROUPS], silver_linkage_index]
 
 
 class IcebergSyncConfig(Config):

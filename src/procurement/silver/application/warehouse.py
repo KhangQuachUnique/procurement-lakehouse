@@ -17,6 +17,7 @@ SCHEMAS = get_silver_schemas()
 
 _local_duckdb = threading.local()
 _ICEBERG_COMMIT_LOCK = threading.RLock()
+_EMPTY_TYPED_TABLES: dict[str, pa.Table] = {}
 
 
 def _get_duckdb_conn():
@@ -25,7 +26,7 @@ def _get_duckdb_conn():
 
         _local_duckdb.conn = duckdb.connect(
             ":memory:",
-            config={"max_memory": "2GB", "threads": "2"},
+            config={"max_memory": "128MB", "threads": "1"},
         )
     return _local_duckdb.conn
 
@@ -33,16 +34,25 @@ def _get_duckdb_conn():
 def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
     """Validate and cast rows against the SQL contract before writing local Parquet."""
     clean_name = identifier(name)
+    if not rows:
+        cached = _EMPTY_TYPED_TABLES.get(clean_name)
+        if cached is not None:
+            return cached
     db = _get_duckdb_conn()
     db.execute(f"CREATE OR REPLACE TEMP TABLE typed_rows ({SCHEMAS[clean_name]})")
     try:
         if rows:
-            db.register("input_rows", pa.Table.from_pylist(rows))
+            raw_tbl = pa.Table.from_pylist(rows)
+            db.register("input_rows", raw_tbl)
             try:
                 db.execute("INSERT INTO typed_rows BY NAME SELECT * FROM input_rows")
             finally:
                 db.unregister("input_rows")
-        return db.execute("SELECT * FROM typed_rows").to_arrow_table()
+                del raw_tbl
+        res_tbl = db.execute("SELECT * FROM typed_rows").to_arrow_table()
+        if not rows:
+            _EMPTY_TYPED_TABLES[clean_name] = res_tbl
+        return res_tbl
     finally:
         db.execute("DROP TABLE IF EXISTS typed_rows")
 
@@ -197,6 +207,9 @@ def stage_partition(
     release_id: str | None = None,
     schemas: dict[str, str] | None = None,
     change_journal=None,
+    skip_delete: bool = False,
+    ensure_views_after: bool = True,
+    pop_tables: bool = False,
 ) -> dict[str, dict[str, Any]]:
     """Stage candidate tables into Iceberg Lake using idempotent partition/key overwrites.
 
@@ -244,14 +257,6 @@ def stage_partition(
                     rids.add(str(row["revision_id"]))
         return rids
 
-    replaced_result_rids: set[str] = set()
-    if "result_revision" in tables:
-        replaced_result_rids.update(_extract_rids(tables["result_revision"]))
-    if "award_lot" in tables:
-        replaced_result_rids.update(_extract_rids(tables["award_lot"]))
-    if "award_contractor" in tables:
-        replaced_result_rids.update(_extract_rids(tables["award_contractor"]))
-
     def _extract_obs_ids(cand: Any) -> set[str]:
         obs_ids = set()
         if isinstance(cand, pa.Table):
@@ -265,15 +270,25 @@ def stage_partition(
                     obs_ids.add(str(row["observation_id"]))
         return obs_ids
 
+    replaced_result_rids: set[str] = set()
     incoming_observation_ids: set[str] = set()
-    if "observation" in tables:
-        incoming_observation_ids.update(_extract_obs_ids(tables["observation"]))
-    if "quality_issue" in tables:
-        incoming_observation_ids.update(_extract_obs_ids(tables["quality_issue"]))
-    if "quarantine" in tables:
-        incoming_observation_ids.update(_extract_obs_ids(tables["quarantine"]))
+    if not skip_delete or change_journal is not None:
+        if "result_revision" in tables:
+            replaced_result_rids.update(_extract_rids(tables["result_revision"]))
+        if "award_lot" in tables:
+            replaced_result_rids.update(_extract_rids(tables["award_lot"]))
+        if "award_contractor" in tables:
+            replaced_result_rids.update(_extract_rids(tables["award_contractor"]))
 
-    for name, candidate in tables.items():
+        if "observation" in tables:
+            incoming_observation_ids.update(_extract_obs_ids(tables["observation"]))
+        if "quality_issue" in tables:
+            incoming_observation_ids.update(_extract_obs_ids(tables["quality_issue"]))
+        if "quarantine" in tables:
+            incoming_observation_ids.update(_extract_obs_ids(tables["quarantine"]))
+
+    for name in list(tables.keys()):
+        candidate = tables.pop(name) if pop_tables else tables[name]
         clean_name = identifier(name)
         schema = schemas.get(clean_name)
         if schema is None:
@@ -311,76 +326,85 @@ def stage_partition(
             with _ICEBERG_COMMIT_LOCK:
                 db.execute("BEGIN")
                 try:
-                    if clean_name == "contract_performance_revision" and partition_date is not None:
-                        # Replace this publication-day slice, including records removed on refresh.
-                        day_value = date.fromisoformat(str(partition_date)).isoformat()
-                        db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
-                    elif clean_name == "observation":
-                        if (
-                            arrow_table is not None
-                            and "resource" in arrow_table.column_names
-                            and "source_date" in arrow_table.column_names
-                            and len(arrow_table) > 0
-                        ):
-                            db.register("_incoming_obs_dates", arrow_table)
-                            try:
-                                db.execute(
-                                    f"DELETE FROM {table} WHERE (source_date, resource) IN "
-                                    f"(SELECT DISTINCT source_date, resource FROM _incoming_obs_dates)"
-                                )
-                            finally:
-                                db.unregister("_incoming_obs_dates")
-                        elif partition_date is not None:
+                    if not skip_delete:
+                        if clean_name == "contract_performance_revision" and partition_date is not None:
+                            # Replace this publication-day slice, including records removed on refresh.
                             day_value = date.fromisoformat(str(partition_date)).isoformat()
                             db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
-                    # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
-                    if clean_name in {"quality_issue", "quarantine"} and incoming_observation_ids:
-                        db.register(
-                            "_cohort_obs_ids",
-                            pa.Table.from_arrays(
-                                [pa.array(sorted(incoming_observation_ids), type=pa.string())],
-                                names=["observation_id"],
-                            ),
-                        )
-                        try:
-                            db.execute(
-                                f"DELETE FROM {table} WHERE observation_id IN (SELECT observation_id FROM _cohort_obs_ids)"
+                        if clean_name == "observation":
+                            if (
+                                arrow_table is not None
+                                and "resource" in arrow_table.column_names
+                                and "source_date" in arrow_table.column_names
+                                and len(arrow_table) > 0
+                            ):
+                                db.register("_incoming_obs_dates", arrow_table)
+                                try:
+                                    db.execute(
+                                        f"DELETE FROM {table} WHERE (source_date, resource) IN "
+                                        f"(SELECT DISTINCT source_date, resource FROM _incoming_obs_dates)"
+                                    )
+                                finally:
+                                    db.unregister("_incoming_obs_dates")
+                            elif partition_date is not None:
+                                day_value = date.fromisoformat(str(partition_date)).isoformat()
+                                db.execute(f"DELETE FROM {table} WHERE source_date = DATE '{day_value}'")
+                        # 1. True Key-Level UPSERT (or Partition Cleanup if empty batch with explicit partition_date)
+                        elif clean_name in {"quality_issue", "quarantine"} and incoming_observation_ids:
+                            db.register(
+                                "_cohort_obs_ids",
+                                pa.Table.from_arrays(
+                                    [pa.array(sorted(incoming_observation_ids), type=pa.string())],
+                                    names=["observation_id"],
+                                ),
                             )
-                        finally:
-                            db.unregister("_cohort_obs_ids")
-                    elif clean_name in {"award_lot", "award_contractor"} and replaced_result_rids:
-                        db.register(
-                            "_cand_result_rids",
-                            pa.Table.from_arrays(
-                                [pa.array(sorted(replaced_result_rids), type=pa.string())],
-                                names=["revision_id"],
-                            ),
-                        )
-                        try:
-                            db.execute(
-                                f"DELETE FROM {table} WHERE revision_id IN (SELECT revision_id FROM _cand_result_rids)"
+                            try:
+                                db.execute(
+                                    f"DELETE FROM {table} WHERE observation_id IN (SELECT observation_id FROM _cohort_obs_ids)"
+                                )
+                            finally:
+                                db.unregister("_cohort_obs_ids")
+                        elif clean_name in {"award_lot", "award_contractor"} and replaced_result_rids:
+                            db.register(
+                                "_cand_result_rids",
+                                pa.Table.from_arrays(
+                                    [pa.array(sorted(replaced_result_rids), type=pa.string())],
+                                    names=["revision_id"],
+                                ),
                             )
-                        finally:
-                            db.unregister("_cand_result_rids")
-                    elif pk and arrow_table is not None and len(arrow_table) > 0:
-                        db.register("_incoming_cand", arrow_table)
-                        try:
-                            db.execute(
-                                f"DELETE FROM {table} WHERE {pk} IN (SELECT {pk} FROM _incoming_cand)"
-                            )
-                        finally:
-                            db.unregister("_incoming_cand")
-                    elif (
-                        clean_name != "contract_revision"
-                        and spec
-                        and partition_date is not None
-                        and (arrow_table is None or len(arrow_table) == 0)
-                    ):
-                        if isinstance(partition_date, date):
-                            p_str = partition_date.isoformat()
-                        else:
-                            p_str = str(partition_date)
-                        db.execute(f"DELETE FROM {table} WHERE {spec} = '{p_str}'")
+                            try:
+                                db.execute(
+                                    f"DELETE FROM {table} WHERE revision_id IN (SELECT revision_id FROM _cand_result_rids)"
+                                )
+                            finally:
+                                db.unregister("_cand_result_rids")
+                        elif pk and arrow_table is not None and len(arrow_table) > 0:
+                            db.register("_incoming_cand", arrow_table)
+                            try:
+                                if (
+                                    "source_month" in arrow_table.column_names
+                                    and "source_month" in get_table_column_types(clean_name)
+                                ):
+                                    db.execute(
+                                        f"DELETE FROM {table} WHERE (source_month IS NULL OR source_month IN (SELECT DISTINCT source_month FROM _incoming_cand)) AND {pk} IN (SELECT {pk} FROM _incoming_cand)"
+                                    )
+                                else:
+                                    db.execute(
+                                        f"DELETE FROM {table} WHERE {pk} IN (SELECT {pk} FROM _incoming_cand)"
+                                    )
+                            finally:
+                                db.unregister("_incoming_cand")
+                        elif (
+                            clean_name != "contract_revision"
+                            and spec
+                            and partition_date is not None
+                            and (arrow_table is None or len(arrow_table) == 0)
+                        ):
+                            if isinstance(partition_date, date):
+                                p_str = partition_date.isoformat()
+                            else:
+                                p_str = str(partition_date)
+                            db.execute(f"DELETE FROM {table} WHERE {spec} = '{p_str}'")
 
                     # 2. Atomic Insert
                     if arrow_table is not None and len(arrow_table) > 0:
@@ -446,7 +470,7 @@ def stage_partition(
                 if total_pos_deletes > 0 or total_del_files > 0 or total_eq_deletes > 0:
                     has_deletes = True
 
-            if has_deletes or physical_count is None:
+            if (has_deletes and not skip_delete) or physical_count is None:
                 try:
                     actual = db.sql(
                         f"SELECT count(*) FROM {table} AT (VERSION => {snapshot_id})"
@@ -470,9 +494,12 @@ def stage_partition(
         elif clean_name in {"award_lot", "award_contractor"}:
             snapshots[clean_name] = {"snapshot_id": None, "row_count": 0,
                                      "table_uuid": metadata.get("table-uuid")}
+        arrow_table = None
+        candidate = None
 
     # Automatically ensure active vectorized current views in DuckDB
-    ensure_views(db, clean_ns)
+    if ensure_views_after:
+        ensure_views(db, clean_ns)
 
     return snapshots
 

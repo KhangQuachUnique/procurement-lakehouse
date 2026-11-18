@@ -75,10 +75,12 @@ def calculate(db, plan, on_batch=None):
                     f"INSERT INTO affected SELECT DISTINCT owner_key FROM changes.{name} ON CONFLICT DO NOTHING"
                 )
             for name in DIMENSIONS:
-                key = TABLES[name].key
-                db.execute(f"""CREATE OR REPLACE TABLE computed_dimensions.{name} AS
-                  SELECT * FROM (SELECT * FROM computed_dimensions.{name} UNION ALL SELECT * FROM dimensions.{name}) t
-                  QUALIFY row_number() OVER(PARTITION BY {key} ORDER BY to_json(t))=1""")
+                db.execute(f"INSERT INTO computed_dimensions.{name} SELECT * FROM dimensions.{name}")
+                if (batch + 1) % 50 == 0:
+                    key = TABLES[name].key
+                    db.execute(f"""CREATE OR REPLACE TABLE computed_dimensions.{name} AS
+                      SELECT * FROM computed_dimensions.{name} t
+                      QUALIFY row_number() OVER(PARTITION BY {key} ORDER BY to_json(t))=1""")
             db.execute("INSERT INTO control.completed_batches VALUES (?,?)", [plan.run_id, batch])
             db.execute("COMMIT")
         except BaseException:
@@ -96,19 +98,43 @@ def calculate(db, plan, on_batch=None):
     for name in FACTS:
         db.execute(f"INSERT INTO changes.{name} SELECT * FROM computed.{name}")
     for name in DIMENSIONS:
+        key = TABLES[name].key
+        db.execute(f"""CREATE OR REPLACE TABLE computed_dimensions.{name} AS
+          SELECT * FROM computed_dimensions.{name} t
+          QUALIFY row_number() OVER(PARTITION BY {key} ORDER BY to_json(t))=1""")
         db.execute(f"INSERT INTO dimensions.{name} SELECT * FROM computed_dimensions.{name}")
         if has_accepted:
-            key = TABLES[name].key
             db.execute(
                 f"INSERT INTO dimensions.{name} SELECT * FROM accepted.{name} a WHERE NOT EXISTS (SELECT 1 FROM dimensions.{name} d WHERE a.{key}=d.{key})"
             )
-    # Shared geography labels are source-wide, not component-local. Recompute
-    # all observed raw dictionary descriptors, including unchanged owners.
+    # Shared geography labels are source-wide, not component-local. Ensure all 65
+    # canonical geography records are populated with official names and regions,
+    # while allowing synthetic non-canonical test codes if present.
+    from procurement.gold.domain.geography import ensure_province_map_table
+
+    ensure_province_map_table(db)
+    db.execute("""INSERT INTO dimensions.dim_geography
+      SELECT cg.geography_key, 'v1', cg.province_code, cg.province_name, cg.region_name,
+             cg.is_multi_geography, cg.is_unknown, NULL, NULL, TRUE
+      FROM _gtmp_canonical_geography cg
+      WHERE NOT EXISTS (SELECT 1 FROM dimensions.dim_geography d WHERE d.geography_key=cg.geography_key)""")
+    db.execute("""UPDATE dimensions.dim_geography d
+      SET province_code=cg.province_code,
+          province_name=cg.province_name,
+          region_name=cg.region_name,
+          is_multi_geography=cg.is_multi_geography,
+          is_unknown=cg.is_unknown,
+          is_current=COALESCE(d.is_current, TRUE)
+      FROM _gtmp_canonical_geography cg
+      WHERE d.geography_key=cg.geography_key AND d.geography_version='v1'""")
     db.execute("""CREATE OR REPLACE TEMP TABLE global_geography AS
-      SELECT 'GEO_'||upper(trim(province_code)) geography_key,upper(trim(province_code)) province_code,
-        CASE WHEN count(DISTINCT nullif(trim(province_name),''))=1 THEN min(nullif(trim(province_name),'')) ELSE NULL END province_name
-      FROM frozen.package_location WHERE nullif(trim(province_code),'') IS NOT NULL GROUP BY upper(trim(province_code))""")
-    db.execute("""INSERT INTO dimensions.dim_geography SELECT geography_key,'v1',province_code,province_name,NULL,FALSE,FALSE,NULL,NULL,NULL
+      SELECT 'GEO_'||upper(trim(pl.province_code)) geography_key,upper(trim(pl.province_code)) province_code,
+        CASE WHEN count(DISTINCT nullif(trim(pl.province_name),''))=1 THEN min(nullif(trim(pl.province_name),'')) ELSE NULL END province_name
+      FROM frozen.package_location pl
+      LEFT JOIN _gtmp_province_map pm ON upper(trim(pl.province_code))=pm.raw_code
+      WHERE nullif(trim(pl.province_code),'') IS NOT NULL AND pm.raw_code IS NULL
+      GROUP BY upper(trim(pl.province_code))""")
+    db.execute("""INSERT INTO dimensions.dim_geography SELECT geography_key,'v1',province_code,province_name,NULL,FALSE,FALSE,NULL,NULL,TRUE
       FROM global_geography g WHERE NOT EXISTS (SELECT 1 FROM dimensions.dim_geography d WHERE d.geography_key=g.geography_key)""")
     db.execute(
         "UPDATE dimensions.dim_geography d SET province_name=g.province_name FROM global_geography g WHERE d.geography_key=g.geography_key AND d.geography_version='v1'"
@@ -150,6 +176,9 @@ def calculate(db, plan, on_batch=None):
         ("notice_to_close_hours", "hours"),
         ("close_to_first_award_days", "days"),
         ("close_to_complete_award_days", "days"),
+        ("close_to_open_hours", "hours"),
+        ("open_to_award_days", "days"),
+        ("planned_to_actual_delay_days", "days"),
     ):
         db.execute(
             "INSERT INTO dimensions.dim_duration_metric SELECT ?,?,? WHERE NOT EXISTS (SELECT 1 FROM dimensions.dim_duration_metric WHERE metric_key=?)",

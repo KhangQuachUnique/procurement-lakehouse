@@ -10,11 +10,11 @@ SELECT
     ai.award_business_key,
     ai.scope_key,
     ai.package_key,
-    COALESCE(dem.sector_key, 'SEC_UNKNOWN') AS sector_key,
-    COALESCE(dem.method_key, 'METHOD_UNKNOWN') AS method_key,
-    COALESCE(dem.package_value_band_key, 'BAND_RAW') AS package_value_band_key,
-    COALESCE(dem.investor_party_key, 'PARTY_INVESTOR:UNKNOWN') AS investor_party_key,
-    COALESCE(dem.procurer_party_key, 'PARTY_BUYER:UNKNOWN') AS procurer_party_key,
+    COALESCE(dem.sector_key, ftn.sector_key, 'SEC_UNKNOWN') AS sector_key,
+    COALESCE(dem.method_key, ftn.method_key, 'METHOD_UNKNOWN') AS method_key,
+    COALESCE(dem.package_value_band_key, ftn.package_value_band_key, 'BAND_RAW') AS package_value_band_key,
+    COALESCE(dem.investor_party_key, ftn.investor_party_key, 'PARTY_INVESTOR:UNKNOWN') AS investor_party_key,
+    COALESCE(dem.procurer_party_key, ftn.procurer_party_key, 'PARTY_BUYER:UNKNOWN') AS procurer_party_key,
     CASE
         WHEN ai.currency IS NULL OR TRIM(ai.currency) IN ('', 'UNKNOWN', 'None', 'CUR_UNKNOWN') THEN 'CUR_UNKNOWN'
         ELSE UPPER(TRIM(ai.currency))
@@ -47,8 +47,18 @@ SELECT
         WHEN rs.winner_count = 1 THEN 'single_recipient'
         ELSE 'independent_winners'
     END AS recipient_allocation_state,
-    COALESCE(dem.reporting_geography_key, 'GEO_UNKNOWN') AS reporting_geography_key,
-    COALESCE(dem.location_set_key, 'LOC_SET:UNKNOWN') AS location_set_key,
+    COALESCE(
+        CASE WHEN dem.reporting_geography_key != 'GEO_UNKNOWN' THEN dem.reporting_geography_key END,
+        ftn.reporting_geography_key,
+        dem.reporting_geography_key,
+        'GEO_UNKNOWN'
+    ) AS reporting_geography_key,
+    COALESCE(
+        CASE WHEN dem.location_set_key != 'LOC_SET:UNKNOWN' THEN dem.location_set_key END,
+        ftn.location_set_key,
+        dem.location_set_key,
+        'LOC_SET:UNKNOWN'
+    ) AS location_set_key,
     'EVD:AWARD:' || ai.result_revision_id AS evidence_set_key,
     TIMESTAMPTZ '{p4}' AS created_at
 FROM _gtmp_award_items_resolved ai
@@ -58,4 +68,6 @@ LEFT JOIN _gtmp_recipient_summary rs ON ai.award_business_key = rs.award_busines
 LEFT JOIN (
     SELECT notify_no, MIN(round_business_key) AS round_business_key
     FROM _gtmp_cand_notice GROUP BY notify_no HAVING COUNT(*) = 1
-) not_sub ON ai.notify_no = not_sub.notify_no;
+) not_sub ON ai.notify_no = not_sub.notify_no
+LEFT JOIN {p5}fact_tender_notice ftn
+  ON ftn.release_id = '{p6}' AND ftn.round_business_key = not_sub.round_business_key;

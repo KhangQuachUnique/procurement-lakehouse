@@ -21,7 +21,13 @@ SELECT
         '{p2}'
     ) AS method_key,
     'BAND_RAW' AS package_value_band_key,
-    COALESCE('PARTY_UNRESOLVED:{p3}:PLAN_INVESTOR:' || pl.entity_id, 'PARTY_INVESTOR:UNKNOWN') AS investor_party_key,
+    CASE
+        WHEN pl.entity_id IS NOT NULL AND NULLIF(TRIM(pl.investor_name), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR_NAME:' || MD5(UPPER(TRIM(pl.investor_name)))
+        WHEN pl.entity_id IS NOT NULL
+        THEN 'PARTY_UNRESOLVED:{p3}:PLAN_INVESTOR:' || pl.entity_id
+        ELSE 'PARTY_INVESTOR:UNKNOWN'
+    END AS investor_party_key,
     'PARTY_BUYER:UNKNOWN' AS procurer_party_key,
     CASE
         WHEN p.currency IS NULL OR TRIM(p.currency) IN ('', 'UNKNOWN', 'None', 'CUR_UNKNOWN') THEN 'CUR_UNKNOWN'

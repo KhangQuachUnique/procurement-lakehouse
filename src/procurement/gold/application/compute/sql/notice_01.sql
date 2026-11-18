@@ -25,7 +25,13 @@ SELECT
         '{p2}'
     ) AS method_key,
     'BAND_RAW' AS package_value_band_key,
-    'PARTY_UNRESOLVED:{p3}:NOTICE_INVESTOR:' || n.entity_id AS investor_party_key,
+    CASE
+        WHEN NULLIF(TRIM(n.investor_code), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR:' || TRIM(n.investor_code)
+        WHEN NULLIF(TRIM(n.investor_name), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR_NAME:' || MD5(UPPER(TRIM(n.investor_name)))
+        ELSE 'PARTY_UNRESOLVED:{p3}:NOTICE_INVESTOR:' || n.entity_id
+    END AS investor_party_key,
     CASE WHEN NULLIF(TRIM(n.procuring_entity_code), '') IS NOT NULL THEN 'PARTY_PROCURER:' || TRIM(n.procuring_entity_code) ELSE 'PARTY_UNRESOLVED:{p4}:NOTICE_PROCURER:' || n.entity_id END AS procurer_party_key,
     n.public_date AS published_date_key,
     n.published_at,
@@ -70,9 +76,18 @@ SELECT
         WHEN n.cancel_reason IS NOT NULL THEN 'explicit_notice_cancellation'
         ELSE NULL
     END AS cancel_reason_category,
-    'GEO_UNKNOWN' AS reporting_geography_key,
-    'LOC_SET:UNKNOWN' AS location_set_key,
+    CASE
+        WHEN COALESCE(ngeo.prov_count, 0) = 1 THEN 'GEO_' || ngeo.single_province_code
+        WHEN COALESCE(ngeo.prov_count, 0) > 1 THEN 'GEO_MULTI_UNALLOCATED'
+        WHEN COALESCE(pgeo.prov_count, 0) = 1 THEN 'GEO_' || pgeo.single_province_code
+        WHEN COALESCE(pgeo.prov_count, 0) > 1 THEN 'GEO_MULTI_UNALLOCATED'
+        ELSE 'GEO_UNKNOWN'
+    END AS reporting_geography_key,
+    'LOC_SET:' || COALESCE(ngeo.loc_hash, pgeo.loc_hash, 'UNKNOWN') AS location_set_key,
     'EVD:NOTICE:' || n.revision_id AS evidence_set_key,
     TIMESTAMPTZ '{p5}' AS created_at
 FROM _gtmp_cand_notice n
-JOIN _gtmp_notice_package_match npm ON npm.revision_id = n.revision_id;
+JOIN _gtmp_notice_package_match npm ON npm.revision_id = n.revision_id
+LEFT JOIN _gtmp_notice_geography ngeo ON n.revision_id = ngeo.revision_id
+LEFT JOIN _gtmp_cand_package pkg ON npm.resolved_entity_id = pkg.entity_id
+LEFT JOIN _gtmp_pkg_geography pgeo ON pkg.revision_id = pgeo.revision_id;

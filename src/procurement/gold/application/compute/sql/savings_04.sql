@@ -49,6 +49,7 @@ SELECT
             AND fa.award_published_date_key <= DATE '{p3}'
             AND sb.baseline_date <= fa.award_published_date_key
             AND NOT (fa.scope_key LIKE '%:PACKAGE' AND COALESCE(plc.lot_count, 0) > 0)
+            AND fa.award_amount <= sb.baseline_amount * 2
         )
         THEN sb.baseline_amount - fa.award_amount
         ELSE NULL
@@ -66,7 +67,8 @@ SELECT
         AND fa.award_published_date_key >= DATE '{p4}'
         AND fa.award_published_date_key <= DATE '{p5}'
         AND sb.baseline_date <= fa.award_published_date_key
-        AND NOT (fa.scope_key LIKE '%:PACKAGE' AND COALESCE(plc.lot_count, 0) > 0),
+        AND NOT (fa.scope_key LIKE '%:PACKAGE' AND COALESCE(plc.lot_count, 0) > 0)
+        AND fa.award_amount <= sb.baseline_amount * 2,
         FALSE
     ) AS is_descriptive_eligible,
     CASE
@@ -94,6 +96,8 @@ SELECT
         THEN 'currency_mismatch'
         WHEN NOT fa.is_amount_eligible
         THEN 'invalid_award_amount'
+        WHEN fa.award_amount > sb.baseline_amount * 2
+        THEN 'extreme_overrun_anomaly'
         ELSE NULL
     END AS descriptive_exclusion_reason,
     sb.baseline_basis AS descriptive_basis,
@@ -119,13 +123,45 @@ SELECT
     (sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0) AS is_baseline_valid,
     fa.evidence_set_key,
     TIMESTAMPTZ '{p9}' AS created_at,
-    cs.contract_price AS contract_amount,
     CASE
-        WHEN sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0 AND cs.contract_price IS NOT NULL AND cs.contract_price > 0
+        WHEN (
+            fa.award_state = 'effective'
+            AND fa.scope_key LIKE '%:PACKAGE%'
+            AND COALESCE(plc.lot_count, 0) = 0
+            AND sb.baseline_amount IS NOT NULL
+            AND sb.baseline_amount > 0
+            AND cs.contract_price IS NOT NULL
+            AND cs.contract_price > 0
+            AND cs.contract_price <= sb.baseline_amount * 2
+        )
+        THEN cs.contract_price
+        ELSE NULL
+    END AS contract_amount,
+    CASE
+        WHEN (
+            fa.award_state = 'effective'
+            AND fa.scope_key LIKE '%:PACKAGE%'
+            AND COALESCE(plc.lot_count, 0) = 0
+            AND sb.baseline_amount IS NOT NULL
+            AND sb.baseline_amount > 0
+            AND cs.contract_price IS NOT NULL
+            AND cs.contract_price > 0
+            AND cs.contract_price <= sb.baseline_amount * 2
+        )
         THEN sb.baseline_amount - cs.contract_price
         ELSE NULL
     END AS contract_saving_amount,
-    COALESCE(sb.baseline_amount IS NOT NULL AND sb.baseline_amount > 0 AND cs.contract_price IS NOT NULL AND cs.contract_price > 0, FALSE) AS is_contract_eligible
+    COALESCE(
+        fa.award_state = 'effective'
+        AND fa.scope_key LIKE '%:PACKAGE%'
+        AND COALESCE(plc.lot_count, 0) = 0
+        AND sb.baseline_amount IS NOT NULL
+        AND sb.baseline_amount > 0
+        AND cs.contract_price IS NOT NULL
+        AND cs.contract_price > 0
+        AND cs.contract_price <= sb.baseline_amount * 2,
+        FALSE
+    ) AS is_contract_eligible
 FROM {p10}fact_award fa
 JOIN _gtmp_scope_baselines sb ON fa.award_business_key = sb.award_business_key
 LEFT JOIN _gtmp_package_lot_counts plc ON fa.package_key = plc.package_key AND split_part(fa.scope_key, ':ROUND:', 2) = plc.scope_round_key

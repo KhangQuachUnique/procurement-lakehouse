@@ -778,11 +778,49 @@ SILVER_PARTITION_SPECS: dict[str, str] = {
     "package_revision": "public_date",
 }
 
+SILVER_MONTHLY_PARTITION_SPECS: dict[str, str] = {
+    # Tier 1: Governance & Execution (monthly hidden partitioning)
+    "observation": "month(source_date)",
+    "contract_revision": "month(source_date)",
+    "contract_performance_revision": "month(source_date)",
+    # Tier 2: Core Revisions (monthly hidden partitioning)
+    "notice_revision": "month(public_date)",
+    "project_revision": "month(public_date)",
+    "plan_revision": "month(public_date)",
+    "result_revision": "month(public_date)",
+    "opening_revision": "month(public_date)",
+    "package_revision": "month(public_date)",
+    # Tier 3: Child Projections with source_month
+    "notice_lot": "source_month",
+    "notice_location": "source_month",
+    "notice_reoffer_submission": "source_month",
+    "notice_amendment": "source_month",
+    "project_location": "source_month",
+    "package_lot": "source_month",
+    "package_location": "source_month",
+    "award_lot": "source_month",
+    "award_contractor": "source_month",
+}
+
 
 def get_partition_spec(table_name: str) -> str | None:
     """Return the Iceberg partition specification for a Silver table if configured."""
     clean_name = table_name.split(".")[-1]
     return SILVER_PARTITION_SPECS.get(clean_name)
+
+
+LEGACY_DAILY_PARTITION_NAMESPACES: frozenset[str] = frozenset(
+    {"silver", "silver_v2", "custom_lake"}
+)
+
+
+def get_iceberg_partition_spec(table_name: str, namespace: str = "silver") -> str | None:
+    """Return the DDL partition expression for a Silver table (monthly by default, daily for legacy namespaces)."""
+    clean_name = table_name.split(".")[-1]
+    clean_ns = namespace.strip().split(".")[-1]
+    if clean_ns in LEGACY_DAILY_PARTITION_NAMESPACES:
+        return SILVER_PARTITION_SPECS.get(clean_name)
+    return SILVER_MONTHLY_PARTITION_SPECS.get(clean_name)
 
 
 def to_iceberg_ddl(
@@ -807,7 +845,7 @@ def to_iceberg_ddl(
         if not table_schema:
             raise ValueError(f"Unknown silver table schema: {clean_name}")
 
-    spec = get_partition_spec(clean_name)
+    spec = get_iceberg_partition_spec(clean_name, clean_ns)
     partition_clause = f" PARTITIONED BY ({spec})" if spec else ""
     return (
         f"CREATE TABLE IF NOT EXISTS lake.{clean_ns}.{clean_name} "
