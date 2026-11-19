@@ -1,6 +1,6 @@
 """PostgreSQL implementation of the MetadataService protocol."""
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -329,3 +329,17 @@ class PostgresMetadataService(MetadataService):
     def get_snapshot(self, partitions: list[PartitionIdentity]) -> list[SnapshotView]:
         with self._engine.begin() as conn:
             return get_snapshot_for_partitions(conn, partitions)
+
+    def list_committed_dates(self, source: str, resource: str) -> list[date]:
+        """Return sorted source_dates that have a published commit for source/resource."""
+        with self._engine.begin() as conn:
+            rows = conn.execute(
+                select(partitions.c.source_date)
+                .where(
+                    partitions.c.source == source,
+                    partitions.c.resource == resource,
+                    partitions.c.current_commit_id.is_not(None),
+                )
+                .order_by(partitions.c.source_date)
+            ).scalars()
+            return list(rows)

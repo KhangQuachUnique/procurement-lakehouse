@@ -1,4 +1,4 @@
-SELECT owner_key,report_date,geography_key,sector_key,method_key,value_band_key,currency_key,scope_count,descriptive_sample_count,descriptive_baseline_sum,descriptive_award_sum,descriptive_difference_sum,verified_sample_count,verified_baseline_sum,verified_award_sum,verified_saving_sum FROM (SELECT package_key AS owner_key,
+SELECT owner_key,report_date,geography_key,sector_key,method_key,value_band_key,currency_key,scope_count,descriptive_sample_count,descriptive_baseline_sum,descriptive_award_sum,descriptive_difference_sum,verified_sample_count,verified_baseline_sum,verified_award_sum,verified_saving_sum,contract_sample_count,contract_amount_sum,contract_saving_sum FROM (SELECT package_key AS owner_key,
 comparison_date_key AS report_date,
 reporting_geography_key AS geography_key,
 sector_key AS sector_key,
@@ -13,4 +13,7 @@ CAST(coalesce((CASE WHEN is_descriptive_eligible THEN descriptive_difference_amo
 CAST(coalesce((CASE WHEN is_verified_comparable THEN 1 ELSE 0 END),0) AS BIGINT) AS verified_sample_count,
 CAST(coalesce((CASE WHEN is_verified_comparable THEN baseline_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS verified_baseline_sum,
 CAST(coalesce((CASE WHEN is_verified_comparable THEN award_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS verified_award_sum,
-CAST(coalesce((CASE WHEN is_verified_comparable THEN verified_saving_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS verified_saving_sum FROM business.fact_savings WHERE (is_in_event_period OR comparison_date_key IS NULL)) projected
+CAST(coalesce((CASE WHEN is_verified_comparable THEN verified_saving_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS verified_saving_sum,
+CAST(coalesce((CASE WHEN is_contract_eligible THEN 1 ELSE 0 END),0) AS BIGINT) AS contract_sample_count,
+CAST(coalesce((CASE WHEN is_contract_eligible THEN contract_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS contract_amount_sum,
+CAST(coalesce((CASE WHEN is_contract_eligible THEN contract_saving_amount ELSE 0 END),0) AS DECIMAL(38,6)) AS contract_saving_sum FROM business.fact_savings WHERE (is_in_event_period OR comparison_date_key IS NULL)) projected

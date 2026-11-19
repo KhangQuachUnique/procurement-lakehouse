@@ -30,7 +30,25 @@ SELECT DISTINCT
     m.is_domestic,
     m.is_internet,
     m.contract_type,
-    COALESCE(m.bid_form, 'Chưa xác định') AS method_category
+    CASE UPPER(COALESCE(NULLIF(TRIM(m.bid_form), ''), 'UNKNOWN'))
+        WHEN 'DTRR' THEN 'Đấu thầu rộng rãi'
+        WHEN 'DTR' THEN 'Đấu thầu rộng rãi'
+        WHEN 'CHCT' THEN 'Chào hàng cạnh tranh'
+        WHEN 'CHCTRG' THEN 'Chào hàng cạnh tranh rút gọn'
+        WHEN 'CDT' THEN 'Chỉ định thầu'
+        WHEN 'CDTRG' THEN 'Chỉ định thầu rút gọn'
+        WHEN 'CGTTRG' THEN 'Chào giá trực tuyến rút gọn'
+        WHEN 'CGTT' THEN 'Chào giá trực tuyến'
+        WHEN 'MSONL' THEN 'Mua sắm trực tuyến'
+        WHEN 'DTHC' THEN 'Đấu thầu hạn chế'
+        WHEN 'TT' THEN 'Tự thực hiện'
+        WHEN 'TTH' THEN 'Tự thực hiện'
+        WHEN 'LCNT_DB' THEN 'Lựa chọn nhà thầu trong trường hợp đặc biệt'
+        WHEN 'DPTT' THEN 'Đàm phán trực tiếp'
+        WHEN 'MSTT' THEN 'Mua sắm trực tiếp'
+        WHEN 'UNKNOWN' THEN 'Chưa xác định'
+        ELSE COALESCE(NULLIF(TRIM(m.bid_form), ''), 'Chưa xác định')
+    END AS method_category
 FROM _gtmp_all_methods m
 WHERE NOT EXISTS (
     SELECT 1 FROM {p7}dim_procurement_method dm

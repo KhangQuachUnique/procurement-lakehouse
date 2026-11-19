@@ -30,7 +30,7 @@ def project(db, plan, *, retain_accepted=True):
                     "week_start_date": "date_trunc('week',date_key)::DATE",
                     "valid_from": "NULL::DATE",
                     "valid_to": "NULL::DATE",
-                    "is_current": "NULL::BOOLEAN",
+                    "is_current": "TRUE::BOOLEAN",
                 }.get(col.name, col.name)
             )
         db.execute(f"INSERT INTO dimensions.{name} SELECT {','.join(fields)} FROM business.{name}")
@@ -46,6 +46,9 @@ def project(db, plan, *, retain_accepted=True):
         ("notice_to_close_hours", "hours"),
         ("close_to_first_award_days", "days"),
         ("close_to_complete_award_days", "days"),
+        ("close_to_open_hours", "hours"),
+        ("open_to_award_days", "days"),
+        ("planned_to_actual_delay_days", "days"),
     ):
         db.execute(
             "INSERT INTO dimensions.dim_duration_metric VALUES (?,?,?)", [metric, metric, unit]

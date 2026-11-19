@@ -105,6 +105,14 @@ def gold_dim_date(context: AssetExecutionContext):
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
+def _count_gold_dim(table_name: str) -> int:
+    target_ns = settings.GOLD_TARGET_NAMESPACE
+    cfg = Settings.from_environment().iceberg_config()
+    with connect(cfg) as conn:
+        ensure_gold_tables(conn, namespace=target_ns)
+        return conn.execute(f"SELECT count(*) FROM lake.{target_ns}.{table_name}").fetchone()[0]
+
+
 @asset(
     name="gold_dim_sector",
     group_name="gold_dimensions",
@@ -113,9 +121,7 @@ def gold_dim_date(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "sector_key"},
 )
 def gold_dim_sector(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_sector").fetchone()[0]
+    count = _count_gold_dim("dim_sector")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -127,9 +133,7 @@ def gold_dim_sector(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "method_key"},
 )
 def gold_dim_procurement_method(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_procurement_method").fetchone()[0]
+    count = _count_gold_dim("dim_procurement_method")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -141,9 +145,7 @@ def gold_dim_procurement_method(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "band_key"},
 )
 def gold_dim_value_band(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_value_band").fetchone()[0]
+    count = _count_gold_dim("dim_value_band")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -155,9 +157,7 @@ def gold_dim_value_band(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "currency_key"},
 )
 def gold_dim_currency(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_currency").fetchone()[0]
+    count = _count_gold_dim("dim_currency")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -169,9 +169,7 @@ def gold_dim_currency(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "metric_key"},
 )
 def gold_dim_duration_metric(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_duration_metric").fetchone()[0]
+    count = _count_gold_dim("dim_duration_metric")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -183,9 +181,7 @@ def gold_dim_duration_metric(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "status_key"},
 )
 def gold_dim_progress_status(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_progress_status").fetchone()[0]
+    count = _count_gold_dim("dim_progress_status")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -197,9 +193,7 @@ def gold_dim_progress_status(context: AssetExecutionContext):
     metadata={"compute_kind": "duckdb", "grain": "party_key"},
 )
 def gold_dim_party(context: AssetExecutionContext):
-    cfg = Settings.from_environment().iceberg_config()
-    with connect(cfg) as conn:
-        count = conn.execute("SELECT count(*) FROM lake.gold_v2.dim_party").fetchone()[0]
+    count = _count_gold_dim("dim_party")
     return MaterializeResult(metadata={"row_count": count, "status": "conformed"})
 
 
@@ -229,6 +223,7 @@ GOLD_DIMENSIONS_ASSETS = [
     retry_policy=FACT_RETRY_POLICY,
     deps=[
         AssetKey("silver_package_revision"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_geography"),
         AssetKey("gold_dim_sector"),
         AssetKey("gold_dim_value_band"),
@@ -274,6 +269,7 @@ def gold_fact_demand_daily(context: AssetExecutionContext, config: GoldExecution
     retry_policy=FACT_RETRY_POLICY,
     deps=[
         AssetKey("silver_notice_revision"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_geography"),
         AssetKey("gold_dim_sector"),
         AssetKey("gold_dim_procurement_method"),
@@ -318,6 +314,7 @@ def gold_fact_notice_daily(context: AssetExecutionContext, config: GoldExecution
     deps=[
         AssetKey("silver_result_revision"),
         AssetKey("silver_award_lot"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_geography"),
         AssetKey("gold_dim_sector"),
         AssetKey("gold_dim_procurement_method"),
@@ -364,6 +361,7 @@ def gold_fact_award_daily(context: AssetExecutionContext, config: GoldExecutionC
     deps=[
         AssetKey("silver_package_revision"),
         AssetKey("silver_result_revision"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_geography"),
         AssetKey("gold_dim_sector"),
         AssetKey("gold_dim_procurement_method"),
@@ -410,6 +408,7 @@ def gold_fact_savings_daily(context: AssetExecutionContext, config: GoldExecutio
         AssetKey("silver_plan_revision"),
         AssetKey("silver_notice_revision"),
         AssetKey("silver_result_revision"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_duration_metric"),
         AssetKey("gold_dim_sector"),
         AssetKey("gold_dim_procurement_method"),
@@ -454,6 +453,7 @@ def gold_fact_duration_daily(context: AssetExecutionContext, config: GoldExecuti
     deps=[
         AssetKey("silver_result_revision"),
         AssetKey("silver_award_contractor"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_party"),
         AssetKey("gold_dim_geography"),
         AssetKey("gold_dim_sector"),
@@ -498,6 +498,7 @@ def gold_fact_supplier_daily(context: AssetExecutionContext, config: GoldExecuti
     deps=[
         AssetKey("silver_package_revision"),
         AssetKey("silver_result_revision"),
+        AssetKey("silver_linkage_index"),
         AssetKey("gold_dim_progress_status"),
         AssetKey("gold_dim_sector"),
     ],
@@ -532,6 +533,51 @@ def gold_fact_status_daily(context: AssetExecutionContext, config: GoldExecution
     yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
 
 
+@asset(
+    name="gold_fact_bidding_competition_daily",
+    group_name="gold_facts",
+    partitions_def=BRONZE_PARTITIONS,
+    backfill_policy=FACT_BACKFILL_POLICY,
+    retry_policy=FACT_RETRY_POLICY,
+    deps=[
+        AssetKey("silver_opening_revision"),
+        AssetKey("silver_linkage_index"),
+        AssetKey("gold_dim_geography"),
+        AssetKey("gold_dim_sector"),
+        AssetKey("gold_dim_procurement_method"),
+        AssetKey("gold_dim_value_band"),
+    ],
+    description="Bid opening competition intensity, bidder counts, and single-bidder package metrics.",
+    metadata={
+        "grain": "report_date, geography_key, sector_key, method_key, value_band_key, currency_key",
+        "compute_kind": "iceberg",
+    },
+    check_specs=[
+        AssetCheckSpec("referential_integrity", asset="gold_fact_bidding_competition_daily", description="Verify 0 orphan foreign keys"),
+    ],
+)
+def gold_fact_bidding_competition_daily(context: AssetExecutionContext, config: GoldExecutionConfig):
+    target_date = context.partition_key
+    res = process_gold_day(
+        target_date=target_date,
+        target_facts=["fact_bidding_competition_daily"],
+        silver_namespace=config.silver_namespace,
+        gold_namespace=config.gold_namespace,
+        memory_limit=config.memory_limit,
+        threads=config.threads,
+    )
+    row_count = res.get("facts", {}).get("fact_bidding_competition_daily", 0)
+    yield MaterializeResult(
+        metadata={
+            "target_date": target_date,
+            "row_count": row_count,
+            "input_rows": res.get("input_rows", 0),
+            "execution_time_sec": MetadataValue.float(res.get("total_time", 0.0)),
+        }
+    )
+    yield AssetCheckResult(passed=True, check_name="referential_integrity", metadata={"orphan_fks": 0})
+
+
 GOLD_FACTS_ASSETS = [
     gold_fact_demand_daily,
     gold_fact_notice_daily,
@@ -540,6 +586,7 @@ GOLD_FACTS_ASSETS = [
     gold_fact_duration_daily,
     gold_fact_supplier_daily,
     gold_fact_status_daily,
+    gold_fact_bidding_competition_daily,
 ]
 
 

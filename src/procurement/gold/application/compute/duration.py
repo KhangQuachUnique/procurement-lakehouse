@@ -15,6 +15,46 @@ def execute(conn, context):
 
     execute_sql(conn, "duration_02.sql", {"p0": schema_prefix, "p1": release_id})
 
+    rel_open_rev = getattr(context, "rel_open_rev", None) or "frozen.opening_revision"
+    rel_contract_rev = getattr(context, "rel_contract_rev", None) or "frozen.contract_revision"
+    rel_contract_perf = getattr(context, "rel_contract_perf", None) or "frozen.contract_performance_revision"
+
+    conn.execute(f"""
+        CREATE TEMP TABLE _gtmp_round_opening_endpoints AS
+        SELECT
+            COALESCE(n.round_business_key, 'RND:NOT:VN:' || o.notify_no) AS round_business_key,
+            MIN(CAST(COALESCE(o.actual_open_date, o.scheduled_open_date) AS DATE)) AS open_date,
+            MIN(COALESCE(o.actual_open_date, o.scheduled_open_date)) AS open_at
+        FROM {rel_open_rev} o
+        LEFT JOIN (
+            SELECT notify_no, MIN(round_business_key) AS round_business_key
+            FROM _gtmp_cand_notice
+            WHERE notify_no IS NOT NULL
+            GROUP BY notify_no
+        ) n ON o.notify_no = n.notify_no
+        WHERE o.notify_no IS NOT NULL
+        GROUP BY COALESCE(n.round_business_key, 'RND:NOT:VN:' || o.notify_no)
+    """)
+
+    conn.execute(f"""
+        CREATE TEMP TABLE _gtmp_round_contract_endpoints AS
+        SELECT
+            COALESCE(n.round_business_key, 'RND:NOT:VN:' || c.notice_no) AS round_business_key,
+            MIN(cp.public_date) AS contract_complete_date,
+            MIN(cp.planned_completion_date) AS planned_completion_date,
+            MAX(cp.actual_completion_date) AS actual_completion_date
+        FROM {rel_contract_perf} cp
+        JOIN {rel_contract_rev} c ON cp.contract_code = c.contract_code
+        LEFT JOIN (
+            SELECT notify_no, MIN(round_business_key) AS round_business_key
+            FROM _gtmp_cand_notice
+            WHERE notify_no IS NOT NULL
+            GROUP BY notify_no
+        ) n ON c.notice_no = n.notify_no
+        WHERE c.notice_no IS NOT NULL
+        GROUP BY COALESCE(n.round_business_key, 'RND:NOT:VN:' || c.notice_no)
+    """)
+
     execute_sql(
         conn,
         "duration_03.sql",

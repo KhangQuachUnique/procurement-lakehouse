@@ -40,8 +40,15 @@ UNION ALL
 
 -- Plan investors
 SELECT
-    'PARTY_UNRESOLVED:{p2}:PLAN_INVESTOR:' || entity_id AS party_key,
-    'UNKNOWN' AS party_kind,
+    CASE
+        WHEN NULLIF(TRIM(investor_name), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR_NAME:' || MD5(UPPER(TRIM(investor_name)))
+        ELSE 'PARTY_UNRESOLVED:{p2}:PLAN_INVESTOR:' || entity_id
+    END AS party_key,
+    CASE
+        WHEN NULLIF(TRIM(investor_name), '') IS NOT NULL THEN 'ORGANIZATION'
+        ELSE 'UNKNOWN'
+    END AS party_kind,
     NULL AS party_code,
     investor_name AS party_name,
     NULL AS tax_code,
@@ -52,9 +59,19 @@ UNION ALL
 
 -- Notice investors
 SELECT
-    'PARTY_UNRESOLVED:{p3}:NOTICE_INVESTOR:' || entity_id AS party_key,
-    'UNKNOWN' AS party_kind,
-    NULL AS party_code,
+    CASE
+        WHEN NULLIF(TRIM(investor_code), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR:' || TRIM(investor_code)
+        WHEN NULLIF(TRIM(investor_name), '') IS NOT NULL
+        THEN 'PARTY_INVESTOR_NAME:' || MD5(UPPER(TRIM(investor_name)))
+        ELSE 'PARTY_UNRESOLVED:{p3}:NOTICE_INVESTOR:' || entity_id
+    END AS party_key,
+    CASE
+        WHEN COALESCE(NULLIF(TRIM(investor_code), ''), NULLIF(TRIM(investor_name), '')) IS NOT NULL
+        THEN 'ORGANIZATION'
+        ELSE 'UNKNOWN'
+    END AS party_kind,
+    NULLIF(TRIM(investor_code), '') AS party_code,
     investor_name AS party_name,
     NULL AS tax_code,
     'silver.notice_revision' AS source_namespace

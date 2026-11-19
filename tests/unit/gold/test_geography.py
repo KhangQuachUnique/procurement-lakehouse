@@ -1,11 +1,16 @@
-"""Unit tests for the authoritative 63 provinces dictionary and normalization."""
+"""Unit tests for the authoritative 63 provinces dictionary, 3-digit Muasamcong codes, and Silver linkage index."""
 
+import duckdb
 
 from procurement.gold.domain.geography import (
+    MUASAMCONG_3DIGIT_CODES,
     VIETNAM_63_PROVINCES,
+    ensure_province_map_table,
     get_geography_records,
     normalize_province,
 )
+from procurement.silver.application.linkage_index import build_silver_linkage_index
+from tests.gold.test_business import populated
 
 
 def test_vietnam_has_exactly_63_canonical_provinces():
@@ -84,3 +89,54 @@ def test_get_geography_records_contains_63_plus_special():
     assert "GEO_HCM" in keys
     assert "GEO_MULTI_UNALLOCATED" in keys
     assert "GEO_UNKNOWN" in keys
+
+
+def test_normalize_by_muasamcong_3digit_codes():
+    assert len(MUASAMCONG_3DIGIT_CODES) == 63
+    assert normalize_province("101").short_code == "HNI"
+    assert normalize_province("701").short_code == "HCM"
+    assert normalize_province("501").short_code == "DNG"
+    assert normalize_province("823").short_code == "CMU"
+
+    conn = duckdb.connect(":memory:")
+    ensure_province_map_table(conn)
+    assert conn.execute("SELECT count(*) FROM _gtmp_canonical_geography").fetchone()[0] == 65
+    assert (
+        conn.execute(
+            "SELECT geography_key FROM _gtmp_province_map WHERE raw_code='101'"
+        ).fetchone()[0]
+        == "GEO_HNI"
+    )
+    assert (
+        conn.execute(
+            "SELECT geography_key FROM _gtmp_province_map WHERE raw_code='824'"
+        ).fetchone()[0]
+        == "GEO_MULTI_UNALLOCATED"
+    )
+
+
+def test_silver_linkage_index_union_find():
+    conn = duckdb.connect(":memory:")
+    populated(conn)
+    stats = build_silver_linkage_index(conn, source_schema="silver", target_table="silver.linkage_index")
+    assert stats["nodes"] > 0
+    assert stats["components"] > 0
+    # Package p1, notice not1, result res1_2024, opening opn1, contract ctr1, contract_performance cp1
+    # must all share the exact same connected component_id
+    comp_ids = {
+        r[0]
+        for r in conn.execute(
+            """
+            SELECT DISTINCT component_id
+            FROM silver.linkage_index
+            WHERE (entity_type='package_revision' AND entity_id='p1')
+               OR (entity_type='notice_revision' AND entity_id='not1')
+               OR (entity_type='result_revision' AND entity_id='res1_2024')
+               OR (entity_type='opening_revision' AND entity_id='opn1')
+               OR (entity_type='contract_revision' AND entity_id='ctr1')
+               OR (entity_type='contract_performance_revision' AND entity_id='cp1')
+            """
+        ).fetchall()
+    }
+    assert len(comp_ids) == 1
+

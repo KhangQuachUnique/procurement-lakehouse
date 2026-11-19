@@ -61,6 +61,175 @@ def get_iceberg_connection(remote_conn=None, memory_limit="2GB", threads=4):
             yield conn
 
 
+_UPSTREAM_FALLBACK_SPECS: tuple[tuple[str, str, str], ...] = (
+    (
+        "contract_revision",
+        """
+        SELECT DISTINCT NULLIF(TRIM(contract_code), '') AS ref_key
+        FROM frozen.contract_performance_revision
+        WHERE NULLIF(TRIM(contract_code), '') IS NOT NULL
+          AND NULLIF(TRIM(contract_code), '') NOT IN (
+              SELECT DISTINCT contract_code FROM frozen.contract_revision WHERE contract_code IS NOT NULL
+          )
+        """,
+        "contract_code IN (SELECT ref_key FROM _missing_refs)",
+    ),
+    (
+        "opening_revision",
+        """
+        SELECT DISTINCT NULLIF(TRIM(notify_no), '') AS ref_key
+        FROM frozen.result_revision
+        WHERE NULLIF(TRIM(notify_no), '') IS NOT NULL
+          AND NULLIF(TRIM(notify_no), '') NOT IN (
+              SELECT DISTINCT notify_no FROM frozen.opening_revision WHERE notify_no IS NOT NULL
+          )
+        """,
+        "notify_no IN (SELECT ref_key FROM _missing_refs)",
+    ),
+    (
+        "package_revision",
+        """
+        SELECT DISTINCT pkg_id AS ref_key FROM (
+            SELECT NULLIF(TRIM(bid_id), '') AS pkg_id FROM frozen.result_revision
+            UNION
+            SELECT NULLIF(TRIM(package_id), '') AS pkg_id FROM frozen.notice_revision
+            UNION
+            SELECT NULLIF(TRIM(package_id), '') AS pkg_id FROM frozen.opening_revision
+        ) WHERE pkg_id IS NOT NULL
+          AND pkg_id NOT IN (
+              SELECT COALESCE(NULLIF(TRIM(json_extract_string(root_json, '$.id')), ''), entity_id)
+              FROM frozen.package_revision
+          )
+        """,
+        "source_id IN (SELECT ref_key FROM _missing_refs)",
+    ),
+    (
+        "package_revision",
+        """
+        SELECT DISTINCT pkg_no AS ref_key FROM (
+            SELECT NULLIF(TRIM(package_no), '') AS pkg_no FROM frozen.result_revision
+            UNION
+            SELECT NULLIF(TRIM(package_no), '') AS pkg_no FROM frozen.notice_revision
+            UNION
+            SELECT NULLIF(TRIM(package_no), '') AS pkg_no FROM frozen.opening_revision
+        ) WHERE pkg_no IS NOT NULL
+          AND pkg_no NOT IN (
+              SELECT DISTINCT package_no FROM frozen.package_revision WHERE package_no IS NOT NULL
+          )
+        """,
+        "package_no IN (SELECT ref_key FROM _missing_refs)",
+    ),
+    (
+        "notice_revision",
+        """
+        SELECT DISTINCT notify_no AS ref_key FROM (
+            SELECT NULLIF(TRIM(notify_no), '') AS notify_no FROM frozen.result_revision
+            UNION
+            SELECT NULLIF(TRIM(notify_no), '') AS notify_no FROM frozen.opening_revision
+            UNION
+            SELECT NULLIF(TRIM(notice_no), '') AS notify_no FROM frozen.contract_revision
+        ) WHERE notify_no IS NOT NULL
+          AND notify_no NOT IN (
+              SELECT DISTINCT notify_no FROM frozen.notice_revision WHERE notify_no IS NOT NULL
+          )
+        """,
+        "notify_no IN (SELECT ref_key FROM _missing_refs)",
+    ),
+    (
+        "plan_revision",
+        """
+        SELECT DISTINCT NULLIF(TRIM(plan_id), '') AS ref_key
+        FROM frozen.package_revision
+        WHERE NULLIF(TRIM(plan_id), '') IS NOT NULL
+          AND NULLIF(TRIM(plan_id), '') NOT IN (
+              SELECT COALESCE(NULLIF(TRIM(json_extract_string(root_json, '$.id')), ''), entity_id)
+              FROM frozen.plan_revision
+          )
+        """,
+        "source_id IN (SELECT ref_key FROM _missing_refs)",
+    ),
+)
+
+
+def _pull_upstream_references(
+    conn, local, silver_namespace: str, start_date: str, append_fn
+) -> None:
+    """Resolve cross-month upstream revisions via linkage_index (O(1)) or declarative reference closure."""
+    has_linkage = conn.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog='lake' AND table_schema=? AND table_name='linkage_index'",
+        [silver_namespace],
+    ).fetchone()[0]
+    if has_linkage:
+        seed_revs = local.execute("""
+            SELECT DISTINCT revision_id FROM frozen.result_revision
+            UNION
+            SELECT DISTINCT revision_id FROM frozen.notice_revision
+            UNION
+            SELECT DISTINCT revision_id FROM frozen.opening_revision
+            UNION
+            SELECT DISTINCT revision_id FROM frozen.contract_revision
+            UNION
+            SELECT DISTINCT revision_id FROM frozen.contract_performance_revision
+        """).to_arrow_table()
+        if len(seed_revs) == 0:
+            return
+        conn.register("_seed_revs", seed_revs)
+        try:
+            conn.execute(f"""
+                CREATE OR REPLACE TEMP TABLE _upstream_links AS
+                SELECT li.entity_type, li.revision_id, li.public_date
+                FROM lake.{silver_namespace}.linkage_index li
+                WHERE li.component_id IN (
+                    SELECT DISTINCT component_id
+                    FROM lake.{silver_namespace}.linkage_index
+                    WHERE revision_id IN (SELECT revision_id FROM _seed_revs)
+                )
+                  AND li.public_date < '{start_date}'
+            """)
+            for up_tbl in (
+                "package_revision",
+                "notice_revision",
+                "plan_revision",
+                "opening_revision",
+                "contract_revision",
+            ):
+                bounds = conn.execute(
+                    "SELECT count(*), min(public_date), max(public_date), min(revision_id), max(revision_id) FROM _upstream_links WHERE entity_type=?",
+                    [up_tbl],
+                ).fetchone()
+                if bounds and bounds[0] > 0:
+                    min_d, max_d, min_r, max_r = bounds[1], bounds[2], bounds[3], bounds[4]
+                    date_pred = (
+                        f"public_date >= '{min_d}' AND public_date <= '{max_d}' AND public_date IN (SELECT DISTINCT public_date FROM _upstream_links WHERE entity_type='{up_tbl}' AND public_date IS NOT NULL) AND "
+                        if min_d and max_d
+                        else ""
+                    )
+                    rev_pred = ""
+                    if min_r and max_r:
+                        min_r_esc = str(min_r).replace("'", "''")
+                        max_r_esc = str(max_r).replace("'", "''")
+                        rev_pred = f"revision_id >= '{min_r_esc}' AND revision_id <= '{max_r_esc}' AND "
+                    append_fn(
+                        up_tbl,
+                        f"{date_pred}{rev_pred}revision_id IN (SELECT revision_id FROM _upstream_links WHERE entity_type='{up_tbl}')",
+                    )
+        finally:
+            conn.unregister("_seed_revs")
+        return
+
+    for target_tbl, local_missing_sql, remote_pred in _UPSTREAM_FALLBACK_SPECS:
+        missing_refs = local.execute(local_missing_sql).to_arrow_table()
+        if len(missing_refs) > 0:
+            conn.register("_missing_refs", missing_refs)
+            try:
+                append_fn(
+                    target_tbl,
+                    f"public_date < '{start_date}' AND is_current = TRUE AND ({remote_pred})",
+                )
+            finally:
+                conn.unregister("_missing_refs")
+
+
 def process_gold_range(
     start_date: str,
     end_date: str,
@@ -91,19 +260,83 @@ def process_gold_range(
             local.unregister(temp_name)
             return count
 
+        def _append_table(table_name: str, where_sql: str) -> int:
+            cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
+            select_cols = ", ".join(projection(cols, table_name))
+            arrow_tbl = conn.execute(
+                f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} WHERE {where_sql}"
+            ).to_arrow_table()
+            count = len(arrow_tbl)
+            if count == 0:
+                return 0
+            temp_name = f"_tmp_append_{table_name}"
+            local.register(temp_name, arrow_tbl)
+            local.execute(f"""
+                INSERT INTO frozen.{table_name}
+                SELECT * FROM {temp_name} t
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM frozen.{table_name} f WHERE f.revision_id = t.revision_id
+                )
+            """)
+            local.unregister(temp_name)
+            return count
+
+        def _extract_child_by_revisions(table_name: str, parent_table: str) -> int:
+            rev_arrow = local.execute(f"SELECT DISTINCT revision_id FROM frozen.{parent_table} WHERE revision_id IS NOT NULL").to_arrow_table()
+            if len(rev_arrow) == 0:
+                cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
+                select_cols = ", ".join(projection(cols, table_name))
+                empty_tbl = conn.execute(f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} LIMIT 0").to_arrow_table()
+                local.register("_tmp_empty", empty_tbl)
+                local.execute(f"CREATE TABLE frozen.{table_name} AS SELECT * FROM _tmp_empty")
+                local.unregister("_tmp_empty")
+                return 0
+            bounds = local.execute(
+                f"SELECT min(revision_id), max(revision_id) FROM frozen.{parent_table} WHERE revision_id IS NOT NULL"
+            ).fetchone()
+            rev_range_pred = ""
+            if bounds and bounds[0] and bounds[1]:
+                min_r = str(bounds[0]).replace("'", "''")
+                max_r = str(bounds[1]).replace("'", "''")
+                rev_range_pred = f"revision_id >= '{min_r}' AND revision_id <= '{max_r}' AND "
+            conn.register("_target_revs", rev_arrow)
+            try:
+                return _extract_table(
+                    table_name,
+                    f"{rev_range_pred}revision_id IN (SELECT revision_id FROM _target_revs)",
+                )
+            finally:
+                conn.unregister("_target_revs")
+
         input_rows = (
             _extract_table("package_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("notice_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("result_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
             + _extract_table("plan_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
-            + _extract_table("award_lot", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
-            + _extract_table("award_contractor", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.result_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
-            + _extract_table("package_location", f"revision_id IN (SELECT revision_id FROM lake.{silver_namespace}.package_revision WHERE public_date >= '{start_date}' AND public_date < '{end_date}')")
+            + _extract_table("opening_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("contract_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
+            + _extract_table("contract_performance_revision", f"public_date >= '{start_date}' AND public_date < '{end_date}'")
         )
+
+        if input_rows > 0:
+            _pull_upstream_references(conn, local, silver_namespace, start_date, _append_table)
+
+        input_rows += (
+            _extract_child_by_revisions("award_lot", "result_revision")
+            + _extract_child_by_revisions("award_contractor", "result_revision")
+            + _extract_child_by_revisions("package_location", "package_revision")
+            + _extract_child_by_revisions("opening_submission", "opening_revision")
+        )
+        has_notice_loc = conn.execute(
+            "SELECT count(*) FROM information_schema.tables WHERE table_catalog='lake' AND table_schema=? AND table_name='notice_location'",
+            [silver_namespace],
+        ).fetchone()[0]
+        if has_notice_loc:
+            _extract_child_by_revisions("notice_location", "notice_revision")
         _extract_table("observation", f"source_date >= '{start_date}' AND source_date < '{end_date}'")
 
         # Synthetic observations for any orphaned revisions
-        for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision"):
+        for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision", "opening_revision", "contract_revision", "contract_performance_revision"):
             local.execute(f"""
                 INSERT INTO frozen.observation (
                     observation_id, resource, source_date, run_id, table_name,
@@ -143,30 +376,35 @@ def process_gold_range(
 
         # 2. Run Business Transformation
         t_biz_start = time.perf_counter()
+        start_d = date.fromisoformat(start_date)
+        inclusive_end = max(start_d, date.fromisoformat(end_date) - timedelta(days=1))
         ready = SilverReadyInput(
             input_id=f"input_{start_date}_{end_date}",
             cohort_id=f"cohort_{start_date}_{end_date}",
             namespace=silver_namespace,
             mapping_version="v1",
             completed_at=datetime.now(UTC),
-            source_start=date.fromisoformat(start_date),
-            source_end=date.fromisoformat(end_date),
+            source_start=start_d,
+            source_end=inclusive_end,
             source_complete=True,
             blocking_issues=0,
             quarantined=0,
             tables=tuple(Snapshot(table=n, table_uuid="uuid_" + n, snapshot_id=1, rows=0) for n in INPUT_TABLES),
         )
+        from procurement.gold.domain.policies import DEFAULT_REFERENCE_POLICY
+
         plan = RunPlan(
             run_id=f"run_{start_date.replace('-', '_')}_{end_date.replace('-', '_')}",
             mode="backfill",
             logic_version="a" * 64,
-            reference_version="raw_v1",
+            reference_version=DEFAULT_REFERENCE_POLICY.version,
+            references_json=DEFAULT_REFERENCE_POLICY.model_dump_json(),
             target_namespace=gold_namespace,
             source=ready,
-            source_cutoff=date.fromisoformat(end_date),
-            event_start=date.fromisoformat(start_date),
-            event_end=date.fromisoformat(end_date),
-            observation_day=date.fromisoformat(end_date),
+            source_cutoff=inclusive_end,
+            event_start=start_d,
+            event_end=inclusive_end,
+            observation_day=inclusive_end,
             budget=ResourceBudget(memory_limit=memory_limit, threads=threads),
         )
 
@@ -196,6 +434,9 @@ def process_gold_range(
                     {grain_cols},
                     {measure_exprs}
                 FROM changes.{fact}
+                WHERE report_date IS NOT NULL
+                  AND report_date >= DATE '{start_date}'
+                  AND report_date < DATE '{end_date}'
                 GROUP BY {grain_cols}
             """)
             fact_counts[fact] = local.execute(f"SELECT count(*) FROM outbox.{fact}").fetchone()[0]

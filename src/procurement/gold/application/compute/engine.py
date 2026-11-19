@@ -1,7 +1,7 @@
-"""Explicit ordered business computation over eight local frozen source tables.
+"""Explicit ordered business computation over local frozen source tables.
 
 SQL was ported, not rederived from memory. Private detailed relations and bridges
-are temporary computation/evidence, never the 16-table public contract.
+are temporary computation/evidence, never the 17-table public contract.
 """
 
 import json
@@ -13,6 +13,7 @@ from procurement.gold.domain.models import INPUT_TABLES, RunPlan, identifier
 
 from . import (
     award,
+    competition,
     demand,
     dimensions_base,
     dimensions_business,
@@ -51,9 +52,24 @@ class Context:
     release_id: str = "business_v2"
     schema_prefix: str = "business."
     obs_cutoff_pred: str = "TRUE"
+    rel_open_rev: str = ""
+    rel_open_sub: str = ""
+    rel_contract_rev: str = ""
+    rel_contract_perf: str = ""
+    rel_not_loc: str = ""
 
 
-STEPS = (dimensions_base, selection, dimensions_business, demand, notice, award, savings, duration)
+STEPS = (
+    dimensions_base,
+    selection,
+    dimensions_business,
+    demand,
+    notice,
+    award,
+    savings,
+    duration,
+    competition,
+)
 
 
 def run_business(db, plan: RunPlan, source="frozen", on_step=None):
@@ -74,10 +90,70 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
             raise ValueError("Missing observed lineage: " + name)
     db.execute("DROP SCHEMA IF EXISTS business CASCADE")
     db.execute("CREATE SCHEMA business")
+    db.execute("""
+        CREATE OR REPLACE MACRO norm_bid_price(raw_val, ref_baseline) AS (
+            CASE
+                WHEN raw_val IS NULL OR raw_val <= 0 THEN NULL
+                WHEN ref_baseline IS NOT NULL AND raw_val <= ref_baseline * 2 THEN raw_val
+                WHEN ref_baseline IS NOT NULL AND raw_val > ref_baseline * 2 THEN (
+                    CASE
+                        WHEN FLOOR(raw_val / 1000000.0) BETWEEN ref_baseline * 0.2 AND ref_baseline * 1.5
+                        THEN CAST(FLOOR(raw_val / 1000000.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 1000.0) BETWEEN ref_baseline * 0.2 AND ref_baseline * 1.5
+                        THEN CAST(FLOOR(raw_val / 1000.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 100.0) BETWEEN ref_baseline * 0.2 AND ref_baseline * 1.5
+                        THEN CAST(FLOOR(raw_val / 100.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 10.0) BETWEEN ref_baseline * 0.2 AND ref_baseline * 1.5
+                        THEN CAST(FLOOR(raw_val / 10.0) AS DECIMAL(38,6))
+                        ELSE NULL
+                    END
+                )
+                WHEN ref_baseline IS NULL AND raw_val > 10000000000000 AND FLOOR(raw_val / 1000.0) <= 500000000000
+                THEN CAST(FLOOR(raw_val / 1000.0) AS DECIMAL(38,6))
+                WHEN raw_val <= 50000000000000 THEN raw_val
+                ELSE NULL
+            END
+        );
+        CREATE OR REPLACE MACRO recover_award_amount(raw_val, ref_baseline) AS (
+            CASE
+                WHEN raw_val IS NULL OR raw_val <= 0 THEN raw_val
+                WHEN ref_baseline IS NOT NULL AND raw_val <= ref_baseline * 2 THEN raw_val
+                WHEN ref_baseline IS NOT NULL AND raw_val > ref_baseline * 2 THEN (
+                    CASE
+                        WHEN FLOOR(raw_val / 1000000.0) = ref_baseline
+                             AND ((CAST(raw_val AS BIGINT) % 1000000) * 1000) BETWEEN ref_baseline * 0.3 AND ref_baseline * 1.0
+                        THEN CAST((CAST(raw_val AS BIGINT) % 1000000) * 1000 AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 1000000.0) BETWEEN ref_baseline * 0.3 AND ref_baseline * 1.2
+                        THEN CAST(FLOOR(raw_val / 1000000.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 1000.0) BETWEEN ref_baseline * 0.3 AND ref_baseline * 1.2
+                        THEN CAST(FLOOR(raw_val / 1000.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 100.0) BETWEEN ref_baseline * 0.3 AND ref_baseline * 1.2
+                        THEN CAST(FLOOR(raw_val / 100.0) AS DECIMAL(38,6))
+                        WHEN FLOOR(raw_val / 10.0) BETWEEN ref_baseline * 0.3 AND ref_baseline * 1.2
+                        THEN CAST(FLOOR(raw_val / 10.0) AS DECIMAL(38,6))
+                        WHEN CAST(ref_baseline AS BIGINT) >= 1000000
+                             AND starts_with(CAST(CAST(raw_val AS BIGINT) AS VARCHAR), CAST(CAST(ref_baseline AS BIGINT) AS VARCHAR))
+                        THEN ref_baseline
+                        ELSE raw_val
+                    END
+                )
+                WHEN ref_baseline IS NULL
+                     AND raw_val > 10000000000000
+                     AND (CAST(FLOOR(raw_val / 1000.0) AS BIGINT) % 1000) = 0
+                     AND FLOOR(raw_val / 1000.0) <= 500000000000
+                THEN CAST(FLOOR(raw_val / 1000.0) AS DECIMAL(38,6))
+                ELSE raw_val
+            END
+        );
+    """)
     for name, ddl in json.loads(
         Path(__file__).with_name("private_schema.json").read_text()
     ).items():
         db.execute(f"CREATE TABLE business.{name} ({ddl})")
+    has_not_loc = db.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog=current_database() AND table_schema=? AND table_name='notice_location'",
+        [source],
+    ).fetchone()[0]
     context = Context(
         rel_pkg=f"{source}.package_revision",
         rel_not=f"{source}.notice_revision",
@@ -87,6 +163,11 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         rel_award_ctr=f"{source}.award_contractor",
         rel_pkg_loc=f"{source}.package_location",
         rel_plan=f"{source}.plan_revision",
+        rel_open_rev=f"{source}.opening_revision",
+        rel_open_sub=f"{source}.opening_submission",
+        rel_contract_rev=f"{source}.contract_revision",
+        rel_contract_perf=f"{source}.contract_performance_revision",
+        rel_not_loc=f"{source}.notice_location" if has_not_loc else "",
         release_config=BusinessConfig(),
         ev_start=plan.event_start.isoformat(),
         ev_end=plan.event_end.isoformat(),
@@ -110,6 +191,7 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         ("fact_award", "award_published_date_key"),
         ("fact_savings", "comparison_date_key"),
         ("fact_selection_round", "first_notice_date_key"),
+        ("fact_bidding_competition", "report_date"),
     ):
         db.execute(
             f"UPDATE business.{name} SET is_in_event_period=coalesce({day} BETWEEN ? AND ?,FALSE)",
@@ -121,6 +203,7 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
         ("fact_award", "award_business_key"),
         ("fact_savings", "comparison_scope_key"),
         ("fact_selection_round", "round_business_key"),
+        ("fact_bidding_competition", "opening_key"),
     ):
         bad = db.execute(
             f"SELECT count(*) FROM (SELECT {key} FROM business.{fact} GROUP BY 1 HAVING count(*)>1 OR {key} IS NULL)"
@@ -142,5 +225,6 @@ def run_business(db, plan: RunPlan, source="frozen", on_step=None):
             "fact_award",
             "fact_savings",
             "fact_selection_round",
+            "fact_bidding_competition",
         )
     }

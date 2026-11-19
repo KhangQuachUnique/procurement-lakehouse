@@ -110,10 +110,19 @@ class ContractPerformanceApi:
             raise ValueError("Contract lookup returned another contractCode")
         return required_text(hit.get("id"), "lookup.id")
 
-    def contract(self, source_id: str, code: str) -> dict[str, Any]:
+    def contract(self, source_id: str, code: str) -> dict[str, Any] | None:
         response = self.client.post(CONTRACT_PATH, {"id": source_id})
         root = response.get("contract")
-        if not isinstance(root, dict) or not isinstance(response.get("versionsList"), list):
+        versions_list = response.get("versionsList")
+        if (
+            "contract" in response
+            and "versionsList" in response
+            and root is None
+            and (versions_list is None or versions_list == [])
+        ):
+            # Portal occasionally keeps a lookup hit after contract detail is purged/unpublished.
+            return None
+        if not isinstance(root, dict) or not isinstance(versions_list, list):
             raise TypeError("Contract detail missing contract/versionsList")
         if root.get("id") != source_id or root.get("contractCode") != code:
             raise ValueError("Contract detail identity mismatch")
@@ -158,7 +167,8 @@ class PerformanceExtraction:
             self.contract_cache[code] = {}
             if source_id:
                 current = self.api.contract(source_id, code)
-                self.contract_cache[code][source_id] = current
+                if current is not None:
+                    self.contract_cache[code][source_id] = current
         responses = self.contract_cache[code]
         output = []
         for item, report in reports:
@@ -179,10 +189,11 @@ class PerformanceExtraction:
                 if ids:
                     source_id = next(iter(ids))
                     resolved = self.api.contract(source_id, code)
-                    if str(resolved["contract"]["contractVersion"]) != wanted:
-                        raise ValueError("Referenced contract version mismatch")
-                    responses[source_id] = resolved
-                    exact = [resolved]
+                    if resolved is not None:
+                        if str(resolved["contract"]["contractVersion"]) != wanted:
+                            raise ValueError("Referenced contract version mismatch")
+                        responses[source_id] = resolved
+                        exact = [resolved]
             status = (
                 "resolved"
                 if exact

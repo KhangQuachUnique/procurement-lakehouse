@@ -1,9 +1,12 @@
 """Ported dimensions_base rules; SQL assets preserved from vetted baseline, not runtime legacy imports."""
 
+from procurement.gold.domain.geography import ensure_province_map_table
+
 from .sql import execute_sql
 
 
 def execute(conn, context):
+    ensure_province_map_table(conn)
     ev_end = context.ev_end
     ev_start = context.ev_start
     rel_award_lot = context.rel_award_lot

@@ -443,3 +443,84 @@ def test_wrapped_429_as_http_400_stops_the_shared_circuit():
     finally:
         reader.close()
         parent.close()
+
+
+def test_null_contract_detail_falls_back_to_missing_contract(monkeypatch):
+    client = FixtureClient()
+    original = client.post
+    monkeypatch.setattr(
+        client,
+        "post",
+        lambda path, body: (
+            {"contract": None, "versionsList": None}
+            if path == CONTRACT_PATH
+            else original(path, body)
+        ),
+    )
+    item = client.data["search"][0]
+    records, stats = extract(
+        create_contract_performance_spec(client),
+        [item],
+        date.fromisoformat(item["publicDate"][:10]),
+    )
+    assert len(records) == 1
+    assert records[0].table == "contract_performance_detail"
+    assert records[0].record.payload["resolution"]["status"] == "missing_contract"
+    assert stats.quality_observations[0]["code"] == "missing_contract"
+
+
+def test_null_historical_version_detail_keeps_current_contract(monkeypatch):
+    client = FixtureClient()
+    item = client.data["search"][0]
+    current = next(
+        r for r in client.data["contracts"] if r["contract"]["contractCode"] == item["contractCode"]
+    )
+    current["contract"]["id"] = "latest-contract-id"
+    current["contract"]["contractVersion"] = "01"
+    current["versionsList"] = [
+        {"id": "latest-contract-id", "version": "01"},
+        {"id": "purged-old-contract-id", "version": "00"},
+    ]
+    lookup = next(
+        r
+        for r in client.data["lookups"]
+        if r["page"]["content"][0]["contractCode"] == item["contractCode"]
+    )
+    lookup["page"]["content"][0]["id"] = "latest-contract-id"
+
+    original = client.post
+    monkeypatch.setattr(
+        client,
+        "post",
+        lambda path, body: (
+            {"contract": None, "versionsList": None}
+            if path == CONTRACT_PATH and body["id"] == "purged-old-contract-id"
+            else original(path, body)
+        ),
+    )
+    records, stats = extract(
+        create_contract_performance_spec(client),
+        [item],
+        date.fromisoformat(item["publicDate"][:10]),
+    )
+    assert any(r.table == "contract_detail" for r in records)
+    report = next(r for r in records if r.table == "contract_performance_detail")
+    assert report.record.payload["resolution"]["status"] == "missing_contract_version"
+    assert stats.quality_observations[0]["code"] == "missing_contract_version"
+
+
+def test_malformed_contract_detail_schema_still_fails(monkeypatch):
+    client = FixtureClient()
+    original = client.post
+    monkeypatch.setattr(
+        client,
+        "post",
+        lambda path, body: {} if path == CONTRACT_PATH else original(path, body),
+    )
+    item = client.data["search"][0]
+    with pytest.raises(TypeError, match="missing contract/versionsList"):
+        extract(
+            create_contract_performance_spec(client),
+            [item],
+            date.fromisoformat(item["publicDate"][:10]),
+        )

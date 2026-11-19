@@ -53,7 +53,7 @@ def execute(fs, resource="project", *, refresh=False, reconciled_run_ids=None):
     )
 
 
-ACTIVE_RESOURCES = [d for d in RESOURCE_CATALOG if d.identity.resource != "bid_opening"]
+ACTIVE_RESOURCES = list(RESOURCE_CATALOG)
 
 
 def test_definitions_cover_catalog_and_safe_execution_policy():

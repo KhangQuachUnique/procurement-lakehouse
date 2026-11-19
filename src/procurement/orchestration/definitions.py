@@ -24,6 +24,13 @@ from procurement.orchestration.gold_v2 import gold_v2_run_job
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
 from procurement.orchestration.silver import SILVER_GROUPS, silver_assets, silver_sync_iceberg_job
+from procurement.orchestration.watcher import (
+    bid_opening_due_sensor,
+    bid_opening_seed_job,
+    bid_opening_seed_schedule,
+    bid_opening_seed_sensor,
+    bid_opening_watch_job,
+)
 from procurement.orchestration.workflows import benchmark_job
 
 # ============================================================================
@@ -99,6 +106,7 @@ def bronze_daily_schedule(context: ScheduleEvaluationContext):
                 "ops": {
                     asset.key.to_user_string(): {"config": {"refresh": True}}
                     for asset in bronze_assets
+                    if asset.key.to_user_string() != "bronze_bid_opening"
                 }
             },
         )
@@ -173,7 +181,10 @@ defs = Definitions(
         reconcile_lakehouse_job,
         silver_sync_iceberg_job,
         benchmark_job,
+        bid_opening_seed_job,
+        bid_opening_watch_job,
     ],
-    schedules=[bronze_daily_schedule, silver_daily_schedule],
+    schedules=[bronze_daily_schedule, silver_daily_schedule, bid_opening_seed_schedule],
+    sensors=[bid_opening_due_sensor, bid_opening_seed_sensor],
     resources={"object_storage": object_storage},
 )

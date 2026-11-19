@@ -5,6 +5,7 @@ from collections.abc import Callable
 from contextlib import nullcontext
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from procurement.common.catalog import get_resource
@@ -12,7 +13,7 @@ from procurement.common.dates import api_day_window, today_vn
 from procurement.common.errors import sanitize_error_message
 from procurement.common.file_lock import exclusive_file_lock
 from procurement.common.settings import settings
-from procurement.ingestion.coverage import read_coverage
+from procurement.ingestion.coverage import CoverageDay, read_coverage
 from procurement.ingestion.engine.metadata import calculate_content_hash
 from procurement.ingestion.engine.pagination import iter_search_pages
 from procurement.ingestion.sources.muasamcong.bid_opening.resource import BidOpeningApi
@@ -24,6 +25,10 @@ from procurement.storage.committed import CommittedDay, iter_committed_records
 from procurement.storage.control import list_run_manifests, read_day_manifest
 from procurement.watcher.policy import NOTICE_ROOTS, calculate_due_date
 from procurement.watcher.store import WatchStore, namespace
+
+_ORIG_LIST_RUN_MANIFESTS = list_run_manifests
+_ORIG_READ_COVERAGE = read_coverage
+_ORIG_READ_DAY_MANIFEST = read_day_manifest
 
 # Export NOTICE_ROOTS and namespace for backwards compatibility
 __all__ = [
@@ -48,18 +53,72 @@ __all__ = [
 ]
 
 
+def _snapshot_to_manifest(view: Any) -> SimpleNamespace:
+    commit = view.commit
+    return SimpleNamespace(
+        run_id=str(commit.id),
+        source_date=view.partition.identity.source_date,
+        bronze_records=commit.record_count,
+        status=SimpleNamespace(value="success"),
+        files=view.files,
+    )
+
+
+def _pg_committed_bounds(identity: Any) -> tuple[date, date] | None:
+    try:
+        from procurement.bootstrap import get_metadata_service
+
+        dates = get_metadata_service().list_committed_dates(identity.source, identity.resource)
+    except Exception:  # noqa: BLE001 -- fallback to S3 manifests when Postgres is unavailable
+        return None
+    if not dates:
+        return None
+    return dates[0], dates[-1]
+
+
+def _pg_coverage_for_dates(identity: Any, dates: list[date]) -> dict[date, CoverageDay] | None:
+    if not dates:
+        return {}
+    try:
+        from procurement.bootstrap import get_metadata_service
+        from procurement.metadata.models import PartitionIdentity
+
+        snapshots = get_metadata_service().get_snapshot(
+            [PartitionIdentity(identity.source, identity.resource, d) for d in dates]
+        )
+    except Exception:  # noqa: BLE001 -- fallback to S3 manifests when Postgres is unavailable
+        return None
+    by_date = {
+        view.partition.identity.source_date: _snapshot_to_manifest(view)
+        for view in snapshots
+        if view.commit is not None
+    }
+    return {
+        d: CoverageDay(
+            source_date=d,
+            effective=by_date.get(d),
+            latest=by_date.get(d),
+            active_run_ids=(),
+        )
+        for d in dates
+    }
+
+
 def selection_for(fs: Any, resource: str, manifest: Any) -> CommittedDay:
     """Build CommittedDay partition selection for given resource and manifest."""
-    if hasattr(manifest, "files") and manifest.files:
+    if hasattr(manifest, "files") and manifest.files is not None:
         files = tuple(
-            (getattr(f, "table_name", f[0]), getattr(f, "object_key", f[1]))
+            (f.table_name, f.object_key)
+            if hasattr(f, "table_name") and hasattr(f, "object_key")
+            else (f[0], f[1])
             for f in manifest.files
         )
         run_id = getattr(manifest, "run_id", str(getattr(manifest, "id", "")))
         records = getattr(
             manifest, "bronze_records", getattr(manifest, "record_count", 0)
         )
-        return CommittedDay(manifest.source_date, run_id, records, files)
+        if files or records == 0:
+            return CommittedDay(manifest.source_date, run_id, records, files)
     definition = get_resource(resource)
     files = []
     for table in definition.tables:
@@ -206,26 +265,46 @@ def seed(
     """Seed uncompleted bid notices from committed TBMT into watch store."""
     now = now or datetime.now(UTC)
     identity = get_resource("notify_contractor").identity
-    runs = list_run_manifests(fs, identity, workers=settings.OPS_SYNC_WORKERS)
-    if not runs and (start is None or end is None):
-        return {"seeded_days": 0, "coverage": "no_tbmt_manifests"}
-    start = start or min(r.start_date for r in runs)
-    end = min(end or max(r.end_date for r in runs), today_vn() - timedelta(days=1))
-    if start > end:
-        raise ValueError("No closed dates in watch range")
-    notices = read_coverage(
-        fs, identity, start, end, runs=runs, workers=settings.OPS_SYNC_WORKERS
+    opening_identity = get_resource("bid_opening").identity
+    use_pg = (
+        list_run_manifests is _ORIG_LIST_RUN_MANIFESTS
+        and read_coverage is _ORIG_READ_COVERAGE
     )
-    openings = {
-        c.source_date: c.effective
-        for c in read_coverage(
-            fs,
-            get_resource("bid_opening").identity,
-            start,
-            end,
-            workers=settings.OPS_SYNC_WORKERS,
+    pg_bounds = _pg_committed_bounds(identity) if use_pg else None
+    if pg_bounds is not None:
+        start = start or pg_bounds[0]
+        end = min(end or pg_bounds[1], today_vn() - timedelta(days=1))
+        if start > end:
+            raise ValueError("No closed dates in watch range")
+        days = [start + timedelta(days=offset) for offset in range((end - start).days + 1)]
+        pg_notices = _pg_coverage_for_dates(identity, days)
+        pg_openings = _pg_coverage_for_dates(opening_identity, days)
+        if pg_notices is not None and pg_openings is not None:
+            notices = [pg_notices[d] for d in days]
+            openings = {d: cov.effective for d, cov in pg_openings.items()}
+        else:
+            pg_bounds = None
+    if pg_bounds is None:
+        runs = list_run_manifests(fs, identity, workers=settings.OPS_SYNC_WORKERS)
+        if not runs and (start is None or end is None):
+            return {"seeded_days": 0, "coverage": "no_tbmt_manifests"}
+        start = start or min(r.start_date for r in runs)
+        end = min(end or max(r.end_date for r in runs), today_vn() - timedelta(days=1))
+        if start > end:
+            raise ValueError("No closed dates in watch range")
+        notices = read_coverage(
+            fs, identity, start, end, runs=runs, workers=settings.OPS_SYNC_WORKERS
         )
-    }
+        openings = {
+            c.source_date: c.effective
+            for c in read_coverage(
+                fs,
+                opening_identity,
+                start,
+                end,
+                workers=settings.OPS_SYNC_WORKERS,
+            )
+        }
     seeded = 0
     for day in notices:
         key = str(day.source_date)
@@ -385,20 +464,27 @@ def check(
         }
     results = []
     identity = get_resource("bid_opening").identity
+    row_dates = [date.fromisoformat(r["day"]) for r in rows]
     coverage_by_day = (
-        {
-            item.source_date: item
-            for item in read_coverage(
-                fs,
-                identity,
-                min(date.fromisoformat(r["day"]) for r in rows),
-                max(date.fromisoformat(r["day"]) for r in rows),
-                workers=settings.OPS_SYNC_WORKERS,
-            )
-        }
-        if rows
-        else {}
+        _pg_coverage_for_dates(identity, row_dates)
+        if row_dates and read_coverage is _ORIG_READ_COVERAGE
+        else None
     )
+    if coverage_by_day is None:
+        coverage_by_day = (
+            {
+                item.source_date: item
+                for item in read_coverage(
+                    fs,
+                    identity,
+                    min(row_dates),
+                    max(row_dates),
+                    workers=settings.OPS_SYNC_WORKERS,
+                )
+            }
+            if row_dates
+            else {}
+        )
     for row in rows:
         day = date.fromisoformat(row["day"])
         try:
@@ -458,45 +544,22 @@ def check(
                     search_pages=pages,
                     bid_opening_detail_workers=detail_workers,
                 )
-                try:
-                    manifest = read_day_manifest(fs, identity, run, day)
-                except (
-                    Exception
-                ):  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
-                    manifest = None
+                manifest = None
+                if read_day_manifest is _ORIG_READ_DAY_MANIFEST:
+                    pg_cov = _pg_coverage_for_dates(identity, [day])
+                    if pg_cov is not None and pg_cov[day].effective is not None:
+                        manifest = pg_cov[day].effective
                 if manifest is None:
                     try:
-                        from types import SimpleNamespace
-
-                        from procurement.bootstrap import get_metadata_service
-                        from procurement.metadata.models import PartitionIdentity
-
-                        meta_svc = get_metadata_service()
-                        snapshot = meta_svc.get_snapshot(
-                            [
-                                PartitionIdentity(
-                                    source=identity.source,
-                                    resource=identity.resource,
-                                    source_date=day,
-                                )
-                            ]
-                        )
-                        part_commit = snapshot.partitions.get(
-                            (identity.source, identity.resource, day)
-                        )
-                        if part_commit and part_commit.commit:
-                            c = part_commit.commit
-                            manifest = SimpleNamespace(
-                                run_id=str(c.id),
-                                source_date=day,
-                                bronze_records=c.record_count,
-                                status=SimpleNamespace(value="success"),
-                                files=c.files,
-                            )
+                        manifest = read_day_manifest(fs, identity, run, day)
                     except (
                         Exception
-                    ):  # noqa: BLE001, S110 -- best-effort metadata service lookup
-                        pass
+                    ):  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
+                        manifest = None
+                if manifest is None:
+                    pg_cov = _pg_coverage_for_dates(identity, [day])
+                    if pg_cov is not None:
+                        manifest = pg_cov[day].effective
                 if manifest is None or (
                     hasattr(manifest, "status") and manifest.status.value != "success"
                 ):

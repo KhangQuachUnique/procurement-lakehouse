@@ -8,23 +8,23 @@
   "tables": {
     "fact_procurement_demand": {
       "rows": 22,
-      "sha256": "e5038906443d1f83ffe2791e20a6913ff0ae0bf03b9710d906b6973ff7dd467d"
+      "sha256": "3ca42d9c2ff24e630265499dabe1d1919ef56e159710ad33d1a8b8be15e63fe7"
     },
     "fact_tender_notice": {
       "rows": 5,
-      "sha256": "415fae7789de13a16283ee39e92f4fc8706c823da037c6f88f6f53cf2301590d"
+      "sha256": "f813aa2f7db09cb36055de81bb9e880a913f7c3d79aeb6e333834e454702a0be"
     },
     "fact_award": {
       "rows": 19,
-      "sha256": "162a944360b569205b538bfa61d45fed1e9b8f6990c48314b2123ceb13e59ff8"
+      "sha256": "ccfb6e77ee124a7afbf39c01e3b99da706e23089416bb895a6e6b05317b8d644"
     },
     "fact_savings": {
       "rows": 19,
-      "sha256": "72a3a4b65081786c18ccf2d2123cd2a93924c6f24d89ce2515160f7a116454ce"
+      "sha256": "3af92c5774a1f4b192e0ff06b3a0f0d8fae3f62434da3661a2a233a5bbb25210"
     },
     "fact_selection_round": {
       "rows": 5,
-      "sha256": "ece5e4008495150bf9337aeca1180d4ca909bb96e4a381febfdbac660764d31e"
+      "sha256": "e28d1f541c70ebb814716ce156ec4808540dfb4224d7885b68557c5187e8ec87"
     }
   }
 }

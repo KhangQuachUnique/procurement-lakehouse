@@ -32,7 +32,9 @@ def test_definitions_cover_silver_assets_and_policies():
     Definitions.validate_loadable(defs)
 
     all_table_keys = {k.to_user_string() for a in silver.silver_assets for k in a.keys}
-    expected_tables = {f"silver_{t.table}" for g in silver.SILVER_GROUPS for t in g.tables}
+    expected_tables = {f"silver_{t.table}" for g in silver.SILVER_GROUPS for t in g.tables} | {
+        "silver_linkage_index"
+    }
     assert all_table_keys == expected_tables
 
     for asset in silver.silver_assets:
@@ -40,7 +42,14 @@ def test_definitions_cover_silver_assets_and_policies():
             assert asset.group_names_by_key[k] in {"silver", "silver_pilot"}
         assert asset.op.retry_policy.max_retries == 0
         assert asset.backfill_policy.max_partitions_per_run == 1
-        group = next(g for g in silver.SILVER_GROUPS if f"silver_{g.primary_revision_table}" in {k.to_user_string() for k in asset.keys})
+        asset_key_strings = {k.to_user_string() for k in asset.keys}
+        if asset_key_strings == {"silver_linkage_index"}:
+            dep_keys = {d.to_user_string() for d in asset.asset_deps[next(iter(asset.keys))]}
+            assert "silver_notice_revision" in dep_keys
+            continue
+        group = next(
+            g for g in silver.SILVER_GROUPS if f"silver_{g.primary_revision_table}" in asset_key_strings
+        )
         # Check upstream bronze dependency
         for k in asset.keys:
             dep_keys = {d.to_user_string() for d in asset.asset_deps[k]}

@@ -109,10 +109,13 @@ def run_resource(
     change_journal=None,
     readiness_evidence=False,
     iceberg_namespace="silver",
-    iceberg_memory_limit="4GB",
-    iceberg_threads=4,
+    iceberg_memory_limit="1536MB",
+    iceberg_threads=2,
     direct_iceberg_only: bool = False,
     batch_size: int = 15,
+    batch_mb: int = 512,
+    shared_writer: Any = None,
+    sync_linkage: bool = False,
 ) -> dict:
     """Verify all source families before applying a family filter; report every day."""
     current_module = sys.modules[__name__]
@@ -154,9 +157,11 @@ def run_resource(
         iceberg_threads=iceberg_threads,
         direct_iceberg_only=direct_iceberg_only,
         batch_size=batch_size,
+        batch_mb=batch_mb,
+        shared_writer=shared_writer,
     )
 
-    return use_case.execute(
+    result = use_case.execute(
         start_date=start,
         end_date=end,
         family=family,
@@ -166,11 +171,129 @@ def run_resource(
         on_progress=on_progress,
     )
 
+    if sync_linkage and resolved_iceberg_config is not None:
+        from procurement.silver.application.linkage_index import sync_silver_linkage_index
+        from procurement.storage.iceberg import connect, identifier
+
+        clean_ns = identifier(iceberg_namespace)
+        with connect(
+            resolved_iceberg_config,
+            max_memory=iceberg_memory_limit,
+            threads=iceberg_threads,
+        ) as conn:
+            result["linkage_index"] = sync_silver_linkage_index(
+                conn,
+                source_schema=f"lake.{clean_ns}",
+                target_table=f"lake.{clean_ns}.linkage_index",
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+            )
+
+    return result
+
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def open_shared_silver_session(
+    resource: str,
+    namespace: str,
+    start: date,
+    end: date,
+    *,
+    iceberg: bool = True,
+    batch_mb: int = 512,
+):
+    """Manage a single shared PostgreSQL engine, DuckDB Iceberg connection, and byte-bounded buffer across parallel workers."""
+    import contextlib
+
+    shared_db = None
+    shared_cat = None
+    shared_writer = None
+    shared_pg_engine = None
+
+    with contextlib.suppress(Exception):
+        from procurement.infrastructure.database import create_application_engine
+
+        shared_pg_engine = create_application_engine()
+
+    if iceberg:
+        from procurement.common.settings import settings as app_settings
+        from procurement.silver.application.process_silver_service import SharedIcebergBatchBuffer
+        from procurement.silver.application.resources import get_silver_resource
+        from procurement.silver.application.warehouse import ensure_silver_tables, ensure_views
+        from procurement.storage.catalog_scope import NamespaceCatalog
+        from procurement.storage.iceberg import RestCatalog, connect, identifier
+
+        try:
+            cfg = app_settings.iceberg_config()
+            clean_ns = identifier(namespace)
+            raw_cat = RestCatalog(cfg)
+            raw_cat.create_namespace_if_not_exists(clean_ns)
+            shared_cat = NamespaceCatalog(raw_cat, clean_ns)
+            shared_db = connect(cfg, max_memory="2GB", threads=2)
+            contract = get_silver_resource(resource)
+            ensure_silver_tables(
+                shared_db, shared_cat, namespace=clean_ns, tables=contract.output_tables
+            )
+            ensure_views(shared_db, namespace=clean_ns)
+
+            existing_dates: set[str] = set()
+            with contextlib.suppress(Exception):
+                obs_rows = shared_db.execute(
+                    f"SELECT DISTINCT CAST(source_date AS VARCHAR) "
+                    f"FROM lake.{clean_ns}.observation "
+                    f"WHERE resource = '{contract.resource}' "
+                    f"AND source_date BETWEEN DATE '{start.isoformat()}' AND DATE '{end.isoformat()}'"
+                ).fetchall()
+                existing_dates = {str(r[0]) for r in obs_rows if r[0]}
+
+            shared_writer = SharedIcebergBatchBuffer(
+                shared_db,
+                shared_cat,
+                clean_ns,
+                existing_dates=existing_dates,
+                change_journal=app_settings.SILVER_CHANGE_JOURNAL_ROOT,
+                max_buffer_bytes=batch_mb * 1024 * 1024,
+                max_days=0,
+            )
+        except Exception:
+            if shared_db is not None:
+                with contextlib.suppress(Exception):
+                    shared_db.close()
+                shared_db = None
+            if shared_cat is not None:
+                with contextlib.suppress(Exception):
+                    shared_cat.close()
+                shared_cat = None
+            shared_writer = None
+
+    try:
+        yield shared_pg_engine, shared_writer
+        if shared_writer is not None:
+            shared_writer.flush()
+    finally:
+        if shared_db is not None:
+            with contextlib.suppress(Exception):
+                from procurement.silver.application.warehouse import ensure_views
+
+                ensure_views(shared_db, namespace=namespace)
+            with contextlib.suppress(Exception):
+                shared_db.close()
+        if shared_cat is not None:
+            with contextlib.suppress(Exception):
+                shared_cat.close()
+        if shared_pg_engine is not None:
+            with contextlib.suppress(Exception):
+                shared_pg_engine.dispose()
+
 
 __all__ = [
     "date_range",
     "freeze",
     "merge_run_reports",
+    "open_shared_silver_session",
     "records",
     "run_resource",
     "split_date_range_by_year",

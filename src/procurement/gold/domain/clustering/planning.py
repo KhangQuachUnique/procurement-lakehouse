@@ -8,7 +8,15 @@ both previous and new owner contributions.
 from procurement.gold.domain.models import INPUT_TABLES, identifier
 from .relationship_index import ensure_index, impact_graph
 
-ROOTS = ("package_revision", "plan_revision", "notice_revision", "result_revision")
+ROOTS = (
+    "package_revision",
+    "plan_revision",
+    "notice_revision",
+    "result_revision",
+    "opening_revision",
+    "contract_revision",
+    "contract_performance_revision",
+)
 LINKS = {
     "package_revision": (
         ("package", "entity_id"),
@@ -33,11 +41,24 @@ LINKS = {
         ("notice", "notify_no"),
         ("result", "coalesce(result_id,entity_id)"),
     ),
+    "opening_revision": (
+        ("notice", "notify_no"),
+        ("package_code", "package_no"),
+        ("package", "package_id"),
+    ),
+    "contract_revision": (
+        ("notice", "notice_no"),
+        ("contract", "contract_code"),
+    ),
+    "contract_performance_revision": (
+        ("contract", "contract_code"),
+    ),
 }
 CHILDREN = {
     "package_location": "package_revision",
     "award_lot": "result_revision",
     "award_contractor": "result_revision",
+    "opening_submission": "opening_revision",
 }
 
 
@@ -132,16 +153,39 @@ def plan_components(
 
 def select_batch(db, batch, source="frozen"):
     identifier(source)
+    has_batch_nodes = db.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog=current_database() AND table_schema='graph' AND table_name='batch_nodes'"
+    ).fetchone()[0]
+    if not has_batch_nodes:
+        db.execute("""
+            CREATE TABLE graph.batch_nodes AS
+            SELECT
+                b.batch,
+                split_part(i.node, ':', 1) AS table_name,
+                substr(i.node, strpos(i.node, ':') + 1) AS entity_id
+            FROM graph.impacted i
+            JOIN graph.batches b USING (component)
+            ORDER BY b.batch, table_name
+        """)
     db.execute("DROP SCHEMA IF EXISTS scoped CASCADE")
     db.execute("CREATE SCHEMA scoped")
     for name in ROOTS:
         db.execute(
-            f"CREATE TABLE scoped.{name} AS SELECT * FROM {source}.{name} WHERE '{name}:'||entity_id IN (SELECT node FROM graph.impacted JOIN graph.batches USING(component) WHERE batch=?)",
-            [batch],
+            f"CREATE TABLE scoped.{name} AS SELECT * FROM {source}.{name} "
+            f"WHERE entity_id IN (SELECT entity_id FROM graph.batch_nodes WHERE batch=? AND table_name=?)",
+            [batch, name],
         )
     for child, parent in CHILDREN.items():
         db.execute(
             f"CREATE TABLE scoped.{child} AS SELECT * FROM {source}.{child} WHERE revision_id IN (SELECT revision_id FROM scoped.{parent})"
+        )
+    has_not_loc = db.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_catalog=current_database() AND table_schema=? AND table_name='notice_location'",
+        [source],
+    ).fetchone()[0]
+    if has_not_loc:
+        db.execute(
+            f"CREATE TABLE scoped.notice_location AS SELECT * FROM {source}.notice_location WHERE revision_id IN (SELECT revision_id FROM scoped.notice_revision)"
         )
     ids = " UNION ".join("SELECT observation_id FROM scoped." + n for n in ROOTS)
     db.execute(
@@ -163,4 +207,7 @@ def affected_owners(db):
             values.append(
                 f"SELECT 'PKG_{state}:{match}:'||substr(node,{len(name) + 2}) FROM graph.impacted WHERE starts_with(node,'{name}:')"
             )
+    values.append(
+        "SELECT 'PKG_UNRESOLVED:OPENING:'||substr(node,length('opening_revision:')+1) FROM graph.impacted WHERE starts_with(node,'opening_revision:')"
+    )
     db.execute("INSERT INTO affected " + " UNION ".join(values))

@@ -18,6 +18,10 @@ INPUT_TABLES = (
     "award_contractor",
     "plan_revision",
     "package_location",
+    "opening_revision",
+    "opening_submission",
+    "contract_revision",
+    "contract_performance_revision",
 )
 PROJECTION_VERSION = "silver_gold_projection_v1"
 

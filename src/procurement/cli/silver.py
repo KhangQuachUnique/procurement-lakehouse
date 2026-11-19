@@ -176,6 +176,7 @@ def execute_resource(
     workers: int | None = None,
     namespace: str | None = None,
     batch_size: int = 15,
+    batch_mb: int = 512,
 ) -> dict:
     target_ns = namespace or settings.SILVER_TARGET_NAMESPACE
     year_chunks = split_date_range_by_year(start, end)
@@ -195,6 +196,7 @@ def execute_resource(
             iceberg_namespace=target_ns,
             direct_iceberg_only=iceberg,
             batch_size=batch_size,
+            batch_mb=batch_mb,
         )
 
     import os
@@ -208,91 +210,90 @@ def execute_resource(
         TextColumn,
         TimeElapsedColumn,
     )
+    from procurement.silver.service import open_shared_silver_session
 
-    if iceberg:
-        from procurement.common.settings import settings
-        from procurement.silver.application.warehouse import ensure_silver_tables, ensure_views
-        from procurement.storage.iceberg import RestCatalog, connect
-
-        try:
-            cfg = settings.iceberg_config()
-            with connect(cfg) as init_db, RestCatalog(cfg) as init_cat:
-                ensure_silver_tables(init_db, init_cat, namespace=target_ns)
-                ensure_views(init_db, namespace=target_ns)
-        except Exception as exc:
-            console.print(f"[bold yellow]⚠️ Pre-flight Iceberg check skipped:[/] {exc}")
-
-    max_workers = workers or min(len(year_chunks), 2)
+    max_workers = workers or min(len(year_chunks), os.cpu_count() or 4)
     console.print(
         f"[bold cyan]⚡ Multi-year detected:[/] Running [bold green]{len(year_chunks)} years[/] in parallel "
         f"across [bold green]{max_workers}[/] workers "
-        f"({', '.join(str(s.year) for s, _ in year_chunks)})"
+        f"({', '.join(str(s.year) for s, _ in year_chunks)}) "
+        f"[dim]• Shared Buffer: {batch_mb}MB (1 Iceberg Connection)[/]"
     )
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[bold cyan]{task.fields[name]}[/]"),
-        BarColumn(bar_width=25),
-        TaskProgressColumn(),
-        TextColumn("[white]{task.completed}/{task.total} days[/]"),
-        TextColumn("• [dim]acc=[/][bold green]{task.fields[acc]:,}[/]"),
-        TextColumn("[dim]quar=[/][bold yellow]{task.fields[quar]:,}[/]"),
-        TimeElapsedColumn(),
-        console=console,
-    ) as progress_ui:
-        task_ids = {}
-        for s, e in year_chunks:
-            total_days = (e - s).days + 1
-            t_id = progress_ui.add_task(
-                f"{s.year}",
-                total=total_days,
-                name=f"[{s.year}]",
-                acc=0,
-                quar=0,
-            )
-            task_ids[s.year] = t_id
+    chunk_reports = []
+    with open_shared_silver_session(
+        resource, target_ns, start, end, iceberg=iceberg, batch_mb=batch_mb
+    ) as (shared_pg_engine, shared_writer):
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold cyan]{task.fields[name]}[/]"),
+            BarColumn(bar_width=25),
+            TaskProgressColumn(),
+            TextColumn("[white]{task.completed}/{task.total} days[/]"),
+            TextColumn("• [dim]acc=[/][bold green]{task.fields[acc]:,}[/]"),
+            TextColumn("[dim]quar=[/][bold yellow]{task.fields[quar]:,}[/]"),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress_ui:
+            task_ids = {}
+            for s, e in year_chunks:
+                total_days = (e - s).days + 1
+                t_id = progress_ui.add_task(
+                    f"{s.year}",
+                    total=total_days,
+                    name=f"[{s.year}]",
+                    acc=0,
+                    quar=0,
+                )
+                task_ids[s.year] = t_id
 
-        def make_worker_progress(y: int):
-            t_id = task_ids[y]
-            acc_total = 0
-            quar_total = 0
+            def make_worker_progress(y: int):
+                t_id = task_ids[y]
+                acc_total = 0
+                quar_total = 0
 
-            def on_chunk_day(entry: dict) -> None:
-                nonlocal acc_total, quar_total
-                q = entry.get("quality", {})
-                acc_total += q.get("accepted", 0)
-                quar_total += q.get("quarantined", 0)
-                progress_ui.update(t_id, advance=1, acc=acc_total, quar=quar_total)
-                if entry.get("status") == "failed":
-                    progress_ui.console.print(
-                        f"  [bold red]✘ [{y}] {entry.get('date')}: {entry.get('error')}[/]"
-                    )
+                def on_chunk_day(entry: dict) -> None:
+                    nonlocal acc_total, quar_total
+                    q = entry.get("quality", {})
+                    acc_total += q.get("accepted", 0)
+                    quar_total += q.get("quarantined", 0)
+                    progress_ui.update(t_id, advance=1, acc=acc_total, quar=quar_total)
+                    if entry.get("status") == "failed":
+                        progress_ui.console.print(
+                            f"  [bold red]✘ [{y}] {entry.get('date')}: {entry.get('error')}[/]"
+                        )
 
-            return on_chunk_day
+                return on_chunk_day
 
-        def run_chunk(chunk_start: date, chunk_end: date) -> dict:
-            return run_resource(
-                fs,
-                bucket,
-                resource,
-                chunk_start,
-                chunk_end,
-                family=family,
-                continue_on_error=continue_on_error,
-                skip_existing=skip_existing,
-                on_progress=make_worker_progress(chunk_start.year),
-                iceberg=iceberg,
-                iceberg_namespace=target_ns,
-                direct_iceberg_only=iceberg,
-                batch_size=batch_size,
-            )
+            def run_chunk(chunk_start: date, chunk_end: date) -> dict:
+                extra_kwargs = {}
+                if shared_pg_engine is not None:
+                    extra_kwargs["db_engine"] = shared_pg_engine
+                if shared_writer is not None:
+                    extra_kwargs["shared_writer"] = shared_writer
+                    extra_kwargs["batch_mb"] = batch_mb
+                return run_resource(
+                    fs,
+                    bucket,
+                    resource,
+                    chunk_start,
+                    chunk_end,
+                    family=family,
+                    continue_on_error=continue_on_error,
+                    skip_existing=skip_existing,
+                    on_progress=make_worker_progress(chunk_start.year),
+                    iceberg=iceberg,
+                    iceberg_namespace=target_ns,
+                    direct_iceberg_only=iceberg,
+                    batch_size=batch_size,
+                    **extra_kwargs,
+                )
 
-        chunk_reports = []
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = {pool.submit(run_chunk, s, e): (s, e) for s, e in year_chunks}
-            for fut in as_completed(futures):
-                rep = fut.result()
-                chunk_reports.append(rep)
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = {pool.submit(run_chunk, s, e): (s, e) for s, e in year_chunks}
+                for fut in as_completed(futures):
+                    rep = fut.result()
+                    chunk_reports.append(rep)
 
     return merge_run_reports(sorted(chunk_reports, key=lambda r: r.get("start_date", "")))
 
@@ -576,6 +577,98 @@ def result(
         raise typer.Exit(code=1)
 
 
+@app.command("bid_opening")
+@app.command("opening", hidden=True)
+def bid_opening(
+    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
+    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
+    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    continue_on_error: Annotated[
+        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
+    ] = False,
+    skip_existing: Annotated[
+        bool,
+        typer.Option(
+            "--skip-existing",
+            help="Skip processing for days where Silver data already exists in storage.",
+        ),
+    ] = False,
+    iceberg: Annotated[
+        bool,
+        typer.Option(
+            "--iceberg/--no-iceberg",
+            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
+        ),
+    ] = True,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel/--no-parallel",
+            help="Automatically run multi-year ranges in parallel worker threads.",
+        ),
+    ] = True,
+    workers: Annotated[
+        int | None,
+        typer.Option(
+            "--workers",
+            "-w",
+            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+        ),
+    ] = None,
+    namespace: Annotated[
+        str,
+        typer.Option(
+            "--namespace",
+            "-n",
+            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
+        ),
+    ] = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            "--batch-size",
+            "-b",
+            help="Number of days to accumulate before committing to Iceberg (default 30).",
+        ),
+    ] = 30,
+):
+    """Process bid opening (bien ban mo thau) automatically for each day."""
+    try:
+        first, last = date_range(day, start, end)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    fs, bucket = get_storage()
+    typer.echo(f"bid_opening | {first} .. {last}")
+    report = execute_resource(
+        fs,
+        bucket,
+        "bid_opening",
+        first,
+        last,
+        family=None,
+        continue_on_error=continue_on_error,
+        skip_existing=skip_existing,
+        iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
+        namespace=namespace,
+        batch_size=batch_size,
+    )
+    typer.echo(f"Status: {report['status']}")
+    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
+    if iceberg:
+        typer.echo(
+            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
+        )
+    typer.echo(
+        "Output published to Silver Lakehouse tables "
+        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+    )
+    display_run_summary(report, "bid_opening", iceberg, namespace=namespace)
+    if report["status"] != "completed":
+        raise typer.Exit(code=1)
+
+
 @app.command("contract_performance")
 def contract_performance(
     day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
@@ -822,15 +915,36 @@ def all_resources(
             help="Number of days to accumulate before committing to Iceberg (default 15).",
         ),
     ] = 15,
+    batch_mb: Annotated[
+        int,
+        typer.Option(
+            "--batch-mb",
+            help="Shared Arrow buffer threshold in MB before flushing to Iceberg (default 512).",
+        ),
+    ] = 512,
+    linkage: Annotated[
+        bool,
+        typer.Option(
+            "--linkage/--no-linkage",
+            help="Automatically update the Union-Find linkage_index table after all resources finish.",
+        ),
+    ] = True,
+    linkage_mode: Annotated[
+        str,
+        typer.Option(
+            "--linkage-mode",
+            help="Linkage index update mode: 'full' (default, zero delete files) or 'incremental'.",
+        ),
+    ] = "full",
 ):
-    """Run Silver candidate & Iceberg pipeline across ALL resources (khlcnt, notice, project, result)."""
+    """Run Silver candidate & Iceberg pipeline across ALL resources and update linkage_index."""
     try:
         first, last = date_range(day, start, end)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
     fs, bucket = get_storage()
-    resources = ["khlcnt", "notice", "project", "contractor_result", "contract_performance"]
+    resources = ["khlcnt", "notice", "project", "bid_opening", "contractor_result", "contract_performance"]
     year_chunks = split_date_range_by_year(first, last)
     is_multi_year = len(year_chunks) > 1 and parallel
 
@@ -841,8 +955,9 @@ def all_resources(
             f"Namespace: [bold magenta]lake.{namespace}.*[/]\n"
             f"Date Range: [bold yellow]{first}[/] ➔ [bold yellow]{last}[/]\n"
             f"Execution Mode: [bold green]{'Multi-Year Parallel (' + str(len(year_chunks)) + ' years)' if is_multi_year else 'Sequential'}[/]\n"
-            f"Batch Size: [bold green]{batch_size} days/commit[/]\n"
+            f"Shared Buffer: [bold green]{batch_mb} MB/commit[/]\n"
             f"Iceberg: [bold sky_blue2]{'Enabled (Format v2)' if iceberg else 'Disabled'}[/]\n"
+            f"Linkage Index: [bold green]{'Enabled (' + linkage_mode + ')' if (iceberg and linkage) else 'Disabled'}[/]\n"
             f"Skip existing: [white]{skip_existing}[/]\n"
             f"Continue on error: [white]{continue_on_error}[/]",
             title="[bold cyan]Procurement Lakehouse[/]",
@@ -867,6 +982,7 @@ def all_resources(
             workers=workers,
             namespace=namespace,
             batch_size=batch_size,
+            batch_mb=batch_mb,
         )
         display_run_summary(report, display_name, iceberg, namespace=namespace)
         if report.get("status") == "failed":
@@ -878,8 +994,80 @@ def all_resources(
         console.rule("[bold red]✘ Execution finished with errors[/]")
         console.print(f"[bold red]Failed resources: {', '.join(failed_resources)}[/]")
         raise typer.Exit(code=1)
-    else:
-        console.rule("[bold green]✔ All Resources Processed Successfully![/]")
+
+    if iceberg and linkage:
+        from procurement.silver.application.linkage_index import run_linkage_index
+
+        console.rule(f"[bold cyan]▶ Updating Union-Find Linkage Index (lake.{namespace}.linkage_index)[/]")
+        with console.status(f"[bold cyan]Building linkage_index ({linkage_mode})...[/]"):
+            link_res = run_linkage_index(
+                namespace=namespace,
+                mode=linkage_mode,
+                start_date=first.isoformat(),
+                end_date=last.isoformat(),
+            )
+        _display_linkage_summary(link_res, namespace)
+
+    console.rule("[bold green]✔ All Silver Resources & Linkage Index Processed Successfully![/]")
+
+
+def _display_linkage_summary(link_res: dict, namespace: str) -> None:
+    link_table = Table.grid(padding=(0, 2))
+    link_table.add_column(style="bold white")
+    link_table.add_column()
+    link_table.add_row("Target Table:", f"[bold sky_blue2]lake.{namespace}.linkage_index[/]")
+    link_table.add_row("Mode:", f"[bold cyan]{str(link_res.get('mode', 'full')).upper()}[/]")
+    link_table.add_row("Graph Nodes:", f"[bold green]{link_res.get('nodes', 0):,}[/]")
+    link_table.add_row("Graph Edges:", f"[bold green]{link_res.get('edges', 0):,}[/]")
+    link_table.add_row("Connected Cases:", f"[bold yellow]{link_res.get('components', 0):,}[/]")
+    link_table.add_row("Rows Materialized:", f"[bold cyan]{link_res.get('rows', 0):,}[/]")
+    link_table.add_row("Wall Time:", f"[bold white]{link_res.get('wall_time_s', 0.0):.2f}s[/]")
+    console.print()
+    console.print(
+        Panel(
+            link_table,
+            title="[bold]Silver Union-Find Linkage Index[/]",
+            border_style="cyan",
+        )
+    )
+
+
+@app.command("linkage")
+@app.command("linkage-index", hidden=True)
+def cmd_linkage(
+    namespace: Annotated[
+        str,
+        typer.Option("--namespace", "-n", help="Target Silver namespace in catalog 'lake'."),
+    ] = settings.SILVER_TARGET_NAMESPACE,
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Update mode: 'full' (default) or 'incremental'."),
+    ] = "full",
+    day: Annotated[str | None, typer.Option("--date", help="Single date (YYYY-MM-DD) for incremental sync.")] = None,
+    start: Annotated[str | None, typer.Option("--start-date", help="Start date (YYYY-MM-DD) for incremental sync.")] = None,
+    end: Annotated[str | None, typer.Option("--end-date", help="End date (YYYY-MM-DD) for incremental sync.")] = None,
+    memory_limit: Annotated[str, typer.Option("--memory-limit", help="DuckDB memory limit.")] = "2GB",
+    threads: Annotated[int, typer.Option("--threads", help="DuckDB execution threads.")] = 4,
+):
+    """Build or incrementally synchronize the Silver Union-Find linkage_index table."""
+    from procurement.silver.application.linkage_index import run_linkage_index
+
+    s_date: str | None = None
+    e_date: str | None = None
+    if day or (start and end):
+        first, last = date_range(day, start, end)
+        s_date, e_date = first.isoformat(), last.isoformat()
+
+    with console.status(f"[bold cyan]Running Union-Find linkage_index ({mode}) on lake.{namespace}...[/]"):
+        res = run_linkage_index(
+            namespace=namespace,
+            mode=mode,
+            start_date=s_date,
+            end_date=e_date,
+            memory_limit=memory_limit,
+            threads=threads,
+        )
+    _display_linkage_summary(res, namespace)
 
 
 @app.command("list")
@@ -887,18 +1075,46 @@ def list_resources():
     """List implemented resources and optional family choices."""
     typer.echo("notice (alias: tbmt): standard, vk_adb, reoffer")
     typer.echo("project (alias: du_an): project")
+    typer.echo("bid_opening (alias: opening): bid_opening_detail")
     typer.echo("result (alias: kq_lcnt, contractor_result): contractor_result")
     typer.echo("contract_performance: contract, performance")
     typer.echo("khlcnt (alias: plan, package): plan, package")
 
 
+from procurement.storage.iceberg import purge_iceberg_namespaces as _purge_iceberg_namespaces
+
+
 @app.command("reset")
+@app.command("delete", hidden=True)
+@app.command("purge", hidden=True)
 def reset(
+    namespace: Annotated[
+        str | None,
+        typer.Option(
+            "--namespace",
+            "-n",
+            help="Specific Iceberg namespace to delete (e.g. 'silver_v3'). Defaults to all silver* namespaces when --all is set.",
+        ),
+    ] = None,
     all_silver: Annotated[
         bool,
         typer.Option(
             "--all/--candidates-only",
-            help="Reset both published silver tables and silver_candidates.",
+            help="Delete both published Silver tables/namespaces and silver_candidates.",
+        ),
+    ] = True,
+    include_gold: Annotated[
+        bool,
+        typer.Option(
+            "--include-gold",
+            help="Also delete Gold Iceberg namespaces (gold*) and S3 prefixes.",
+        ),
+    ] = False,
+    iceberg: Annotated[
+        bool,
+        typer.Option(
+            "--iceberg/--no-iceberg",
+            help="Purge Iceberg REST Catalog tables and namespaces.",
         ),
     ] = True,
     force: Annotated[
@@ -906,71 +1122,88 @@ def reset(
         typer.Option(
             "--force",
             "-f",
-            help="Bỏ qua xác nhận, xóa ngay không hỏi (dành cho người dũng cảm).",
+            help="Skip confirmation prompt.",
         ),
     ] = False,
 ):
-    """Cleanly reset Silver data on Object Storage (candidates and published tables)."""
+    """Delete Silver (and optionally Gold) Iceberg namespaces and S3 storage data."""
+    import contextlib
+
+    target_ns_list: list[str] = []
+    if namespace:
+        target_ns_list.append(namespace)
+    elif all_silver:
+        target_ns_list.extend(["silver", "silver_v2", "silver_v3", settings.SILVER_TARGET_NAMESPACE])
+    if include_gold:
+        target_ns_list.extend(["gold", "gold_v2", "gold_v3", settings.GOLD_TARGET_NAMESPACE])
+    target_ns_list = list(dict.fromkeys(target_ns_list))
+
     if not force:
-        target_desc = (
-            "TOÀN BỘ tầng Silver (cả bảng Parquet lẫn candidate runs cày cuốc bao lâu nay)"
+        scope_text = (
+            f"Silver + Gold (namespaces: {', '.join(target_ns_list)})"
+            if include_gold
+            else f"Silver (namespaces: {', '.join(target_ns_list)})"
             if all_silver
-            else "các bản chạy thử nháp (silver_candidates)"
+            else "silver_candidates only"
         )
         console.print()
         console.print(
             Panel(
-                f"[bold red]🚨 CẢNH BÁO NGUY CẤP: BẠN ĐANG BẤM NÚT TỰ HỦY! 🚨[/]\n\n"
-                f"Thao tác này sẽ [bold red]XÓA SẠCH SÀNH SANH[/] [bold yellow]{target_desc}[/] trên Object Storage!\n"
-                f"[italic dim]\"Dữ liệu một đi không trở lại, đừng khóc khi thấy S3 trống trơn...\"[/]\n\n"
-                f"[dim]💡 Mẹo nhỏ: Dùng flag [bold cyan]--force[/] hoặc [bold cyan]-f[/] nếu bạn là dân chơi hệ liều![/]",
-                title="[bold yellow]⚠️ XÁC NHẬN 'BÚNG TAY' THANOS ⚠️[/]",
+                f"[bold red]WARNING: Data Deletion Request[/]\n\n"
+                f"  • Target Scope : [bold yellow]{scope_text}[/]\n"
+                f"  • Iceberg Purge: [bold cyan]{'Enabled (purgeRequested=true)' if iceberg and all_silver else 'Disabled'}[/]\n"
+                f"  • Protected    : [bold green]s3://{settings.OBJECT_STORAGE_BUCKET}/bronze (Untouched)[/]",
+                title="[bold yellow]Confirm Silver Reset[/]",
                 border_style="red",
             )
         )
         confirmed = typer.confirm(
-            "👉 Bạn có THẬT SỰ muốn tiễn đống data này về miền cực lạc không?",
+            "Are you sure you want to permanently delete the selected data?",
             default=False,
         )
         if not confirmed:
-            console.print(
-                "[bold green]Huề cả làng! 😅 Đã phanh xe trong gang tấc. Dữ liệu vẫn an toàn nguyên vẹn nhé![/]\n"
-            )
+            console.print("[yellow]Operation cancelled. No data was deleted.[/]\n")
             raise typer.Exit(code=0)
 
-        console.print("[bold red]Đã nhận lệnh tử thủ! Đang 'búng tay' thanh trừng dữ liệu... 🔥[/]\n")
+    purged_iceberg: list[tuple[str, int]] = []
+    if iceberg and (all_silver or namespace):
+        purged_iceberg = _purge_iceberg_namespaces(target_ns_list)
 
     fs, bucket = get_storage()
-    cleaned = []
+    cleaned_s3: list[tuple[str, int]] = []
 
     prefixes = [f"{bucket}/silver_candidates"]
     if all_silver:
-        prefixes.append(f"{bucket}/silver")
+        prefixes.extend([f"{bucket}/silver", f"{bucket}/silver_v2", f"{bucket}/silver_v3"])
+    if include_gold:
+        prefixes.extend([f"{bucket}/gold", f"{bucket}/gold_v2", f"{bucket}/gold_v3"])
 
-    for prefix in prefixes:
+    for prefix in dict.fromkeys(prefixes):
         if fs.exists(prefix):
             all_files = fs.find(prefix)
+            file_count = len(all_files)
             if all_files:
                 fs.rm(all_files)
-            import contextlib
-
             with contextlib.suppress(Exception):
                 fs.rm(prefix, recursive=True)
-            cleaned.append(f"s3://{prefix}")
+            cleaned_s3.append((f"s3://{prefix}", file_count))
 
-    if cleaned:
-        console.print("[bold green]✔ Đã thanh tẩy thành công![/]")
-        for item in cleaned:
-            console.print(
-                f"  [dim]- Đã dọn sạch:[/] [bold cyan]{item}[/] (toàn bộ parquet, partition và reports)"
-            )
-        console.print(
-            "[bold cyan]Tầng Silver giờ đã sạch bóng kin kít như mới, tha hồ cho bạn cày lại từ đầu! 🧹✨[/]\n"
-        )
+    if purged_iceberg or cleaned_s3:
+        summary = Table(title="Reset Summary", show_header=True, header_style="bold cyan")
+        summary.add_column("Target", style="cyan")
+        summary.add_column("Type", style="white")
+        summary.add_column("Removed", justify="right", style="green")
+
+        for ns, tbl_count in purged_iceberg:
+            summary.add_row(f"lake.{ns}", "Iceberg Namespace", f"{tbl_count} tables")
+        for s3_uri, f_count in cleaned_s3:
+            summary.add_row(s3_uri, "S3 Prefix", f"{f_count} files")
+
+        console.print()
+        console.print(Panel(summary, border_style="green"))
+        console.print("[bold green]✔ Reset completed successfully.[/]\n")
     else:
-        console.print(
-            "[bold yellow]Tầng Silver vốn đã sạch bong kin kít rồi, không có gì để xóa cả! 🏖️[/]\n"
-        )
+        console.print("[yellow]No existing Silver/Gold data found to delete.[/]\n")
 
 
 def _sync_contract_performance(fs, bucket: str, year: int | None) -> None:

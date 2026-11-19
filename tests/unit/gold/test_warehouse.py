@@ -16,7 +16,7 @@ def mem_db():
 
 def test_ensure_gold_tables_creates_16_tables(mem_db):
     results = ensure_gold_tables(mem_db, namespace="gold_v2")
-    assert len(results) == 16
+    assert len(results) == len(TABLES)
     assert set(results.keys()) == set(TABLES.keys())
 
     tables_in_lake = {
@@ -48,7 +48,7 @@ def test_seed_geography_populates_65_records(mem_db):
 def test_promote_views_creates_zero_copy_views(mem_db):
     ensure_gold_tables(mem_db, namespace="gold_v2")
     views = promote_views(mem_db, source_namespace="gold_v2", target_schema="gold")
-    assert len(views) == 16
+    assert len(views) == len(TABLES)
 
     res = mem_db.execute("SELECT count(*) FROM gold.dim_geography").fetchone()[0]
     assert res == 65

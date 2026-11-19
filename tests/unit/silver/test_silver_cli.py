@@ -263,10 +263,11 @@ def test_cli_reset_aborts_on_no(monkeypatch):
     mock_fs.makedirs("bucket/silver", exist_ok=True)
     mock_fs.touch("bucket/silver/sample.parquet")
     monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+    monkeypatch.setattr(silver, "_purge_iceberg_namespaces", lambda ns: [])
 
     result = runner.invoke(silver.app, ["reset"], input="n\n")
     assert result.exit_code == 0
-    assert "Huề cả làng" in result.output
+    assert "Operation cancelled" in result.output
     assert mock_fs.exists("bucket/silver/sample.parquet")
 
 
@@ -276,10 +277,11 @@ def test_cli_reset_proceeds_on_yes(monkeypatch):
     mock_fs.makedirs("bucket/silver", exist_ok=True)
     mock_fs.touch("bucket/silver/sample.parquet")
     monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+    monkeypatch.setattr(silver, "_purge_iceberg_namespaces", lambda ns: [("silver_v3", 18)])
 
     result = runner.invoke(silver.app, ["reset"], input="y\n")
     assert result.exit_code == 0
-    assert "thanh tẩy thành công" in result.output
+    assert "Reset completed successfully" in result.output
     assert not mock_fs.exists("bucket/silver/sample.parquet")
 
 
@@ -289,11 +291,12 @@ def test_cli_reset_force_flag_bypasses_prompt(monkeypatch):
     mock_fs.makedirs("bucket/silver", exist_ok=True)
     mock_fs.touch("bucket/silver/sample.parquet")
     monkeypatch.setattr(silver, "get_storage", lambda: (mock_fs, "bucket"))
+    monkeypatch.setattr(silver, "_purge_iceberg_namespaces", lambda ns: [])
 
     result = runner.invoke(silver.app, ["reset", "--force"])
     assert result.exit_code == 0
-    assert "CẢNH BÁO NGUY CẤP" not in result.output
-    assert "thanh tẩy thành công" in result.output
+    assert "WARNING: Data Deletion Request" not in result.output
+    assert "Reset completed successfully" in result.output
     assert not mock_fs.exists("bucket/silver/sample.parquet")
 
 
