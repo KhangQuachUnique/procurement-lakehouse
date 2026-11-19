@@ -243,7 +243,11 @@ class IngestionService:
                     raise heartbeat_errors[0]
                 search_count += len(items)
                 record_counts.update(stats.record_counts)
-                issue_counts.update(issue["code"] for issue in stats.quality_observations)
+                issue_counts.update(
+                    code
+                    for issue in stats.quality_observations
+                    if (code := issue.get("code") or (issue.get("result") or {}).get("status"))
+                )
                 contract_codes.update(i["contractCode"] for i in items if i.get("contractCode"))
                 table_batches: dict[str, list[Any]] = defaultdict(list)
                 for item in bronze_items:
