@@ -1,17 +1,16 @@
 """Validate the assembly without rewriting any of its source responses."""
 
+import json
+from collections import Counter
+from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
+
+from procurement.common.dates import VIETNAM_TZ
 from procurement.quality.contracts import finish, issue, lookup, validate_detail
 from procurement.quality.opening_phases import (
     financial_published,
     opening_parts,
 )
-import json
-from datetime import datetime, timezone
-
-from procurement.common.dates import VIETNAM_TZ
-
-from collections import Counter
-from decimal import Decimal, InvalidOperation
 
 KHAC_ROOTS = [
     "opening_out.bidoNotifyContractorP",
@@ -176,7 +175,13 @@ def _khac_cancelled_multilot_technical_verified(details, submissions, notice, co
     return actual_pairs == expected_pairs
 
 
-def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False):
+def _khac_cancelled_verified_pattern(
+    payload,
+    context,
+    *,
+    priced_financial=False,
+    mixed_timeline=False,
+):
     """Verify a narrow, source-backed KHAC cancellation pattern in both phases."""
 
     if (
@@ -269,11 +274,22 @@ def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False
 
     # This particular source anomaly:
     # scheduled opening < cancellation < recorded opening timestamps.
-    if not (
-        scheduled < cancelled
-        and decision <= cancelled
-        and cancelled < opened_technical < opened_financial
-    ):
+    if mixed_timeline:
+        # Verified anomalous KHAC timeline:
+        # financial marker < cancellation decision <= cancellation
+        # < technical marker.
+        chronology_verified = (
+            priced_financial
+            and scheduled < opened_financial < decision
+            and decision <= cancelled < opened_technical
+        )
+    else:
+        chronology_verified = (
+            scheduled < cancelled
+            and decision <= cancelled < opened_technical < opened_financial
+        )
+
+    if not chronology_verified:
         return False
 
     # Round timestamps must be consistent across both responses.
@@ -320,13 +336,12 @@ def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False
 
     # Non-null technical lot details are supported only for
     # a strictly verified unevaluated multi-lot cancellation.
-    if technical_details is not None:
-        if (
-            priced_financial
-            or not isinstance(technical_details, list)
-            or not technical_details
-        ):
-            return False
+    if technical_details is not None and (
+        priced_financial
+        or not isinstance(technical_details, list)
+        or not technical_details
+    ):
+        return False
 
     submissions = technical_container.get("bidSubmissionDTOList")
     if not isinstance(submissions, list) or not submissions:
@@ -414,14 +429,15 @@ def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False
         ):
             return False
 
-    if isinstance(technical_details, list):
-        if not _khac_cancelled_multilot_technical_verified(
-            technical_details,
-            submissions,
-            original,
-            context,
-        ):
-            return False
+    if isinstance(
+        technical_details, list
+    ) and not _khac_cancelled_multilot_technical_verified(
+        technical_details,
+        submissions,
+        original,
+        context,
+    ):
+        return False
 
     if not priced_financial:
         return True
@@ -493,7 +509,7 @@ def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False
 
     # Do not classify a genuinely evaluated or awarded financial lot as
     # this limited source anomaly.
-    if any(
+    return not any(
         financial_lot.get(key) is not None
         for key in (
             "passedYn",
@@ -504,9 +520,7 @@ def _khac_cancelled_verified_pattern(payload, context, *, priced_financial=False
             "succBidderYn",
             "succBidderPrice",
         )
-    ):
-        return False
-    return True
+    )
 
 
 def _khac_cancelled_without_verified_evaluation(payload, context):
@@ -515,6 +529,206 @@ def _khac_cancelled_without_verified_evaluation(payload, context):
 
 def _khac_cancelled_with_priced_financial(payload, context):
     return _khac_cancelled_verified_pattern(payload, context, priced_financial=True)
+
+
+def _khac_cancelled_with_priced_financial_mixed_timeline(payload, context):
+    return _khac_cancelled_verified_pattern(
+        payload,
+        context,
+        priced_financial=True,
+        mixed_timeline=True,
+    )
+
+
+def _khac_financial_null_marker_conflict(payload, context):
+    """Verify a KHAC opening with a stale financial marker and no financial bids."""
+
+    if (
+        context.get("processApply") != "KHAC"
+        or context.get("bidMode") != "1_HTHS"
+        or not isinstance(payload, dict)
+        or set(payload)
+        != {
+            "opening_out_technical",
+            "opening_out_financial",
+        }
+    ):
+        return False
+
+    technical = payload["opening_out_technical"]
+    financial = payload["opening_out_financial"]
+
+    if not isinstance(technical, dict):
+        return False
+    if not isinstance(financial, dict):
+        return False
+
+    for part in (technical, financial):
+        if part.get("error") or part.get("success") is False:
+            return False
+
+    tech_notice = technical.get("bidoNotifyContractorP")
+    tech_round = technical.get("bidoBidroundOutMngViewDTO")
+    tech_container = technical.get("bidSubmissionByContractorViewResponse")
+
+    fin_notice = financial.get("bidoNotifyContractorP")
+    fin_round = financial.get("bidoBidroundOutMngViewDTO")
+    fin_container = financial.get("bidSubmissionByContractorViewResponse")
+
+    # Explicit type narrowing for Pylance.
+    if not isinstance(tech_notice, dict):
+        return False
+    if not isinstance(tech_round, dict):
+        return False
+    if not isinstance(tech_container, dict):
+        return False
+    if not isinstance(fin_notice, dict):
+        return False
+    if not isinstance(fin_round, dict):
+        return False
+    if not isinstance(fin_container, dict):
+        return False
+
+    bid_no = tech_notice.get("bidNo")
+    if not isinstance(bid_no, str) or not bid_no:
+        return False
+
+    # Verify notice identities and business workflow.
+    for root in (tech_notice, tech_round, fin_notice, fin_round):
+        if any(
+            not context.get(key) or root.get(key) != context.get(key)
+            for key in ("id", "notifyNo", "notifyVersion")
+        ):
+            return False
+
+        if (
+            root.get("processApply") != "KHAC"
+            or root.get("bidMode") != "1_HTHS"
+            or root.get("bidNo") != bid_no
+        ):
+            return False
+
+    # Neither response may indicate a cancellation.
+    for notice in (tech_notice, fin_notice):
+        if notice.get("status") != "01":
+            return False
+
+        for field in (
+            "cancelDate",
+            "cancelDecisionDate",
+            "cancelDecisionNo",
+            "cancelReason",
+        ):
+            if field not in notice or notice[field] is not None:
+                return False
+
+        if notice.get("cancelFileAttachName") is not None:
+            return False
+
+    if tech_notice.get("bidOpenDate") != fin_notice.get("bidOpenDate"):
+        return False
+
+    # Both API phases must agree on the round metadata.
+    for field in (
+        "successBidOpenDate",
+        "successBidOpenDateTc",
+        "countContractor",
+        "bidStatus",
+        "evalStatus",
+        "isMultiLot",
+    ):
+        if tech_round.get(field) != fin_round.get(field):
+            return False
+
+    for round_info in (tech_round, fin_round):
+        if (
+            type(round_info.get("countContractor")) is not int
+            or round_info["countContractor"] != 1
+            or round_info.get("bidStatus") != "OPEN_DXKT"
+            or round_info.get("evalStatus") is not None
+            or round_info.get("isMultiLot") is not None
+        ):
+            return False
+
+    # The financial marker predates the scheduled technical opening.
+    scheduled = _event_time(tech_notice.get("bidOpenDate"))
+    technical_at = _event_time(tech_round.get("successBidOpenDate"))
+    financial_marker = _event_time(tech_round.get("successBidOpenDateTc"))
+
+    if (
+        scheduled is None
+        or technical_at is None
+        or financial_marker is None
+        or not (financial_marker < scheduled <= technical_at)
+    ):
+        return False
+
+    # Explicit nulls, not missing keys or empty lists.
+    for key in (
+        "bidSubmissionDTOList",
+        "bidoLotOpenDetailDTOS",
+        "bidOpenAdditionList",
+    ):
+        if key not in fin_container or fin_container[key] is not None:
+            return False
+
+    # No auxiliary technical evaluation results.
+    for key in ("bidoLotOpenDetailDTOS", "bidOpenAdditionList"):
+        if key not in tech_container or tech_container[key] is not None:
+            return False
+
+    submissions = tech_container.get("bidSubmissionDTOList")
+    if not isinstance(submissions, list) or len(submissions) != 1:
+        return False
+
+    bidder = submissions[0]
+    if not isinstance(bidder, dict):
+        return False
+
+    if (
+        not bidder.get("id")
+        or not bidder.get("contractorCode")
+        or bidder.get("bidPrice") != 0
+        or bidder.get("bidFinalPrice") not in (None, 0)
+        or bidder.get("techResult") is not None
+        or bidder.get("techScore") is not None
+    ):
+        return False
+
+    lots = bidder.get("lotNoValueDTOList")
+    if not isinstance(lots, list) or len(lots) != 1:
+        return False
+
+    lot = lots[0]
+    if not isinstance(lot, dict):
+        return False
+
+    if (
+        lot.get("lotNo") != bid_no
+        or lot.get("bidNo") not in (None, bid_no)
+        or lot.get("contractorCode")
+        not in (
+            None,
+            bidder["contractorCode"],
+        )
+        or lot.get("lotPrice") != 0
+        or lot.get("lotFinalPrice") not in (None, 0)
+    ):
+        return False
+
+    # Reject any observed evaluation or award result.
+    return not any(
+        lot.get(field) is not None
+        for field in (
+            "passedYn",
+            "techResult",
+            "techScore",
+            "evalPrice",
+            "ranking",
+            "succBidderYn",
+            "succBidderPrice",
+        )
+    )
 
 
 def validate_khac_assembly(payload, context, contract, *, thresholds=None):
@@ -612,6 +826,20 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
         and _khac_cancelled_with_priced_financial(payload, context)
     )
 
+    financial_null_conflict = (
+        mode == "1_HTHS"
+        and not cancelled_no_evaluation
+        and not cancelled_priced_financial
+        and _khac_financial_null_marker_conflict(payload, context)
+    )
+
+    cancelled_mixed_timeline = (
+        mode == "1_HTHS"
+        and not cancelled_no_evaluation
+        and not cancelled_priced_financial
+        and _khac_cancelled_with_priced_financial_mixed_timeline(payload, context)
+    )
+
     # 4. Validate each component independently
     for part_name in sorted(expected):
         part = payload.get(part_name)
@@ -689,7 +917,7 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
         # Financial submissions may be null only when the
         # cancellation has passed all strict business checks.
         if (
-            cancelled_no_evaluation
+            (cancelled_no_evaluation or financial_null_conflict)
             and part_name == "opening_out_financial"
             and submissions is None
         ):
@@ -755,7 +983,11 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
     # strictly verified exception, even if the financial submission list
     # is syntactically valid (for example, []). Check each source response
     # independently so a mismatched cancellation cannot silently pass.
-    if mode == "1_HTHS" and not (cancelled_no_evaluation or cancelled_priced_financial):
+    if mode == "1_HTHS" and not (
+        cancelled_no_evaluation
+        or cancelled_priced_financial
+        or cancelled_mixed_timeline
+    ):
         technical_round = lookup(
             payload,
             "opening_out_technical.bidoBidroundOutMngViewDTO",
@@ -806,6 +1038,32 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
                 "opening_out_financial.bidSubmissionByContractorViewResponse.bidSubmissionDTOList",
             )
         )
+    elif cancelled_mixed_timeline:
+        problems.append(
+            issue(
+                "cancelled_khac_mixed_opening_timeline",
+                "warn",
+                "opening_out_technical.bidoBidroundOutMngViewDTO",
+            )
+        )
+        problems.append(
+            issue(
+                "financial_bid_price_vs_zero_lot_price",
+                "warn",
+                "opening_out_financial.bidSubmissionByContractorViewResponse.bidSubmissionDTOList",
+            )
+        )
+
+    if financial_null_conflict:
+        problems.append(
+            issue(
+                "khac_financial_null_with_early_publication_marker",
+                "warn",
+                "opening_out_financial."
+                "bidSubmissionByContractorViewResponse."
+                "bidSubmissionDTOList",
+            )
+        )
 
     result = finish(result)
 
@@ -814,6 +1072,10 @@ def validate_khac_assembly(payload, context, contract, *, thresholds=None):
             result["collection_status"] = "cancelled_without_verified_evaluation"
         elif cancelled_priced_financial:
             result["collection_status"] = "cancelled_priced_financial_timeline_conflict"
+        elif financial_null_conflict:
+            result["collection_status"] = "financial_source_conflict"
+        elif cancelled_mixed_timeline:
+            result["collection_status"] = "cancelled_priced_financial_mixed_timeline"
         else:
             result["collection_status"] = (
                 "awaiting_financial" if pending else "complete"
@@ -835,7 +1097,7 @@ def _event_time(value):
     if result.tzinfo is None:
         result = result.replace(tzinfo=VIETNAM_TZ)
 
-    return result.astimezone(timezone.utc)
+    return result.astimezone(UTC)
 
 
 def _financial_lots_are_technical_qualifiers(payload, context):
@@ -1259,7 +1521,7 @@ def validate_adb_assembly(payload, context, contract, *, thresholds=None):
     """Validate a verified ADB single-envelope bid opening."""
 
     roots = [
-        "opening_adb_wb." "bidNoContractorResponse.bidNotification",
+        "opening_adb_wb.bidNoContractorResponse.bidNotification",
         "opening_adb_wb.bidoBidroundMngViewDTO",
     ]
 
@@ -1691,14 +1953,241 @@ def _no_qualified_technical_bidders(payload, context):
     if not isinstance(linked, dict):
         return False
 
+    return (
+        linked.get("notifyId") == context.get("id")
+        and linked.get("notifyNo") == context.get("notifyNo")
+        and linked.get("bidId") == notice.get("bidId")
+    )
+
+
+def _ldt_financial_source_conflict(payload, context):
+    """Verify an LDT opening with null financial data despite a publication marker."""
+
+    required = {
+        "notify",
+        "roundmng",
+        "bid_open_technical",
+        "lot_open_detail_technical",
+        "bid_open_financial",
+        "lot_open_detail_financial",
+        "cancellation_notice",
+    }
+
     if (
-        linked.get("notifyId") != context.get("id")
-        or linked.get("notifyNo") != context.get("notifyNo")
-        or linked.get("bidId") != notice.get("bidId")
+        context.get("processApply") != "LDT"
+        or context.get("bidMode") != "1_HTHS"
+        or not isinstance(payload, dict)
+        or set(payload) != required
     ):
         return False
 
-    return True
+    # 1. Read source business roots.
+    notice = lookup(
+        payload,
+        "notify.bidNoContractorResponse.bidNotification",
+    )
+    round_info = lookup(
+        payload,
+        "roundmng.bidoBidroundMngViewDTO",
+    )
+    detail_notice = lookup(
+        payload,
+        "cancellation_notice.bidNoContractorResponse.bidNotification",
+    )
+    cancellation = lookup(
+        payload,
+        "cancellation_notice.bidCancelingResponse",
+    )
+    plan = lookup(
+        payload,
+        "cancellation_notice.bidpPlanDetail",
+    )
+    financial = payload.get("bid_open_financial")
+    technical = lookup(
+        payload,
+        "bid_open_technical."
+        "bidSubmissionByContractorViewResponse."
+        "bidSubmissionDTOList",
+    )
+    technical_lots = payload.get("lot_open_detail_technical")
+
+    # Explicit checks allow Pylance to narrow each variable.
+    if not isinstance(notice, dict):
+        return False
+    if not isinstance(round_info, dict):
+        return False
+    if not isinstance(detail_notice, dict):
+        return False
+    if not isinstance(cancellation, dict):
+        return False
+    if not isinstance(plan, dict):
+        return False
+    if not isinstance(financial, dict):
+        return False
+
+    # 2. Reject API error envelopes.
+    for name in (
+        "notify",
+        "roundmng",
+        "bid_open_technical",
+        "bid_open_financial",
+        "cancellation_notice",
+    ):
+        part = payload[name]
+        if (
+            not isinstance(part, dict)
+            or part.get("error")
+            or part.get("success") is False
+        ):
+            return False
+
+    # 3. Verify identities across all business roots.
+    for root in (notice, round_info, detail_notice):
+        if any(
+            root.get(key) != context.get(key)
+            for key in ("id", "notifyNo", "notifyVersion")
+        ):
+            return False
+
+    if (
+        notice.get("processApply") != "LDT"
+        or notice.get("bidMode") != "1_HTHS"
+        or round_info.get("processApply") != "LDT"
+        or round_info.get("bidMode") != "1_HTHS"
+        or not notice.get("bidNo")
+        or round_info.get("bidNo") != notice["bidNo"]
+        or detail_notice.get("bidNo") != notice["bidNo"]
+    ):
+        return False
+
+    # 4. Require the observed single-lot, unevaluated shape.
+    if (
+        round_info.get("isMultiLot") is not False
+        or type(round_info.get("countContractor")) is not int
+        or round_info["countContractor"] != 1
+        or round_info.get("bidStatus") != "OPEN_DXKT"
+        or round_info.get("evalStatus") != "-1"
+    ):
+        return False
+
+    # 5. Verify the source timestamp contradiction.
+    technical_at = _event_time(round_info.get("successBidOpenDate"))
+    financial_at = _event_time(round_info.get("successBidOpenDateTc"))
+
+    if technical_at is None or financial_at is None or financial_at >= technical_at:
+        return False
+
+    # 6. Financial API must explicitly return null data.
+    financial_roots = (
+        "bidNoContractorResponse",
+        "bidoBidroundMngViewDTO",
+        "bidSubmissionByContractorViewResponse",
+    )
+
+    if any(
+        key not in financial or financial[key] is not None for key in financial_roots
+    ):
+        return False
+
+    if payload["lot_open_detail_financial"] != []:
+        return False
+
+    # 7. Confirm that cancellation did not occur.
+    if (
+        cancellation.get("id") != context.get("id")
+        or cancellation.get("notifyNo") != context.get("notifyNo")
+        or cancellation.get("bidNo") != notice["bidNo"]
+        or "cancelDate" not in cancellation
+        or "cancelDecisionNo" not in cancellation
+        or cancellation["cancelDate"] is not None
+        or cancellation["cancelDecisionNo"] is not None
+        or not notice.get("bidId")
+        or plan.get("id") != notice["bidId"]
+    ):
+        return False
+
+    # 8. Verify that the linked notice refers to itself.
+    try:
+        linked = json.loads(plan["linkNotifyInfo"])
+    except (KeyError, TypeError, ValueError):
+        return False
+
+    if not isinstance(linked, dict):
+        return False
+
+    if (
+        linked.get("notifyId") != context.get("id")
+        or linked.get("notifyNo") != context.get("notifyNo")
+        or linked.get("bidId") != notice["bidId"]
+        or linked.get("status") not in (None, "01")
+    ):
+        return False
+
+    if "notifyVersion" in linked and linked["notifyVersion"] != context.get(
+        "notifyVersion"
+    ):
+        return False
+
+    # 9. Require exactly one technical bidder and one lot.
+    if (
+        not isinstance(technical, list)
+        or len(technical) != 1
+        or not isinstance(technical_lots, list)
+        or len(technical_lots) != 1
+    ):
+        return False
+
+    bidder = technical[0]
+    lot = technical_lots[0]
+
+    if not isinstance(bidder, dict):
+        return False
+    if not isinstance(lot, dict):
+        return False
+
+    if (
+        not bidder.get("id")
+        or not bidder.get("contractorCode")
+        or lot.get("notifyId") != context.get("id")
+        or lot.get("contractorCode") != bidder["contractorCode"]
+        or not lot.get("lotNo")
+        or lot.get("bidNo") not in (None, notice["bidNo"])
+        or lot.get("bidId") not in (None, notice["bidId"])
+    ):
+        return False
+
+    # 10. Validate the technical opening timestamp.
+    opened_at = _event_time(bidder.get("createdDateBidOpen"))
+
+    if opened_at is None or opened_at > technical_at:
+        return False
+
+    # 11. Ensure no actual evaluation or award is present.
+    if any(
+        bidder.get(key) is not None
+        for key in (
+            "techResult",
+            "techScore",
+        )
+    ):
+        return False
+
+    if "passedYn" not in lot:
+        return False
+
+    return not any(
+        lot.get(key) is not None
+        for key in (
+            "passedYn",
+            "eligibilityYn",
+            "experienceYn",
+            "techScore",
+            "evalPrice",
+            "ranking",
+            "succBidderYn",
+            "succBidderPrice",
+        )
+    )
 
 
 def validate_assembly(payload, context, contract, *, thresholds=None):
@@ -1785,6 +2274,11 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
         context,
     )
 
+    financial_source_conflict = _ldt_financial_source_conflict(
+        payload,
+        context,
+    )
+
     if cancelled_single:
         result["collection_status"] = "cancelled_after_opening"
 
@@ -1794,12 +2288,15 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
     elif no_qualified:
         result["collection_status"] = "no_qualified_technical_bidders"
 
+    elif financial_source_conflict:
+        result["collection_status"] = "financial_source_conflict"
+
     else:
         result["collection_status"] = "awaiting_financial" if pending else "complete"
 
     expected = {"notify", "roundmng"} | {name for pair in parts for name in pair}
 
-    if cancelled or cancelled_single or no_qualified:
+    if cancelled or cancelled_single or no_qualified or financial_source_conflict:
         expected.add("cancellation_notice")
 
     if set(payload) != expected:
@@ -1823,7 +2320,7 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
             # Financial root is genuinely null for a verified
             # cancelled-after-technical notice.
             if (
-                (cancelled or no_qualified)
+                (cancelled or no_qualified or financial_source_conflict)
                 and name == "bid_open_financial"
                 and rows is None
             ):
@@ -1848,4 +2345,12 @@ def validate_assembly(payload, context, contract, *, thresholds=None):
             and count != len(submissions)
         ):
             problems.append(issue("contractor_count_mismatch", "warn", bid))
+    if financial_source_conflict:
+        problems.append(
+            issue(
+                "financial_null_with_publication_marker_conflict",
+                "warn",
+                "bid_open_financial.bidSubmissionByContractorViewResponse",
+            )
+        )
     return finish(result)
