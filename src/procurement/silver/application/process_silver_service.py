@@ -100,12 +100,34 @@ class SharedIcebergBatchBuffer:
         )
         can_skip_delete = (not has_existing_days) and (self.change_journal is None)
 
-        merged_tables: dict[str, pa.Table] = {}
+        can_stage = self.iceberg_db is not None and self.iceberg_catalog is not None
+
+        replaced_result_rids: set[str] | None = None
+        incoming_observation_ids: set[str] | None = None
+        if can_stage and ((not can_skip_delete) or self.change_journal is not None):
+            replaced_result_rids = set()
+            for r_tbl in ("result_revision", "award_lot", "award_contractor"):
+                for tbl in self.batch_buffer.get(r_tbl, ()):
+                    if "revision_id" in tbl.column_names and len(tbl) > 0:
+                        replaced_result_rids.update(
+                            str(v) for v in tbl["revision_id"].to_pylist() if v is not None
+                        )
+            incoming_observation_ids = set()
+            for o_tbl in ("observation", "quality_issue", "quarantine"):
+                for tbl in self.batch_buffer.get(o_tbl, ()):
+                    if "observation_id" in tbl.column_names and len(tbl) > 0:
+                        incoming_observation_ids.update(
+                            str(v) for v in tbl["observation_id"].to_pylist() if v is not None
+                        )
+
+        staged_res: dict[str, dict[str, Any]] = {}
         for t_name in list(self.batch_buffer.keys()):
             t_list = self.batch_buffer.pop(t_name)
             non_empty = [t for t in t_list if len(t) > 0]
             first_fallback = t_list[0] if t_list else None
             del t_list
+
+            combined: pa.Table | None = None
             if non_empty:
                 combined = pa.concat_tables(non_empty) if len(non_empty) > 1 else non_empty[0]
                 del non_empty
@@ -117,29 +139,34 @@ class SharedIcebergBatchBuffer:
                         if len(seen_idx) < len(col_vals):
                             combined = combined.take(sorted(seen_idx.values()))
                         del col_vals, seen_idx
-                merged_tables[t_name] = combined
             elif first_fallback is not None:
-                merged_tables[t_name] = first_fallback
+                combined = first_fallback
+            del first_fallback
 
-        if merged_tables and self.iceberg_db is not None and self.iceberg_catalog is not None:
-            staged_res = stage_partition(
-                self.iceberg_db,
-                self.iceberg_catalog,
-                namespace=self.namespace,
-                tables=merged_tables,
-                partition_date=None,
-                release_id=None,
-                change_journal=self.change_journal,
-                skip_delete=can_skip_delete,
-                ensure_views_after=False,
-                pop_tables=True,
-            )
+            if combined is not None and can_stage:
+                table_staged = stage_partition(
+                    self.iceberg_db,
+                    self.iceberg_catalog,
+                    namespace=self.namespace,
+                    tables={t_name: combined},
+                    partition_date=None,
+                    release_id=None,
+                    change_journal=self.change_journal,
+                    skip_delete=can_skip_delete,
+                    ensure_views_after=False,
+                    pop_tables=True,
+                    replaced_result_rids=replaced_result_rids,
+                    incoming_observation_ids=incoming_observation_ids,
+                )
+                staged_res.update(table_staged)
+            del combined
+
+        if can_stage and staged_res:
             for b_entry in self.buffered_entries:
                 b_entry["iceberg"] = staged_res
                 if b_entry.get("date"):
                     self.existing_dates.add(str(b_entry["date"]))
 
-        merged_tables.clear()
         self.batch_buffer.clear()
         self.buffered_entries.clear()
         self.current_bytes = 0

@@ -4,6 +4,7 @@ from typing import Any
 
 import pyarrow as pa
 
+from procurement.silver.application.arrow_typing import typed_arrow_rows_pyarrow
 from procurement.silver.domain.schema import (
     get_partition_spec,
     get_primary_key,
@@ -15,46 +16,12 @@ from procurement.storage.iceberg import identifier
 
 SCHEMAS = get_silver_schemas()
 
-_local_duckdb = threading.local()
 _ICEBERG_COMMIT_LOCK = threading.RLock()
-_EMPTY_TYPED_TABLES: dict[str, pa.Table] = {}
-
-
-def _get_duckdb_conn():
-    if not hasattr(_local_duckdb, "conn") or _local_duckdb.conn is None:
-        import duckdb
-
-        _local_duckdb.conn = duckdb.connect(
-            ":memory:",
-            config={"max_memory": "128MB", "threads": "1"},
-        )
-    return _local_duckdb.conn
 
 
 def typed_arrow_rows(name: str, rows: list[dict[str, Any]]) -> pa.Table:
     """Validate and cast rows against the SQL contract before writing local Parquet."""
-    clean_name = identifier(name)
-    if not rows:
-        cached = _EMPTY_TYPED_TABLES.get(clean_name)
-        if cached is not None:
-            return cached
-    db = _get_duckdb_conn()
-    db.execute(f"CREATE OR REPLACE TEMP TABLE typed_rows ({SCHEMAS[clean_name]})")
-    try:
-        if rows:
-            raw_tbl = pa.Table.from_pylist(rows)
-            db.register("input_rows", raw_tbl)
-            try:
-                db.execute("INSERT INTO typed_rows BY NAME SELECT * FROM input_rows")
-            finally:
-                db.unregister("input_rows")
-                del raw_tbl
-        res_tbl = db.execute("SELECT * FROM typed_rows").to_arrow_table()
-        if not rows:
-            _EMPTY_TYPED_TABLES[clean_name] = res_tbl
-        return res_tbl
-    finally:
-        db.execute("DROP TABLE IF EXISTS typed_rows")
+    return typed_arrow_rows_pyarrow(name, rows)
 
 
 RESULT_SCHEMA_MIGRATIONS: dict[str, dict[str, str]] = {
@@ -210,6 +177,8 @@ def stage_partition(
     skip_delete: bool = False,
     ensure_views_after: bool = True,
     pop_tables: bool = False,
+    replaced_result_rids: set[str] | None = None,
+    incoming_observation_ids: set[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Stage candidate tables into Iceberg Lake using idempotent partition/key overwrites.
 
@@ -270,22 +239,26 @@ def stage_partition(
                     obs_ids.add(str(row["observation_id"]))
         return obs_ids
 
-    replaced_result_rids: set[str] = set()
-    incoming_observation_ids: set[str] = set()
+    replaced_result_rids_set: set[str] = set(replaced_result_rids) if replaced_result_rids else set()
+    incoming_observation_ids_set: set[str] = (
+        set(incoming_observation_ids) if incoming_observation_ids else set()
+    )
     if not skip_delete or change_journal is not None:
         if "result_revision" in tables:
-            replaced_result_rids.update(_extract_rids(tables["result_revision"]))
+            replaced_result_rids_set.update(_extract_rids(tables["result_revision"]))
         if "award_lot" in tables:
-            replaced_result_rids.update(_extract_rids(tables["award_lot"]))
+            replaced_result_rids_set.update(_extract_rids(tables["award_lot"]))
         if "award_contractor" in tables:
-            replaced_result_rids.update(_extract_rids(tables["award_contractor"]))
+            replaced_result_rids_set.update(_extract_rids(tables["award_contractor"]))
 
         if "observation" in tables:
-            incoming_observation_ids.update(_extract_obs_ids(tables["observation"]))
+            incoming_observation_ids_set.update(_extract_obs_ids(tables["observation"]))
         if "quality_issue" in tables:
-            incoming_observation_ids.update(_extract_obs_ids(tables["quality_issue"]))
+            incoming_observation_ids_set.update(_extract_obs_ids(tables["quality_issue"]))
         if "quarantine" in tables:
-            incoming_observation_ids.update(_extract_obs_ids(tables["quarantine"]))
+            incoming_observation_ids_set.update(_extract_obs_ids(tables["quarantine"]))
+    replaced_result_rids = replaced_result_rids_set
+    incoming_observation_ids = incoming_observation_ids_set
 
     for name in list(tables.keys()):
         candidate = tables.pop(name) if pop_tables else tables[name]
