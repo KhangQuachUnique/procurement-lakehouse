@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tổng fact_demand_daily[package_count] trong phạm vi chọn; không phải số dòng tổng hợp.'"
+                  "Value": "'Kế hoạch · tỷ VND'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Số gói kế hoạch'"
+                  "Value": "'Kế hoạch · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Số gói kế hoạch"
+                  "Property": "Hiển thị · Kế hoạch · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Số gói kế hoạch",
-              "nativeQueryRef": "Hiển thị · Số gói kế hoạch"
+              "queryRef": "_Measures.Hiển thị · Kế hoạch · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Kế hoạch · tỷ VND"
             }
           ]
         }

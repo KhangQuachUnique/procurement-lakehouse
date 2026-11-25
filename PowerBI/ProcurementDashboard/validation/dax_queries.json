@@ -12,6 +12,10 @@
     "dax": "EVALUATE ROW(\"value\",[Trúng thầu VND])"
   },
   {
+    "name": "all/priced_awards_vnd",
+    "dax": "EVALUATE ROW(\"value\",[Mẫu giá trúng VND])"
+  },
+  {
     "name": "all/award_scopes",
     "dax": "EVALUATE ROW(\"value\",[Lượt kết quả])"
   },
@@ -44,10 +48,6 @@
     "dax": "EVALUATE ROW(\"value\",[Tỷ lệ một nhà thầu])"
   },
   {
-    "name": "all/discount_count_rate",
-    "dax": "EVALUATE ROW(\"value\",[Tỷ lệ lượt có giảm giá])"
-  },
-  {
     "name": "all/technical_issues",
     "dax": "EVALUATE ROW(\"value\",[Nhóm kỹ thuật cần xác minh])"
   },
@@ -72,12 +72,20 @@
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Thời gian bình quân],dim_duration_metric[metric_key]=\"open_to_award_days\"))"
   },
   {
+    "name": "all/recipient_samples",
+    "dax": "EVALUATE ROW(\"value\",[Mẫu giá người nhận])"
+  },
+  {
     "name": "all/supplier",
     "dax": "EVALUATE ROW(\"value\",[Người nhận · tỷ VND])"
   },
   {
     "name": "all/people",
     "dax": "EVALUATE ROW(\"value\",[Số khóa người nhận])"
+  },
+  {
+    "name": "all/recipient_coverage",
+    "dax": "EVALUATE ROW(\"value\",[Độ phủ giá trị người nhận])"
   },
   {
     "name": "year2025/planned",
@@ -90,6 +98,10 @@
   {
     "name": "year2025/award",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Trúng thầu VND],dim_date[year]=2025))"
+  },
+  {
+    "name": "year2025/priced_awards_vnd",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Mẫu giá trúng VND],dim_date[year]=2025))"
   },
   {
     "name": "year2025/award_scopes",
@@ -124,10 +136,6 @@
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ một nhà thầu],dim_date[year]=2025))"
   },
   {
-    "name": "year2025/discount_count_rate",
-    "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ lượt có giảm giá],dim_date[year]=2025))"
-  },
-  {
     "name": "year2025/technical_issues",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Nhóm kỹ thuật cần xác minh],dim_date[year]=2025))"
   },
@@ -152,12 +160,20 @@
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Thời gian bình quân],dim_duration_metric[metric_key]=\"open_to_award_days\",dim_date[year]=2025))"
   },
   {
+    "name": "year2025/recipient_samples",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Mẫu giá người nhận],dim_date[year]=2025))"
+  },
+  {
     "name": "year2025/supplier",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Người nhận · tỷ VND],dim_date[year]=2025))"
   },
   {
     "name": "year2025/people",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Số khóa người nhận],dim_date[year]=2025))"
+  },
+  {
+    "name": "year2025/recipient_coverage",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Độ phủ giá trị người nhận],dim_date[year]=2025))"
   },
   {
     "name": "jan2025_hh/planned",
@@ -170,6 +186,10 @@
   {
     "name": "jan2025_hh/award",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Trúng thầu VND],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "jan2025_hh/priced_awards_vnd",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Mẫu giá trúng VND],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
   },
   {
     "name": "jan2025_hh/award_scopes",
@@ -204,10 +224,6 @@
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ một nhà thầu],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
   },
   {
-    "name": "jan2025_hh/discount_count_rate",
-    "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ lượt có giảm giá],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
-  },
-  {
     "name": "jan2025_hh/technical_issues",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Nhóm kỹ thuật cần xác minh],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
   },
@@ -232,12 +248,56 @@
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Thời gian bình quân],dim_duration_metric[metric_key]=\"open_to_award_days\",dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
   },
   {
+    "name": "jan2025_hh/recipient_samples",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Mẫu giá người nhận],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
     "name": "jan2025_hh/supplier",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Người nhận · tỷ VND],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
   },
   {
     "name": "jan2025_hh/people",
     "dax": "EVALUATE ROW(\"value\",CALCULATE([Số khóa người nhận],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "jan2025_hh/recipient_coverage",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Độ phủ giá trị người nhận],dim_date[year_month]=\"2025-01\",dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "band/package_count",
+    "dax": "EVALUATE ROW(\"value\",MAXX(FILTER(SUMMARIZECOLUMNS(dim_value_band[band_label],dim_value_band[band_order],\"share\",[Tỷ trọng gói VND]),dim_value_band[band_label]=\"Từ 100 tỷ VND trở lên\"),[share]))"
+  },
+  {
+    "name": "band/planned_amount_sum",
+    "dax": "EVALUATE ROW(\"value\",MAXX(FILTER(SUMMARIZECOLUMNS(dim_value_band[band_label],dim_value_band[band_order],\"share\",[Tỷ trọng giá kế hoạch VND]),dim_value_band[band_label]=\"Từ 100 tỷ VND trở lên\"),[share]))"
+  },
+  {
+    "name": "benchmark/all",
+    "dax": "EVALUATE ROW(\"value\",MAXX(FILTER(SUMMARIZECOLUMNS(dim_sector[sector_name],\"gap\",[Chênh so với tập chọn · đpt]),dim_sector[sector_name]=\"Hàng hóa\"),[gap]))"
+  },
+  {
+    "name": "benchmark/multi",
+    "dax": "EVALUATE ROW(\"value\",MAXX(FILTER(CALCULATETABLE(SUMMARIZECOLUMNS(dim_sector[sector_name],\"gap\",[Chênh so với tập chọn · đpt]),dim_sector[sector_name] IN {\"Hàng hóa\",\"Xây lắp\"}),dim_sector[sector_name]=\"Hàng hóa\"),[gap]))"
+  },
+  {
+    "name": "quarter/competition",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ một nhà thầu],dim_date[year]=2025,dim_date[quarter]=1))"
+  },
+  {
+    "name": "competition/dim_procurement_method",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ một nhà thầu],dim_procurement_method[method_key]=\"MTH:862a011b609f575884378a688ead795f\"))"
+  },
+  {
+    "name": "competition/dim_geography",
+    "dax": "EVALUATE ROW(\"value\",CALCULATE([Tỷ lệ một nhà thầu],dim_geography[geography_key]=\"GEO_HNI\"))"
+  },
+  {
+    "name": "band/single_selection",
+    "dax": "EVALUATE ROW(\"value\",MAXX(CALCULATETABLE(SUMMARIZECOLUMNS(dim_value_band[band_label],dim_value_band[band_order],\"share\",[Tỷ trọng gói VND]),dim_value_band[band_label]=\"Từ 100 tỷ VND trở lên\"),[share]))"
+  },
+  {
+    "name": "status/latest",
+    "dax": "EVALUATE ROW(\"value\",[Gói theo trạng thái quan sát])"
   },
   {
     "name": "duration_no_metric",
@@ -316,20 +376,12 @@
     "dax": "EVALUATE ROW(\"value\",[Lượt nhiều nhà thầu])"
   },
   {
-    "name": "compile/Lượt có giảm giá",
-    "dax": "EVALUATE ROW(\"value\",[Lượt có giảm giá])"
-  },
-  {
     "name": "compile/Thông báo",
     "dax": "EVALUATE ROW(\"value\",[Thông báo])"
   },
   {
     "name": "compile/Thông báo hủy quan sát",
     "dax": "EVALUATE ROW(\"value\",[Thông báo hủy quan sát])"
-  },
-  {
-    "name": "compile/Gói theo trạng thái quan sát",
-    "dax": "EVALUATE ROW(\"value\",[Gói theo trạng thái quan sát])"
   },
   {
     "name": "compile/Kế hoạch VND",
@@ -400,12 +452,28 @@
     "dax": "EVALUATE ROW(\"value\",[Tỷ lệ nhiều nhà thầu])"
   },
   {
-    "name": "compile/Tỷ lệ lượt có giảm giá",
-    "dax": "EVALUATE ROW(\"value\",[Tỷ lệ lượt có giảm giá])"
-  },
-  {
     "name": "compile/Tỷ lệ hủy quan sát",
     "dax": "EVALUATE ROW(\"value\",[Tỷ lệ hủy quan sát])"
+  },
+  {
+    "name": "compile/Mẫu giá trúng VND",
+    "dax": "EVALUATE ROW(\"value\",[Mẫu giá trúng VND])"
+  },
+  {
+    "name": "compile/Tỷ trọng gói VND",
+    "dax": "EVALUATE ROW(\"value\",[Tỷ trọng gói VND])"
+  },
+  {
+    "name": "compile/Tỷ trọng giá kế hoạch VND",
+    "dax": "EVALUATE ROW(\"value\",[Tỷ trọng giá kế hoạch VND])"
+  },
+  {
+    "name": "compile/Chênh so với tập chọn · đpt",
+    "dax": "EVALUATE ROW(\"value\",[Chênh so với tập chọn · đpt])"
+  },
+  {
+    "name": "compile/Gói theo trạng thái quan sát",
+    "dax": "EVALUATE ROW(\"value\",[Gói theo trạng thái quan sát])"
   },
   {
     "name": "compile/Mẫu thời gian",
@@ -440,8 +508,8 @@
     "dax": "EVALUATE ROW(\"value\",[Số khóa người nhận])"
   },
   {
-    "name": "compile/Lượt nhận đơn",
-    "dax": "EVALUATE ROW(\"value\",[Lượt nhận đơn])"
+    "name": "compile/Mẫu giá người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Mẫu giá người nhận])"
   },
   {
     "name": "compile/Phân bổ · tỷ VND",
@@ -450,6 +518,10 @@
   {
     "name": "compile/Phân bổ · số lượt",
     "dax": "EVALUATE ROW(\"value\",[Phân bổ · số lượt])"
+  },
+  {
+    "name": "compile/Độ phủ giá trị người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Độ phủ giá trị người nhận])"
   },
   {
     "name": "compile/Tỷ trọng Top 10 người nhận",
@@ -498,6 +570,10 @@
   {
     "name": "compile/Dòng · status",
     "dax": "EVALUATE ROW(\"value\",[Dòng · status])"
+  },
+  {
+    "name": "compile/Luồng có quan sát",
+    "dax": "EVALUATE ROW(\"value\",[Luồng có quan sát])"
   },
   {
     "name": "compile/Hiển thị · Số gói kế hoạch",
@@ -552,20 +628,12 @@
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Lượt nhiều nhà thầu])"
   },
   {
-    "name": "compile/Hiển thị · Lượt có giảm giá",
-    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Lượt có giảm giá])"
-  },
-  {
     "name": "compile/Hiển thị · Thông báo",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Thông báo])"
   },
   {
     "name": "compile/Hiển thị · Thông báo hủy quan sát",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Thông báo hủy quan sát])"
-  },
-  {
-    "name": "compile/Hiển thị · Gói theo trạng thái quan sát",
-    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Gói theo trạng thái quan sát])"
   },
   {
     "name": "compile/Hiển thị · Kế hoạch VND",
@@ -636,12 +704,28 @@
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Tỷ lệ nhiều nhà thầu])"
   },
   {
-    "name": "compile/Hiển thị · Tỷ lệ lượt có giảm giá",
-    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Tỷ lệ lượt có giảm giá])"
-  },
-  {
     "name": "compile/Hiển thị · Tỷ lệ hủy quan sát",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Tỷ lệ hủy quan sát])"
+  },
+  {
+    "name": "compile/Hiển thị · Mẫu giá trúng VND",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Mẫu giá trúng VND])"
+  },
+  {
+    "name": "compile/Hiển thị · Tỷ trọng gói VND",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Tỷ trọng gói VND])"
+  },
+  {
+    "name": "compile/Hiển thị · Tỷ trọng giá kế hoạch VND",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Tỷ trọng giá kế hoạch VND])"
+  },
+  {
+    "name": "compile/Hiển thị · Chênh so với tập chọn · đpt",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Chênh so với tập chọn · đpt])"
+  },
+  {
+    "name": "compile/Hiển thị · Gói theo trạng thái quan sát",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Gói theo trạng thái quan sát])"
   },
   {
     "name": "compile/Hiển thị · Mẫu thời gian",
@@ -672,8 +756,8 @@
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Số khóa người nhận])"
   },
   {
-    "name": "compile/Hiển thị · Lượt nhận đơn",
-    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Lượt nhận đơn])"
+    "name": "compile/Hiển thị · Mẫu giá người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Mẫu giá người nhận])"
   },
   {
     "name": "compile/Hiển thị · Phân bổ · tỷ VND",
@@ -682,6 +766,10 @@
   {
     "name": "compile/Hiển thị · Phân bổ · số lượt",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Phân bổ · số lượt])"
+  },
+  {
+    "name": "compile/Hiển thị · Độ phủ giá trị người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Độ phủ giá trị người nhận])"
   },
   {
     "name": "compile/Hiển thị · Tỷ trọng Top 10 người nhận",
@@ -805,10 +893,10 @@
   },
   {
     "name": "top10_geography",
-    "dax": "EVALUATE TOPN(10,FILTER(SUMMARIZECOLUMNS(dim_geography[province_name],\"amount\",[Trúng thầu VND]),NOT ISBLANK([amount])),[amount],DESC,dim_geography[province_name],ASC) ORDER BY [amount] DESC,dim_geography[province_name] ASC"
+    "dax": "EVALUATE TOPN(10,FILTER(SUMMARIZECOLUMNS(dim_geography[province_display],FILTER(dim_geography,NOT dim_geography[geography_key] IN {\"GEO_UNKNOWN\",\"GEO_MULTI_UNALLOCATED\"}),\"amount\",[Trúng thầu VND]),NOT ISBLANK([amount])),[amount],DESC,dim_geography[province_display],ASC) ORDER BY [amount] DESC,dim_geography[province_display] ASC"
   },
   {
     "name": "top10_supplier",
-    "dax": "EVALUATE TOPN(10,FILTER(SUMMARIZECOLUMNS(dim_party[party_display],\"amount\",[Người nhận · tỷ VND]),NOT ISBLANK([amount])),[amount],DESC,dim_party[party_display],ASC) ORDER BY [amount] DESC,dim_party[party_display] ASC"
+    "dax": "EVALUATE TOPN(10,FILTER(SUMMARIZECOLUMNS(dim_party[party_key],dim_party[party_display],\"amount\",[Người nhận · tỷ VND]),NOT ISBLANK([amount])),[amount],DESC,dim_party[party_key],ASC) ORDER BY [amount] DESC,dim_party[party_display] ASC"
   }
 ]

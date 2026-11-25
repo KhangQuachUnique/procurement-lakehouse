@@ -38,57 +38,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Dòng · demand"
+                  "Property": "Luồng có quan sát"
                 }
               },
-              "queryRef": "_Measures.Dòng · demand",
-              "nativeQueryRef": "Dòng · demand",
-              "displayName": "Nhu cầu"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Dòng · award"
-                }
-              },
-              "queryRef": "_Measures.Dòng · award",
-              "nativeQueryRef": "Dòng · award",
-              "displayName": "Kết quả"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Dòng · bidding_competition"
-                }
-              },
-              "queryRef": "_Measures.Dòng · bidding_competition",
-              "nativeQueryRef": "Dòng · bidding_competition",
-              "displayName": "Cạnh tranh"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Dòng · duration"
-                }
-              },
-              "queryRef": "_Measures.Dòng · duration",
-              "nativeQueryRef": "Dòng · duration",
-              "displayName": "Thời gian"
+              "queryRef": "_Measures.Luồng có quan sát",
+              "nativeQueryRef": "Luồng có quan sát"
             }
           ]
         }
@@ -175,7 +129,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "120D"
+                  "Value": "112D"
                 }
               }
             }
@@ -189,55 +143,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "120D"
+                  "Value": "520D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Dòng · demand"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "120D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Dòng · award"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "135D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Dòng · bidding_competition"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "135D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Dòng · duration"
+            "metadata": "_Measures.Luồng có quan sát"
           }
         }
       ]
@@ -340,7 +252,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Số nhóm có bản ghi theo tháng · không phải số giao dịch'"
+                  "Value": "'Luồng sự kiện có quan sát theo tháng'"
                 }
               }
             }
@@ -360,7 +272,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Số nhóm có bản ghi theo tháng · không phải số giao dịch'"
+                  "Value": "'Luồng sự kiện có quan sát theo tháng'"
                 }
               }
             },

@@ -59,7 +59,7 @@ LABELS={'close_to_open_hours':'Đóng thầu → mở thầu','open_to_award_day
 
 
 def model(files):
-    dates=[v for part in files['dim_date'] for v in pq.read_table(part,columns=['date_key'])['date_key'].to_pylist() if v is not None and 2022 <= v.year <= 2025]
+    dates=[v for part in files['dim_date'] for v in pq.read_table(part,columns=['date_key'])['date_key'].to_pylist()]
     calendar_ok=bool(dates) and None not in dates and len(dates)==len(set(dates)) and (max(dates)-min(dates)).days+1==len(dates)
     save(PROJECT/'ProcurementDashboard.pbip',{'$schema':BASE+'pbip/pbipProperties/1.0.0/schema.json','version':'1.0','artifacts':[{'report':{'path':REPORT.name}}],'settings':{'enableAutoRecovery':True}})
     save(MODEL/'definition.pbism',{'$schema':BASE+'item/semanticModel/definitionProperties/1.0.0/schema.json','version':'4.2','settings':{'qnaEnabled':False}})
@@ -127,8 +127,7 @@ expression ReadParquetTable =
         source='let\n    Source = ReadParquetTable("'+name+'", {'+', '.join('"'+c.name+'"' for c in schema)+'}),\n    Typed = Table.TransformColumnTypes(Source, {'+', '.join(mtypes)+'}, "en-US")'
         end='Typed'
         if name=='dim_date':
-            source+=',\n    ReportCalendar = Table.SelectRows(Typed, each [date_key] >= #date(2022,1,1) and [date_key] <= #date(2025,12,31))'
-            source+=',\n    MonthOrder = Table.AddColumn(ReportCalendar, "year_month_order", each [year]*100+[month], Int64.Type),\n    QuarterOrder = Table.AddColumn(MonthOrder, "year_quarter_order", each [year]*10+[quarter], Int64.Type),\n    MonthStart = Table.AddColumn(QuarterOrder, "month_start", each Date.StartOfMonth([date_key]), type date)'
+            source+=',\n    MonthOrder = Table.AddColumn(Typed, "year_month_order", each [year]*100+[month], Int64.Type),\n    QuarterOrder = Table.AddColumn(MonthOrder, "year_quarter_order", each [year]*10+[quarter], Int64.Type),\n    MonthStart = Table.AddColumn(QuarterOrder, "month_start", each Date.StartOfMonth([date_key]), type date)'
             end='MonthStart'
         if name=='dim_geography':
             source+=',\n    Display = Table.AddColumn(Typed,"province_display",each Text.Combine({[province_name],[geography_version],[province_code]}," · "), type text)'
@@ -258,11 +257,6 @@ class Page:
         v=self.add(key,'card',x,y,w,h,roles={'Values':[m(display_name)]},title=label or measure_name,objects=objects,alt=MEASURES[measure_name]['description'])
         return v
 
-    def bound_note(self,key,name,x,y,w,h):
-        v=self.add(key,'card',x,y,w,h,roles={'Values':[m(name)]},objects={'labels':obj(fontSize=lit(10),color=color(MUTED),labelDisplayUnits=lit(1)),'categoryLabels':obj(show=lit(False))})
-        v['visual']['visualContainerObjects'].update({'background':obj(show=lit(False)),'padding':obj(top=lit(0),bottom=lit(0),left=lit(0),right=lit(0))})
-        return v
-
     def chart(self,key,typ,category,measures,x,y,w=608,h=196,title=None,tooltips=None):
         roles={'Category':[category],'Y':[m(n) for n in measures]}
         if tooltips:
@@ -283,23 +277,6 @@ def categorical(t,p,values):
     return {'name':uid(t+p+str(values)).replace('-',''),'field':field(t,p),'type':'Categorical','howCreated':'User',
         'filter':{'Version':2,'From':[{'Name':'d','Entity':t,'Type':0}],
         'Where':[{'Condition':{'In':{'Expressions':[field('d',p,alias=True)],'Values':[[{'Literal':{'Value':"'"+x+"'"}}] for x in values]}}}]}}
-
-
-def top10(v,dimension,col,fact,amount,allocation=False):
-    # Filter's ranking expression is an aggregation, scoped to VND and (for suppliers) single-recipient.
-    wh=[{'Condition':{'In':{'Expressions':[field('c','currency_code',alias=True)],'Values':[[{'Literal':{'Value':"'VND'"}}]]}}}]
-    if allocation:
-        wh.append({'Condition':{'In':{'Expressions':[field('f','recipient_allocation_state',alias=True)],'Values':[[{'Literal':{'Value':"'single_recipient'"}}]]}}})
-    query={'Version':2,'From':[{'Name':'d','Entity':dimension,'Type':0},{'Name':'f','Entity':fact,'Type':0},{'Name':'c','Entity':'dim_currency','Type':0}],
-        'Select':[dict(field('d',col,alias=True),Name='field')], 'Where':wh,
-        'OrderBy':[{'Direction':2,'Expression':{'Aggregation':{'Expression':field('f',amount,alias=True),'Function':0}}},{'Direction':1,'Expression':field('d',col,alias=True)}], 'Top':10}
-    filt={'name':v['name']+'top','field':field(dimension,col),'type':'TopN','howCreated':'User',
-        'filter':{'Version':2,'From':[{'Name':'subquery','Expression':{'Subquery':{'Query':query}},'Type':2},{'Name':'d','Entity':dimension,'Type':0}],
-        'Where':[{'Condition':{'In':{'Expressions':[field('d',col,alias=True)],'Table':{'SourceRef':{'Source':'subquery'}}}}}]}}
-    filters=[filt,categorical('dim_currency','currency_code',['VND'])]
-    if allocation:
-        filters.append(categorical(fact,'recipient_allocation_state',['single_recipient']))
-    v['filterConfig']={'filters':filters}
 
 
 def report():

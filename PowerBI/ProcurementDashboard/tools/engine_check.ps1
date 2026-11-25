@@ -35,6 +35,7 @@ try {
             foreach($query in $queries) {
                 $cmd=$connection.CreateCommand(); $cmd.CommandText=$query.dax; $cmd.CommandTimeout=120
                 try {
+                    $timer=[Diagnostics.Stopwatch]::StartNew()
                     $reader=$cmd.ExecuteReader(); $rows=@()
                     while($reader.Read()) {
                         $row=@{}
@@ -42,7 +43,8 @@ try {
                         $rows+=,$row
                     }
                     $reader.Close()
-                    $results+=@{name=$query.name;status='passed';rows=$rows}
+                    $timer.Stop()
+                    $results+=@{name=$query.name;status='passed';rows=$rows;elapsed_ms=$timer.Elapsed.TotalMilliseconds}
                 } catch { $results+=@{name=$query.name;status='failed';error=$_.Exception.ToString()} }
             }
             $results | ConvertTo-Json -Depth 15 | Set-Content -LiteralPath (Join-Path $projectRoot 'validation\dax_results.json') -Encoding utf8

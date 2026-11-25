@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "PK / grain / FK đã kiểm tra toàn snapshot, không chứng minh đầy đủ nghiệp vụ. Tháng không có dòng không tự coi là hoạt động bằng 0.",
+                    "value": "Ô trống cho biết thiếu quan sát hoặc thiếu mẫu đủ điều kiện. Các tỷ lệ chỉ đại diện cho phạm vi được ghi nhận.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

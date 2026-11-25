@@ -1,0 +1,1830 @@
+{
+  "competition": {
+    "sql": "SELECT sector_name, min(report_date) first_day, max(report_date) last_day,\n            sum(opening_count) openings, sum(single_bidder_count) single_openings,\n            sum(single_bidder_count)/sum(opening_count) single_rate,\n            sum(opening_count-single_bidder_count-multi_bidder_count) zero_or_unknown\n            FROM fact_bidding_competition_daily JOIN dim_sector USING(sector_key) GROUP BY 1 ORDER BY openings DESC",
+    "rows": [
+      {
+        "sector_name": "Hàng hóa",
+        "first_day": "2022-09-23",
+        "last_day": "2025-12-31",
+        "openings": 170156,
+        "single_openings": 89574,
+        "single_rate": 0.5264228120078046,
+        "zero_or_unknown": 0
+      },
+      {
+        "sector_name": "Xây lắp",
+        "first_day": "2022-09-23",
+        "last_day": "2025-12-31",
+        "openings": 151829,
+        "single_openings": 106619,
+        "single_rate": 0.7022307991226973,
+        "zero_or_unknown": 0
+      },
+      {
+        "sector_name": "Phi tư vấn",
+        "first_day": "2022-09-23",
+        "last_day": "2025-12-31",
+        "openings": 67601,
+        "single_openings": 39885,
+        "single_rate": 0.5900060649990385,
+        "zero_or_unknown": 0
+      },
+      {
+        "sector_name": "Tư vấn",
+        "first_day": "2022-09-29",
+        "last_day": "2025-12-31",
+        "openings": 37054,
+        "single_openings": 26866,
+        "single_rate": 0.7250499271333729,
+        "zero_or_unknown": 0
+      },
+      {
+        "sector_name": "Hỗn hợp",
+        "first_day": "2025-01-13",
+        "last_day": "2025-12-31",
+        "openings": 1200,
+        "single_openings": 663,
+        "single_rate": 0.5525,
+        "zero_or_unknown": 0
+      },
+      {
+        "sector_name": "KHAC",
+        "first_day": "2023-02-25",
+        "last_day": "2023-02-25",
+        "openings": 1,
+        "single_openings": 1,
+        "single_rate": 1.0,
+        "zero_or_unknown": 0
+      }
+    ]
+  },
+  "band_shares": {
+    "sql": "SELECT band_label, sum(package_count) packages, sum(eligible_amount_count) priced,\n            sum(package_count)/sum(sum(package_count)) over() package_share,\n            sum(planned_amount_sum)/sum(sum(planned_amount_sum)) over() value_share\n            FROM fact_demand_daily f JOIN dim_value_band ON value_band_key=band_key\n            WHERE f.currency_key='VND' GROUP BY 1 ORDER BY value_share DESC",
+    "rows": [
+      {
+        "band_label": "Từ 100 tỷ VND trở lên",
+        "packages": 6257,
+        "priced": 6257,
+        "package_share": 0.0027461555139484685,
+        "value_share": 0.46441930364394607
+      },
+      {
+        "band_label": "Từ 20 tỷ đến dưới 100 tỷ VND",
+        "packages": 27508,
+        "priced": 27508,
+        "package_share": 0.012073077493638241,
+        "value_share": 0.2180832683878737
+      },
+      {
+        "band_label": "Từ 5 tỷ đến dưới 20 tỷ VND",
+        "packages": 92259,
+        "priced": 92259,
+        "package_share": 0.040491858967775574,
+        "value_share": 0.16794254072678833
+      },
+      {
+        "band_label": "Từ 500 triệu đến dưới 5 tỷ VND",
+        "packages": 367288,
+        "priced": 367288,
+        "package_share": 0.16120025034475072,
+        "value_share": 0.11550698108513147
+      },
+      {
+        "band_label": "Từ 100 triệu đến dưới 500 triệu VND",
+        "packages": 535965,
+        "priced": 535965,
+        "package_share": 0.23523145917107097,
+        "value_share": 0.025972094339630276
+      },
+      {
+        "band_label": "Dưới 100 triệu VND",
+        "packages": 1249181,
+        "priced": 1249181,
+        "package_share": 0.548257198508816,
+        "value_share": 0.008075811816630262
+      }
+    ]
+  },
+  "difference": {
+    "sql": "SELECT sector_name,sum(descriptive_sample_count) samples,\n            sum(descriptive_difference_sum)/nullif(sum(descriptive_baseline_sum),0) rate\n            FROM fact_savings_daily JOIN dim_sector USING(sector_key) WHERE currency_key='VND'\n            GROUP BY 1 ORDER BY samples DESC",
+    "rows": [
+      {
+        "sector_name": "Hàng hóa",
+        "samples": 1464505,
+        "rate": 0.08313444499522873
+      },
+      {
+        "sector_name": "Tư vấn",
+        "samples": 554683,
+        "rate": 0.0800393145593818
+      },
+      {
+        "sector_name": "Xây lắp",
+        "samples": 226106,
+        "rate": 0.04144835638901355
+      },
+      {
+        "sector_name": "Phi tư vấn",
+        "samples": 201817,
+        "rate": 0.05996294535309364
+      },
+      {
+        "sector_name": "Chưa xác định",
+        "samples": 29039,
+        "rate": 0.09438498463532907
+      },
+      {
+        "sector_name": "Hỗn hợp",
+        "samples": 5213,
+        "rate": 0.06262609436592227
+      }
+    ]
+  },
+  "duration": {
+    "sql": "SELECT metric_key,sum(sample_count) samples,sum(excluded_sample_count) exclusions,\n            sum(duration_sum)/nullif(sum(sample_count),0) mean FROM fact_duration_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "metric_key": "close_to_complete_award_days",
+        "samples": 500559,
+        "exclusions": 5892,
+        "mean": 28.614371133073224
+      },
+      {
+        "metric_key": "close_to_first_award_days",
+        "samples": 500559,
+        "exclusions": 5892,
+        "mean": 28.614371133073224
+      },
+      {
+        "metric_key": "close_to_open_hours",
+        "samples": 427840,
+        "exclusions": 1,
+        "mean": 26.91247120418848
+      },
+      {
+        "metric_key": "notice_to_close_hours",
+        "samples": 441564,
+        "exclusions": 11,
+        "mean": 237.98200466976473
+      },
+      {
+        "metric_key": "open_to_award_days",
+        "samples": 490115,
+        "exclusions": 16336,
+        "mean": 28.355559409526336
+      },
+      {
+        "metric_key": "plan_to_notice_days",
+        "samples": 526293,
+        "exclusions": 30925,
+        "mean": 16.40409809744762
+      },
+      {
+        "metric_key": "planned_to_actual_delay_days",
+        "samples": 11850,
+        "exclusions": 87,
+        "mean": -14.048607594936708
+      }
+    ]
+  },
+  "supplier": {
+    "sql": "WITH people AS (SELECT sector_key,party_key,sum(award_amount_sum) amount,\n            sum(eligible_amount_count) samples FROM fact_supplier_daily JOIN dim_party USING(party_key)\n            WHERE currency_key='VND' AND recipient_allocation_state='single_recipient'\n            AND eligible_amount_count>0 AND party_kind<>'UNKNOWN' GROUP BY 1,2),\n            ranked AS (SELECT *,row_number() over(partition by sector_key order by amount desc,party_key) r FROM people)\n            SELECT sector_name,count(*) identities,sum(samples) samples,sum(amount) FILTER(WHERE r<=10)/nullif(sum(amount),0) cr10\n            FROM ranked JOIN dim_sector USING(sector_key) GROUP BY 1 ORDER BY samples DESC",
+    "rows": [
+      {
+        "sector_name": "Hàng hóa",
+        "identities": 74165,
+        "samples": 1453793,
+        "cr10": 0.1271911678918898
+      },
+      {
+        "sector_name": "Tư vấn",
+        "identities": 34414,
+        "samples": 554411,
+        "cr10": 0.06700518593193816
+      },
+      {
+        "sector_name": "Xây lắp",
+        "identities": 37995,
+        "samples": 225497,
+        "cr10": 0.05661765944834423
+      },
+      {
+        "sector_name": "Phi tư vấn",
+        "identities": 46491,
+        "samples": 201497,
+        "cr10": 0.1379592355927839
+      },
+      {
+        "sector_name": "Chưa xác định",
+        "identities": 9960,
+        "samples": 29037,
+        "cr10": 0.3728555769970711
+      },
+      {
+        "sector_name": "Hỗn hợp",
+        "identities": 3686,
+        "samples": 5183,
+        "cr10": 0.4664273947445377
+      }
+    ]
+  },
+  "mixed_eligibility": {
+    "sql": "SELECT count(*) mixed_groups FROM fact_supplier_daily WHERE\n            recipient_allocation_state='single_recipient' AND eligible_amount_count BETWEEN 1 AND award_scope_count-1",
+    "rows": [
+      {
+        "mixed_groups": 892
+      }
+    ]
+  },
+  "months_demand": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(package_count) AS volume FROM fact_demand_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 16745
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 55515
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 66357
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 59155
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 21337
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 31399
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 44202
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 43824
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 45814
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 53101
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 50953
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 59108
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 52233
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 62272
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 73648
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 64904
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 33731
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 19193
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 43746
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 52347
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 65461
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 62343
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 71951
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 78984
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 65998
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 89560
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 98531
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 83702
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 37770
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 41135
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 63826
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 76469
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 70066
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 55704
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 28243
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 44625
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 58064
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 64540
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 75076
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 96826
+      }
+    ]
+  },
+  "months_award": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(award_scope_count) AS volume FROM fact_award_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 1738
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 11960
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 28313
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 46859
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 33052
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 40684
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 49348
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 45791
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 51937
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 60393
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 55460
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 78309
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 65181
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 81181
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 82104
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 98986
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 75623
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 47679
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 73487
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 69222
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 70088
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 59132
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 67028
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 78206
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 70806
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 106177
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 105500
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 138182
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 70846
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 70940
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 99992
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 96976
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 89015
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 91968
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 61432
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 69012
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 81737
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 86110
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 87075
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 133096
+      }
+    ]
+  },
+  "months_notice": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(notice_count) AS volume FROM fact_notice_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 1985
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 13839
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 20333
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 19255
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 4905
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 7974
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 12567
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 11739
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 12735
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 15847
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 13194
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 16556
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 15428
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 17234
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 21802
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 22763
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 6764
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 4006
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 10323
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 11754
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 15936
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 17808
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 17494
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 20857
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 19523
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 23156
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 28749
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 22957
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 7405
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 8489
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 13599
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 14346
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 14251
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 13135
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 7006
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 8428
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 9271
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 9785
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 11758
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 12262
+      }
+    ]
+  },
+  "months_savings": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(scope_count) AS volume FROM fact_savings_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 1738
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 11960
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 28313
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 46859
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 33052
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 40684
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 49348
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 45791
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 51937
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 60393
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 55460
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 78309
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 65181
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 81181
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 82104
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 98986
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 75623
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 47679
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 73487
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 69222
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 70088
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 59132
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 67028
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 78206
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 70806
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 106177
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 105500
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 138182
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 70846
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 70940
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 99992
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 96976
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 89015
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 91968
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 61432
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 69012
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 81737
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 86110
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 87075
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 133096
+      }
+    ]
+  },
+  "months_bidding_competition": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(opening_count) AS volume FROM fact_bidding_competition_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 169
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 8259
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 14361
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 19324
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 3686
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 4969
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 9099
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 8707
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 9412
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 12196
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 10534
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 12863
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 11286
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 13821
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 16490
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 20878
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 6194
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 2442
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 6785
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 8569
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 11392
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 12638
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 14261
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 15799
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 13928
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 18427
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 21902
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 24079
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 6253
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 5222
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 8961
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 11268
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 11275
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 11290
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 5011
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 5133
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 6043
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 6663
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 7375
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 10877
+      }
+    ]
+  },
+  "months_duration": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(interval_count) AS volume FROM fact_duration_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 2375
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 37804
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 80606
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 120808
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 36085
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 37997
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 58190
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 60542
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 68390
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 79629
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 73657
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 86073
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 78380
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 91460
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 107847
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 136155
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 58801
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 28933
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 47764
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 55463
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 76375
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 81806
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 96662
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 104330
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 97292
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 123975
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 140937
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 171574
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 52967
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 45455
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 64668
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 76807
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 77586
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 80689
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 41789
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 42896
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 46254
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 51557
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 55730
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 81616
+      }
+    ]
+  },
+  "months_supplier": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(award_scope_count) AS volume FROM fact_supplier_daily GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 1738
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 11960
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 28313
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 46859
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 33052
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 40684
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 49348
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 45791
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 51937
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 60393
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 55460
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 78309
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 65181
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 81181
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 82104
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 98986
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 75623
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 47679
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 73487
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 69222
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 70088
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 59132
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 67028
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 78206
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 70806
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 106177
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 105500
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 138182
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 70846
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 70940
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 99992
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 96976
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 89015
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 91968
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 61432
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 69012
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 81737
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 86110
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 87075
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 133096
+      }
+    ]
+  },
+  "months_status": {
+    "sql": "SELECT date_trunc('month',report_date) AS month, sum(package_count) AS volume FROM (SELECT * FROM fact_status_daily QUALIFY report_date=max(report_date) OVER (PARTITION BY date_trunc('month',report_date))) GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "month": "2022-09-01 00:00:00",
+        "volume": 2668
+      },
+      {
+        "month": "2022-10-01 00:00:00",
+        "volume": 2373
+      },
+      {
+        "month": "2022-11-01 00:00:00",
+        "volume": 2709
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "volume": 765
+      },
+      {
+        "month": "2023-01-01 00:00:00",
+        "volume": 1125
+      },
+      {
+        "month": "2023-02-01 00:00:00",
+        "volume": 1797
+      },
+      {
+        "month": "2023-03-01 00:00:00",
+        "volume": 1821
+      },
+      {
+        "month": "2023-04-01 00:00:00",
+        "volume": 99
+      },
+      {
+        "month": "2023-05-01 00:00:00",
+        "volume": 2366
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "volume": 2191
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "volume": 2322
+      },
+      {
+        "month": "2023-08-01 00:00:00",
+        "volume": 2929
+      },
+      {
+        "month": "2023-09-01 00:00:00",
+        "volume": 860
+      },
+      {
+        "month": "2023-10-01 00:00:00",
+        "volume": 2832
+      },
+      {
+        "month": "2023-11-01 00:00:00",
+        "volume": 3235
+      },
+      {
+        "month": "2023-12-01 00:00:00",
+        "volume": 673
+      },
+      {
+        "month": "2024-01-01 00:00:00",
+        "volume": 1466
+      },
+      {
+        "month": "2024-02-01 00:00:00",
+        "volume": 1300
+      },
+      {
+        "month": "2024-03-01 00:00:00",
+        "volume": 344
+      },
+      {
+        "month": "2024-04-01 00:00:00",
+        "volume": 114
+      },
+      {
+        "month": "2024-05-01 00:00:00",
+        "volume": 2820
+      },
+      {
+        "month": "2024-06-01 00:00:00",
+        "volume": 225
+      },
+      {
+        "month": "2024-07-01 00:00:00",
+        "volume": 3067
+      },
+      {
+        "month": "2024-08-01 00:00:00",
+        "volume": 872
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "volume": 3643
+      },
+      {
+        "month": "2024-10-01 00:00:00",
+        "volume": 4103
+      },
+      {
+        "month": "2024-11-01 00:00:00",
+        "volume": 1687
+      },
+      {
+        "month": "2024-12-01 00:00:00",
+        "volume": 2571
+      },
+      {
+        "month": "2025-01-01 00:00:00",
+        "volume": 3
+      },
+      {
+        "month": "2025-02-01 00:00:00",
+        "volume": 2476
+      },
+      {
+        "month": "2025-03-01 00:00:00",
+        "volume": 2724
+      },
+      {
+        "month": "2025-04-01 00:00:00",
+        "volume": 488
+      },
+      {
+        "month": "2025-05-01 00:00:00",
+        "volume": 735
+      },
+      {
+        "month": "2025-06-01 00:00:00",
+        "volume": 1780
+      },
+      {
+        "month": "2025-07-01 00:00:00",
+        "volume": 1228
+      },
+      {
+        "month": "2025-08-01 00:00:00",
+        "volume": 308
+      },
+      {
+        "month": "2025-09-01 00:00:00",
+        "volume": 2384
+      },
+      {
+        "month": "2025-10-01 00:00:00",
+        "volume": 3132
+      },
+      {
+        "month": "2025-11-01 00:00:00",
+        "volume": 456
+      },
+      {
+        "month": "2025-12-01 00:00:00",
+        "volume": 4870
+      }
+    ]
+  },
+  "award_price_coverage": {
+    "sql": "SELECT currency_key,sum(effective_award_scope_count) effective,sum(eligible_amount_count) priced,sum(award_amount_sum) amount FROM fact_award_daily GROUP BY 1",
+    "rows": [
+      {
+        "currency_key": "VND",
+        "effective": 2550919,
+        "priced": 2481689,
+        "amount": "2162473397657600.321100"
+      }
+    ]
+  },
+  "geography_allocation": {
+    "sql": "SELECT is_multi_geography,is_unknown,sum(eligible_amount_count) samples,sum(award_amount_sum) amount FROM fact_award_daily JOIN dim_geography USING(geography_key) WHERE currency_key='VND' GROUP BY ALL",
+    "rows": [
+      {
+        "is_multi_geography": false,
+        "is_unknown": false,
+        "samples": 2375416,
+        "amount": "1951298356684124.661200"
+      },
+      {
+        "is_multi_geography": true,
+        "is_unknown": false,
+        "samples": 15330,
+        "amount": "117237124458307.599200"
+      },
+      {
+        "is_multi_geography": false,
+        "is_unknown": true,
+        "samples": 90943,
+        "amount": "93937916515168.060700"
+      }
+    ]
+  },
+  "negative_difference": {
+    "sql": "SELECT count(*) negative_daily_groups,sum(descriptive_sample_count) samples_in_these_groups,sum(descriptive_difference_sum) difference FROM fact_savings_daily WHERE currency_key='VND' AND descriptive_difference_sum<0",
+    "rows": [
+      {
+        "negative_daily_groups": 9350,
+        "samples_in_these_groups": 35277,
+        "difference": "-7913870054259.337400"
+      }
+    ]
+  },
+  "largest_planned_groups": {
+    "sql": "SELECT group_key,report_date,sector_key,geography_key,\n        value_band_key,package_count,eligible_amount_count,planned_amount_sum\n        FROM fact_demand_daily WHERE currency_key='VND' ORDER BY planned_amount_sum DESC,group_key LIMIT 10",
+    "rows": [
+      {
+        "group_key": "dbae7a665793f42e429644c5040f063836642c2ad19ff059b6dd8dad28cdf1cc",
+        "report_date": "2025-12-17",
+        "sector_key": "SEC_HON_HOP",
+        "geography_key": "GEO_HNI",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 1,
+        "eligible_amount_count": 1,
+        "planned_amount_sum": "64495067000000.000000"
+      },
+      {
+        "group_key": "1b7e1a7c593c751aaa39ccdac783e9635eada3794740ea0dee54b14ef1501d59",
+        "report_date": "2023-03-24",
+        "sector_key": "SEC_HON_HOP",
+        "geography_key": "GEO_DNI",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 1,
+        "eligible_amount_count": 1,
+        "planned_amount_sum": "35233712322150.000000"
+      },
+      {
+        "group_key": "3aa3ddffedd324a7a86c66f9debb1f4f2435ec7939bede640a2fb5a134619519",
+        "report_date": "2022-09-20",
+        "sector_key": "SEC_HON_HOP",
+        "geography_key": "GEO_DNI",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 1,
+        "eligible_amount_count": 1,
+        "planned_amount_sum": "35233712322150.000000"
+      },
+      {
+        "group_key": "1a9dd9a9a76f40313882ec4c227ddbffe0dd5ba7b1436a50f319ffab1f560512",
+        "report_date": "2025-09-19",
+        "sector_key": "SEC_HON_HOP",
+        "geography_key": "GEO_QBH",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 1,
+        "eligible_amount_count": 1,
+        "planned_amount_sum": "26120000000000.000000"
+      },
+      {
+        "group_key": "e1c7b3bd8b3a93ba28dc5743f6a32231222a86c21e1065d855c4c30b5b8f9629",
+        "report_date": "2022-11-07",
+        "sector_key": "SEC_XL",
+        "geography_key": "GEO_UNKNOWN",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 7,
+        "eligible_amount_count": 7,
+        "planned_amount_sum": "22372454407187.000000"
+      },
+      {
+        "group_key": "530c7fcb062f6a308821a7f1205621c2233892402385bbe94b65004e167031ca",
+        "report_date": "2023-12-25",
+        "sector_key": "SEC_HH",
+        "geography_key": "GEO_MULTI_UNALLOCATED",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 5,
+        "eligible_amount_count": 5,
+        "planned_amount_sum": "21738911065253.000000"
+      },
+      {
+        "group_key": "4f01a9d3a1f7130c40db9afae73e13c16b8ea812b50fa123368fc5a663b170ae",
+        "report_date": "2023-04-18",
+        "sector_key": "SEC_XL",
+        "geography_key": "GEO_HCM",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 13,
+        "eligible_amount_count": 13,
+        "planned_amount_sum": "21549763644794.000000"
+      },
+      {
+        "group_key": "0d28e412d2dbe28aef982115413579c3c7db08a23e85893073f21b5780337d5b",
+        "report_date": "2022-10-30",
+        "sector_key": "SEC_HON_HOP",
+        "geography_key": "GEO_CTO",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 1,
+        "eligible_amount_count": 1,
+        "planned_amount_sum": "20022420000000.000000"
+      },
+      {
+        "group_key": "398abf74bac42c40e66192b52e8e4cb69169d34a0f2ff4379329f9b5275726c8",
+        "report_date": "2023-05-11",
+        "sector_key": "SEC_XL",
+        "geography_key": "GEO_MULTI_UNALLOCATED",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 8,
+        "eligible_amount_count": 8,
+        "planned_amount_sum": "19392140039438.000000"
+      },
+      {
+        "group_key": "1391ee07003c4965f6d51d2a70b678ac24b53d4a1bf05c8103e5ddcdd6645d2a",
+        "report_date": "2024-05-04",
+        "sector_key": "SEC_XL",
+        "geography_key": "GEO_DNI",
+        "value_band_key": "BAND_REF_c6963e30c9da1883e8461e3e59894164917d7061423bddf0cefaa0838cf9da65",
+        "package_count": 2,
+        "eligible_amount_count": 2,
+        "planned_amount_sum": "17788169499644.000000"
+      }
+    ]
+  },
+  "quarterly_market": {
+    "sql": "SELECT date_trunc('quarter',report_date) AS quarter,\n        sum(package_count) packages,sum(eligible_amount_count) priced,sum(planned_amount_sum) amount_vnd\n        FROM fact_demand_daily WHERE currency_key='VND' GROUP BY 1 ORDER BY 1",
+    "rows": [
+      {
+        "quarter": "2022-07-01 00:00:00",
+        "packages": 16745,
+        "priced": 16745,
+        "amount_vnd": "93752963063907.000000"
+      },
+      {
+        "quarter": "2022-10-01 00:00:00",
+        "packages": 181027,
+        "priced": 181027,
+        "amount_vnd": "516377835178737.000000"
+      },
+      {
+        "quarter": "2023-01-01 00:00:00",
+        "packages": 96938,
+        "priced": 96938,
+        "amount_vnd": "293829232365490.000000"
+      },
+      {
+        "quarter": "2023-04-01 00:00:00",
+        "packages": 142739,
+        "priced": 142739,
+        "amount_vnd": "354178461101342.000000"
+      },
+      {
+        "quarter": "2023-07-01 00:00:00",
+        "packages": 162294,
+        "priced": 162294,
+        "amount_vnd": "313398879670908.098900"
+      },
+      {
+        "quarter": "2023-10-01 00:00:00",
+        "packages": 200824,
+        "priced": 200824,
+        "amount_vnd": "434642689710291.740000"
+      },
+      {
+        "quarter": "2024-01-01 00:00:00",
+        "packages": 96670,
+        "priced": 96670,
+        "amount_vnd": "186782239370272.330000"
+      },
+      {
+        "quarter": "2024-04-01 00:00:00",
+        "packages": 180151,
+        "priced": 180151,
+        "amount_vnd": "371013877633134.300000"
+      },
+      {
+        "quarter": "2024-07-01 00:00:00",
+        "packages": 216933,
+        "priced": 216933,
+        "amount_vnd": "361595173039419.200000"
+      },
+      {
+        "quarter": "2024-10-01 00:00:00",
+        "packages": 271793,
+        "priced": 271793,
+        "amount_vnd": "493311869610446.728000"
+      },
+      {
+        "quarter": "2025-01-01 00:00:00",
+        "packages": 142731,
+        "priced": 142731,
+        "amount_vnd": "384566960091360.320000"
+      },
+      {
+        "quarter": "2025-04-01 00:00:00",
+        "packages": 202239,
+        "priced": 202239,
+        "amount_vnd": "459531689746880.720000"
+      },
+      {
+        "quarter": "2025-07-01 00:00:00",
+        "packages": 130932,
+        "priced": 130932,
+        "amount_vnd": "404452955980840.400000"
+      },
+      {
+        "quarter": "2025-10-01 00:00:00",
+        "packages": 236442,
+        "priced": 236442,
+        "amount_vnd": "637974561290443.500000"
+      }
+    ]
+  },
+  "yearly_awards": {
+    "sql": "SELECT year(report_date) AS year,currency_key,sum(award_scope_count) scopes,\n        sum(eligible_amount_count) priced,sum(award_amount_sum) amount\n        FROM fact_award_daily GROUP BY 1,2 ORDER BY 1,2",
+    "rows": [
+      {
+        "year": 2022,
+        "currency_key": "VND",
+        "scopes": 88870,
+        "priced": 80643,
+        "amount": "122541939112659.762300"
+      },
+      {
+        "year": 2023,
+        "currency_key": "VND",
+        "scopes": 742426,
+        "priced": 621594,
+        "amount": "571253464887882.112200"
+      },
+      {
+        "year": 2024,
+        "currency_key": "VND",
+        "scopes": 961130,
+        "priced": 840933,
+        "amount": "645346558196253.860500"
+      },
+      {
+        "year": 2025,
+        "currency_key": "VND",
+        "scopes": 1038199,
+        "priced": 938519,
+        "amount": "823331435460804.586100"
+      }
+    ]
+  }
+}

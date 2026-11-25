@@ -1,11 +1,9 @@
 table dim_date
 	lineageTag: 7a10bd5b-4afe-5fc8-aa5e-b1938d3e9358
-	dataCategory: Time
 
 	column date_key
 		dataType: dateTime
 		isHidden
-		isKey
 		formatString: dd/MM/yyyy
 		lineageTag: b59dc1f4-a1b2-5393-a6ca-adc346b526d0
 		summarizeBy: none
@@ -111,19 +109,19 @@ table dim_date
 		lineageTag: 6624e7b6-81f6-5c79-a8ae-fb9fbb2c1254
 
 		level Năm
-			lineageTag: 9c7837d3-bade-46de-92d9-1d94e7517a06
+			lineageTag: c64f6748-aa68-440f-bb66-0bdf668bbbee
 			column: year
 
 		level Quý
-			lineageTag: fa21ea73-5203-4f59-b370-5bded69be972
+			lineageTag: bafe6435-9805-4836-8f0e-b55e4d5582d7
 			column: year_quarter
 
 		level Tháng
-			lineageTag: 1b1f04c3-c050-4b51-8e0c-06a0f6dc4e63
+			lineageTag: 7b61074d-e202-419b-b157-c3ceeaed907c
 			column: year_month
 
 		level Ngày
-			lineageTag: 944df34d-d14e-47d5-99dc-8225b95697e2
+			lineageTag: 39d00c97-53ce-4b10-beda-da8dfd3635ff
 			column: date_key
 
 	partition dim_date = m
@@ -132,8 +130,7 @@ table dim_date
 				let
 				    Source = ReadParquetTable("dim_date", {"date_key", "year", "quarter", "month", "day", "day_of_week", "is_weekend", "year_quarter", "year_month", "iso_year", "iso_week", "week_start_date"}),
 				    Typed = Table.TransformColumnTypes(Source, {{"date_key", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"day", Int64.Type}, {"day_of_week", Int64.Type}, {"is_weekend", type logical}, {"year_quarter", type text}, {"year_month", type text}, {"iso_year", Int64.Type}, {"iso_week", Int64.Type}, {"week_start_date", type date}}, "en-US"),
-				    ReportCalendar = Table.SelectRows(Typed, each [date_key] >= #date(2022,1,1) and [date_key] <= #date(2025,12,31)),
-				    MonthOrder = Table.AddColumn(ReportCalendar, "year_month_order", each [year]*100+[month], Int64.Type),
+				    MonthOrder = Table.AddColumn(Typed, "year_month_order", each [year]*100+[month], Int64.Type),
 				    QuarterOrder = Table.AddColumn(MonthOrder, "year_quarter_order", each [year]*10+[quarter], Int64.Type),
 				    MonthStart = Table.AddColumn(QuarterOrder, "month_start", each Date.StartOfMonth([date_key]), type date)
 				in

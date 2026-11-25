@@ -271,7 +271,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Đã / chưa quan sát thông báo và kết quả'"
+                  "Value": "'Trạng thái tại ngày cuối có bản ghi trong tập chọn'"
                 }
               }
             }
@@ -291,7 +291,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Đã / chưa quan sát thông báo và kết quả'"
+                  "Value": "'Trạng thái tại ngày cuối có bản ghi trong tập chọn'"
                 }
               }
             },

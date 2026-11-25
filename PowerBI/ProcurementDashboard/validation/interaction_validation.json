@@ -37,10 +37,10 @@
       "status": "passed"
     },
     {
-      "name": "reset2025",
+      "name": "reset_all",
       "measure": "Kế hoạch · tỷ VND",
-      "expected_rendered": "1.886.526,17",
-      "actual_rendered": "1.886.526,17",
+      "expected_rendered": "5.305.409,39",
+      "actual_rendered": "5.305.409,39",
       "status": "passed"
     }
   ],

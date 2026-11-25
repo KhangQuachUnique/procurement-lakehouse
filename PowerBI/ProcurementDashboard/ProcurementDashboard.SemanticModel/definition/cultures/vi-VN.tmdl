@@ -12,7 +12,19 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "province_display"
 			        }
 			      },
-			      "State": "Generated"
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Địa phương · phiên bản": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
 			    },
 			    "table_measures.giá_trị_trúng_thầu__tỷ_vnđ": {
 			      "Definition": {
@@ -270,19 +282,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Dòng · demand"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Nhu cầu": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.dòng__award": {
 			      "Definition": {
@@ -291,19 +291,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Dòng · award"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Kết quả": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.dòng__bidding_competition": {
 			      "Definition": {
@@ -312,19 +300,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Dòng · bidding_competition"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Cạnh tranh": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_measures.dòng__duration": {
 			      "Definition": {
@@ -333,19 +309,7 @@ cultureInfo vi-VN
 			          "ConceptualProperty": "Dòng · duration"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Thời gian": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    }
 			  }
 			}

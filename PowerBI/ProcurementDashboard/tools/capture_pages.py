@@ -1,4 +1,4 @@
-"""Capture eight pages using verified navigator geometry in the project window."""
+"""Capture the generated pages after Desktop exposes their report tabs."""
 import argparse
 import json
 import time
@@ -14,7 +14,17 @@ from desktop_control import ROOT, activate
 def grab(window):
     if win32process.GetWindowThreadProcessId(win32gui.GetForegroundWindow())[1] != window.process_id():
         raise RuntimeError('Power BI project must be foreground')
-    return ImageGrab.grab(bbox=win32gui.GetWindowRect(window.handle))
+    areas = [e.rectangle() for e in window.descendants(control_type='Group')
+             if 'displayAreaContainer' in e.element_info.class_name]
+    if len(areas) != 1:
+        raise RuntimeError('Expected a single report canvas')
+    rect = areas[0]
+    # FitToPage centers the 1440 x 900 generated page in the available canvas.
+    scale = min(rect.width() / 1440, rect.height() / 900)
+    width, height = round(1440 * scale), round(900 * scale)
+    left = rect.left + (rect.width() - width) // 2
+    top = rect.top + (rect.height() - height) // 2
+    return ImageGrab.grab(bbox=(left, top, left + width, top + height))
 
 
 def main():
@@ -30,12 +40,17 @@ def main():
     titles={p['name']:p['displayName'] for p in inventory['pages']}
     for page in order+[order[0]]:
         window = activate(window)
-        tabs=[t for t in window.descendants(control_type='TabItem') if t.window_text()==titles[page]]
+        deadline = time.monotonic() + 60
+        while True:
+            tabs = [t for t in window.descendants(control_type='TabItem') if t.window_text() == titles[page]]
+            if tabs or time.monotonic() >= deadline:
+                break
+            time.sleep(1)
         if len(tabs)!=1:
             raise RuntimeError('Ambiguous page tab '+page)
         rect=tabs[0].rectangle()
         mouse.click(coords=((rect.left+rect.right)//2, (rect.top+rect.bottom)//2))
-        time.sleep(2)
+        time.sleep(7 if page == 'suppliers' else 3)
         if not tabs[0].is_selected():
             raise RuntimeError('Page selection not confirmed '+page)
         window=activate(window)

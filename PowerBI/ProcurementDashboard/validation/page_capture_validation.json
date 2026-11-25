@@ -8,23 +8,13 @@
       "selected": true
     },
     {
-      "page": "demand",
-      "file": "validation\\screenshots\\final-demand.png",
-      "selected": true
-    },
-    {
-      "page": "awards",
-      "file": "validation\\screenshots\\final-awards.png",
+      "page": "competition",
+      "file": "validation\\screenshots\\final-competition.png",
       "selected": true
     },
     {
       "page": "savings",
       "file": "validation\\screenshots\\final-savings.png",
-      "selected": true
-    },
-    {
-      "page": "competition",
-      "file": "validation\\screenshots\\final-competition.png",
       "selected": true
     },
     {

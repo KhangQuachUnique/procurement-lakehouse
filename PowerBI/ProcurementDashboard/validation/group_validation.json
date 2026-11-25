@@ -6,86 +6,86 @@
       "status": "passed",
       "actual": [
         {
-          "label": "Thành phố Hà Nội",
+          "label": "Thành phố Hà Nội · v1 · HNI",
           "amount": 426990052774613.06
         },
         {
-          "label": "Thành phố Hồ Chí Minh",
+          "label": "Thành phố Hồ Chí Minh · v1 · HCM",
           "amount": 252509727049199.7
         },
         {
-          "label": "Đa địa bàn chưa phân bổ",
-          "amount": 117237124458307.64
-        },
-        {
-          "label": "Chưa xác định",
-          "amount": 93937916515168.05
-        },
-        {
-          "label": "Tỉnh Quảng Ninh",
+          "label": "Tỉnh Quảng Ninh · v1 · QNH",
           "amount": 65682892775040.56
         },
         {
-          "label": "Tỉnh Thanh Hóa",
+          "label": "Tỉnh Thanh Hóa · v1 · THA",
           "amount": 56213502051728.414
         },
         {
-          "label": "Thành phố Hải Phòng",
+          "label": "Thành phố Hải Phòng · v1 · HPG",
           "amount": 53644682426054.85
         },
         {
-          "label": "Tỉnh Nghệ An",
+          "label": "Tỉnh Nghệ An · v1 · NAN",
           "amount": 51960992207278.734
         },
         {
-          "label": "Tỉnh Hưng Yên",
+          "label": "Tỉnh Hưng Yên · v1 · HYN",
           "amount": 47336399364680.445
         },
         {
-          "label": "Tỉnh Đồng Nai",
+          "label": "Tỉnh Đồng Nai · v1 · DNI",
           "amount": 43581763524298.664
+        },
+        {
+          "label": "Tỉnh Ninh Bình · v1 · NBH",
+          "amount": 35807145482182.17
+        },
+        {
+          "label": "Tỉnh Bà Rịa - Vũng Tàu · v1 · VTU",
+          "amount": 35378169321925.36
         }
       ],
       "expected": [
         {
-          "label": "Thành phố Hà Nội",
+          "label": "Thành phố Hà Nội · v1 · HNI",
           "amount": "426990052774613.069700"
         },
         {
-          "label": "Thành phố Hồ Chí Minh",
+          "label": "Thành phố Hồ Chí Minh · v1 · HCM",
           "amount": "252509727049199.647000"
         },
         {
-          "label": "Đa địa bàn chưa phân bổ",
-          "amount": "117237124458307.599200"
-        },
-        {
-          "label": "Chưa xác định",
-          "amount": "93937916515168.060700"
-        },
-        {
-          "label": "Tỉnh Quảng Ninh",
+          "label": "Tỉnh Quảng Ninh · v1 · QNH",
           "amount": "65682892775040.598200"
         },
         {
-          "label": "Tỉnh Thanh Hóa",
+          "label": "Tỉnh Thanh Hóa · v1 · THA",
           "amount": "56213502051728.419400"
         },
         {
-          "label": "Thành phố Hải Phòng",
+          "label": "Thành phố Hải Phòng · v1 · HPG",
           "amount": "53644682426054.864300"
         },
         {
-          "label": "Tỉnh Nghệ An",
+          "label": "Tỉnh Nghệ An · v1 · NAN",
           "amount": "51960992207278.726000"
         },
         {
-          "label": "Tỉnh Hưng Yên",
+          "label": "Tỉnh Hưng Yên · v1 · HYN",
           "amount": "47336399364680.449800"
         },
         {
-          "label": "Tỉnh Đồng Nai",
+          "label": "Tỉnh Đồng Nai · v1 · DNI",
           "amount": "43581763524298.658200"
+        },
+        {
+          "label": "Tỉnh Ninh Bình · v1 · NBH",
+          "amount": "35807145482182.182800"
+        },
+        {
+          "label": "Tỉnh Bà Rịa - Vũng Tàu · v1 · VTU",
+          "amount": "35378169321925.359600"
         }
       ]
     },

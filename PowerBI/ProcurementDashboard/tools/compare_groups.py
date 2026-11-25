@@ -12,7 +12,7 @@ for case in cases:
         for row in result['rows']:
             label=next(v for k,v in row.items() if k.endswith('['+case['group_column']+']'))
             actual.append({'label':label,'amount':row['[amount]']})
-    actual.sort(key=lambda r:(-Decimal(str(r['amount'])),r['label']))
+    # Compare engine order directly, including ties.
     expected=case['expected']
     passed=len(actual)==len(expected)==10 and all(a['label']==e['label'] and abs(Decimal(str(a['amount']))-Decimal(str(e['amount'])))<=Decimal(case['absolute_tolerance']) for a,e in zip(actual,expected))
     checks.append({'name':case['name'],'status':'passed' if passed else 'failed','actual':actual,'expected':expected})

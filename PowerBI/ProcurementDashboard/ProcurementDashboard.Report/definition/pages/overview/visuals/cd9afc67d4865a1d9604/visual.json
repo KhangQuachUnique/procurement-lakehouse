@@ -108,11 +108,6 @@
             }
           }
         }
-      ],
-      "general": [
-        {
-          "properties": {}
-        }
       ]
     },
     "visualContainerObjects": {
@@ -239,23 +234,5 @@
       "fieldChanges": true,
       "filterChanges": true
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "83b5da8002206272056d",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_sector"
-              }
-            },
-            "Property": "sector_name"
-          }
-        },
-        "type": "Categorical"
-      }
-    ]
   }
 }

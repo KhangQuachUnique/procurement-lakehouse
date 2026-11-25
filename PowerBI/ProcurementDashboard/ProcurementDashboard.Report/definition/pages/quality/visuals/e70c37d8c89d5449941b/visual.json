@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Phạm vi sự kiện nguồn: 09/2022–12/2025.\nNgày phân tích: 15/11/2026; chưa có thời điểm xuất được chứng minh.",
+                    "value": "Phạm vi theo tháng và lĩnh vực đang chọn. Ngày sự kiện phụ thuộc từng fact.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

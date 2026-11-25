@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Lượt nhận đơn'"
+                  "Value": "'Độ phủ giá trị người nhận'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Lượt nhận đơn'"
+                  "Value": "'Độ phủ giá trị người nhận'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Lượt nhận đơn"
+                  "Property": "Hiển thị · Độ phủ giá trị người nhận"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Lượt nhận đơn",
-              "nativeQueryRef": "Hiển thị · Lượt nhận đơn"
+              "queryRef": "_Measures.Hiển thị · Độ phủ giá trị người nhận",
+              "nativeQueryRef": "Hiển thị · Độ phủ giá trị người nhận"
             }
           ]
         }

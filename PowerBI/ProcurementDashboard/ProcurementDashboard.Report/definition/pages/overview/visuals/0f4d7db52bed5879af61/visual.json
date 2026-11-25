@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "0f4d7db52bed5879af61",
   "position": {
-    "x": 24,
-    "y": 580,
-    "z": 13,
+    "x": 732,
+    "y": 308,
+    "z": 12,
     "height": 248,
     "width": 684,
-    "tabOrder": 13
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -30,6 +30,24 @@
               "nativeQueryRef": "sector_name",
               "active": true,
               "displayName": "Lĩnh vực"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Mẫu giá trúng VND"
+                }
+              },
+              "queryRef": "_Measures.Mẫu giá trúng VND",
+              "nativeQueryRef": "Mẫu giá trúng VND"
             }
           ]
         },
@@ -272,7 +290,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị trúng thầu theo lĩnh vực · tỷ VND'"
+                  "Value": "'Giá trị trúng theo lĩnh vực · tỷ VND'"
                 }
               }
             }
@@ -292,7 +310,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trị trúng thầu theo lĩnh vực · tỷ VND'"
+                  "Value": "'Giá trị trúng theo lĩnh vực · tỷ VND'"
                 }
               }
             },
@@ -332,37 +350,5 @@
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "193a304089977475d239",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_sector"
-              }
-            },
-            "Property": "sector_name"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "cc4761de47912d5acad7",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Trúng thầu · tỷ VND"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

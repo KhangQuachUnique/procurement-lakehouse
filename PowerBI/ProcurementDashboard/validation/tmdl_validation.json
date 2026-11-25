@@ -1,6 +1,6 @@
 ﻿{
     "parser":  "Microsoft.AnalysisServices.Tabular.TmdlSerializer (installed Desktop)",
-    "dateTableMarked":  true,
+    "dateTableMarked":  false,
     "relationships":  37,
     "tables":  [
                    {
@@ -106,7 +106,7 @@
                        "columns":  12
                    },
                    {
-                       "measures":  116,
+                       "measures":  123,
                        "partitions":  1,
                        "name":  "_Measures",
                        "columns":  1

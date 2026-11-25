@@ -40,7 +40,7 @@ if __name__ == "__main__":
         "../pbip/pbipProperties/1.0.0", "report/definitionProperties/2.0.0",
         "semanticModel/definitionProperties/1.0.0",
         "report/definition/versionMetadata/1.0.0", "report/definition/report/3.0.0",
-        "report/definition/pagesMetadata/1.0.0", "report/definition/page/2.0.0",
+        "report/definition/pagesMetadata/1.0.0", "report/definition/pagesMetadata/1.1.0", "report/definition/page/2.0.0",
         "report/definition/visualContainer/2.1.0",
         "report/definition/visualContainer/2.9.0",
     ]:

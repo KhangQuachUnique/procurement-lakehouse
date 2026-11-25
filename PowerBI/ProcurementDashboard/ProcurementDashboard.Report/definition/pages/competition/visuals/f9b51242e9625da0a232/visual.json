@@ -4,16 +4,16 @@
   "position": {
     "x": 732,
     "y": 308,
-    "z": 13,
+    "z": 12,
     "height": 248,
     "width": 684,
-    "tabOrder": 13
+    "tabOrder": 12
   },
   "visual": {
-    "visualType": "clusteredColumnChart",
+    "visualType": "tableEx",
     "query": {
       "queryState": {
-        "Category": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -28,26 +28,7 @@
               },
               "queryRef": "dim_sector.sector_name",
               "nativeQueryRef": "sector_name",
-              "active": true,
               "displayName": "Lĩnh vực"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Lượt một nhà thầu"
-                }
-              },
-              "queryRef": "_Measures.Lượt một nhà thầu",
-              "nativeQueryRef": "Lượt một nhà thầu"
             },
             {
               "field": {
@@ -57,11 +38,39 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Lượt nhiều nhà thầu"
+                  "Property": "Lượt mở thầu"
                 }
               },
-              "queryRef": "_Measures.Lượt nhiều nhà thầu",
-              "nativeQueryRef": "Lượt nhiều nhà thầu"
+              "queryRef": "_Measures.Lượt mở thầu",
+              "nativeQueryRef": "Lượt mở thầu"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Tỷ lệ một nhà thầu"
+                }
+              },
+              "queryRef": "_Measures.Tỷ lệ một nhà thầu",
+              "nativeQueryRef": "Tỷ lệ một nhà thầu"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Chênh so với tập chọn · đpt"
+                }
+              },
+              "queryRef": "_Measures.Chênh so với tập chọn · đpt",
+              "nativeQueryRef": "Chênh so với tập chọn · đpt"
             }
           ]
         }
@@ -76,7 +85,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Lượt một nhà thầu"
+                "Property": "Lượt mở thầu"
               }
             },
             "direction": "Descending"
@@ -86,27 +95,61 @@
       }
     },
     "objects": {
-      "legend": [
+      "grid": [
         {
           "properties": {
-            "show": {
+            "rowPadding": {
+              "expr": {
+                "Literal": {
+                  "Value": "3D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
                   "Value": "true"
                 }
               }
             },
-            "fontSize": {
+            "columnAdjustment": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "'fitToContent'"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "defaultColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "90D"
                 }
               }
             }
           }
         }
       ],
-      "categoryAxis": [
+      "values": [
         {
           "properties": {
             "fontSize": {
@@ -116,92 +159,71 @@
                 }
               }
             },
-            "showAxisTitle": {
+            "wordWrap": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "preferredCategoryWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "14D"
-                }
-              }
-            },
-            "maxMarginFactor": {
-              "expr": {
-                "Literal": {
-                  "Value": "40D"
+                  "Value": "true"
                 }
               }
             }
           }
         }
       ],
-      "valueAxis": [
+      "columnWidth": [
         {
           "properties": {
-            "fontSize": {
+            "value": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "showAxisTitle": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "dataPoint": [
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#142D4E'"
-                    }
-                  }
+                  "Value": "175D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Lượt một nhà thầu"
+            "metadata": "dim_sector.sector_name"
           }
         },
         {
           "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#087F8C'"
-                    }
-                  }
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "125D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Lượt nhiều nhà thầu"
+            "metadata": "_Measures.Lượt mở thầu"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "150D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Tỷ lệ một nhà thầu"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "170D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Chênh so với tập chọn · đpt"
           }
         }
       ]
@@ -304,7 +326,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Lượt mở một / nhiều nhà thầu theo lĩnh vực'"
+                  "Value": "'Một nhà thầu theo lĩnh vực · đối sánh với tập chọn'"
                 }
               }
             }
@@ -324,7 +346,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Lượt mở một / nhiều nhà thầu theo lĩnh vực'"
+                  "Value": "'Một nhà thầu theo lĩnh vực · đối sánh với tập chọn'"
                 }
               }
             },

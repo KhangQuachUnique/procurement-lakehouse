@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Chỉ VND · mỗi chỉ tiêu theo ngày sự kiện riêng.\nMặc định 2025 · không suy ra tỷ lệ hoàn thành kế hoạch.",
+                    "value": "Số lượt gồm mọi tiền tệ. Giá trị tính trên mẫu VND có giá hợp lệ.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

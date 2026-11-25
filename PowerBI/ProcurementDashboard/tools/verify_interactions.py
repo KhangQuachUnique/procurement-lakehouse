@@ -5,7 +5,7 @@ import re
 import time
 from decimal import Decimal
 
-from PIL import ImageGrab
+from capture_pages import grab
 from pywinauto import Desktop, mouse
 from pywinauto.keyboard import send_keys
 import win32gui
@@ -25,7 +25,7 @@ def main():
     evidence = []
     if args.restore_only:
         previous=json.loads((PROJECT/'validation/interaction_validation.json').read_text(encoding='utf-8'))
-        evidence=previous['checks']
+        evidence=[e for e in previous['checks'] if e['name'] != 'reset_all']
         if len(evidence)!=5 or any(e['status']!='passed' for e in evidence):
             raise RuntimeError('Restore-only requires five existing successful interaction checks')
     shots = PROJECT/'validation/screenshots'
@@ -47,6 +47,11 @@ def main():
         r=tab.rectangle()
         mouse.click(coords=((r.left+r.right)//2,(r.top+r.bottom)//2))
         time.sleep(2)
+        if not tab.is_selected():
+            tab.select()
+            time.sleep(1)
+        if not tab.is_selected():
+            raise RuntimeError('Tab selection failed: '+title)
 
     def option(label, combo_rect):
         for attempt in range(20):
@@ -112,19 +117,19 @@ def main():
 
     def screenshot(name):
         foreground()
-        ImageGrab.grab(bbox=win32gui.GetWindowRect(window.handle)).save(shots/(name+'.png'))
+        grab(window).save(shots/(name+'.png'))
 
     def sql(query):
         return con.execute(query).fetchone()[0]
 
     try:
         if not args.restore_only:
-            navigate('Tổng quan')
+            navigate('Quy mô và cơ cấu thị trường')
             select('Tháng', [], clear=True)
             select('Lĩnh vực', [], clear=True)
-            check('baseline_all', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily'))
+            check('baseline_all', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key=\'VND\''))
             select('Lĩnh vực', ['Hàng hóa'])
-            check('sector_filter', 'Kế hoạch · tỷ VND', sql("SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE sector_key='SEC_HH'"))
+            check('sector_filter', 'Kế hoạch · tỷ VND', sql("SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key='VND' AND sector_key='SEC_HH'"))
             screenshot('interaction-sector-hh')
             navigate('Cạnh tranh cơ bản')
             check('sector_sync', 'Lượt mở thầu', sql("SELECT sum(opening_count) FROM fact_bidding_competition_daily WHERE sector_key='SEC_HH'"), places=0)
@@ -139,9 +144,9 @@ def main():
             select('Tháng', ['2022-01'], clear=True)
             check('empty_month', 'Nhà thầu bình quân', None)
             screenshot('interaction-empty-month')
-        select('Tháng', [f'2025-{m:02}' for m in range(1, 13)], clear=True)
-        navigate('Tổng quan')
-        check('reset2025', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE year(report_date)=2025'))
+        select('Tháng', [], clear=True)
+        navigate('Quy mô và cơ cấu thị trường')
+        check('reset_all', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key=\'VND\''))
         screenshot('interaction-reset')
         save(PROJECT/'validation/interaction_validation.json', {'status': 'passed', 'checks': evidence,
              'method': 'Actual slicer mouse input at inspected UIA rectangles; rendered card accessible names compared with SQL; default state restored.'})

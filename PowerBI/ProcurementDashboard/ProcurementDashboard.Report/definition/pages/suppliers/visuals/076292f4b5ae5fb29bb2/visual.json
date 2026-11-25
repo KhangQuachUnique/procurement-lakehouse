@@ -38,11 +38,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Lượt nhận đơn"
+                  "Property": "Mẫu giá người nhận"
                 }
               },
-              "queryRef": "_Measures.Lượt nhận đơn",
-              "nativeQueryRef": "Lượt nhận đơn"
+              "queryRef": "_Measures.Mẫu giá người nhận",
+              "nativeQueryRef": "Mẫu giá người nhận"
             },
             {
               "field": {
@@ -181,7 +181,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Lượt nhận đơn"
+            "metadata": "_Measures.Mẫu giá người nhận"
           }
         },
         {
@@ -370,7 +370,7 @@
                 "Entity": "dim_party"
               }
             },
-            "Property": "party_display"
+            "Property": "party_key"
           }
         },
         "type": "TopN",
@@ -378,7 +378,7 @@
           "Version": 2,
           "From": [
             {
-              "Name": "subquery",
+              "Name": "s",
               "Expression": {
                 "Subquery": {
                   "Query": {
@@ -390,13 +390,8 @@
                         "Type": 0
                       },
                       {
-                        "Name": "f",
-                        "Entity": "fact_supplier_daily",
-                        "Type": 0
-                      },
-                      {
-                        "Name": "c",
-                        "Entity": "dim_currency",
+                        "Name": "m",
+                        "Entity": "_Measures",
                         "Type": 0
                       }
                     ],
@@ -408,7 +403,7 @@
                               "Source": "d"
                             }
                           },
-                          "Property": "party_display"
+                          "Property": "party_key"
                         },
                         "Name": "field"
                       }
@@ -416,55 +411,27 @@
                     "Where": [
                       {
                         "Condition": {
-                          "In": {
-                            "Expressions": [
-                              {
-                                "Column": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Source": "c"
-                                    }
-                                  },
-                                  "Property": "currency_code"
-                                }
-                              }
-                            ],
-                            "Values": [
-                              [
-                                {
+                          "Not": {
+                            "Expression": {
+                              "Comparison": {
+                                "ComparisonKind": 0,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Source": "m"
+                                      }
+                                    },
+                                    "Property": "Người nhận · tỷ VND"
+                                  }
+                                },
+                                "Right": {
                                   "Literal": {
-                                    "Value": "'VND'"
+                                    "Value": "null"
                                   }
                                 }
-                              ]
-                            ]
-                          }
-                        }
-                      },
-                      {
-                        "Condition": {
-                          "In": {
-                            "Expressions": [
-                              {
-                                "Column": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Source": "f"
-                                    }
-                                  },
-                                  "Property": "recipient_allocation_state"
-                                }
                               }
-                            ],
-                            "Values": [
-                              [
-                                {
-                                  "Literal": {
-                                    "Value": "'single_recipient'"
-                                  }
-                                }
-                              ]
-                            ]
+                            }
                           }
                         }
                       }
@@ -473,18 +440,13 @@
                       {
                         "Direction": 2,
                         "Expression": {
-                          "Aggregation": {
+                          "Measure": {
                             "Expression": {
-                              "Column": {
-                                "Expression": {
-                                  "SourceRef": {
-                                    "Source": "f"
-                                  }
-                                },
-                                "Property": "award_amount_sum"
+                              "SourceRef": {
+                                "Source": "m"
                               }
                             },
-                            "Function": 0
+                            "Property": "Người nhận · tỷ VND"
                           }
                         }
                       },
@@ -497,7 +459,7 @@
                                 "Source": "d"
                               }
                             },
-                            "Property": "party_display"
+                            "Property": "party_key"
                           }
                         }
                       }
@@ -526,191 +488,15 @@
                             "Source": "d"
                           }
                         },
-                        "Property": "party_display"
+                        "Property": "party_key"
                       }
                     }
                   ],
                   "Table": {
                     "SourceRef": {
-                      "Source": "subquery"
+                      "Source": "s"
                     }
                   }
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      },
-      {
-        "name": "3bd97ef06c465459a1d98482c6563184",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_currency"
-              }
-            },
-            "Property": "currency_code"
-          }
-        },
-        "type": "Categorical",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "d",
-              "Entity": "dim_currency",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "In": {
-                  "Expressions": [
-                    {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Source": "d"
-                          }
-                        },
-                        "Property": "currency_code"
-                      }
-                    }
-                  ],
-                  "Values": [
-                    [
-                      {
-                        "Literal": {
-                          "Value": "'VND'"
-                        }
-                      }
-                    ]
-                  ]
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      },
-      {
-        "name": "4bf7478314b65701b58d12009377f3cd",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "fact_supplier_daily"
-              }
-            },
-            "Property": "recipient_allocation_state"
-          }
-        },
-        "type": "Categorical",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "d",
-              "Entity": "fact_supplier_daily",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "In": {
-                  "Expressions": [
-                    {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Source": "d"
-                          }
-                        },
-                        "Property": "recipient_allocation_state"
-                      }
-                    }
-                  ],
-                  "Values": [
-                    [
-                      {
-                        "Literal": {
-                          "Value": "'single_recipient'"
-                        }
-                      }
-                    ]
-                  ]
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      },
-      {
-        "name": "25148ef4dbf95a81a7e7af744ee33d65",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_party"
-              }
-            },
-            "Property": "party_kind"
-          }
-        },
-        "type": "Categorical",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "d",
-              "Entity": "dim_party",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "In": {
-                  "Expressions": [
-                    {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Source": "d"
-                          }
-                        },
-                        "Property": "party_kind"
-                      }
-                    }
-                  ],
-                  "Values": [
-                    [
-                      {
-                        "Literal": {
-                          "Value": "'ORGANIZATION'"
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        "Literal": {
-                          "Value": "'CONSORTIUM'"
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        "Literal": {
-                          "Value": "'PERSON'"
-                        }
-                      }
-                    ]
-                  ]
                 }
               }
             }

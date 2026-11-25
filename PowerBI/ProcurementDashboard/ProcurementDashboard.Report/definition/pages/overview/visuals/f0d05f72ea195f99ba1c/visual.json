@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chênh lệch mô tả · tỷ VND'"
+                  "Value": "'Trúng thầu · tỷ VND'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chênh lệch mô tả · tỷ VND'"
+                  "Value": "'Trúng thầu · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Chênh lệch mô tả · tỷ VND"
+                  "Property": "Hiển thị · Trúng thầu · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Chênh lệch mô tả · tỷ VND",
-              "nativeQueryRef": "Hiển thị · Chênh lệch mô tả · tỷ VND"
+              "queryRef": "_Measures.Hiển thị · Trúng thầu · tỷ VND",
+              "nativeQueryRef": "Hiển thị · Trúng thầu · tỷ VND"
             }
           ]
         }

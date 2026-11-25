@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "GIỚI HẠN CẦN BIẾT\n\n• Verified / hợp đồng: chưa có mẫu.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Hai mốc kết quả có dữ liệu trùng; bỏ mốc đầy đủ.\n• Không có hồ sơ gói thầu để tra cứu cá thể.\n• Lịch báo cáo giới hạn 2022–2025; năm 2022 chỉ từ tháng 9.\n• Trạng thái quan sát không phải tiến độ hợp đồng.",
+                    "value": "GIỚI HẠN CẦN BIẾT\n\n• Xem cỡ mẫu xác minh và hợp đồng ở trên.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Hai mốc kết quả có dữ liệu trùng; bỏ mốc đầy đủ.\n• Không có hồ sơ gói thầu để tra cứu cá thể.\n• Tháng thiếu quan sát hiển thị trống.\n• Trạng thái quan sát không phải tiến độ hợp đồng.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "12pt",

@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Tỷ lệ tính từ tổng cùng mẫu, không bình quân tỷ lệ. Verified và hợp đồng chưa có mẫu; không dựng KPI tiền bằng 0.",
+                    "value": "Tỷ lệ tính từ tổng cùng mẫu, không bình quân tỷ lệ. Độ phủ là số mẫu mô tả trên tổng phạm vi so sánh.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

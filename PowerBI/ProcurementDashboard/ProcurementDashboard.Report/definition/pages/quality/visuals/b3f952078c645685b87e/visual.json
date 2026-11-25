@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Nhóm kỹ thuật cần xác minh'"
+                  "Value": "'Độ phủ mẫu mô tả'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Nhóm kỹ thuật cần xác minh'"
+                  "Value": "'Độ phủ mẫu mô tả'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Nhóm kỹ thuật cần xác minh"
+                  "Property": "Hiển thị · Độ phủ mẫu mô tả"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Nhóm kỹ thuật cần xác minh",
-              "nativeQueryRef": "Hiển thị · Nhóm kỹ thuật cần xác minh"
+              "queryRef": "_Measures.Hiển thị · Độ phủ mẫu mô tả",
+              "nativeQueryRef": "Hiển thị · Độ phủ mẫu mô tả"
             }
           ]
         }

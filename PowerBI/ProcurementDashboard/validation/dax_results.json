@@ -6,7 +6,8 @@
                      {
                          "[value]":  5305409387853474
                      }
-                 ]
+                 ],
+        "elapsed_ms":  154.1682
     },
     {
         "status":  "passed",
@@ -15,7 +16,8 @@
                      {
                          "[value]":  2278458
                      }
-                 ]
+                 ],
+        "elapsed_ms":  14.1635
     },
     {
         "status":  "passed",
@@ -24,7 +26,18 @@
                      {
                          "[value]":  2162473397657600.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  13.186900000000001
+    },
+    {
+        "status":  "passed",
+        "name":  "all/priced_awards_vnd",
+        "rows":  [
+                     {
+                         "[value]":  2481689
+                     }
+                 ],
+        "elapsed_ms":  8.1702000000000012
     },
     {
         "status":  "passed",
@@ -33,7 +46,8 @@
                      {
                          "[value]":  2830625
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.1420000000000003
     },
     {
         "status":  "passed",
@@ -42,7 +56,8 @@
                      {
                          "[value]":  2310709089758264.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.502
     },
     {
         "status":  "passed",
@@ -51,7 +66,8 @@
                      {
                          "[value]":  148984188291219.31
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.5552
     },
     {
         "status":  "passed",
@@ -60,7 +76,8 @@
                      {
                          "[value]":  0.064475527859201576
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.6694
     },
     {
         "status":  "passed",
@@ -69,7 +86,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.5086
     },
     {
         "status":  "passed",
@@ -78,7 +96,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.7176
     },
     {
         "status":  "passed",
@@ -87,7 +106,8 @@
                      {
                          "[value]":  2.0048008489134981
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.1604
     },
     {
         "status":  "passed",
@@ -96,16 +116,8 @@
                      {
                          "[value]":  0.616135433490479
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "all/discount_count_rate",
-        "rows":  [
-                     {
-                         "[value]":  0.088833860302004353
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  5.0284
     },
     {
         "status":  "passed",
@@ -114,7 +126,8 @@
                      {
                          "[value]":  26191
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.2951
     },
     {
         "status":  "passed",
@@ -123,7 +136,8 @@
                      {
                          "[value]":  16.404098097447619
                      }
-                 ]
+                 ],
+        "elapsed_ms":  16.0268
     },
     {
         "status":  "passed",
@@ -132,7 +146,8 @@
                      {
                          "[value]":  237.98200466976473
                      }
-                 ]
+                 ],
+        "elapsed_ms":  14.500200000000001
     },
     {
         "status":  "passed",
@@ -141,7 +156,8 @@
                      {
                          "[value]":  28.614371133073224
                      }
-                 ]
+                 ],
+        "elapsed_ms":  11.6735
     },
     {
         "status":  "passed",
@@ -150,7 +166,8 @@
                      {
                          "[value]":  26.912471204188481
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.2171
     },
     {
         "status":  "passed",
@@ -159,7 +176,18 @@
                      {
                          "[value]":  28.355559409526336
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.1234
+    },
+    {
+        "status":  "passed",
+        "name":  "all/recipient_samples",
+        "rows":  [
+                     {
+                         "[value]":  2469418
+                     }
+                 ],
+        "elapsed_ms":  16.5042
     },
     {
         "status":  "passed",
@@ -168,7 +196,8 @@
                      {
                          "[value]":  2098726.4454360874
                      }
-                 ]
+                 ],
+        "elapsed_ms":  28.3397
     },
     {
         "status":  "passed",
@@ -177,7 +206,18 @@
                      {
                          "[value]":  160481
                      }
-                 ]
+                 ],
+        "elapsed_ms":  73.0177
+    },
+    {
+        "status":  "passed",
+        "name":  "all/recipient_coverage",
+        "rows":  [
+                     {
+                         "[value]":  0.970521277953956
+                     }
+                 ],
+        "elapsed_ms":  11.981300000000001
     },
     {
         "status":  "passed",
@@ -186,7 +226,8 @@
                      {
                          "[value]":  1886526167109524.8
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.5091
     },
     {
         "status":  "passed",
@@ -195,7 +236,8 @@
                      {
                          "[value]":  712344
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.8036
     },
     {
         "status":  "passed",
@@ -204,7 +246,18 @@
                      {
                          "[value]":  823331435460804.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.2034
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/priced_awards_vnd",
+        "rows":  [
+                     {
+                         "[value]":  938519
+                     }
+                 ],
+        "elapsed_ms":  4.6096
     },
     {
         "status":  "passed",
@@ -213,7 +266,8 @@
                      {
                          "[value]":  1038199
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.211
     },
     {
         "status":  "passed",
@@ -222,7 +276,8 @@
                      {
                          "[value]":  882229224164924.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.8023
     },
     {
         "status":  "passed",
@@ -231,7 +286,8 @@
                      {
                          "[value]":  58913893021246.031
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.8610000000000007
     },
     {
         "status":  "passed",
@@ -240,7 +296,8 @@
                      {
                          "[value]":  0.066778441937253977
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.4238
     },
     {
         "status":  "passed",
@@ -249,7 +306,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.5790000000000006
     },
     {
         "status":  "passed",
@@ -258,7 +316,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.597
     },
     {
         "status":  "passed",
@@ -267,7 +326,8 @@
                      {
                          "[value]":  2.3140472470667186
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.0128
     },
     {
         "status":  "passed",
@@ -276,16 +336,8 @@
                      {
                          "[value]":  0.55008335867297187
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "year2025/discount_count_rate",
-        "rows":  [
-                     {
-                         "[value]":  0.084882619747794444
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  7.3318
     },
     {
         "status":  "passed",
@@ -294,7 +346,8 @@
                      {
                          "[value]":  5169
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.2730000000000006
     },
     {
         "status":  "passed",
@@ -303,7 +356,8 @@
                      {
                          "[value]":  17.84200080373326
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.2672
     },
     {
         "status":  "passed",
@@ -312,7 +366,8 @@
                      {
                          "[value]":  262.37209199100045
                      }
-                 ]
+                 ],
+        "elapsed_ms":  13.271600000000001
     },
     {
         "status":  "passed",
@@ -321,7 +376,8 @@
                      {
                          "[value]":  29.0558501093021
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.939400000000001
     },
     {
         "status":  "passed",
@@ -330,7 +386,8 @@
                      {
                          "[value]":  31.11300468695935
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.2124
     },
     {
         "status":  "passed",
@@ -339,7 +396,18 @@
                      {
                          "[value]":  28.701959187743029
                      }
-                 ]
+                 ],
+        "elapsed_ms":  11.615300000000001
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/recipient_samples",
+        "rows":  [
+                     {
+                         "[value]":  933851
+                     }
+                 ],
+        "elapsed_ms":  23.3121
     },
     {
         "status":  "passed",
@@ -348,7 +416,8 @@
                      {
                          "[value]":  776769.1550082243
                      }
-                 ]
+                 ],
+        "elapsed_ms":  39.0952
     },
     {
         "status":  "passed",
@@ -357,7 +426,18 @@
                      {
                          "[value]":  88231
                      }
-                 ]
+                 ],
+        "elapsed_ms":  46.0717
+    },
+    {
+        "status":  "passed",
+        "name":  "year2025/recipient_coverage",
+        "rows":  [
+                     {
+                         "[value]":  0.94344649257012725
+                     }
+                 ],
+        "elapsed_ms":  25.933200000000003
     },
     {
         "status":  "passed",
@@ -366,7 +446,8 @@
                      {
                          "[value]":  31773399746008
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.6438
     },
     {
         "status":  "passed",
@@ -375,7 +456,8 @@
                      {
                          "[value]":  7104
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.8486
     },
     {
         "status":  "passed",
@@ -384,7 +466,18 @@
                      {
                          "[value]":  21175018807327.9
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.277000000000001
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/priced_awards_vnd",
+        "rows":  [
+                     {
+                         "[value]":  41043
+                     }
+                 ],
+        "elapsed_ms":  4.9343
     },
     {
         "status":  "passed",
@@ -393,7 +486,8 @@
                      {
                          "[value]":  49268
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.6825
     },
     {
         "status":  "passed",
@@ -402,7 +496,8 @@
                      {
                          "[value]":  22770437006184
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.1729
     },
     {
         "status":  "passed",
@@ -411,7 +506,8 @@
                      {
                          "[value]":  1595517401166.0991
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.1422
     },
     {
         "status":  "passed",
@@ -420,7 +516,8 @@
                      {
                          "[value]":  0.070069687320133037
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.8664
     },
     {
         "status":  "passed",
@@ -429,7 +526,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.7498000000000005
     },
     {
         "status":  "passed",
@@ -438,7 +536,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  27.749100000000002
     },
     {
         "status":  "passed",
@@ -447,7 +546,8 @@
                      {
                          "[value]":  3.14767547857794
                      }
-                 ]
+                 ],
+        "elapsed_ms":  15.8787
     },
     {
         "status":  "passed",
@@ -456,16 +556,8 @@
                      {
                          "[value]":  0.487693710118505
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "jan2025_hh/discount_count_rate",
-        "rows":  [
-                     {
-                         "[value]":  0.024037069215175209
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  11.8588
     },
     {
         "status":  "passed",
@@ -474,7 +566,8 @@
                      {
                          "[value]":  3
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.1652
     },
     {
         "status":  "passed",
@@ -483,7 +576,8 @@
                      {
                          "[value]":  17.397435897435898
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.8221
     },
     {
         "status":  "passed",
@@ -492,7 +586,8 @@
                      {
                          "[value]":  219.42231043710973
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.3445
     },
     {
         "status":  "passed",
@@ -501,7 +596,8 @@
                      {
                          "[value]":  27.225196463654225
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.3377000000000008
     },
     {
         "status":  "passed",
@@ -510,7 +606,8 @@
                      {
                          "[value]":  26.267985414767548
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.1752
     },
     {
         "status":  "passed",
@@ -519,7 +616,18 @@
                      {
                          "[value]":  26.778082875686469
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.8824000000000005
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/recipient_samples",
+        "rows":  [
+                     {
+                         "[value]":  40763
+                     }
+                 ],
+        "elapsed_ms":  17.835900000000002
     },
     {
         "status":  "passed",
@@ -528,7 +636,8 @@
                      {
                          "[value]":  20508.3506246227
                      }
-                 ]
+                 ],
+        "elapsed_ms":  16.604200000000002
     },
     {
         "status":  "passed",
@@ -537,7 +646,108 @@
                      {
                          "[value]":  5296
                      }
-                 ]
+                 ],
+        "elapsed_ms":  22.6766
+    },
+    {
+        "status":  "passed",
+        "name":  "jan2025_hh/recipient_coverage",
+        "rows":  [
+                     {
+                         "[value]":  0.96851628852039118
+                     }
+                 ],
+        "elapsed_ms":  22.619200000000003
+    },
+    {
+        "status":  "passed",
+        "name":  "band/package_count",
+        "rows":  [
+                     {
+                         "[value]":  0.0027461555139484685
+                     }
+                 ],
+        "elapsed_ms":  9.0882
+    },
+    {
+        "status":  "passed",
+        "name":  "band/planned_amount_sum",
+        "rows":  [
+                     {
+                         "[value]":  0.4644193036439459
+                     }
+                 ],
+        "elapsed_ms":  11.3518
+    },
+    {
+        "status":  "passed",
+        "name":  "benchmark/all",
+        "rows":  [
+                     {
+                         "[value]":  -8.9712621482674333
+                     }
+                 ],
+        "elapsed_ms":  9.8896
+    },
+    {
+        "status":  "passed",
+        "name":  "benchmark/multi",
+        "rows":  [
+                     {
+                         "[value]":  -8.2900603679261557
+                     }
+                 ],
+        "elapsed_ms":  9.287700000000001
+    },
+    {
+        "status":  "passed",
+        "name":  "quarter/competition",
+        "rows":  [
+                     {
+                         "[value]":  0.56043256997455471
+                     }
+                 ],
+        "elapsed_ms":  5.6652000000000005
+    },
+    {
+        "status":  "passed",
+        "name":  "competition/dim_procurement_method",
+        "rows":  [
+                     {
+                         "[value]":  0.63245461358087363
+                     }
+                 ],
+        "elapsed_ms":  4.7835
+    },
+    {
+        "status":  "passed",
+        "name":  "competition/dim_geography",
+        "rows":  [
+                     {
+                         "[value]":  0.65061077179344806
+                     }
+                 ],
+        "elapsed_ms":  6.9625
+    },
+    {
+        "status":  "passed",
+        "name":  "band/single_selection",
+        "rows":  [
+                     {
+                         "[value]":  1
+                     }
+                 ],
+        "elapsed_ms":  5.7734000000000005
+    },
+    {
+        "status":  "passed",
+        "name":  "status/latest",
+        "rows":  [
+                     {
+                         "[value]":  4870
+                     }
+                 ],
+        "elapsed_ms":  6.9587
     },
     {
         "status":  "passed",
@@ -546,7 +756,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.7445
     },
     {
         "status":  "passed",
@@ -555,7 +766,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.7324
     },
     {
         "status":  "passed",
@@ -564,7 +776,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.9240000000000013
     },
     {
         "status":  "passed",
@@ -573,7 +786,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.0274
     },
     {
         "status":  "passed",
@@ -582,7 +796,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.6416
     },
     {
         "status":  "passed",
@@ -591,7 +806,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  10.6357
     },
     {
         "status":  "passed",
@@ -600,7 +816,8 @@
                      {
                          "[value]":  2278458
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.5786000000000007
     },
     {
         "status":  "passed",
@@ -609,7 +826,8 @@
                      {
                          "[value]":  2278458
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.263300000000001
     },
     {
         "status":  "passed",
@@ -618,7 +836,8 @@
                      {
                          "[value]":  2830625
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.9557
     },
     {
         "status":  "passed",
@@ -627,7 +846,8 @@
                      {
                          "[value]":  2550919
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.4159000000000006
     },
     {
         "status":  "passed",
@@ -636,7 +856,8 @@
                      {
                          "[value]":  2481689
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.4634
     },
     {
         "status":  "passed",
@@ -645,7 +866,8 @@
                      {
                          "[value]":  2481363
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.2321
     },
     {
         "status":  "passed",
@@ -654,7 +876,8 @@
                      {
                          "[value]":  2830625
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.0842000000000009
     },
     {
         "status":  "passed",
@@ -663,7 +886,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.2302
     },
     {
         "status":  "passed",
@@ -672,7 +896,8 @@
                      {
                          "[value]":  0
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.8878
     },
     {
         "status":  "passed",
@@ -681,7 +906,8 @@
                      {
                          "[value]":  427841
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.4627000000000008
     },
     {
         "status":  "passed",
@@ -690,7 +916,8 @@
                      {
                          "[value]":  857736
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.6824
     },
     {
         "status":  "passed",
@@ -699,7 +926,8 @@
                      {
                          "[value]":  263608
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.4993
     },
     {
         "status":  "passed",
@@ -708,16 +936,8 @@
                      {
                          "[value]":  164233
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Lượt có giảm giá",
-        "rows":  [
-                     {
-                         "[value]":  76196
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  6.6015000000000006
     },
     {
         "status":  "passed",
@@ -726,7 +946,8 @@
                      {
                          "[value]":  557218
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.2655
     },
     {
         "status":  "passed",
@@ -735,16 +956,8 @@
                      {
                          "[value]":  1419
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Gói theo trạng thái quan sát",
-        "rows":  [
-                     {
-                         "[value]":  2278458
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  6.9934
     },
     {
         "status":  "passed",
@@ -753,7 +966,8 @@
                      {
                          "[value]":  5305409387853474
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.9418000000000006
     },
     {
         "status":  "passed",
@@ -762,7 +976,8 @@
                      {
                          "[value]":  5305409.3878534744
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.4763
     },
     {
         "status":  "passed",
@@ -771,7 +986,8 @@
                      {
                          "[value]":  2162473397657600.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.2585000000000006
     },
     {
         "status":  "passed",
@@ -780,7 +996,8 @@
                      {
                          "[value]":  2162473.3976576007
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.3513
     },
     {
         "status":  "passed",
@@ -789,7 +1006,8 @@
                      {
                          "[value]":  2310709089758264.5
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.3933
     },
     {
         "status":  "passed",
@@ -798,7 +1016,8 @@
                      {
                          "[value]":  2310709.0897582644
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.4267
     },
     {
         "status":  "passed",
@@ -807,7 +1026,8 @@
                      {
                          "[value]":  2161724901467045.3
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.7794
     },
     {
         "status":  "passed",
@@ -816,7 +1036,8 @@
                      {
                          "[value]":  2161724.9014670453
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.6698
     },
     {
         "status":  "passed",
@@ -825,7 +1046,8 @@
                      {
                          "[value]":  148984188291219.31
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0747
     },
     {
         "status":  "passed",
@@ -834,7 +1056,8 @@
                      {
                          "[value]":  148984.18829121933
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.4606
     },
     {
         "status":  "passed",
@@ -843,7 +1066,8 @@
                      {
                          "[value]":  2.328508749274059
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.0037
     },
     {
         "status":  "passed",
@@ -852,7 +1076,8 @@
                      {
                          "[value]":  0.97286076116097764
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.093
     },
     {
         "status":  "passed",
@@ -861,7 +1086,8 @@
                      {
                          "[value]":  0.064475527859201576
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.4249000000000009
     },
     {
         "status":  "passed",
@@ -870,7 +1096,8 @@
                      {
                          "[value]":  0.87661311547803045
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0268000000000006
     },
     {
         "status":  "passed",
@@ -879,7 +1106,8 @@
                      {
                          "[value]":  2.0048008489134981
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.8461
     },
     {
         "status":  "passed",
@@ -888,7 +1116,8 @@
                      {
                          "[value]":  0.616135433490479
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.4962
     },
     {
         "status":  "passed",
@@ -897,16 +1126,8 @@
                      {
                          "[value]":  0.38386456650952105
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Tỷ lệ lượt có giảm giá",
-        "rows":  [
-                     {
-                         "[value]":  0.088833860302004353
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  4.5359
     },
     {
         "status":  "passed",
@@ -915,7 +1136,58 @@
                      {
                          "[value]":  0.0025465796151595962
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.6858
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Mẫu giá trúng VND",
+        "rows":  [
+                     {
+                         "[value]":  2481689
+                     }
+                 ],
+        "elapsed_ms":  3.7234000000000003
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Tỷ trọng gói VND",
+        "rows":  [
+                     {
+                         "[value]":  1
+                     }
+                 ],
+        "elapsed_ms":  5.0798000000000005
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Tỷ trọng giá kế hoạch VND",
+        "rows":  [
+                     {
+                         "[value]":  1
+                     }
+                 ],
+        "elapsed_ms":  6.7956
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Chênh so với tập chọn · đpt",
+        "rows":  [
+                     {
+                         "[value]":  0
+                     }
+                 ],
+        "elapsed_ms":  4.5541
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Gói theo trạng thái quan sát",
+        "rows":  [
+                     {
+                         "[value]":  4870
+                     }
+                 ],
+        "elapsed_ms":  4.4961
     },
     {
         "status":  "passed",
@@ -924,7 +1196,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.7461
     },
     {
         "status":  "passed",
@@ -933,7 +1206,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.8696
     },
     {
         "status":  "passed",
@@ -942,7 +1216,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.564
     },
     {
         "status":  "passed",
@@ -951,7 +1226,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.903
     },
     {
         "status":  "passed",
@@ -960,7 +1236,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.3459000000000003
     },
     {
         "status":  "passed",
@@ -969,7 +1246,8 @@
                      {
                          "[value]":  null
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.8320000000000003
     },
     {
         "status":  "passed",
@@ -978,7 +1256,8 @@
                      {
                          "[value]":  2098726.4454360874
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.7875000000000005
     },
     {
         "status":  "passed",
@@ -987,16 +1266,18 @@
                      {
                          "[value]":  160481
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.7562000000000006
     },
     {
         "status":  "passed",
-        "name":  "compile/Lượt nhận đơn",
+        "name":  "compile/Mẫu giá người nhận",
         "rows":  [
                      {
-                         "[value]":  2470593
+                         "[value]":  2469418
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.4032
     },
     {
         "status":  "passed",
@@ -1005,7 +1286,8 @@
                      {
                          "[value]":  2162473.3976576
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.3153
     },
     {
         "status":  "passed",
@@ -1014,7 +1296,18 @@
                      {
                          "[value]":  2830625
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.7409000000000003
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Độ phủ giá trị người nhận",
+        "rows":  [
+                     {
+                         "[value]":  0.970521277953956
+                     }
+                 ],
+        "elapsed_ms":  5.0618
     },
     {
         "status":  "passed",
@@ -1023,7 +1316,8 @@
                      {
                          "[value]":  0.059002913261773947
                      }
-                 ]
+                 ],
+        "elapsed_ms":  655.42410000000007
     },
     {
         "status":  "passed",
@@ -1032,7 +1326,8 @@
                      {
                          "[value]":  26191
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0192000000000005
     },
     {
         "status":  "passed",
@@ -1041,7 +1336,8 @@
                      {
                          "[value]":  50
                      }
-                 ]
+                 ],
+        "elapsed_ms":  35.418600000000005
     },
     {
         "status":  "passed",
@@ -1050,7 +1346,8 @@
                      {
                          "[value]":  "Quan sát: 23/09/2022 – 31/12/2025"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.0242
     },
     {
         "status":  "passed",
@@ -1059,7 +1356,8 @@
                      {
                          "[value]":  473211
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.9812000000000003
     },
     {
         "status":  "passed",
@@ -1068,7 +1366,8 @@
                      {
                          "[value]":  431979
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.8625000000000003
     },
     {
         "status":  "passed",
@@ -1077,7 +1376,8 @@
                      {
                          "[value]":  574693
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.1894
     },
     {
         "status":  "passed",
@@ -1086,7 +1386,8 @@
                      {
                          "[value]":  241978
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.705
     },
     {
         "status":  "passed",
@@ -1095,7 +1396,8 @@
                      {
                          "[value]":  156434
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.8079
     },
     {
         "status":  "passed",
@@ -1104,7 +1406,8 @@
                      {
                          "[value]":  1472830
                      }
-                 ]
+                 ],
+        "elapsed_ms":  20.8324
     },
     {
         "status":  "passed",
@@ -1113,7 +1416,8 @@
                      {
                          "[value]":  245782
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.6555
     },
     {
         "status":  "passed",
@@ -1122,7 +1426,18 @@
                      {
                          "[value]":  19773
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.1849
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Luồng có quan sát",
+        "rows":  [
+                     {
+                         "[value]":  "Kế hoạch, Kết quả, Mở thầu, Người nhận, So sánh giá, Thông báo, Thời gian, Trạng thái"
+                     }
+                 ],
+        "elapsed_ms":  7.5485000000000007
     },
     {
         "status":  "passed",
@@ -1131,7 +1446,8 @@
                      {
                          "[value]":  "2.278.458"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.3347000000000007
     },
     {
         "status":  "passed",
@@ -1140,7 +1456,8 @@
                      {
                          "[value]":  "2.278.458"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.6833
     },
     {
         "status":  "passed",
@@ -1149,7 +1466,8 @@
                      {
                          "[value]":  "2.830.625"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.1489
     },
     {
         "status":  "passed",
@@ -1158,7 +1476,8 @@
                      {
                          "[value]":  "2.550.919"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.3347000000000007
     },
     {
         "status":  "passed",
@@ -1167,7 +1486,8 @@
                      {
                          "[value]":  "2.481.689"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.8706000000000005
     },
     {
         "status":  "passed",
@@ -1176,7 +1496,8 @@
                      {
                          "[value]":  "2.481.363"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.6554
     },
     {
         "status":  "passed",
@@ -1185,7 +1506,8 @@
                      {
                          "[value]":  "2.830.625"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.4032
     },
     {
         "status":  "passed",
@@ -1194,7 +1516,8 @@
                      {
                          "[value]":  "0"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.0791
     },
     {
         "status":  "passed",
@@ -1203,7 +1526,8 @@
                      {
                          "[value]":  "0"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.1016
     },
     {
         "status":  "passed",
@@ -1212,7 +1536,8 @@
                      {
                          "[value]":  "427.841"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.3964
     },
     {
         "status":  "passed",
@@ -1221,7 +1546,8 @@
                      {
                          "[value]":  "857.736"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0934
     },
     {
         "status":  "passed",
@@ -1230,7 +1556,8 @@
                      {
                          "[value]":  "263.608"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0124
     },
     {
         "status":  "passed",
@@ -1239,16 +1566,8 @@
                      {
                          "[value]":  "164.233"
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Hiển thị · Lượt có giảm giá",
-        "rows":  [
-                     {
-                         "[value]":  "76.196"
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  4.1684
     },
     {
         "status":  "passed",
@@ -1257,7 +1576,8 @@
                      {
                          "[value]":  "557.218"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.9531
     },
     {
         "status":  "passed",
@@ -1266,16 +1586,8 @@
                      {
                          "[value]":  "1.419"
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Hiển thị · Gói theo trạng thái quan sát",
-        "rows":  [
-                     {
-                         "[value]":  "2.278.458"
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  4.1594
     },
     {
         "status":  "passed",
@@ -1284,7 +1596,8 @@
                      {
                          "[value]":  "5.305.409.387.853.470,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0708
     },
     {
         "status":  "passed",
@@ -1293,7 +1606,8 @@
                      {
                          "[value]":  "5.305.409,39"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.0671
     },
     {
         "status":  "passed",
@@ -1302,7 +1616,8 @@
                      {
                          "[value]":  "2.162.473.397.657.600,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.1419000000000006
     },
     {
         "status":  "passed",
@@ -1311,7 +1626,8 @@
                      {
                          "[value]":  "2.162.473,40"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.6606000000000005
     },
     {
         "status":  "passed",
@@ -1320,7 +1636,8 @@
                      {
                          "[value]":  "2.310.709.089.758.260,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.4401
     },
     {
         "status":  "passed",
@@ -1329,7 +1646,8 @@
                      {
                          "[value]":  "2.310.709,09"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.0523000000000007
     },
     {
         "status":  "passed",
@@ -1338,7 +1656,8 @@
                      {
                          "[value]":  "2.161.724.901.467.050,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.512
     },
     {
         "status":  "passed",
@@ -1347,7 +1666,8 @@
                      {
                          "[value]":  "2.161.724,90"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.4652000000000012
     },
     {
         "status":  "passed",
@@ -1356,7 +1676,8 @@
                      {
                          "[value]":  "148.984.188.291.219,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  90.827800000000011
     },
     {
         "status":  "passed",
@@ -1365,7 +1686,8 @@
                      {
                          "[value]":  "148.984,19"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.538
     },
     {
         "status":  "passed",
@@ -1374,7 +1696,8 @@
                      {
                          "[value]":  "2,33"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  11.2718
     },
     {
         "status":  "passed",
@@ -1383,7 +1706,8 @@
                      {
                          "[value]":  "97,29%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.057
     },
     {
         "status":  "passed",
@@ -1392,7 +1716,8 @@
                      {
                          "[value]":  "6,45%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  11.1592
     },
     {
         "status":  "passed",
@@ -1401,7 +1726,8 @@
                      {
                          "[value]":  "87,66%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  6.1609000000000007
     },
     {
         "status":  "passed",
@@ -1410,7 +1736,8 @@
                      {
                          "[value]":  "2,00"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.0799
     },
     {
         "status":  "passed",
@@ -1419,7 +1746,8 @@
                      {
                          "[value]":  "61,61%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  7.4625
     },
     {
         "status":  "passed",
@@ -1428,16 +1756,8 @@
                      {
                          "[value]":  "38,39%"
                      }
-                 ]
-    },
-    {
-        "status":  "passed",
-        "name":  "compile/Hiển thị · Tỷ lệ lượt có giảm giá",
-        "rows":  [
-                     {
-                         "[value]":  "8,88%"
-                     }
-                 ]
+                 ],
+        "elapsed_ms":  5.9998000000000005
     },
     {
         "status":  "passed",
@@ -1446,7 +1766,58 @@
                      {
                          "[value]":  "0,25%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.3875
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Mẫu giá trúng VND",
+        "rows":  [
+                     {
+                         "[value]":  "2.481.689"
+                     }
+                 ],
+        "elapsed_ms":  5.5967
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ trọng gói VND",
+        "rows":  [
+                     {
+                         "[value]":  "100,00%"
+                     }
+                 ],
+        "elapsed_ms":  6.617
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Tỷ trọng giá kế hoạch VND",
+        "rows":  [
+                     {
+                         "[value]":  "100,00%"
+                     }
+                 ],
+        "elapsed_ms":  12.2864
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Chênh so với tập chọn · đpt",
+        "rows":  [
+                     {
+                         "[value]":  "0,0"
+                     }
+                 ],
+        "elapsed_ms":  7.6041000000000007
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Gói theo trạng thái quan sát",
+        "rows":  [
+                     {
+                         "[value]":  "4.870"
+                     }
+                 ],
+        "elapsed_ms":  7.3492000000000006
     },
     {
         "status":  "passed",
@@ -1455,7 +1826,8 @@
                      {
                          "[value]":  "—"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.8206000000000007
     },
     {
         "status":  "passed",
@@ -1464,7 +1836,8 @@
                      {
                          "[value]":  "—"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.7757000000000005
     },
     {
         "status":  "passed",
@@ -1473,7 +1846,8 @@
                      {
                          "[value]":  "—"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.631
     },
     {
         "status":  "passed",
@@ -1482,7 +1856,8 @@
                      {
                          "[value]":  "—"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.1547
     },
     {
         "status":  "passed",
@@ -1491,7 +1866,8 @@
                      {
                          "[value]":  "—"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.2396
     },
     {
         "status":  "passed",
@@ -1500,7 +1876,8 @@
                      {
                          "[value]":  "2.098.726,45"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.636800000000001
     },
     {
         "status":  "passed",
@@ -1509,16 +1886,18 @@
                      {
                          "[value]":  "160.481"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  9.6214000000000013
     },
     {
         "status":  "passed",
-        "name":  "compile/Hiển thị · Lượt nhận đơn",
+        "name":  "compile/Hiển thị · Mẫu giá người nhận",
         "rows":  [
                      {
-                         "[value]":  "2.470.593"
+                         "[value]":  "2.469.418"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  11.294400000000001
     },
     {
         "status":  "passed",
@@ -1527,7 +1906,8 @@
                      {
                          "[value]":  "2.162.473,40"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  12.8964
     },
     {
         "status":  "passed",
@@ -1536,7 +1916,18 @@
                      {
                          "[value]":  "2.830.625"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  13.0249
+    },
+    {
+        "status":  "passed",
+        "name":  "compile/Hiển thị · Độ phủ giá trị người nhận",
+        "rows":  [
+                     {
+                         "[value]":  "97,05%"
+                     }
+                 ],
+        "elapsed_ms":  16.546200000000002
     },
     {
         "status":  "passed",
@@ -1545,7 +1936,8 @@
                      {
                          "[value]":  "5,90%"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  806.7758
     },
     {
         "status":  "passed",
@@ -1554,7 +1946,8 @@
                      {
                          "[value]":  "26.191"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  5.8555
     },
     {
         "status":  "passed",
@@ -1563,7 +1956,8 @@
                      {
                          "[value]":  "50"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  40.1393
     },
     {
         "status":  "passed",
@@ -1572,7 +1966,8 @@
                      {
                          "[value]":  "473.211"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.0097
     },
     {
         "status":  "passed",
@@ -1581,7 +1976,8 @@
                      {
                          "[value]":  "431.979"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.4662000000000006
     },
     {
         "status":  "passed",
@@ -1590,7 +1986,8 @@
                      {
                          "[value]":  "574.693"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.8552000000000004
     },
     {
         "status":  "passed",
@@ -1599,7 +1996,8 @@
                      {
                          "[value]":  "241.978"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.2866
     },
     {
         "status":  "passed",
@@ -1608,7 +2006,8 @@
                      {
                          "[value]":  "156.434"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.7964
     },
     {
         "status":  "passed",
@@ -1617,7 +2016,8 @@
                      {
                          "[value]":  "1.472.830"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.4495
     },
     {
         "status":  "passed",
@@ -1626,7 +2026,8 @@
                      {
                          "[value]":  "245.782"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.857
     },
     {
         "status":  "passed",
@@ -1635,7 +2036,8 @@
                      {
                          "[value]":  "19.773"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.2423
     },
     {
         "status":  "passed",
@@ -1644,16 +2046,18 @@
                      {
                          "[value]":  4
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.1779
     },
     {
         "status":  "passed",
         "name":  "rowcount/dim_date",
         "rows":  [
                      {
-                         "[value]":  1461
+                         "[value]":  2276
                      }
-                 ]
+                 ],
+        "elapsed_ms":  8.3227000000000011
     },
     {
         "status":  "passed",
@@ -1662,7 +2066,8 @@
                      {
                          "[value]":  7
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.3556000000000004
     },
     {
         "status":  "passed",
@@ -1671,7 +2076,8 @@
                      {
                          "[value]":  65
                      }
-                 ]
+                 ],
+        "elapsed_ms":  2.8486000000000002
     },
     {
         "status":  "passed",
@@ -1680,7 +2086,8 @@
                      {
                          "[value]":  390948
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.1997
     },
     {
         "status":  "passed",
@@ -1689,7 +2096,8 @@
                      {
                          "[value]":  389
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.6266000000000003
     },
     {
         "status":  "passed",
@@ -1698,7 +2106,8 @@
                      {
                          "[value]":  4
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.1083
     },
     {
         "status":  "passed",
@@ -1707,7 +2116,8 @@
                      {
                          "[value]":  7
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.8876000000000004
     },
     {
         "status":  "passed",
@@ -1716,7 +2126,8 @@
                      {
                          "[value]":  7
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.0019
     },
     {
         "status":  "passed",
@@ -1725,7 +2136,8 @@
                      {
                          "[value]":  431979
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.0995
     },
     {
         "status":  "passed",
@@ -1734,7 +2146,8 @@
                      {
                          "[value]":  241978
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.9438
     },
     {
         "status":  "passed",
@@ -1743,7 +2156,8 @@
                      {
                          "[value]":  473211
                      }
-                 ]
+                 ],
+        "elapsed_ms":  3.8378
     },
     {
         "status":  "passed",
@@ -1752,7 +2166,8 @@
                      {
                          "[value]":  156434
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.2243
     },
     {
         "status":  "passed",
@@ -1761,7 +2176,8 @@
                      {
                          "[value]":  245782
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.2167
     },
     {
         "status":  "passed",
@@ -1770,7 +2186,8 @@
                      {
                          "[value]":  574693
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.2375
     },
     {
         "status":  "passed",
@@ -1779,7 +2196,8 @@
                      {
                          "[value]":  19773
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.0435
     },
     {
         "status":  "passed",
@@ -1788,25 +2206,28 @@
                      {
                          "[value]":  1472830
                      }
-                 ]
+                 ],
+        "elapsed_ms":  4.4372
     },
     {
         "status":  "passed",
         "name":  "top10/2023",
         "rows":  [
                      {
-                         "[value]":  0.063582436639779541
+                         "[value]":  0.063582436639779527
                      }
-                 ]
+                 ],
+        "elapsed_ms":  316.1825
     },
     {
         "status":  "passed",
         "name":  "top10/2025",
         "rows":  [
                      {
-                         "[value]":  0.077498522378867785
+                         "[value]":  0.0774985223788678
                      }
-                 ]
+                 ],
+        "elapsed_ms":  296.6754
     },
     {
         "status":  "passed",
@@ -1814,45 +2235,46 @@
         "rows":  [
                      {
                          "[amount]":  426990052774613.06,
-                         "dim_geography[province_name]":  "Thành phố Hà Nội"
+                         "dim_geography[province_display]":  "Thành phố Hà Nội · v1 · HNI"
                      },
                      {
                          "[amount]":  252509727049199.69,
-                         "dim_geography[province_name]":  "Thành phố Hồ Chí Minh"
-                     },
-                     {
-                         "[amount]":  117237124458307.64,
-                         "dim_geography[province_name]":  "Đa địa bàn chưa phân bổ"
-                     },
-                     {
-                         "[amount]":  93937916515168.047,
-                         "dim_geography[province_name]":  "Chưa xác định"
+                         "dim_geography[province_display]":  "Thành phố Hồ Chí Minh · v1 · HCM"
                      },
                      {
                          "[amount]":  65682892775040.563,
-                         "dim_geography[province_name]":  "Tỉnh Quảng Ninh"
+                         "dim_geography[province_display]":  "Tỉnh Quảng Ninh · v1 · QNH"
                      },
                      {
                          "[amount]":  56213502051728.414,
-                         "dim_geography[province_name]":  "Tỉnh Thanh Hóa"
+                         "dim_geography[province_display]":  "Tỉnh Thanh Hóa · v1 · THA"
                      },
                      {
                          "[amount]":  53644682426054.852,
-                         "dim_geography[province_name]":  "Thành phố Hải Phòng"
+                         "dim_geography[province_display]":  "Thành phố Hải Phòng · v1 · HPG"
                      },
                      {
                          "[amount]":  51960992207278.734,
-                         "dim_geography[province_name]":  "Tỉnh Nghệ An"
+                         "dim_geography[province_display]":  "Tỉnh Nghệ An · v1 · NAN"
                      },
                      {
                          "[amount]":  47336399364680.445,
-                         "dim_geography[province_name]":  "Tỉnh Hưng Yên"
+                         "dim_geography[province_display]":  "Tỉnh Hưng Yên · v1 · HYN"
                      },
                      {
                          "[amount]":  43581763524298.664,
-                         "dim_geography[province_name]":  "Tỉnh Đồng Nai"
+                         "dim_geography[province_display]":  "Tỉnh Đồng Nai · v1 · DNI"
+                     },
+                     {
+                         "[amount]":  35807145482182.172,
+                         "dim_geography[province_display]":  "Tỉnh Ninh Bình · v1 · NBH"
+                     },
+                     {
+                         "[amount]":  35378169321925.359,
+                         "dim_geography[province_display]":  "Tỉnh Bà Rịa - Vũng Tàu · v1 · VTU"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  16.9521
     },
     {
         "status":  "passed",
@@ -1860,44 +2282,55 @@
         "rows":  [
                      {
                          "[amount]":  25231.461118587751,
+                         "dim_party[party_key]":  "PARTY:vn0103053042",
                          "dim_party[party_display]":  "CÔNG TY TNHH MỘT THÀNH VIÊN DƯỢC LIỆU TW2 [PARTY:vn0103053042]"
                      },
                      {
                          "[amount]":  24229.188238825,
+                         "dim_party[party_key]":  "PARTY:vn0302597576",
                          "dim_party[party_display]":  "CÔNG TY CỔ PHẦN DƯỢC LIỆU TRUNG ƯƠNG 2 [PARTY:vn0302597576]"
                      },
                      {
                          "[amount]":  11789.17567535038,
+                         "dim_party[party_key]":  "PARTY:vn0100109699",
                          "dim_party[party_display]":  "CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ HÀ NỘI [PARTY:vn0100109699]"
                      },
                      {
                          "[amount]":  11009.838721192449,
+                         "dim_party[party_key]":  "PARTY:vn0301140748",
                          "dim_party[party_display]":  "CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC [PARTY:vn0301140748]"
                      },
                      {
                          "[amount]":  9973.6157003501521,
+                         "dim_party[party_key]":  "PARTY:vn0302246183",
                          "dim_party[party_display]":  "CÔNG TY CỔ PHẦN PHÁT TRIỂN CÔNG NGHỆ VIỄN THÔNG TIN HỌC SUN VIỆT [PARTY:vn0302246183]"
                      },
                      {
                          "[amount]":  9527.712890344,
+                         "dim_party[party_key]":  "PARTY:vn0316417470",
                          "dim_party[party_display]":  "CÔNG TY TNHH DƯỢC PHẨM GIGAMED [PARTY:vn0316417470]"
                      },
                      {
                          "[amount]":  9141.3568939356119,
+                         "dim_party[party_key]":  "PARTY:vn0100283055",
                          "dim_party[party_display]":  "TỔNG CÔNG TY KINH TẾ KỸ THUẬT CÔNG NGHIỆP QUỐC PHÒNG [PARTY:vn0100283055]"
                      },
                      {
                          "[amount]":  8569.0599164210125,
+                         "dim_party[party_key]":  "PARTY:vn0100512273",
                          "dim_party[party_display]":  "TỔNG CÔNG TY XÂY DỰNG TRƯỜNG SƠN [PARTY:vn0100512273]"
                      },
                      {
                          "[amount]":  7568.083479250241,
+                         "dim_party[party_key]":  "PARTY:vn0101268476",
                          "dim_party[party_display]":  "CÔNG TY TNHH THIẾT BỊ MINH TÂM [PARTY:vn0101268476]"
                      },
                      {
                          "[amount]":  6791.481786,
+                         "dim_party[party_key]":  "PARTY:vn2700113605",
                          "dim_party[party_display]":  "Doanh nghiệp tư nhân xây dựng Xuân Trường [PARTY:vn2700113605]"
                      }
-                 ]
+                 ],
+        "elapsed_ms":  1215.2329
     }
 ]

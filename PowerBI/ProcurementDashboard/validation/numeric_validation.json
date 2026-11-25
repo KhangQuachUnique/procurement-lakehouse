@@ -1,7 +1,7 @@
 {
   "status": "passed",
-  "queries_executed": 203,
-  "independently_compared": 85,
+  "queries_executed": 225,
+  "independently_compared": 100,
   "engine_failures": [],
   "comparisons": [
     {
@@ -27,6 +27,14 @@
       "actual": 2162473397657600.5,
       "difference": "0.178900",
       "tolerance": "2162.473397657600321100"
+    },
+    {
+      "name": "all/priced_awards_vnd",
+      "status": "passed",
+      "expected": "2481689",
+      "actual": 2481689,
+      "difference": "0",
+      "tolerance": "0"
     },
     {
       "name": "all/award_scopes",
@@ -93,14 +101,6 @@
       "tolerance": "1E-9"
     },
     {
-      "name": "all/discount_count_rate",
-      "status": "passed",
-      "expected": "0.08883386030200435",
-      "actual": 0.08883386030200435,
-      "difference": "0E-17",
-      "tolerance": "1E-9"
-    },
-    {
       "name": "all/technical_issues",
       "status": "passed",
       "expected": "26191",
@@ -149,6 +149,14 @@
       "tolerance": "1E-9"
     },
     {
+      "name": "all/recipient_samples",
+      "status": "passed",
+      "expected": "2469418",
+      "actual": 2469418,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
       "name": "all/supplier",
       "status": "passed",
       "expected": "2098726.4454360884",
@@ -163,6 +171,14 @@
       "actual": 160481,
       "difference": "0",
       "tolerance": "0"
+    },
+    {
+      "name": "all/recipient_coverage",
+      "status": "passed",
+      "expected": "0.9705212779539565",
+      "actual": 0.970521277953956,
+      "difference": "5E-16",
+      "tolerance": "1E-9"
     },
     {
       "name": "year2025/planned",
@@ -187,6 +203,14 @@
       "actual": 823331435460804.5,
       "difference": "0.086100",
       "tolerance": "823.331435460804586100"
+    },
+    {
+      "name": "year2025/priced_awards_vnd",
+      "status": "passed",
+      "expected": "938519",
+      "actual": 938519,
+      "difference": "0",
+      "tolerance": "0"
     },
     {
       "name": "year2025/award_scopes",
@@ -253,14 +277,6 @@
       "tolerance": "1E-9"
     },
     {
-      "name": "year2025/discount_count_rate",
-      "status": "passed",
-      "expected": "0.08488261974779444",
-      "actual": 0.08488261974779444,
-      "difference": "0E-17",
-      "tolerance": "1E-9"
-    },
-    {
       "name": "year2025/technical_issues",
       "status": "passed",
       "expected": "5169",
@@ -309,6 +325,14 @@
       "tolerance": "1E-9"
     },
     {
+      "name": "year2025/recipient_samples",
+      "status": "passed",
+      "expected": "933851",
+      "actual": 933851,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
       "name": "year2025/supplier",
       "status": "passed",
       "expected": "776769.1550082244",
@@ -323,6 +347,14 @@
       "actual": 88231,
       "difference": "0",
       "tolerance": "0"
+    },
+    {
+      "name": "year2025/recipient_coverage",
+      "status": "passed",
+      "expected": "0.9434464925701275",
+      "actual": 0.9434464925701272,
+      "difference": "3E-16",
+      "tolerance": "1E-9"
     },
     {
       "name": "jan2025_hh/planned",
@@ -347,6 +379,14 @@
       "actual": 21175018807327.9,
       "difference": "0.001000",
       "tolerance": "21.175018807327901000"
+    },
+    {
+      "name": "jan2025_hh/priced_awards_vnd",
+      "status": "passed",
+      "expected": "41043",
+      "actual": 41043,
+      "difference": "0",
+      "tolerance": "0"
     },
     {
       "name": "jan2025_hh/award_scopes",
@@ -413,14 +453,6 @@
       "tolerance": "1E-9"
     },
     {
-      "name": "jan2025_hh/discount_count_rate",
-      "status": "passed",
-      "expected": "0.02403706921517521",
-      "actual": 0.02403706921517521,
-      "difference": "0E-17",
-      "tolerance": "1E-9"
-    },
-    {
       "name": "jan2025_hh/technical_issues",
       "status": "passed",
       "expected": "3",
@@ -469,6 +501,14 @@
       "tolerance": "1E-9"
     },
     {
+      "name": "jan2025_hh/recipient_samples",
+      "status": "passed",
+      "expected": "40763",
+      "actual": 40763,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
       "name": "jan2025_hh/supplier",
       "status": "passed",
       "expected": "20508.3506246227",
@@ -481,6 +521,86 @@
       "status": "passed",
       "expected": "5296",
       "actual": 5296,
+      "difference": "0",
+      "tolerance": "0"
+    },
+    {
+      "name": "jan2025_hh/recipient_coverage",
+      "status": "passed",
+      "expected": "0.9685162885203912",
+      "actual": 0.9685162885203912,
+      "difference": "0E-16",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "band/package_count",
+      "status": "passed",
+      "expected": "0.0027461555139484685",
+      "actual": 0.0027461555139484685,
+      "difference": "0E-19",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "band/planned_amount_sum",
+      "status": "passed",
+      "expected": "0.46441930364394607",
+      "actual": 0.4644193036439459,
+      "difference": "1.7E-16",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "benchmark/all",
+      "status": "passed",
+      "expected": "-8.971262148267433",
+      "actual": -8.971262148267433,
+      "difference": "0E-15",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "benchmark/multi",
+      "status": "passed",
+      "expected": "-8.290060367926156",
+      "actual": -8.290060367926156,
+      "difference": "0E-15",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "quarter/competition",
+      "status": "passed",
+      "expected": "0.5604325699745547",
+      "actual": 0.5604325699745547,
+      "difference": "0E-16",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "competition/dim_procurement_method",
+      "status": "passed",
+      "expected": "0.6324546135808736",
+      "actual": 0.6324546135808736,
+      "difference": "0E-16",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "competition/dim_geography",
+      "status": "passed",
+      "expected": "0.6506107717934481",
+      "actual": 0.6506107717934481,
+      "difference": "0E-16",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "band/single_selection",
+      "status": "passed",
+      "expected": "1.0",
+      "actual": 1,
+      "difference": "0.0",
+      "tolerance": "1E-9"
+    },
+    {
+      "name": "status/latest",
+      "status": "passed",
+      "expected": "4870",
+      "actual": 4870,
       "difference": "0",
       "tolerance": "0"
     },
@@ -543,8 +663,8 @@
     {
       "name": "rowcount/dim_date",
       "status": "passed",
-      "expected": "1461",
-      "actual": 1461,
+      "expected": "2276",
+      "actual": 2276,
       "difference": "0",
       "tolerance": "0"
     },
@@ -671,17 +791,17 @@
     {
       "name": "top10/2023",
       "status": "passed",
-      "expected": "0.06358243663977978",
-      "actual": 0.06358243663977954,
-      "difference": "2.4E-16",
+      "expected": "0.06358243663977975",
+      "actual": 0.06358243663977953,
+      "difference": "2.2E-16",
       "tolerance": "1E-9"
     },
     {
       "name": "top10/2025",
       "status": "passed",
-      "expected": "0.07749852237886808",
-      "actual": 0.07749852237886778,
-      "difference": "3.0E-16",
+      "expected": "0.07749852237886813",
+      "actual": 0.0774985223788678,
+      "difference": "3.3E-16",
       "tolerance": "1E-9"
     }
   ]

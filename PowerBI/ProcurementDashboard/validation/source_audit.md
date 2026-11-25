@@ -22,6 +22,6 @@ Chi tiết schema, kiểu, grain, PK/FK, currency, metric, allocation state, phi
 | `fact_status_daily` | 19,773 | 2022-09-16 → 2025-12-31 |
 | `fact_supplier_daily` | 1,472,830 | 2022-09-16 → 2025-12-31 |
 
-Có đủ 17 bảng, tổng 4,010,387 dòng. Không phát hiện FK mồ côi hoặc FK ngày null trong các fact mới. PK và grain duy nhất, không null. Lịch model lọc về 1.461 ngày 2022–2025; nguồn lịch gốc giữ nguyên.
+Có đủ 17 bảng, tổng 4,010,387 dòng. Không phát hiện FK mồ côi hoặc FK ngày null trong các fact mới. PK và grain duy nhất, không null. Phạm vi lịch được kiểm tra trực tiếp từ dim_date.
 
 Parquet không có manifest/release ID/thời điểm xuất đáng tin cậy để chứng minh một snapshot chung. Thời gian sửa file không được dùng làm bằng chứng thời điểm xuất. Hash cuối khớp hash khảo sát: [source_integrity.json](source_integrity.json).

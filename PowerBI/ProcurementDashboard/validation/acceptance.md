@@ -1,54 +1,35 @@
-# Bàn giao dashboard Gold V3
+# Nghiệm thu Procurement Analytics V4 · 25/11/2026
 
-Ngày kiểm tra: **15/11/2026**. Đã sửa trực tiếp dự án `ProcurementDashboard.pbip` hiện có, thay bốn trang cũ bằng **tám trang dùng nguồn mới**, mở và refresh bằng Power BI Desktop 2.154.956.0. Không publish lên dịch vụ ngoài.
+| Hạng mục | Kết quả | Bằng chứng |
+|---|---|---|
+| Snapshot hiện tại | 17 bảng khớp tên cột Gold, profile toàn bộ PK, grain, FK. Không có lỗi ở các phép kiểm tra này. | [Source profile](source_profile.json), [insight và SQL](redesign_insights.json) |
+| Tái sinh, schema và binding | Sinh hai lần liên tiếp, SHA-256 của cả 128 file định nghĩa trùng nhau. 110 file qua kiểm tra, 96 visual trên 6 trang, không có lỗi geometry hoặc binding được phát hiện. | [Static](static_validation.json), [inventory](report_inventory.json) |
+| Semantic model | Parser TOM của Desktop đọc được 18 bảng, 37 relationships. Đã refresh toàn bộ dữ liệu và mở lại PBIP. Bản cuối đã refresh lại toàn bộ. Engine xác nhận 18 partition Ready. | [TMDL](tmdl_validation.json), [engine](engine_state.json) |
+| Giá trị | 225 truy vấn engine, 100 phép đối chiếu số độc lập với SQL, gồm cả BLANK, ngoại tệ, một/nhiều metric, quý, ngành, phương thức, địa phương, band và mẫu số benchmark. | [Numeric](numeric_validation.json) |
+| Xếp hạng | SQL và DAX trùng khóa hiển thị, giá trị và thứ tự cho hai bảng Top 10 kiểm thử. Xếp hạng người nhận dùng party_key. | [Groups](group_validation.json) |
+| Tương tác Desktop | Toàn kỳ, lọc ngành, đồng bộ ngành, chọn metric giờ, tháng trống, reset. | [Interaction](interaction_validation.json) |
+| Giao diện | Đã xem ảnh 6 trang. Phát hiện và sửa lỗi tỷ trọng bằng 100% do cột sort của band. Ảnh sau sửa hiển thị 0,27% số gói và 46,44% giá trị ở nhóm từ 100 tỷ. | [Danh sách ảnh V4](page_capture_validation.json), [ảnh tổng quan](screenshots/final-overview.png) |
 
-## Các trang đã triển khai
+## Hiệu năng quan sát được
 
-1. [Tổng quan](screenshots/final-overview.png).
-2. [Nhu cầu thị trường](screenshots/final-demand.png).
-3. [Kết quả lựa chọn](screenshots/final-awards.png).
-4. [Chênh lệch mô tả](screenshots/final-savings.png).
-5. [Cạnh tranh cơ bản](screenshots/final-competition.png).
-6. [Thời gian quy trình](screenshots/final-duration.png).
-7. [Đơn vị nhận thầu](screenshots/final-suppliers.png).
-8. [Chất lượng dữ liệu](screenshots/final-quality.png).
+Performance Analyzer ghi thời gian thực tế trên cùng máy với cache import. Baseline dùng report và model V3 tại Git HEAD, tại cùng đường dẫn PBIP. V3 mở năm 2025 và V4 mở toàn kỳ. Số đo gồm cả thay đổi phạm vi mặc định và thiết kế. Chỉ đối chiếu trang có visual thực sự xuất hiện trong trace. [Trace V3](performance_v3.json) · [Trace V4](performance_v4.json)
 
-Model có 17 bảng nguồn, `_Measures` với 116 measures gồm measures số và measures hiển thị, 37 quan hệ một chiều. Lịch model giới hạn 1.461 ngày 2022–2025; không sửa Parquet. Mặc định chọn 12 tháng năm 2025 qua slicer, không khóa năm bằng page filter. Tháng/lĩnh vực cấu hình đồng bộ; các slicer khác chỉ xuất hiện ở trang hỗ trợ. Tắt lọc chéo từ biểu đồ để không suy diễn quan hệ giữa các fact.
+| Trang | Thao tác | Visual V4 | V3 (ms) | V4 (ms) | Visual V4 có lifecycle dài nhất |
+|---|---|---:|---:|---:|---|
+| overview | Refresh | 16 | 387 | 504 | Giá trị trúng theo lĩnh vực · tỷ VND |
+| overview | Refresh | 16 | 387 | 453 | Địa phương xác định theo giá trúng · tỷ VND |
+| competition | ChangePage | 16 | — | 591 | Tỷ lệ một nhà thầu theo tháng |
+| savings | ChangePage | 17 | — | 812 | Dự toán và giá trúng cùng mẫu · tỷ VND |
+| duration | ChangePage | 17 | 751 | 1024 | Bình quân theo tháng · đơn vị trên card |
+| suppliers | ChangePage | 15 | 847 | 2041 | Tỷ trọng Top 10 người nhận |
+| quality | ChangePage | 15 | 685 | 965 | Trạng thái tại ngày cuối có bản ghi trong tập chọn |
+| overview | ChangePage | 16 | 788 | 1099 | Hai luồng công bố độc lập theo tháng · tỷ VND |
+| quality | ChangePage | 15 | 685 | 1271 | Trạng thái tại ngày cuối có bản ghi trong tập chọn |
+| suppliers | ChangePage | 15 | 847 | 1176 | Tỷ trọng Top 10 trong từng lĩnh vực |
+| overview | ChangePage | 16 | 788 | 1074 | Hai luồng công bố độc lập theo tháng · tỷ VND |
+| overview | ChangeSlicer | 16 | — | 836 | Hai luồng công bố độc lập theo tháng · tỷ VND |
+| overview | ChangeSlicer | 16 | — | 666 | Địa phương xác định theo giá trúng · tỷ VND |
 
-## Bằng chứng kiểm tra
+Đơn vị ms đo từ thao tác tới visual cuối hoàn thành lifecycle đầu tiên của chính visual đó. Sự kiện mở lại dropdown sau khi trang đã render có cùng visualId và được loại khỏi phép đo tải trang. Dấu gạch ngang là không có phép đo tương ứng. Đây là một lượt trên mỗi thao tác, chưa có phân phối cold-cache hoặc phép thử tải đồng thời. Truy vấn CR10 chỉ xếp các khóa xuất hiện trong fact đủ điều kiện. Mỗi truy vấn engine có elapsed_ms riêng trong [DAX results](dax_results.json). Chưa kiểm tra hover từng tooltip và mọi tổ hợp slicer.
 
-| Kiểm tra | Kết quả |
-|---|---|
-| Nguồn | 17 bảng, PK/grain/FK không có lỗi cấu trúc; xem [source_profile.json](source_profile.json) |
-| Toàn vẹn Parquet | 17 hash không đổi so với lúc khảo sát; [source_integrity.json](source_integrity.json) |
-| Static | 8 trang, 131 visual containers; JSON schema, bindings và bố cục đạt; [static_validation.json](static_validation.json) |
-| TMDL | Parser thật Desktop đọc model thành công; [tmdl_validation.json](tmdl_validation.json) |
-| Refresh và mở lại | 18 partition Ready; [engine_state.json](engine_state.json) |
-| DAX | 203 truy vấn không lỗi; 85 kết quả scalar/rowcount khớp SQL theo ngưỡng trong đặc tả; [numeric_validation.json](numeric_validation.json) |
-| Top 10 | Danh tính và giá trị Top 10 địa phương/người nhận khớp SQL; [group_validation.json](group_validation.json) |
-| Giao diện | Đã mở, chụp và xem cả 8 trang; UI Automation xác nhận tab được chọn; [page_capture_validation.json](page_capture_validation.json) |
-| Slicer và đồng bộ | Sáu kiểm tra giao diện khớp SQL, mặc định đã khôi phục; [interaction_validation.json](interaction_validation.json) |
-| Tổng hợp | [completion_audit.json](completion_audit.json) |
-
-Đối chiếu số học gồm toàn kỳ, năm 2025, tháng 01/2025–Hàng hóa, năm 2023 cho Top 10, năm metric thời gian và các trường hợp BLANK, nhiều/không có metric, ngoại tệ giao với measure VND. Các kiểm tra này không thay thế việc thử mọi tổ hợp slicer trên giao diện.
-
-## Những phần đã chủ động loại khỏi bản này
-
-- Tiết kiệm xác minh và tiền hợp đồng: nguồn mới không có mẫu, không dựng KPI bằng 0 để thay cho thiếu dữ liệu.
-- KPI kỹ thuật và tiền cạnh tranh: có bất thường tổng hợp và thiếu thông tin tiền tệ. Trang chất lượng giải thích giới hạn.
-- Metric kết quả đầy đủ trùng dữ liệu và độ lệch kế hoạch chưa rõ dấu: không đưa vào bộ chọn thời gian. Chỉ dùng năm metric còn lại.
-- Không chia đều tiền liên danh, không tra cứu hồ sơ gói cá thể và không diễn giải trạng thái quan sát thành tiến độ hợp đồng.
-
-## Giới hạn kiểm chứng
-
-- Đã kiểm tra trực tiếp sáu tình huống: tổng toàn kỳ, lọc Hàng hóa, giữ lĩnh vực khi chuyển sang trang cạnh tranh, đổi metric giờ, tháng 01/2022 không có dữ liệu, khôi phục đủ 12 tháng năm 2025. Card hiển thị khớp SQL; [interaction_validation.json](interaction_validation.json). Đây là các ca đại diện, chưa kiểm thử mọi tổ hợp slicer.
-- Tiêu đề cột nghiệp vụ và nhãn trạng thái phân bổ đã chuyển sang tiếng Việt. Card dùng vi-VN; trục/bảng native trong Desktop hiện vẫn theo locale tiếng Anh. Mã họ thông báo và mã phương thức chưa có giải nghĩa đáng tin cậy được giữ nguyên theo nguồn. Không khẳng định toàn bộ giá trị nguồn đã Việt hóa.
-
-- Chưa kiểm tra mọi tooltip, tên đơn vị dài và cỡ màn hình. Một số bảng cuộn để xem hết dữ liệu; Top 10 người nhận hiển thị đủ trong khung đã xem.
-- Model dùng double để phân tích, Parquet giữ DECIMAL gốc. Nguồn chưa có release ID/thời điểm xuất đủ chứng minh snapshot chung, và các ngày có bản ghi không chứng minh thu thập đầy đủ.
-
-Nội dung/bằng chứng bản cũ đã được dọn khỏi thư mục nghiệm thu hiện hành. Bản sao trung gian trước khi thay đổi cũng đã được dọn sau khi kiểm tra bản mới. Dữ liệu mới không bị xóa hoặc thay đổi.
-
-## Dọn thư mục PowerBI
-
-Đã xóa 38 mục không còn dùng (khoảng 13,25 MB): tám script khảo sát/fixture cũ, cache Python, fixture nhiều part, ảnh mở/refresh trung gian, tài liệu nghiên cứu không được bộ kiểm tra tham chiếu và bản sao PBIP trước lần thay mới. Giữ dữ liệu nguồn, dự án hiện tại, công cụ sinh/kiểm tra đang dùng, JSON schema chính thức và ảnh nghiệm thu cuối. Cache dữ liệu Desktop hiện tại được giữ để mở nhanh trên máy này; không theo Git.
+[Danh sách ảnh nghiệm thu sáu trang V4](page_capture_validation.json).

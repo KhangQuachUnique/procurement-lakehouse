@@ -71,7 +71,7 @@ def main():
         actual={v['visual']['query']['queryState']['Values']['projections'][0]['queryRef'] for v in slicers}
         if expected-actual: errors.append(f'{page}: missing required slicers {expected-actual}')
         if any(r['source'] not in names or r['target'] not in names for r in pd['visualInteractions']): errors.append(f'{page}: missing interaction target')
-        unsupported = ['T? l? ??t k? thu?t', 'H? s? ??t k? thu?t', 'total_bid_amount', 'total_final_bid_amount', 'verified_saving_sum', 'contract_amount_sum']
+        unsupported = ['Tỷ lệ lượt có giảm giá', 'Lượt có giảm giá', 'Hồ sơ đạt kỹ thuật', 'total_bid_amount', 'total_final_bid_amount', 'verified_saving_sum', 'contract_amount_sum']
         for v in docs:
             if v['visual']['visualType'] == 'textbox':
                 continue
@@ -79,9 +79,7 @@ def main():
             for term in unsupported:
                 if term in data:
                     errors.append(f'{page}: unsupported source metric {term}')
-        if not any(v['visual'].get('objects',{}).get('general') for v in slicers if 'dim_date.year_month' in json.dumps(v)):
-            errors.append(f'{page}: missing default month selection')
-    expected_pages=['overview','demand','awards','savings','competition','duration','suppliers','quality']
+    expected_pages=['overview','competition','savings','duration','suppliers','quality']
     if order != expected_pages: errors.append(f'Unexpected pages: {order}')
     outcome={'status':'passed' if not errors else 'failed','json_files_checked':len(checks),'visuals_checked':visuals,'pages':order,'errors':errors,
         'limits':['Static validation is not a Desktop render or refresh test.','TMDL parsing and engine execution recorded separately.']}

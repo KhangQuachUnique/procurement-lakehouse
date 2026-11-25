@@ -1,5 +1,5 @@
 {
-  "audited_at_utc": "2026-11-15T08:18:32.371916+00:00",
+  "audited_at_utc": "2026-11-25T14:23:19.794489+00:00",
   "data_root": "D:\\Project\\procurement-lakehouse\\PowerBI\\export\\parquet",
   "tables": {
     "dim_currency": {
@@ -57,19 +57,19 @@
       "categories": {
         "currency_code": [
           {
-            "currency_code": "VND",
-            "rows": 1
-          },
-          {
-            "currency_code": "USD",
-            "rows": 1
-          },
-          {
             "currency_code": "UNKNOWN",
             "rows": 1
           },
           {
             "currency_code": "EUR",
+            "rows": 1
+          },
+          {
+            "currency_code": "VND",
+            "rows": 1
+          },
+          {
+            "currency_code": "USD",
             "rows": 1
           }
         ]
@@ -250,11 +250,11 @@
       "categories": {
         "metric_name": [
           {
-            "metric_name": "plan_to_notice_days",
+            "metric_name": "close_to_complete_award_days",
             "rows": 1
           },
           {
-            "metric_name": "open_to_award_days",
+            "metric_name": "close_to_open_hours",
             "rows": 1
           },
           {
@@ -266,11 +266,11 @@
             "rows": 1
           },
           {
-            "metric_name": "close_to_complete_award_days",
+            "metric_name": "plan_to_notice_days",
             "rows": 1
           },
           {
-            "metric_name": "close_to_open_hours",
+            "metric_name": "open_to_award_days",
             "rows": 1
           },
           {
@@ -2329,8 +2329,8 @@
       {
         "award_scopes": 2830625,
         "savings_scopes": 2830625,
-        "award_amount": "2162473397657600.321100",
-        "descriptive_award": "2161724901467045.116700"
+        "award_amount_vnd": "2162473397657600.321100",
+        "descriptive_award_vnd": "2161724901467045.116700"
       }
     ],
     "competition": [
@@ -2345,24 +2345,28 @@
     ],
     "allocation": [
       {
+        "currency_key": "VND",
         "recipient_allocation_state": "independent_winners",
         "rows": 56,
         "scopes": 219,
         "amount": "143661772587.000000"
       },
       {
+        "currency_key": "VND",
         "recipient_allocation_state": "unallocated_consortium",
         "rows": 71977,
         "scopes": 79863,
         "amount": "63603290448924.909000"
       },
       {
+        "currency_key": "VND",
         "recipient_allocation_state": "no_winner",
         "rows": 18423,
         "scopes": 276219,
         "amount": "0.000000"
       },
       {
+        "currency_key": "VND",
         "recipient_allocation_state": "single_recipient",
         "rows": 1382374,
         "scopes": 2474324,

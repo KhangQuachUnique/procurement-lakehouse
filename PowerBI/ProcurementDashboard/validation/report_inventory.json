@@ -2,27 +2,17 @@
   "pages": [
     {
       "name": "overview",
-      "displayName": "Tổng quan",
+      "displayName": "Quy mô và cơ cấu thị trường",
       "visuals": 16
-    },
-    {
-      "name": "demand",
-      "displayName": "Nhu cầu thị trường",
-      "visuals": 17
-    },
-    {
-      "name": "awards",
-      "displayName": "Kết quả lựa chọn",
-      "visuals": 17
-    },
-    {
-      "name": "savings",
-      "displayName": "Chênh lệch mô tả",
-      "visuals": 17
     },
     {
       "name": "competition",
       "displayName": "Cạnh tranh cơ bản",
+      "visuals": 16
+    },
+    {
+      "name": "savings",
+      "displayName": "Chênh lệch mô tả",
       "visuals": 17
     },
     {

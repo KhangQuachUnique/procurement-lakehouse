@@ -4,10 +4,10 @@
   "position": {
     "x": 24,
     "y": 308,
-    "z": 12,
+    "z": 11,
     "height": 248,
     "width": 684,
-    "tabOrder": 12
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "lineChart",
@@ -342,51 +342,5 @@
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "64e251e883a0ee3839b7",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_date"
-              }
-            },
-            "Property": "month_start"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "09c69dd20aaa012c047c",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Tỷ lệ một nhà thầu"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "dbe48510d789154c548e",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Lượt mở thầu"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

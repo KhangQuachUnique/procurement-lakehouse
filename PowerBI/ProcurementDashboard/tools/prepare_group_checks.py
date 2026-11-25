@@ -6,15 +6,19 @@ con=connection(discover(WORKSPACE/'PowerBI/export/parquet'))
 queries=json.loads((PROJECT/'validation/dax_queries.json').read_text(encoding='utf-8'))
 cases=[]
 for name,dim,display,fact,key,measure,extra in [
-    ('top10_geography','dim_geography','province_name','fact_award_daily','geography_key','Trúng thầu VND',''),
+    ('top10_geography','dim_geography','province_display','fact_award_daily','geography_key','Trúng thầu VND'," AND f.geography_key NOT IN ('GEO_UNKNOWN','GEO_MULTI_UNALLOCATED')"),
     ('top10_supplier','dim_party','party_display','fact_supplier_daily','party_key','Người nhận · tỷ VND'," AND f.recipient_allocation_state='single_recipient' AND f.eligible_amount_count>0 AND d.party_kind<>'UNKNOWN'"),
 ]:
-    label="d.province_name" if name=='top10_geography' else "CASE WHEN d.party_name IS NULL OR trim(d.party_name)='' THEN 'Chưa có tên' ELSE d.party_name END || ' [' || d.party_key || ']'"
-    sql=f"SELECT {label} AS label,sum(f.award_amount_sum) AS amount FROM {fact} f JOIN {dim} d USING({key}) WHERE f.currency_key='VND'{extra} GROUP BY ALL ORDER BY amount DESC,label ASC LIMIT 10"
+    label="concat_ws(' · ',d.province_name,d.geography_version,d.province_code)" if name=='top10_geography' else "CASE WHEN d.party_name IS NULL OR trim(d.party_name)='' THEN 'Chưa có tên' ELSE d.party_name END || ' [' || d.party_key || ']'"
+    sql=f"SELECT {label} AS label,sum(f.award_amount_sum) AS amount FROM {fact} f JOIN {dim} d USING({key}) WHERE f.currency_key='VND'{extra} GROUP BY {key},label ORDER BY amount DESC,{key} ASC LIMIT 10"
     if name=='top10_supplier': sql=sql.replace('sum(f.award_amount_sum) AS amount','sum(f.award_amount_sum)/1000000000 AS amount')
     rows=records(con,sql)
     dax=f'EVALUATE TOPN(10,FILTER(SUMMARIZECOLUMNS({dim}[{display}],"amount",[{measure}]),NOT ISBLANK([amount])),[amount],DESC,{dim}[{display}],ASC) ORDER BY [amount] DESC,{dim}[{display}] ASC'
-    cases.append({'name':name,'group_column':display,'sql':sql,'expected':rows,'absolute_tolerance':'5'})
+    if name=='top10_supplier':
+        dax=dax.replace(f'{dim}[{display}],"amount"',f'{dim}[party_key],{dim}[{display}],"amount"').replace(f'{dim}[{display}],ASC',f'{dim}[party_key],ASC')
+    else:
+        dax=dax.replace(',"amount",',',FILTER(dim_geography,NOT dim_geography[geography_key] IN {"GEO_UNKNOWN","GEO_MULTI_UNALLOCATED"}),"amount",')
+    cases.append({'name':name,'group_column':display,'sql':sql,'expected':rows,'absolute_tolerance':'0.000001' if name=='top10_supplier' else '5'})
     queries=[q for q in queries if q['name']!=name]
     queries.append({'name':name,'dax':dax})
 save(PROJECT/'validation/group_expected.json',cases)

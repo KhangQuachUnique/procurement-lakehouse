@@ -63,7 +63,7 @@ def main():
         '| Bảng | Số dòng | Phạm vi ngày nguồn |\n|---|---:|---|\n' + '\n'.join(rows) + '\n\n'
         'Có đủ 17 bảng, tổng ' + f"{sum(t['rows'] for t in profile['tables'].values()):,}" + ' dòng. '
         'Không phát hiện FK mồ côi hoặc FK ngày null trong các fact mới. '
-        'PK và grain duy nhất, không null. Lịch model lọc về 1.461 ngày 2022–2025; nguồn lịch gốc giữ nguyên.\n\n'
+        'PK và grain duy nhất, không null. Phạm vi lịch được kiểm tra trực tiếp từ dim_date.\n\n'
         'Parquet không có manifest/release ID/thời điểm xuất đáng tin cậy để chứng minh một snapshot chung. '
         'Thời gian sửa file không được dùng làm bằng chứng thời điểm xuất. '
         'Hash cuối khớp hash khảo sát: [source_integrity.json](source_integrity.json).\n', encoding='utf-8')

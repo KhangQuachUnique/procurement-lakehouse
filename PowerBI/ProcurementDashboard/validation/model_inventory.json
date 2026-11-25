@@ -26,7 +26,7 @@
         "year_quarter_order": "int64",
         "month_start": "dateTime"
       },
-      "marked_date_table": true
+      "marked_date_table": false
     },
     "dim_duration_metric": {
       "columns": {
@@ -302,12 +302,6 @@
       "folder": "Số lượng",
       "description": "Tổng fact_bidding_competition_daily[multi_bidder_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
-    "Lượt có giảm giá": {
-      "dax": "SUM(fact_bidding_competition_daily[discounted_bidder_count])",
-      "format": "#,0",
-      "folder": "Số lượng",
-      "description": "Tổng fact_bidding_competition_daily[discounted_bidder_count] trong phạm vi chọn; không phải số dòng tổng hợp."
-    },
     "Thông báo": {
       "dax": "SUM(fact_notice_daily[notice_count])",
       "format": "#,0",
@@ -319,12 +313,6 @@
       "format": "#,0",
       "folder": "Số lượng",
       "description": "Tổng fact_notice_daily[cancelled_notice_count] trong phạm vi chọn; không phải số dòng tổng hợp."
-    },
-    "Gói theo trạng thái quan sát": {
-      "dax": "SUM(fact_status_daily[package_count])",
-      "format": "#,0",
-      "folder": "Số lượng",
-      "description": "Tổng fact_status_daily[package_count] trong phạm vi chọn; không phải số dòng tổng hợp."
     },
     "Kế hoạch VND": {
       "dax": "CALCULATE(IF(SUM(fact_demand_daily[eligible_amount_count]) > 0, SUM(fact_demand_daily[planned_amount_sum])), KEEPFILTERS(dim_currency[currency_code] = \"VND\"))",
@@ -428,17 +416,41 @@
       "folder": "Tỷ lệ và bình quân",
       "description": "Tỷ lệ nhiều nhà thầu"
     },
-    "Tỷ lệ lượt có giảm giá": {
-      "dax": "DIVIDE([Lượt có giảm giá], [Lượt nhà thầu])",
-      "format": "0.00%;(0.00%);0.00%",
-      "folder": "Tỷ lệ và bình quân",
-      "description": "Tỷ lệ lượt có giảm giá"
-    },
     "Tỷ lệ hủy quan sát": {
       "dax": "DIVIDE([Thông báo hủy quan sát], [Thông báo])",
       "format": "0.00%;(0.00%);0.00%",
       "folder": "Tỷ lệ và bình quân",
       "description": "Tỷ lệ hủy quan sát"
+    },
+    "Mẫu giá trúng VND": {
+      "dax": "CALCULATE([Mẫu giá trúng], KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "#,0",
+      "folder": "Giá trị",
+      "description": "Mẫu giá trúng VND"
+    },
+    "Tỷ trọng gói VND": {
+      "dax": "CALCULATE(DIVIDE([Số gói kế hoạch], CALCULATE([Số gói kế hoạch], ALLSELECTED(dim_value_band[band_label], dim_value_band[band_order]))), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Cơ cấu",
+      "description": "Tỷ trọng gói VND"
+    },
+    "Tỷ trọng giá kế hoạch VND": {
+      "dax": "CALCULATE(DIVIDE([Kế hoạch · tỷ VND], CALCULATE([Kế hoạch · tỷ VND], ALLSELECTED(dim_value_band[band_label], dim_value_band[band_order]))), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Cơ cấu",
+      "description": "Tỷ trọng giá kế hoạch VND"
+    },
+    "Chênh so với tập chọn · đpt": {
+      "dax": "VAR r=[Tỷ lệ một nhà thầu] VAR refRate=CALCULATE([Tỷ lệ một nhà thầu], ALLSELECTED(dim_sector[sector_name])) RETURN IF(NOT ISBLANK(r) && NOT ISBLANK(refRate), (r-refRate)*100)",
+      "format": "0.0",
+      "folder": "Cạnh tranh",
+      "description": "Chênh so với tập chọn · đpt"
+    },
+    "Gói theo trạng thái quan sát": {
+      "dax": "VAR lastDay=CALCULATE(MAX(fact_status_daily[report_date]), REMOVEFILTERS(dim_progress_status)) RETURN IF(NOT ISBLANK(lastDay), CALCULATE(SUM(fact_status_daily[package_count]), KEEPFILTERS(fact_status_daily[report_date]=lastDay)))",
+      "format": "#,0",
+      "folder": "Số lượng",
+      "description": "Tổng theo trạng thái tại ngày cuối có bản ghi trong phạm vi tháng và lĩnh vực đang chọn."
     },
     "Mẫu thời gian": {
       "dax": "IF(HASONEVALUE(dim_duration_metric[metric_key]), SUM(fact_duration_daily[sample_count]))",
@@ -488,11 +500,11 @@
       "folder": "Người nhận",
       "description": "Số khóa người nhận"
     },
-    "Lượt nhận đơn": {
-      "dax": "CALCULATE(SUM(fact_supplier_daily[award_scope_count]), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+    "Mẫu giá người nhận": {
+      "dax": "CALCULATE(SUM(fact_supplier_daily[eligible_amount_count]), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
       "format": "#,0",
       "folder": "Người nhận",
-      "description": "Lượt nhận đơn"
+      "description": "Mẫu giá người nhận"
     },
     "Phân bổ · tỷ VND": {
       "dax": "CALCULATE(IF(SUM(fact_supplier_daily[eligible_amount_count])>0, DIVIDE(SUM(fact_supplier_daily[award_amount_sum]),1000000000)), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
@@ -506,8 +518,14 @@
       "folder": "Người nhận",
       "description": "Phân bổ · số lượt"
     },
+    "Độ phủ giá trị người nhận": {
+      "dax": "DIVIDE([Người nhận · tỷ VND], [Phân bổ · tỷ VND])",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Người nhận",
+      "description": "Độ phủ giá trị người nhận"
+    },
     "Tỷ trọng Top 10 người nhận": {
-      "dax": "VAR People = CALCULATETABLE(VALUES(dim_party[party_key]), REMOVEFILTERS(dim_party)) VAR Ranked = TOPN(10, ADDCOLUMNS(People, \"_value\", CALCULATE([Người nhận · tỷ VND])), [_value], DESC, dim_party[party_key], ASC) RETURN DIVIDE(SUMX(Ranked, [_value]), CALCULATE([Người nhận · tỷ VND], REMOVEFILTERS(dim_party)))",
+      "dax": "CALCULATE(         VAR People = CALCULATETABLE(VALUES(fact_supplier_daily[party_key]), KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]=\"single_recipient\"), KEEPFILTERS(fact_supplier_daily[eligible_amount_count]>0), KEEPFILTERS(dim_party[party_kind]<>\"UNKNOWN\"), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))         VAR Amounts = FILTER(ADDCOLUMNS(People, \"_value\", [Người nhận · tỷ VND]), NOT ISBLANK([_value]))         VAR Ranked = TOPN(10, Amounts, [_value], DESC, fact_supplier_daily[party_key], ASC)         RETURN DIVIDE(SUMX(Ranked, [_value]), [Người nhận · tỷ VND]), ALLSELECTED(dim_party))",
       "format": "0.00%;(0.00%);0.00%",
       "folder": "Người nhận",
       "description": "Tỷ trọng Top 10 người nhận"
@@ -577,6 +595,12 @@
       "format": "#,0",
       "folder": "Độ phủ",
       "description": "Số nhóm tổng hợp có bản ghi; không chứng minh độ đầy đủ thu thập."
+    },
+    "Luồng có quan sát": {
+      "dax": "VAR streams=FILTER({IF([Dòng · demand] > 0, \"Kế hoạch\"), IF([Dòng · award] > 0, \"Kết quả\"), IF([Dòng · savings] > 0, \"So sánh giá\"), IF([Dòng · bidding_competition] > 0, \"Mở thầu\"), IF([Dòng · duration] > 0, \"Thời gian\"), IF([Dòng · supplier] > 0, \"Người nhận\"), IF([Dòng · notice] > 0, \"Thông báo\"), IF([Dòng · status] > 0, \"Trạng thái\")}, NOT ISBLANK([Value])) RETURN IF(COUNTROWS(streams)>0, CONCATENATEX(streams,[Value],\", \",[Value],ASC))",
+      "format": null,
+      "folder": "Độ phủ",
+      "description": "Luồng có quan sát"
     },
     "Hiển thị · Số gói kế hoạch": {
       "dax": "IF(ISBLANK([Số gói kế hoạch]), \"—\", FORMAT([Số gói kế hoạch], \"#,0\", \"vi-VN\"))",
@@ -656,12 +680,6 @@
       "folder": "Hiển thị",
       "description": "Hiển thị · Lượt nhiều nhà thầu"
     },
-    "Hiển thị · Lượt có giảm giá": {
-      "dax": "IF(ISBLANK([Lượt có giảm giá]), \"—\", FORMAT([Lượt có giảm giá], \"#,0\", \"vi-VN\"))",
-      "format": null,
-      "folder": "Hiển thị",
-      "description": "Hiển thị · Lượt có giảm giá"
-    },
     "Hiển thị · Thông báo": {
       "dax": "IF(ISBLANK([Thông báo]), \"—\", FORMAT([Thông báo], \"#,0\", \"vi-VN\"))",
       "format": null,
@@ -673,12 +691,6 @@
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Thông báo hủy quan sát"
-    },
-    "Hiển thị · Gói theo trạng thái quan sát": {
-      "dax": "IF(ISBLANK([Gói theo trạng thái quan sát]), \"—\", FORMAT([Gói theo trạng thái quan sát], \"#,0\", \"vi-VN\"))",
-      "format": null,
-      "folder": "Hiển thị",
-      "description": "Hiển thị · Gói theo trạng thái quan sát"
     },
     "Hiển thị · Kế hoạch VND": {
       "dax": "IF(ISBLANK([Kế hoạch VND]), \"—\", FORMAT([Kế hoạch VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
@@ -782,17 +794,41 @@
       "folder": "Hiển thị",
       "description": "Hiển thị · Tỷ lệ nhiều nhà thầu"
     },
-    "Hiển thị · Tỷ lệ lượt có giảm giá": {
-      "dax": "IF(ISBLANK([Tỷ lệ lượt có giảm giá]), \"—\", FORMAT([Tỷ lệ lượt có giảm giá], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
-      "format": null,
-      "folder": "Hiển thị",
-      "description": "Hiển thị · Tỷ lệ lượt có giảm giá"
-    },
     "Hiển thị · Tỷ lệ hủy quan sát": {
       "dax": "IF(ISBLANK([Tỷ lệ hủy quan sát]), \"—\", FORMAT([Tỷ lệ hủy quan sát], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Tỷ lệ hủy quan sát"
+    },
+    "Hiển thị · Mẫu giá trúng VND": {
+      "dax": "IF(ISBLANK([Mẫu giá trúng VND]), \"—\", FORMAT([Mẫu giá trúng VND], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Mẫu giá trúng VND"
+    },
+    "Hiển thị · Tỷ trọng gói VND": {
+      "dax": "IF(ISBLANK([Tỷ trọng gói VND]), \"—\", FORMAT([Tỷ trọng gói VND], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Tỷ trọng gói VND"
+    },
+    "Hiển thị · Tỷ trọng giá kế hoạch VND": {
+      "dax": "IF(ISBLANK([Tỷ trọng giá kế hoạch VND]), \"—\", FORMAT([Tỷ trọng giá kế hoạch VND], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Tỷ trọng giá kế hoạch VND"
+    },
+    "Hiển thị · Chênh so với tập chọn · đpt": {
+      "dax": "IF(ISBLANK([Chênh so với tập chọn · đpt]), \"—\", FORMAT([Chênh so với tập chọn · đpt], \"0.0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Chênh so với tập chọn · đpt"
+    },
+    "Hiển thị · Gói theo trạng thái quan sát": {
+      "dax": "IF(ISBLANK([Gói theo trạng thái quan sát]), \"—\", FORMAT([Gói theo trạng thái quan sát], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Gói theo trạng thái quan sát"
     },
     "Hiển thị · Mẫu thời gian": {
       "dax": "IF(ISBLANK([Mẫu thời gian]), \"—\", FORMAT([Mẫu thời gian], \"#,0\", \"vi-VN\"))",
@@ -836,11 +872,11 @@
       "folder": "Hiển thị",
       "description": "Hiển thị · Số khóa người nhận"
     },
-    "Hiển thị · Lượt nhận đơn": {
-      "dax": "IF(ISBLANK([Lượt nhận đơn]), \"—\", FORMAT([Lượt nhận đơn], \"#,0\", \"vi-VN\"))",
+    "Hiển thị · Mẫu giá người nhận": {
+      "dax": "IF(ISBLANK([Mẫu giá người nhận]), \"—\", FORMAT([Mẫu giá người nhận], \"#,0\", \"vi-VN\"))",
       "format": null,
       "folder": "Hiển thị",
-      "description": "Hiển thị · Lượt nhận đơn"
+      "description": "Hiển thị · Mẫu giá người nhận"
     },
     "Hiển thị · Phân bổ · tỷ VND": {
       "dax": "IF(ISBLANK([Phân bổ · tỷ VND]), \"—\", FORMAT([Phân bổ · tỷ VND], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
@@ -853,6 +889,12 @@
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Phân bổ · số lượt"
+    },
+    "Hiển thị · Độ phủ giá trị người nhận": {
+      "dax": "IF(ISBLANK([Độ phủ giá trị người nhận]), \"—\", FORMAT([Độ phủ giá trị người nhận], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Độ phủ giá trị người nhận"
     },
     "Hiển thị · Tỷ trọng Top 10 người nhận": {
       "dax": "IF(ISBLANK([Tỷ trọng Top 10 người nhận]), \"—\", FORMAT([Tỷ trọng Top 10 người nhận], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",

@@ -134,9 +134,9 @@ def profile(root):
         report['caveats'].append('dim_date is not continuous and must not be marked as a standard date table. Preserve source dates; use explicit month/year grouping, not classic time-intelligence functions.')
     report["sample_dimensions"] = {n: records(con, f"SELECT * FROM {n}") for n in ("dim_currency", "dim_duration_metric", "dim_progress_status", "dim_sector", "dim_value_band")}
     report["reconciliations"] = {
-        "award_savings": records(con, "SELECT (SELECT sum(award_scope_count) FROM fact_award_daily) AS award_scopes,(SELECT sum(scope_count) FROM fact_savings_daily) AS savings_scopes,(SELECT sum(award_amount_sum) FROM fact_award_daily) AS award_amount,(SELECT sum(descriptive_award_sum) FROM fact_savings_daily) AS descriptive_award"),
+        "award_savings": records(con, "SELECT (SELECT sum(award_scope_count) FROM fact_award_daily) AS award_scopes,(SELECT sum(scope_count) FROM fact_savings_daily) AS savings_scopes,(SELECT sum(award_amount_sum) FROM fact_award_daily WHERE currency_key='VND') AS award_amount_vnd,(SELECT sum(descriptive_award_sum) FROM fact_savings_daily WHERE currency_key='VND') AS descriptive_award_vnd"),
         "competition": records(con, "SELECT sum(opening_count) AS openings,sum(single_bidder_count) AS single_count,sum(multi_bidder_count) AS multi_count,sum(total_bidders) AS bidders,sum(tech_passed_count) AS passed,sum(tech_failed_count) AS failed FROM fact_bidding_competition_daily"),
-        "allocation": records(con, "SELECT recipient_allocation_state,count(*) AS rows,sum(award_scope_count) AS scopes,sum(award_amount_sum) AS amount FROM fact_supplier_daily GROUP BY ALL"),
+        "allocation": records(con, "SELECT currency_key,recipient_allocation_state,count(*) AS rows,sum(award_scope_count) AS scopes,sum(award_amount_sum) AS amount FROM fact_supplier_daily GROUP BY ALL"),
     }
     report["caveats"] += [
         "No export manifest/release ID supplied. File mtime is filesystem evidence, not an authoritative export timestamp. Cross-table atomic snapshot cannot be proven from absent metadata.",
