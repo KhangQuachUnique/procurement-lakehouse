@@ -203,10 +203,17 @@ def report_pages():
     p.filters(geography=True)
     p.cards(['Số gói kế hoạch', 'Kế hoạch · tỷ VND', 'Lượt kết quả hiệu lực', 'Trúng thầu · tỷ VND'])
     p.chart('trend', 'lineChart', month, ['Kế hoạch · tỷ VND', 'Trúng thầu · tỷ VND'], 24, 308, w=844, title='Giá trị kế hoạch và giá trúng theo tháng · tỷ VND')
+    sector_colors = {'Hàng hóa': b.TEAL, 'Xây lắp': b.NAVY, 'Phi tư vấn': '#6487AD',
+                     'Tư vấn': '#A87945', 'Hỗn hợp': '#86B8A9', 'Chưa xác định': '#ADB5BD'}
+    slices = [
+        {'properties': {'fill': b.color(fill)}, 'selector': {'data': [{'scopeId': {'Comparison': {
+            'ComparisonKind': 0, 'Left': b.field(*sector[:2]), 'Right': b.lit(label)['expr']}}}]}}
+        for label, fill in sector_colors.items()
+    ]
     p.add('sectors', 'donutChart', 892, 308, 524, 248, title='Cơ cấu giá trị trúng theo lĩnh vực',
           roles={'Category':[sector], 'Y':[m('Trúng thầu · tỷ VND')], 'Tooltips':[m('Mẫu giá trúng VND')]},
           objects={'legend':b.obj(show=b.lit(True), position=b.lit('Right'), showTitle=b.lit(False), fontSize=b.lit(10)),
-                   'labels':b.obj(show=b.lit(False))})
+                   'labels':b.obj(show=b.lit(False)), 'dataPoint': slices})
     p.chart('bands', 'clusteredBarChart', band, ['Tỷ trọng giá kế hoạch VND', 'Tỷ trọng gói VND'], 24, 580, title='Quy mô gói · tỷ trọng giá trị và số gói VND')
     v = p.chart('geo', 'clusteredBarChart', c('dim_geography','province_display'), ['Trúng thầu · tỷ VND'], 732, 580, title='5 địa phương có giá trúng cao nhất · tỷ VND', tooltips=['Mẫu giá trúng VND'])
     excluded = b.categorical('dim_geography', 'geography_key', ['GEO_UNKNOWN', 'GEO_MULTI_UNALLOCATED'])

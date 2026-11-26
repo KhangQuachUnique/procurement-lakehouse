@@ -558,6 +558,62 @@
           ]
         },
         "howCreated": "User"
+      },
+      {
+        "name": "c4697b493d5f6aaabfdf",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Khóa người nhận"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "20408f91016de9043ba5",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Mẫu giá người nhận"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "bd58187edc35ddcce896",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_party"
+              }
+            },
+            "Property": "party_display"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "f68d7cb247fe5e843680",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Người nhận · tỷ VND"
+          }
+        },
+        "type": "Advanced"
       }
     ]
   }
