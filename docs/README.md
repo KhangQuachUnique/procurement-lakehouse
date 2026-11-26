@@ -49,3 +49,7 @@ Toàn bộ các quyết định kỹ thuật cốt lõi được lưu giữ theo
 ## 📐 SƠ ĐỒ VẼ GỐC (`docs/schemas/`)
 
 - **[Sơ đồ Star Schema Chi tiết (Draw.io)](schemas/gold-star-schemas-compact-approved-2026-11-06.drawio)**: File thiết kế kiến trúc gốc phục vụ kiểm tra tự động hợp đồng trong test suite (`test_contracts.py`).
+
+## Báo cáo Power BI
+
+[Dashboard mua sắm công](../PowerBI/ProcurementDashboard/README.md) gồm hướng dẫn đọc sáu trang, quy ước KPI, quy trình refresh và kết quả nghiệm thu.
