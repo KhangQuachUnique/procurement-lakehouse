@@ -4,10 +4,10 @@
   "position": {
     "x": 228,
     "y": 272,
-    "z": 18,
+    "z": 20000,
     "height": 312,
     "width": 1048,
-    "tabOrder": 18
+    "tabOrder": 20000
   },
   "visual": {
     "visualType": "pivotTable",
@@ -519,7 +519,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Nhóm có bản ghi theo tháng và nguồn'"
+                  "Value": "'Quan sát theo tháng · xanh: có bản ghi, trống: chưa quan sát'"
                 }
               }
             }
@@ -539,7 +539,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Nhóm có bản ghi theo tháng và nguồn'"
+                  "Value": "'Quan sát theo tháng · xanh: có bản ghi, trống: chưa quan sát'"
                 }
               }
             },

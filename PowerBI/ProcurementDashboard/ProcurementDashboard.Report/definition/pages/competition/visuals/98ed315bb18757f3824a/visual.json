@@ -1,16 +1,38 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "98ed315bb18757f3824a",
   "position": {
-    "x": 228,
+    "x": 274,
     "y": 152,
-    "width": 441,
+    "z": 19000,
     "height": 104,
-    "z": 18,
-    "tabOrder": 18
+    "width": 395,
+    "tabOrder": 19000
   },
   "visual": {
     "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Lượt mở thầu"
+                }
+              },
+              "queryRef": "_Measures.Hiển thị · Lượt mở thầu",
+              "nativeQueryRef": "Hiển thị · Lượt mở thầu"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "labels": [
         {
@@ -18,7 +40,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "30D"
+                  "Value": "24D"
                 }
               }
             },
@@ -37,6 +59,20 @@
               "expr": {
                 "Literal": {
                   "Value": "1D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Segoe UI Semibold'"
                 }
               }
             }
@@ -95,7 +131,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -172,8 +208,13 @@
           "properties": {
             "altText": {
               "expr": {
-                "Literal": {
-                  "Value": "'Tổng fact_bidding_competition_daily[opening_count] trong phạm vi chọn; không phải số dòng tổng hợp.'"
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Lượt mở thầu"
                 }
               }
             }
@@ -193,7 +234,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'▦   Lượt mở thầu'"
+                  "Value": "'Lượt mở thầu'"
                 }
               }
             },
@@ -231,29 +272,45 @@
             }
           }
         }
-      ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Hiển thị · Lượt mở thầu"
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
-              },
-              "queryRef": "_Measures.Hiển thị · Lượt mở thầu",
-              "nativeQueryRef": "Hiển thị · Lượt mở thầu"
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Trên tập lượt mở'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#64748B'"
+                    }
+                  }
+                }
+              }
             }
-          ]
+          }
         }
-      }
+      ]
     }
   }
 }

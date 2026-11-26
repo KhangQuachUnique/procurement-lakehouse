@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "286403ac500654529929",
   "position": {
     "x": 1290,
     "y": 272,
+    "z": 28000,
+    "height": 66,
     "width": 286,
-    "height": 54,
-    "z": 25,
-    "tabOrder": 25
+    "tabOrder": 28000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "◉   Trọng tâm phân tích",
+                    "value": "Khoảng cách giữa lĩnh vực",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "16pt",
+                      "fontSize": "15pt",
                       "color": "#935009"
                     }
                   }

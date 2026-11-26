@@ -4,10 +4,10 @@
   "position": {
     "x": 892,
     "y": 600,
-    "z": 25,
+    "z": 29000,
     "height": 276,
     "width": 684,
-    "tabOrder": 25
+    "tabOrder": 29000
   },
   "visual": {
     "visualType": "hundredPercentStackedBarChart",

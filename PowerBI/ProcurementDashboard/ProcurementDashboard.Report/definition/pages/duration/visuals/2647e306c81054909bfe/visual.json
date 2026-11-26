@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "2647e306c81054909bfe",
   "position": {
     "x": 1290,
-    "y": 496,
+    "y": 494,
+    "z": 32000,
+    "height": 90,
     "width": 286,
-    "height": 88,
-    "z": 29,
-    "tabOrder": 29
+    "tabOrder": 32000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Bình quân chỉ đại diện cho các khoảng hợp lệ của chỉ số đang chọn.",
+                    "value": "Bộ chọn chỉ số xác định hai mốc thời gian và đơn vị đo.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11pt",
-                      "color": "#0F172A"
+                      "color": "#64748B"
                     }
                   }
                 ]

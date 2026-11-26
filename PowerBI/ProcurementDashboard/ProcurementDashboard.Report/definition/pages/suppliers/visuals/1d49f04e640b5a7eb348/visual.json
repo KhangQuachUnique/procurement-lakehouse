@@ -4,10 +4,10 @@
   "position": {
     "x": 956,
     "y": 600,
-    "z": 23,
+    "z": 27000,
     "height": 276,
     "width": 620,
-    "tabOrder": 23
+    "tabOrder": 27000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -170,6 +170,44 @@
           },
           "selector": {
             "metadata": "_Measures.Phân bổ · tỷ VND"
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]

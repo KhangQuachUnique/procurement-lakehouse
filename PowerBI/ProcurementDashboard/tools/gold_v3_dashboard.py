@@ -92,7 +92,7 @@ def define_measures():
     observed = ', '.join(f'IF([Dòng · {fact}] > 0, "{label}")' for fact, label in labels.items())
     add('Luồng có quan sát', 'VAR streams=FILTER({' + observed + '}, NOT ISBLANK([Value])) RETURN IF(COUNTROWS(streams)>0, CONCATENATEX(streams,[Value],", ",[Value],ASC))', None, 'Độ phủ')
     add('Đối sánh tập chọn', 'CALCULATE([Tỷ lệ một nhà thầu], ALLSELECTED(dim_sector[sector_name]))', pct, 'Cạnh tranh')
-    add('Màu cạnh tranh', 'VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#EFF5FC", r<0.5,"#D5E6FA", r<0.75,"#A8CDF5","#76A8E0"))', None, 'Cạnh tranh')
+    add('Màu cạnh tranh', 'VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), [Lượt mở thầu]<30,"#FFF0D4", r<0.25,"#EFF5FC", r<0.5,"#D5E6FA", r<0.75,"#A8CDF5","#76A8E0"))', None, 'Cạnh tranh')
     add('Lưu ý cỡ mẫu', 'IF([Lượt mở thầu]>0 && [Lượt mở thầu]<30, "Ít hơn 30 lượt mở")', None, 'Cạnh tranh')
     add('Mẫu ngoài so sánh', 'IF(NOT ISBLANK([Phạm vi so sánh]) && NOT ISBLANK([Mẫu mô tả]), [Phạm vi so sánh]-[Mẫu mô tả])', folder='Chất lượng')
     add('Khóa người nhận', 'SELECTEDVALUE(dim_party[party_key])', None, 'Người nhận')
@@ -117,8 +117,30 @@ def define_measures():
         suffix = ' & " " & [Đơn vị thời gian]' if name == 'Thời gian bình quân' else ''
         add('Hiển thị · ' + name, f'IF(ISBLANK([{name}]), "—", FORMAT([{name}], "{definition["format"]}", "vi-VN"){suffix})', None, 'Hiển thị')
 
+    for key, (_, guard, expression, _) in NARRATIVES.items():
+        add('Nhận định · '+key, f'IF(ISBLANK([{guard}]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", {expression})', None, 'Hiển thị')
+    for name in ['Kế hoạch · tỷ VND','Trúng thầu · tỷ VND','Dự toán mô tả · tỷ VND','Giá trúng mô tả · tỷ VND','Chênh lệch mô tả · tỷ VND','Người nhận · tỷ VND','Giá trúng thiếu địa phương','Giá chưa phân bổ']:
+        add('KPI · '+name, f'VAR v=[{name}] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))', None, 'Hiển thị')
+
 
 SIDEBAR = '#14243D'
+ICONS = {
+    'overview':'M3 20h18 M5 16v-5h3v5z M11 16V7h3v9z M17 16V3h3v13z',
+    'competition':'M3 7h12m-3-3 3 3-3 3 M21 17H9m3-3-3 3 3 3',
+    'savings':'M5 4h14v16H5z M8 8h8 M8 12h3 M14 12h2 M8 16h3 M14 16h2',
+    'duration':'M12 3a9 9 0 1 0 .01 0 M12 7v5l4 2',
+    'suppliers':'M4 20v-9l8-5 8 5v9z M8 20v-6h8v6 M9 10h6',
+    'quality':'M12 3l8 3v6c0 4-4 7-8 9-4-2-8-5-8-9V6z M8 12l3 3 5-6',
+}
+RESOURCE_FILES = {}
+
+def svg_resource(name, body, width, height):
+    filename=name+'.svg'
+    b.text(b.REPORT/'StaticResources/RegisteredResources'/filename,
+           f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">{body}</svg>')
+    RESOURCE_FILES[name]={'name':name,'path':filename,'type':'Image'}
+    return {'expr':{'ResourcePackageItem':{'PackageName':'RegisteredResources','PackageType':1,'ItemName':name}}}
+
 LEFT, RIGHT = 228, 1576
 PAGE_TITLES = {
     'overview': ('Tổng quan thị trường', 'Quy mô thị trường đấu thầu công', 'Quy mô, xu hướng và cơ cấu giá trị trong phạm vi đang chọn.'),
@@ -128,15 +150,15 @@ PAGE_TITLES = {
     'suppliers': ('Thị trường nhà cung cấp', 'Thị trường nhà cung cấp', 'Giá trị phân bổ, mức tập trung và các đơn vị nhận thầu.'),
     'quality': ('Chất lượng dữ liệu', 'Độ phủ và chất lượng dữ liệu', 'Theo dõi phạm vi quan sát, mẫu đủ điều kiện và giá trị thiếu phân bổ.'),
 }
-# Each pair supplies one contextual value and its interpretation in the insight rail.
-INSIGHTS = {
- 'overview': [('Giá trị nhóm từ 100 tỷ','Giá kế hoạch'), ('Số gói nhóm từ 100 tỷ','Số gói kế hoạch'), 'Hai tỷ trọng của nhóm gói từ 100 tỷ VND trong tập đang chọn.'],
- 'competition': [('Biên độ cạnh tranh','Chênh giữa lĩnh vực · đpt'), ('Lượt mở thầu','Lượt mở trong tập chọn'), 'Biên độ xét lĩnh vực có ít nhất 30 lượt mở. KPI và heatmap gồm cả nhóm mẫu nhỏ.'],
- 'savings': [('Độ phủ mẫu mô tả','Đủ điều kiện so sánh'), ('Mẫu mô tả','Số mẫu so sánh'), 'Chênh lệch trên cùng mẫu cần được xác minh trước khi diễn giải là tiết kiệm.'],
- 'duration': [('Tỷ lệ mẫu bị loại','Khoảng thời gian bị loại'), ('Mẫu thời gian','Số mẫu hợp lệ'), 'Bình quân chỉ đại diện cho các khoảng hợp lệ của chỉ số đang chọn.'],
- 'suppliers': [('Tỷ trọng Top 10 người nhận','Giá trị thuộc Top 10'), ('Độ phủ giá trị người nhận','Giá trị đã xác định người nhận'), 'Xếp hạng theo định danh trên mẫu VND phân bổ cho một người nhận.'],
- 'quality': [('Độ phủ mẫu mô tả','Đủ điều kiện so sánh'), ('Độ phủ giá trúng','Có giá trúng hợp lệ'), 'Hai tỷ lệ có mẫu số riêng. Có bản ghi chưa chứng minh thu thập đầy đủ.'],
+NARRATIVES = {
+ 'overview': ('Giá trị tập trung ở đâu?', 'Giá trị nhóm từ 100 tỷ', '"Nhóm từ 100 tỷ VND chiếm " & [Hiển thị · Số gói nhóm từ 100 tỷ] & " số gói và " & [Hiển thị · Giá trị nhóm từ 100 tỷ] & " giá trị kế hoạch."', 'Hai tỷ trọng cùng tính trên phạm vi VND đang chọn.'),
+ 'competition': ('Khoảng cách giữa lĩnh vực','Biên độ cạnh tranh','"Tỷ lệ một nhà thầu giữa lĩnh vực cao nhất và thấp nhất cách nhau " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm."','So sánh các lĩnh vực có từ 30 lượt mở. Ô màu kem đánh dấu mẫu nhỏ.'),
+ 'savings': ('Phạm vi so sánh giá','Tỷ lệ chênh lệch mô tả','"Trên " & [Hiển thị · Mẫu mô tả] & " mẫu đủ điều kiện, chênh lệch dự toán trừ giá trúng bằng " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán."','Chênh lệch quan sát cần được xác minh trước khi diễn giải là tiết kiệm.'),
+ 'duration': ('Thời gian quan sát','Thời gian bình quân','"Bình quân " & [Hiển thị · Thời gian bình quân] & " dựa trên " & [Hiển thị · Mẫu thời gian] & " khoảng hợp lệ. Tỷ lệ bị loại là " & [Hiển thị · Tỷ lệ mẫu bị loại] & "."','Bộ chọn chỉ số xác định hai mốc thời gian và đơn vị đo.'),
+ 'suppliers': ('Mức tập trung giá trị','Tỷ trọng Top 10 người nhận','"Mười người nhận đứng đầu chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị trong tập xếp hạng. Giá trị xác định người nhận đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ."','Xếp hạng theo định danh trên mẫu VND đủ điều kiện.'),
+ 'quality': ('Khả năng sử dụng dữ liệu','Phạm vi so sánh','"Mẫu đủ điều kiện so giá chiếm " & [Hiển thị · Độ phủ mẫu mô tả] & " phạm vi so sánh. Trong tập kết quả hiệu lực, độ phủ giá trúng là " & [Hiển thị · Độ phủ giá trúng] & "."','Độ phủ dùng mẫu số riêng cho từng chỉ tiêu.'),
 }
+
 class Page(b.Page):
     def __init__(self, key, currency=False):
         self.key = key
@@ -146,18 +168,21 @@ class Page(b.Page):
                     'name': key, 'displayName': self.title, 'displayOption': 'FitToPage',
                     'height': 900, 'width': 1600,
                     'objects': {'background': b.obj(color=b.color(b.BG), transparency=b.lit(0))}}
-        self.block('brand', '◈  Procurement\n     Analytics', 0, 0, 204, 98, 15, '#FFFFFF', SIDEBAR, 16)
+        mark='<path d="M7 14l14-8 14 8v16l-14 8-14-8z M7 14l14 8 14-8 M21 22v16" fill="none" stroke="#A8CDF5" stroke-width="2.4" stroke-linejoin="round"/>'
+        wordmark='<text x="46" y="20" font-family="Segoe UI, sans-serif" font-size="16" font-weight="600" fill="white">Procurement<tspan x="46" dy="21">Analytics</tspan></text>'
+        self.picture('brand',svg_resource('procurement-brand',mark+wordmark,184,50),0,0,204,98,SIDEBAR)
         self.block('brand_sub', 'Đấu thầu công Việt Nam', 0, 98, 204, 63, 11, '#D6E4F7', SIDEBAR, 16)
-        for i, (page, icon) in enumerate(zip(PAGE_TITLES, ('▥','◉','▤','◷','◇','▦'))):
-            self.block('icon_'+page, icon, 0, 161+i*54, 31, 54, 14, '#A8CDF5' if page!=key else '#FFFFFF', SIDEBAR, 7)
+        for i,page in enumerate(PAGE_TITLES):
+            self.icon('icon_'+page,page,0,161+i*54,31,54,'active' if page==key else 'nav')
         nav = self.add('nav','pageNavigator',31,161,173,324,objects={
-            'layout':b.obj(orientation=b.lit(1),cellPadding=b.lit(5)),
+            'layout':b.obj(orientation=b.lit(1),cellPadding=b.lit(0)),
             'text':[{'selector':{'id':state},'properties':{'fontSize':b.lit(11),'fontColor':b.color(ink),
                     'horizontalAlignment':b.lit('left'),'leftMargin':b.lit(4)}} for state,ink in [('default','#FFFFFF'),('selected',SIDEBAR)]],
             'fill':[{'selector':{'id':state},'properties':{'show':b.lit(True),'fillColor':b.color(fill)}}
                     for state,fill in [('default',SIDEBAR),('selected','#E8F1FF')]],
             'outline':b.obj(show=b.lit(False))})
         self.surface(nav,SIDEBAR,False)
+        nav['visual']['visualContainerObjects']['padding']=b.obj(**{side:b.lit(0) for side in ('top','bottom','left','right')})
         self.block('rail', '', 0, 485, 204, 287, 11, '#FFFFFF', SIDEBAR)
         self.block('range','PHẠM VI DỮ LIỆU\n09/2022 – 12/2025',0,772,204,128,11,'#D6E4F7',SIDEBAR,16)
         self.text('section', self.title.upper(),LEFT,14,670,23,11,b.NAVY)
@@ -187,6 +212,19 @@ class Page(b.Page):
         v['visual']['visualContainerObjects']['padding']=b.obj(left=b.lit(padding),top=b.lit(padding))
         return v
 
+    def picture(self,key,resource,x,y,w,h,fill):
+        v=self.add(key,'image',x,y,w,h,objects={'general':b.obj(imageUrl=resource),'imageScaling':b.obj(imageScalingType=b.lit('Normal'))})
+        self.surface(v,fill,False)
+        v['visual']['visualContainerObjects']['padding']=b.obj(**{side:b.lit(0) for side in ('left','right','top','bottom')})
+        return v
+
+    def icon(self,key,symbol,x,y,w,h,style):
+        fill={'active':'#E8F1FF','nav':SIDEBAR,'badge':'#FFFFFF','focus':'#EAF1FF'}[style]
+        ink='#D0E4FF' if style=='nav' else b.NAVY
+        circle='<circle cx="12" cy="12" r="17" fill="#DBE9FC"/>' if style in ('badge','focus') else ''
+        body=f'<g transform="translate({(w-24)/2} {(h-24)/2})">{circle}<path d="{ICONS[symbol]}" stroke="{ink}" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>'
+        return self.picture(key,svg_resource(symbol+'-'+style,body,w,h),x,y,w,h,fill)
+
     def filters(self, geography=False, method=False, band=False):
         if geography:
             self.slicer('geography', b.c('dim_geography', 'province_name'), 'Địa phương theo nguồn', 1008, 74, 274, 52)
@@ -198,12 +236,23 @@ class Page(b.Page):
     def cards(self, names):
         for i, name in enumerate(names):
             width=(RIGHT-LEFT-12*(len(names)-1))//len(names)
-            v=self.card('k'+str(i),name,LEFT+i*(width+12),y=152,w=width,h=104,size=30,label=['▦','◈','▤','◎'][i]+'   '+name)
-            focus={'overview':1,'competition':2,'savings':3,'duration':0,'suppliers':3}
-            self.surface(v,'#EAF1FF' if i==focus.get(self.key) else '#FFFFFF')
+            focus={'overview':1,'competition':2,'savings':3,'duration':0,'suppliers':3,'quality':0}
+            selected=i==focus[self.key]
+            x=LEFT+i*(width+12)
+            self.icon('badge'+str(i),('overview','savings','quality','competition')[i],x,152,46,104,'focus' if selected else 'badge')
+            compact='KPI · '+name
+            label={'Giá trúng thiếu địa phương':'Giá thiếu địa phương','Giá chưa phân bổ':'Ngoài một người nhận'}.get(name,name.split(' · ')[0])
+            v=self.card('k'+str(i),compact if compact in b.MEASURES else name,x+46,152,width-46,104,label=label,size=24)
+            self.surface(v,'#EAF1FF' if selected else '#FFFFFF',False)
+            v['visual']['objects']['labels'][0]['properties'].update(bold=b.lit(True),fontFamily=b.lit('Segoe UI Semibold'))
+            subtitle={'overview':'Thị trường đang chọn','competition':'Trên tập lượt mở','savings':'Mẫu so sánh VND','duration':'Theo khoảng đang chọn','suppliers':'Phân bổ giá trị VND','quality':'Giá trị trúng bằng VND'}[self.key]
+            v['visual']['visualContainerObjects']['subTitle']=b.obj(show=b.lit(True),text=b.lit(subtitle),fontSize=b.lit(9),fontColor=b.color(b.MUTED))
+            v['visual']['visualContainerObjects']['general'][0]['properties']['altText']={'expr':b.field('_Measures','Hiển thị · '+name,'Measure')}
 
     def chart(self, key, typ, category, measures, x, y, w=684, h=248, title=None, tooltips=None):
         v=super().chart(key, typ, category, measures, x, y, w, h, title, tooltips)
+        if typ=='clusteredBarChart' and len(measures)==1:
+            v['visual']['objects']['labels']=b.obj(show=b.lit(True),fontSize=b.lit(10),labelPrecision=b.lit(1),color=b.color(b.INK))
         if self.key=='duration' and key in ('trend','sectors','methods'):
             v['visual']['visualContainerObjects']['title'][0]['properties']['text']={'expr':b.field('_Measures','Tiêu đề thời gian '+key,'Measure')}
         return v
@@ -217,13 +266,13 @@ class Page(b.Page):
         return self.add(key, 'pivotTable', x, y, w, h, roles=roles, title=title, objects=objects)
 
     def insight(self):
-        first, second, explanation = INSIGHTS[self.key]
+        headline, _, _, explanation=NARRATIVES[self.key]
         x,w=1290,286
-        self.block('insight_title','◉   '+('Gói từ 100 tỷ VND' if self.key=='overview' else 'Trọng tâm phân tích'),x,272,w,54,16,'#935009','#FFF8ED',12)
-        for i,(metric,label) in enumerate((first,second)):
-            v=self.card('insight'+str(i),metric,x,326+i*85,w,85,label=label,size=24)
-            self.surface(v,'#FFF8ED',False)
-        self.block('insight_note',explanation,x,496,w,88,11,b.INK,'#FFF8ED',12)
+        self.block('insight_title',headline,x,272,w,66,15,'#935009','#FFF8ED',12)
+        v=self.block('insight_body','',x,338,w,156,13,b.INK,'#FFF8ED',12)
+        v['visual']['visualContainerObjects']['title']=b.obj(show=b.lit(True),titleWrap=b.lit(True),
+            text={'expr':b.field('_Measures','Nhận định · '+self.key,'Measure')},fontSize=b.lit(15),fontFamily=b.lit('Segoe UI Semibold'),fontColor=b.color(b.INK))
+        self.block('insight_note',explanation,x,494,w,90,11,b.MUTED,'#FFF8ED',12)
 
     def flush(self):
         # Every page has its own supported facts, so all local slicers filter the entire page.
@@ -304,7 +353,7 @@ def report_pages():
     v = p.chart('sectorchart', 'clusteredBarChart', sector, ['Tỷ lệ một nhà thầu','Đối sánh tập chọn'], 792, 272, w=484, h=312, title='Một nhà thầu theo lĩnh vực · đối sánh gia quyền', tooltips=competition_tips)
     v['visual']['query']['sortDefinition']['sort'][0]['field']=b.field('_Measures','Lượt mở thầu','Measure')
     p.chart('methods', 'clusteredBarChart', method, ['Tỷ lệ một nhà thầu'], 228, 600, w=456, h=276, title='Một nhà thầu theo phương thức · % lượt mở', tooltips=competition_tips)
-    p.matrix('bands', {'Rows':[band], 'Columns':[sector], 'Values':[m('Tỷ lệ một nhà thầu')], 'Tooltips':[m(n) for n in competition_tips]}, 'Một nhà thầu · lĩnh vực × quy mô (%)', 698, 600, 878, 276, {'Tỷ lệ một nhà thầu': {'expr': b.field('_Measures', 'Màu cạnh tranh', 'Measure')}})
+    p.matrix('bands', {'Rows':[band], 'Columns':[sector], 'Values':[m('Tỷ lệ một nhà thầu')], 'Tooltips':[m(n) for n in competition_tips]}, 'Một nhà thầu (%) · xanh: từ 30 lượt mở, kem: mẫu nhỏ', 698, 600, 878, 276, {'Tỷ lệ một nhà thầu': {'expr': b.field('_Measures', 'Màu cạnh tranh', 'Measure')}})
     p.insight()
     pages.append(p)
 
@@ -335,14 +384,15 @@ def report_pages():
     p.filters(geography=True)
     p.cards(['Người nhận · tỷ VND', 'Số khóa người nhận', 'Độ phủ giá trị người nhận', 'Tỷ trọng Top 10 người nhận'])
     amount_name = 'Người nhận · tỷ VND'
-    v = p.add('ranking', 'tableEx', 228, 272, 714, 604, title='10 người nhận có giá trị cao nhất · tỷ VND',
+    v = p.add('ranking', 'tableEx', 228, 272, 714, 530, title='10 người nhận có giá trị cao nhất · tỷ VND',
               roles={'Values':[m('Hạng người nhận'), m('Tên người nhận'), m(amount_name), c('dim_party','party_key')], 'Tooltips':[m('Khóa người nhận'), m('Mẫu giá người nhận')]})
-    b.table_widths(v, [44, 338, 145, 139])
+    b.table_widths(v, [46, 311, 145, 164])
+    v['visual']['objects']['grid']=b.obj(rowPadding=b.lit(5),gridVertical=b.lit(False))
     for proj,label in zip(v['visual']['query']['queryState']['Values']['projections'],['Hạng','Đơn vị nhận thầu','Tỷ VND','Định danh']):
         proj['displayName']=label
     v['visual']['objects']['columnFormatting'] = [{
         'selector': {'metadata':'_Measures.' + amount_name},
-        'properties': {'dataBars': {'positiveColor': b.color('#A8CDF5'), 'hideText': b.lit(False),
+        'properties': {'dataBars': {'positiveColor': b.color('#94BCEF'), 'hideText': b.lit(False),
                                                   'negativeColor': b.color('#64748B'), 'axisColor': b.color(b.MUTED),
                                         'totalMatchingOption': {'expr': {'Literal': {'Value':'1L'}}},
                                         'reverseDirection': b.lit(False)}}}]
@@ -354,10 +404,9 @@ def report_pages():
     pages.append(p)
 
     p = Page('quality')
-    p.card('missinggeo', 'Giá trúng thiếu địa phương', 228, 152, 668, 104, label='Chưa xác định hoặc nhiều địa phương · tỷ VND')
-    p.card('missingparty', 'Giá chưa phân bổ', 910, 152, 666, 104, label='Ngoài trạng thái một người nhận · tỷ VND')
+    p.cards(['Giá trúng thiếu địa phương','Giá chưa phân bổ'])
     streams = [n for n in b.MEASURES if n.startswith('Dòng · ')]
-    p.matrix('coverage', {'Rows':[c('dim_date','year_month')], 'Values':[m(n) for n in streams]}, 'Nhóm có bản ghi theo tháng và nguồn', 228, 272, 1048, 312, {n: {'expr': b.field('_Measures', 'Nền ' + n, 'Measure')} for n in streams})
+    p.matrix('coverage', {'Rows':[c('dim_date','year_month')], 'Values':[m(n) for n in streams]}, 'Quan sát theo tháng · xanh: có bản ghi, trống: chưa quan sát', 228, 272, 1048, 312, {n: {'expr': b.field('_Measures', 'Nền ' + n, 'Measure')} for n in streams})
     p.chart('coverage_rates', 'clusteredBarChart', sector, ['Độ phủ giá trúng','Độ phủ mẫu mô tả'], 228, 600, w=504, h=276, title='Độ phủ trong từng tập mẫu · %', tooltips=['Lượt kết quả hiệu lực','Phạm vi so sánh'])
     p.chart('samples', 'barChart', sector, ['Mẫu mô tả','Mẫu ngoài so sánh'], 746, 600, w=530, h=276, title='Phạm vi so sánh theo lĩnh vực · lượt', tooltips=['Độ phủ mẫu mô tả'])
     p.text('limits', 'GIỚI HẠN CẦN BIẾT\n\n• Có bản ghi chưa chứng minh thu thập đầy đủ.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Ô trống biểu thị thiếu quan sát hoặc thiếu mẫu hợp lệ.', 1290, 600, 286, 276, 12, b.INK)

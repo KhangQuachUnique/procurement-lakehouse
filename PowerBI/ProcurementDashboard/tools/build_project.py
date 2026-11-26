@@ -56,7 +56,9 @@ def define_measures():
 
 EXTRA = {
  'dim_date': [('year_month_order','int64'),('year_quarter_order','int64'),('month_start','dateTime')],
- 'dim_geography': [('province_display','string')],
+ 'dim_geography': [('province_display','string'),('province_short','string')],
+ 'dim_value_band': [('band_short','string')],
+ 'dim_procurement_method': [('method_short','string')],
  'dim_party': [('party_display','string')],
  'dim_duration_metric': [('metric_label','string')],
  'dim_progress_status': [('status_label','string')],
@@ -126,7 +128,7 @@ expression ReadParquetTable =
                 body+='\t\tisKey\n'
             if name=='dim_date' and col in ['year_month','year_quarter']:
                 body+=f'\t\tsortByColumn: {col}_order\n'
-            if name=='dim_value_band' and col=='band_label':
+            if name=='dim_value_band' and col in ('band_label','band_short'):
                 body+='\t\tsortByColumn: band_order\n'
             if typ=='dateTime':
                 body+='\t\tannotation UnderlyingDateTimeDataType = Date\n'
@@ -141,7 +143,18 @@ expression ReadParquetTable =
             end='MonthStart'
         if name=='dim_geography':
             source+=',\n    Display = Table.AddColumn(Typed,"province_display",each Text.Combine({[province_name],[geography_version],[province_code]}," · "), type text)'
-            end='Display'
+            source+=',\n    Compact = Table.AddColumn(Display,"province_short",each Text.Replace(Text.Replace([province_display],"Thành phố ","TP. "),"Tỉnh ",""),type text)'
+            end='Compact'
+        if name in ('dim_value_band','dim_procurement_method'):
+            if name=='dim_value_band':
+                col,short='band_label','band_short'
+                labels={'Dưới 100 triệu VND':'< 100 triệu','Từ 100 triệu đến dưới 500 triệu VND':'100 – < 500 triệu','Từ 500 triệu đến dưới 5 tỷ VND':'0,5 – < 5 tỷ','Từ 5 tỷ đến dưới 20 tỷ VND':'5 – < 20 tỷ','Từ 20 tỷ đến dưới 100 tỷ VND':'20 – < 100 tỷ','Từ 100 tỷ VND trở lên':'≥ 100 tỷ','Chưa phân nhóm quy mô':'Chưa phân nhóm'}
+            else:
+                col,short='method_category','method_short'
+                labels={'Lựa chọn nhà thầu trong trường hợp đặc biệt':'Trường hợp đặc biệt','Chào hàng cạnh tranh rút gọn':'Chào hàng CT rút gọn','Chào giá trực tuyến rút gọn':'Chào giá TT rút gọn','Chỉ định thầu rút gọn':'Chỉ định rút gọn'}
+            mapping='['+', '.join(f'#"{k}"="{v}"' for k,v in labels.items())+']'
+            source+=f',\n    Compact = Table.AddColumn(Typed,"{short}",each Record.FieldOrDefault({mapping},[{col}],[{col}]),type text)'
+            end='Compact'
         if name=='dim_party':
             source+=',\n    Display = Table.AddColumn(Typed,"party_display",each (if [party_name] = null or Text.Trim([party_name]) = "" then "Chưa có tên" else [party_name]) & " [" & [party_key] & "]",type text)'
             end='Display'
@@ -304,8 +317,13 @@ def report():
         'themeCollection':{'customTheme':{'name':'ProcurementTheme','reportVersionAtImport':{'visual':'2.1.0','page':'2.0.0','report':'3.0.0'},'type':'RegisteredResources'}},
         'resourcePackages':[{'name':'RegisteredResources','type':'RegisteredResources','items':[{'name':'ProcurementTheme','path':'ProcurementTheme.json','type':'CustomTheme'}]}],
         'settings':{'useEnhancedTooltips':True,'hideVisualContainerHeader':True,'exportDataMode':'AllowSummarized','defaultFilterActionIsDataFilter':True}})
-    from gold_v3_dashboard import report_pages
+    from gold_v3_dashboard import RESOURCE_FILES, report_pages
+    RESOURCE_FILES.clear()
     report_pages()
+    path=REPORT/'definition/report.json'
+    definition=json.loads(path.read_text(encoding='utf-8'))
+    definition['resourcePackages'][0]['items'].extend(RESOURCE_FILES.values())
+    save(path,definition)
 
 
 

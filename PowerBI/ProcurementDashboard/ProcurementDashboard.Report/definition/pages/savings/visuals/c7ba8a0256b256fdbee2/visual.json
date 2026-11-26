@@ -1,16 +1,38 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "c7ba8a0256b256fdbee2",
   "position": {
-    "x": 908,
+    "x": 954,
     "y": 152,
-    "width": 328,
+    "z": 23000,
     "height": 104,
-    "z": 20,
-    "tabOrder": 20
+    "width": 282,
+    "tabOrder": 23000
   },
   "visual": {
     "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "KPI · Chênh lệch mô tả · tỷ VND"
+                }
+              },
+              "queryRef": "_Measures.KPI · Chênh lệch mô tả · tỷ VND",
+              "nativeQueryRef": "KPI · Chênh lệch mô tả · tỷ VND"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "labels": [
         {
@@ -18,7 +40,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "30D"
+                  "Value": "24D"
                 }
               }
             },
@@ -37,6 +59,20 @@
               "expr": {
                 "Literal": {
                   "Value": "1D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Segoe UI Semibold'"
                 }
               }
             }
@@ -95,7 +131,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -172,8 +208,13 @@
           "properties": {
             "altText": {
               "expr": {
-                "Literal": {
-                  "Value": "'Chênh lệch mô tả · tỷ VND'"
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Chênh lệch mô tả · tỷ VND"
                 }
               }
             }
@@ -193,7 +234,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'▤   Chênh lệch mô tả · tỷ VND'"
+                  "Value": "'Chênh lệch mô tả'"
                 }
               }
             },
@@ -231,29 +272,45 @@
             }
           }
         }
-      ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Hiển thị · Chênh lệch mô tả · tỷ VND"
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
-              },
-              "queryRef": "_Measures.Hiển thị · Chênh lệch mô tả · tỷ VND",
-              "nativeQueryRef": "Hiển thị · Chênh lệch mô tả · tỷ VND"
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Mẫu so sánh VND'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#64748B'"
+                    }
+                  }
+                }
+              }
             }
-          ]
+          }
         }
-      }
+      ]
     }
   }
 }

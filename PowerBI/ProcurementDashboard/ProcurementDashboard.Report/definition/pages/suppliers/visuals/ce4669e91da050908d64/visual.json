@@ -4,10 +4,10 @@
   "position": {
     "x": 956,
     "y": 272,
-    "z": 22,
+    "z": 26000,
     "height": 312,
     "width": 320,
-    "tabOrder": 22
+    "tabOrder": 26000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -202,6 +202,44 @@
           },
           "selector": {
             "metadata": "_Measures.Tỷ trọng Top 10 người nhận"
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]

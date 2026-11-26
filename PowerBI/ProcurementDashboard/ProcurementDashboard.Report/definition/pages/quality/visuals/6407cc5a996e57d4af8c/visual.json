@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "6407cc5a996e57d4af8c",
   "position": {
     "x": 1290,
-    "y": 496,
+    "y": 494,
+    "z": 26000,
+    "height": 90,
     "width": 286,
-    "height": 88,
-    "z": 25,
-    "tabOrder": 25
+    "tabOrder": 26000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Hai tỷ lệ có mẫu số riêng. Có bản ghi chưa chứng minh thu thập đầy đủ.",
+                    "value": "Độ phủ dùng mẫu số riêng cho từng chỉ tiêu.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11pt",
-                      "color": "#0F172A"
+                      "color": "#64748B"
                     }
                   }
                 ]

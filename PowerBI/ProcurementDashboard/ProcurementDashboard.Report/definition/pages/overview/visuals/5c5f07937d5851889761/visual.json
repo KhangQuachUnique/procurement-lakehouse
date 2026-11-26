@@ -1,34 +1,42 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "5c5f07937d5851889761",
   "position": {
     "x": 0,
     "y": 269,
-    "width": 31,
+    "z": 4000,
     "height": 54,
-    "z": 4,
-    "tabOrder": 4
+    "width": 31,
+    "tabOrder": 4000
   },
   "visual": {
-    "visualType": "textbox",
+    "visualType": "image",
     "objects": {
       "general": [
         {
           "properties": {
-            "paragraphs": [
-              {
-                "textRuns": [
-                  {
-                    "value": "▤",
-                    "textStyle": {
-                      "fontFamily": "Segoe UI",
-                      "fontSize": "14pt",
-                      "color": "#A8CDF5"
-                    }
-                  }
-                ]
+            "imageUrl": {
+              "expr": {
+                "ResourcePackageItem": {
+                  "PackageName": "RegisteredResources",
+                  "PackageType": 1,
+                  "ItemName": "savings-nav"
+                }
               }
-            ]
+            }
+          }
+        }
+      ],
+      "imageScaling": [
+        {
+          "properties": {
+            "imageScalingType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Normal'"
+                }
+              }
+            }
           }
         }
       ]
@@ -102,14 +110,28 @@
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "7D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             },
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "7D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }

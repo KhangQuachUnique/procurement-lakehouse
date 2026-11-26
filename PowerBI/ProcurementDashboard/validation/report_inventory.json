@@ -3,32 +3,32 @@
     {
       "name": "overview",
       "displayName": "Tổng quan thị trường",
-      "visuals": 29
+      "visuals": 32
     },
     {
       "name": "competition",
       "displayName": "Mức độ cạnh tranh",
-      "visuals": 29
+      "visuals": 31
     },
     {
       "name": "savings",
       "displayName": "Dự toán và giá trúng",
-      "visuals": 30
+      "visuals": 33
     },
     {
       "name": "duration",
       "displayName": "Thời gian quy trình",
-      "visuals": 30
+      "visuals": 33
     },
     {
       "name": "suppliers",
       "displayName": "Thị trường nhà cung cấp",
-      "visuals": 28
+      "visuals": 31
     },
     {
       "name": "quality",
       "displayName": "Chất lượng dữ liệu",
-      "visuals": 26
+      "visuals": 27
     }
   ]
 }

@@ -609,7 +609,7 @@
       "description": "Đối sánh tập chọn"
     },
     "Màu cạnh tranh": {
-      "dax": "VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,\"#EFF5FC\", r<0.5,\"#D5E6FA\", r<0.75,\"#A8CDF5\",\"#76A8E0\"))",
+      "dax": "VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), [Lượt mở thầu]<30,\"#FFF0D4\", r<0.25,\"#EFF5FC\", r<0.5,\"#D5E6FA\", r<0.75,\"#A8CDF5\",\"#76A8E0\"))",
       "format": null,
       "folder": "Cạnh tranh",
       "description": "Màu cạnh tranh"
@@ -1147,6 +1147,90 @@
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Biên độ cạnh tranh"
+    },
+    "Nhận định · overview": {
+      "dax": "IF(ISBLANK([Giá trị nhóm từ 100 tỷ]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Nhóm từ 100 tỷ VND chiếm \" & [Hiển thị · Số gói nhóm từ 100 tỷ] & \" số gói và \" & [Hiển thị · Giá trị nhóm từ 100 tỷ] & \" giá trị kế hoạch.\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · overview"
+    },
+    "Nhận định · competition": {
+      "dax": "IF(ISBLANK([Biên độ cạnh tranh]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Tỷ lệ một nhà thầu giữa lĩnh vực cao nhất và thấp nhất cách nhau \" & [Hiển thị · Biên độ cạnh tranh] & \" điểm phần trăm.\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · competition"
+    },
+    "Nhận định · savings": {
+      "dax": "IF(ISBLANK([Tỷ lệ chênh lệch mô tả]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Trên \" & [Hiển thị · Mẫu mô tả] & \" mẫu đủ điều kiện, chênh lệch dự toán trừ giá trúng bằng \" & [Hiển thị · Tỷ lệ chênh lệch mô tả] & \" dự toán.\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · savings"
+    },
+    "Nhận định · duration": {
+      "dax": "IF(ISBLANK([Thời gian bình quân]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Bình quân \" & [Hiển thị · Thời gian bình quân] & \" dựa trên \" & [Hiển thị · Mẫu thời gian] & \" khoảng hợp lệ. Tỷ lệ bị loại là \" & [Hiển thị · Tỷ lệ mẫu bị loại] & \".\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · duration"
+    },
+    "Nhận định · suppliers": {
+      "dax": "IF(ISBLANK([Tỷ trọng Top 10 người nhận]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Mười người nhận đứng đầu chiếm \" & [Hiển thị · Tỷ trọng Top 10 người nhận] & \" giá trị trong tập xếp hạng. Giá trị xác định người nhận đạt \" & [Hiển thị · Độ phủ giá trị người nhận] & \" tổng phân bổ.\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · suppliers"
+    },
+    "Nhận định · quality": {
+      "dax": "IF(ISBLANK([Phạm vi so sánh]), \"Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.\", \"Mẫu đủ điều kiện so giá chiếm \" & [Hiển thị · Độ phủ mẫu mô tả] & \" phạm vi so sánh. Trong tập kết quả hiệu lực, độ phủ giá trúng là \" & [Hiển thị · Độ phủ giá trúng] & \".\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Nhận định · quality"
+    },
+    "KPI · Kế hoạch · tỷ VND": {
+      "dax": "VAR v=[Kế hoạch · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Kế hoạch · tỷ VND"
+    },
+    "KPI · Trúng thầu · tỷ VND": {
+      "dax": "VAR v=[Trúng thầu · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Trúng thầu · tỷ VND"
+    },
+    "KPI · Dự toán mô tả · tỷ VND": {
+      "dax": "VAR v=[Dự toán mô tả · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Dự toán mô tả · tỷ VND"
+    },
+    "KPI · Giá trúng mô tả · tỷ VND": {
+      "dax": "VAR v=[Giá trúng mô tả · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Giá trúng mô tả · tỷ VND"
+    },
+    "KPI · Chênh lệch mô tả · tỷ VND": {
+      "dax": "VAR v=[Chênh lệch mô tả · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Chênh lệch mô tả · tỷ VND"
+    },
+    "KPI · Người nhận · tỷ VND": {
+      "dax": "VAR v=[Người nhận · tỷ VND] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Người nhận · tỷ VND"
+    },
+    "KPI · Giá trúng thiếu địa phương": {
+      "dax": "VAR v=[Giá trúng thiếu địa phương] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Giá trúng thiếu địa phương"
+    },
+    "KPI · Giá chưa phân bổ": {
+      "dax": "VAR v=[Giá chưa phân bổ] RETURN IF(ISBLANK(v),\"—\",IF(ABS(v)>=1000,FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ\",FORMAT(v,\"#,0.0\",\"vi-VN\") & \" tỷ\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "KPI · Giá chưa phân bổ"
     }
   },
   "relationships": 37

@@ -1,16 +1,38 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "7a0935701da05eb38685",
   "position": {
-    "x": 681,
+    "x": 727,
     "y": 152,
-    "width": 441,
+    "z": 21000,
     "height": 104,
-    "z": 19,
-    "tabOrder": 19
+    "width": 395,
+    "tabOrder": 21000
   },
   "visual": {
     "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Nhà thầu bình quân"
+                }
+              },
+              "queryRef": "_Measures.Hiển thị · Nhà thầu bình quân",
+              "nativeQueryRef": "Hiển thị · Nhà thầu bình quân"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "labels": [
         {
@@ -18,7 +40,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "30D"
+                  "Value": "24D"
                 }
               }
             },
@@ -37,6 +59,20 @@
               "expr": {
                 "Literal": {
                   "Value": "1D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Segoe UI Semibold'"
                 }
               }
             }
@@ -95,7 +131,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -172,8 +208,13 @@
           "properties": {
             "altText": {
               "expr": {
-                "Literal": {
-                  "Value": "'Nhà thầu bình quân'"
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hiển thị · Nhà thầu bình quân"
                 }
               }
             }
@@ -193,7 +234,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'◈   Nhà thầu bình quân'"
+                  "Value": "'Nhà thầu bình quân'"
                 }
               }
             },
@@ -231,29 +272,45 @@
             }
           }
         }
-      ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Hiển thị · Nhà thầu bình quân"
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
-              },
-              "queryRef": "_Measures.Hiển thị · Nhà thầu bình quân",
-              "nativeQueryRef": "Hiển thị · Nhà thầu bình quân"
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Trên tập lượt mở'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#64748B'"
+                    }
+                  }
+                }
+              }
             }
-          ]
+          }
         }
-      }
+      ]
     }
   }
 }

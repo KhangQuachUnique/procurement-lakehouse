@@ -1,34 +1,42 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "add2a581340c5f42abc1",
   "position": {
     "x": 0,
     "y": 377,
-    "width": 31,
+    "z": 6000,
     "height": 54,
-    "z": 6,
-    "tabOrder": 6
+    "width": 31,
+    "tabOrder": 6000
   },
   "visual": {
-    "visualType": "textbox",
+    "visualType": "image",
     "objects": {
       "general": [
         {
           "properties": {
-            "paragraphs": [
-              {
-                "textRuns": [
-                  {
-                    "value": "◇",
-                    "textStyle": {
-                      "fontFamily": "Segoe UI",
-                      "fontSize": "14pt",
-                      "color": "#A8CDF5"
-                    }
-                  }
-                ]
+            "imageUrl": {
+              "expr": {
+                "ResourcePackageItem": {
+                  "PackageName": "RegisteredResources",
+                  "PackageType": 1,
+                  "ItemName": "suppliers-nav"
+                }
               }
-            ]
+            }
+          }
+        }
+      ],
+      "imageScaling": [
+        {
+          "properties": {
+            "imageScalingType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Normal'"
+                }
+              }
+            }
           }
         }
       ]
@@ -102,14 +110,28 @@
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "7D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             },
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "7D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }

@@ -20,6 +20,111 @@
           "name": "ProcurementTheme",
           "path": "ProcurementTheme",
           "type": "CustomTheme"
+        },
+        {
+          "name": "procurement-brand",
+          "path": "procurement-brand",
+          "type": "Image"
+        },
+        {
+          "name": "overview-active",
+          "path": "overview-active",
+          "type": "Image"
+        },
+        {
+          "name": "competition-nav",
+          "path": "competition-nav",
+          "type": "Image"
+        },
+        {
+          "name": "savings-nav",
+          "path": "savings-nav",
+          "type": "Image"
+        },
+        {
+          "name": "duration-nav",
+          "path": "duration-nav",
+          "type": "Image"
+        },
+        {
+          "name": "suppliers-nav",
+          "path": "suppliers-nav",
+          "type": "Image"
+        },
+        {
+          "name": "quality-nav",
+          "path": "quality-nav",
+          "type": "Image"
+        },
+        {
+          "name": "overview-badge",
+          "path": "overview-badge",
+          "type": "Image"
+        },
+        {
+          "name": "savings-focus",
+          "path": "savings-focus",
+          "type": "Image"
+        },
+        {
+          "name": "quality-badge",
+          "path": "quality-badge",
+          "type": "Image"
+        },
+        {
+          "name": "competition-badge",
+          "path": "competition-badge",
+          "type": "Image"
+        },
+        {
+          "name": "overview-nav",
+          "path": "overview-nav",
+          "type": "Image"
+        },
+        {
+          "name": "competition-active",
+          "path": "competition-active",
+          "type": "Image"
+        },
+        {
+          "name": "savings-badge",
+          "path": "savings-badge",
+          "type": "Image"
+        },
+        {
+          "name": "quality-focus",
+          "path": "quality-focus",
+          "type": "Image"
+        },
+        {
+          "name": "savings-active",
+          "path": "savings-active",
+          "type": "Image"
+        },
+        {
+          "name": "competition-focus",
+          "path": "competition-focus",
+          "type": "Image"
+        },
+        {
+          "name": "duration-active",
+          "path": "duration-active",
+          "type": "Image"
+        },
+        {
+          "name": "overview-focus",
+          "path": "overview-focus",
+          "type": "Image"
+        },
+        {
+          "name": "suppliers-active",
+          "path": "suppliers-active",
+          "type": "Image"
+        },
+        {
+          "name": "quality-active",
+          "path": "quality-active",
+          "type": "Image"
         }
       ]
     }

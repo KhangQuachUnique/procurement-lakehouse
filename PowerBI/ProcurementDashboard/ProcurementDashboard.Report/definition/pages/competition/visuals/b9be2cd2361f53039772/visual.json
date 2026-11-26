@@ -10,25 +10,33 @@
     "tabOrder": 0
   },
   "visual": {
-    "visualType": "textbox",
+    "visualType": "image",
     "objects": {
       "general": [
         {
           "properties": {
-            "paragraphs": [
-              {
-                "textRuns": [
-                  {
-                    "value": "◈  Procurement\n     Analytics",
-                    "textStyle": {
-                      "fontFamily": "Segoe UI",
-                      "fontSize": "15pt",
-                      "color": "#FFFFFF"
-                    }
-                  }
-                ]
+            "imageUrl": {
+              "expr": {
+                "ResourcePackageItem": {
+                  "PackageName": "RegisteredResources",
+                  "PackageType": 1,
+                  "ItemName": "procurement-brand"
+                }
               }
-            ]
+            }
+          }
+        }
+      ],
+      "imageScaling": [
+        {
+          "properties": {
+            "imageScalingType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Normal'"
+                }
+              }
+            }
           }
         }
       ]
@@ -102,14 +110,28 @@
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             },
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "0D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }

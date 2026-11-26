@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "dc12a941a1e256c49b99",
   "position": {
     "x": 31,
     "y": 161,
-    "width": 173,
+    "z": 8000,
     "height": 324,
-    "z": 8,
-    "tabOrder": 8
+    "width": 173,
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "pageNavigator",
@@ -25,7 +25,7 @@
             "cellPadding": {
               "expr": {
                 "Literal": {
-                  "Value": "5D"
+                  "Value": "0D"
                 }
               }
             }
@@ -34,9 +34,6 @@
       ],
       "text": [
         {
-          "selector": {
-            "id": "default"
-          },
           "properties": {
             "fontSize": {
               "expr": {
@@ -70,12 +67,12 @@
                 }
               }
             }
+          },
+          "selector": {
+            "id": "default"
           }
         },
         {
-          "selector": {
-            "id": "selected"
-          },
           "properties": {
             "fontSize": {
               "expr": {
@@ -109,14 +106,14 @@
                 }
               }
             }
+          },
+          "selector": {
+            "id": "selected"
           }
         }
       ],
       "fill": [
         {
-          "selector": {
-            "id": "default"
-          },
           "properties": {
             "show": {
               "expr": {
@@ -136,12 +133,12 @@
                 }
               }
             }
+          },
+          "selector": {
+            "id": "default"
           }
         },
         {
-          "selector": {
-            "id": "selected"
-          },
           "properties": {
             "show": {
               "expr": {
@@ -161,6 +158,9 @@
                 }
               }
             }
+          },
+          "selector": {
+            "id": "selected"
           }
         }
       ],
@@ -247,28 +247,28 @@
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "8D"
+                  "Value": "0D"
                 }
               }
             },
             "bottom": {
               "expr": {
                 "Literal": {
-                  "Value": "8D"
+                  "Value": "0D"
                 }
               }
             },
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "12D"
+                  "Value": "0D"
                 }
               }
             },
             "right": {
               "expr": {
                 "Literal": {
-                  "Value": "12D"
+                  "Value": "0D"
                 }
               }
             }

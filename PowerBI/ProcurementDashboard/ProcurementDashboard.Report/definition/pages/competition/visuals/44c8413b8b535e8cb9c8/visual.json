@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "44c8413b8b535e8cb9c8",
   "position": {
     "x": 1290,
-    "y": 496,
+    "y": 494,
+    "z": 30000,
+    "height": 90,
     "width": 286,
-    "height": 88,
-    "z": 28,
-    "tabOrder": 28
+    "tabOrder": 30000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Biên độ xét lĩnh vực có ít nhất 30 lượt mở. KPI và heatmap gồm cả nhóm mẫu nhỏ.",
+                    "value": "So sánh các lĩnh vực có từ 30 lượt mở. Ô màu kem đánh dấu mẫu nhỏ.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11pt",
-                      "color": "#0F172A"
+                      "color": "#64748B"
                     }
                   }
                 ]

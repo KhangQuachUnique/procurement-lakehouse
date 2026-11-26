@@ -4,10 +4,10 @@
   "position": {
     "x": 698,
     "y": 600,
-    "z": 24,
+    "z": 27000,
     "height": 276,
     "width": 878,
-    "tabOrder": 24
+    "tabOrder": 27000
   },
   "visual": {
     "visualType": "pivotTable",
@@ -269,7 +269,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Một nhà thầu · lĩnh vực × quy mô (%)'"
+                  "Value": "'Một nhà thầu (%) · xanh: từ 30 lượt mở, kem: mẫu nhỏ'"
                 }
               }
             }
@@ -289,7 +289,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Một nhà thầu · lĩnh vực × quy mô (%)'"
+                  "Value": "'Một nhà thầu (%) · xanh: từ 30 lượt mở, kem: mẫu nhỏ'"
                 }
               }
             },

@@ -4,10 +4,10 @@
   "position": {
     "x": 228,
     "y": 600,
-    "z": 24,
+    "z": 28000,
     "height": 276,
     "width": 548,
-    "tabOrder": 24
+    "tabOrder": 28000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -216,6 +216,44 @@
           },
           "selector": {
             "metadata": "_Measures.Thời gian bình quân"
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]

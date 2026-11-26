@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "1f83a17e09b15221a780",
   "position": {
     "x": 1290,
-    "y": 496,
+    "y": 494,
+    "z": 31000,
+    "height": 90,
     "width": 286,
-    "height": 88,
-    "z": 28,
-    "tabOrder": 28
+    "tabOrder": 31000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Hai tỷ trọng của nhóm gói từ 100 tỷ VND trong tập đang chọn.",
+                    "value": "Hai tỷ trọng cùng tính trên phạm vi VND đang chọn.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11pt",
-                      "color": "#0F172A"
+                      "color": "#64748B"
                     }
                   }
                 ]

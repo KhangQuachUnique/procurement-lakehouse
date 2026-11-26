@@ -684,7 +684,7 @@ table _Measures
 		lineageTag: f2d52695-6c98-5672-95b5-67918f9723dd
 
 	/// Màu cạnh tranh
-	measure 'Màu cạnh tranh' = VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#EFF5FC", r<0.5,"#D5E6FA", r<0.75,"#A8CDF5","#76A8E0"))
+	measure 'Màu cạnh tranh' = VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), [Lượt mở thầu]<30,"#FFF0D4", r<0.25,"#EFF5FC", r<0.5,"#D5E6FA", r<0.75,"#A8CDF5","#76A8E0"))
 		displayFolder: Cạnh tranh
 		lineageTag: 9e1ed731-a506-5234-bb95-1b68ccd510de
 
@@ -839,10 +839,80 @@ table _Measures
 		displayFolder: Hiển thị
 		lineageTag: c83c03e4-d5f4-56db-9110-c37cc93976a2
 
+	/// Nhận định · overview
+	measure 'Nhận định · overview' = IF(ISBLANK([Giá trị nhóm từ 100 tỷ]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Nhóm từ 100 tỷ VND chiếm " & [Hiển thị · Số gói nhóm từ 100 tỷ] & " số gói và " & [Hiển thị · Giá trị nhóm từ 100 tỷ] & " giá trị kế hoạch.")
+		displayFolder: Hiển thị
+		lineageTag: 0966b37c-e478-58f9-abd6-ed66541db8ab
+
+	/// Nhận định · competition
+	measure 'Nhận định · competition' = IF(ISBLANK([Biên độ cạnh tranh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Tỷ lệ một nhà thầu giữa lĩnh vực cao nhất và thấp nhất cách nhau " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm.")
+		displayFolder: Hiển thị
+		lineageTag: ee7e45e9-66a5-5eab-9a03-84166d120dbc
+
+	/// Nhận định · savings
+	measure 'Nhận định · savings' = IF(ISBLANK([Tỷ lệ chênh lệch mô tả]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Trên " & [Hiển thị · Mẫu mô tả] & " mẫu đủ điều kiện, chênh lệch dự toán trừ giá trúng bằng " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán.")
+		displayFolder: Hiển thị
+		lineageTag: 41817a74-4563-5d6e-9e16-a8ab7adbafcf
+
+	/// Nhận định · duration
+	measure 'Nhận định · duration' = IF(ISBLANK([Thời gian bình quân]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Bình quân " & [Hiển thị · Thời gian bình quân] & " dựa trên " & [Hiển thị · Mẫu thời gian] & " khoảng hợp lệ. Tỷ lệ bị loại là " & [Hiển thị · Tỷ lệ mẫu bị loại] & ".")
+		displayFolder: Hiển thị
+		lineageTag: 977722a3-8286-5219-ae3d-fc5216e1bbf8
+
+	/// Nhận định · suppliers
+	measure 'Nhận định · suppliers' = IF(ISBLANK([Tỷ trọng Top 10 người nhận]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mười người nhận đứng đầu chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị trong tập xếp hạng. Giá trị xác định người nhận đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ.")
+		displayFolder: Hiển thị
+		lineageTag: fcb9e715-c20b-5006-8885-6d0de902996c
+
+	/// Nhận định · quality
+	measure 'Nhận định · quality' = IF(ISBLANK([Phạm vi so sánh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mẫu đủ điều kiện so giá chiếm " & [Hiển thị · Độ phủ mẫu mô tả] & " phạm vi so sánh. Trong tập kết quả hiệu lực, độ phủ giá trúng là " & [Hiển thị · Độ phủ giá trúng] & ".")
+		displayFolder: Hiển thị
+		lineageTag: 74a33937-61ea-5fae-9e25-43ccdac0d439
+
+	/// KPI · Kế hoạch · tỷ VND
+	measure 'KPI · Kế hoạch · tỷ VND' = VAR v=[Kế hoạch · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: 2152032a-daf6-535f-8b8c-b81dfd705a40
+
+	/// KPI · Trúng thầu · tỷ VND
+	measure 'KPI · Trúng thầu · tỷ VND' = VAR v=[Trúng thầu · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: acff9e19-fb07-59be-8f1f-7f901d69bbc2
+
+	/// KPI · Dự toán mô tả · tỷ VND
+	measure 'KPI · Dự toán mô tả · tỷ VND' = VAR v=[Dự toán mô tả · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: 8b5f369c-863b-560d-b9d4-c743b25f37dc
+
+	/// KPI · Giá trúng mô tả · tỷ VND
+	measure 'KPI · Giá trúng mô tả · tỷ VND' = VAR v=[Giá trúng mô tả · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: 1eed530a-762d-547a-a3f4-96742beda611
+
+	/// KPI · Chênh lệch mô tả · tỷ VND
+	measure 'KPI · Chênh lệch mô tả · tỷ VND' = VAR v=[Chênh lệch mô tả · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: ecfe5980-f041-553d-82c1-6035274c8ad5
+
+	/// KPI · Người nhận · tỷ VND
+	measure 'KPI · Người nhận · tỷ VND' = VAR v=[Người nhận · tỷ VND] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: e75469ea-2dda-5bc6-9fc3-89d30468ffff
+
+	/// KPI · Giá trúng thiếu địa phương
+	measure 'KPI · Giá trúng thiếu địa phương' = VAR v=[Giá trúng thiếu địa phương] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: 90c25af6-3044-518c-802b-1a065f1dfbe3
+
+	/// KPI · Giá chưa phân bổ
+	measure 'KPI · Giá chưa phân bổ' = VAR v=[Giá chưa phân bổ] RETURN IF(ISBLANK(v),"—",IF(ABS(v)>=1000,FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ",FORMAT(v,"#,0.0","vi-VN") & " tỷ"))
+		displayFolder: Hiển thị
+		lineageTag: 72bbf1e9-2534-55d7-b838-3a3d19e0328f
+
 	column _placeholder
 		dataType: int64
 		isHidden
-		lineageTag: 3bb065e5-3d64-4a4f-9b41-22a4c35ef528
+		lineageTag: 84f59697-31b0-4a45-bdf8-84f7e7884406
 		sourceColumn: _placeholder
 
 	partition _Measures = m

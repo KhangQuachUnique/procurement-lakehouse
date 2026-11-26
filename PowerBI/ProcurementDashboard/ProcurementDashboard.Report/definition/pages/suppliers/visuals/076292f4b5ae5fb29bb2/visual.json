@@ -1,16 +1,133 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "076292f4b5ae5fb29bb2",
   "position": {
     "x": 228,
     "y": 272,
+    "z": 25000,
+    "height": 530,
     "width": 714,
-    "height": 604,
-    "z": 21,
-    "tabOrder": 21
+    "tabOrder": 25000
   },
   "visual": {
     "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Khóa người nhận"
+                }
+              },
+              "queryRef": "_Measures.Khóa người nhận",
+              "nativeQueryRef": "Khóa người nhận"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Mẫu giá người nhận"
+                }
+              },
+              "queryRef": "_Measures.Mẫu giá người nhận",
+              "nativeQueryRef": "Mẫu giá người nhận"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Hạng người nhận"
+                }
+              },
+              "queryRef": "_Measures.Hạng người nhận",
+              "nativeQueryRef": "Hạng người nhận",
+              "displayName": "Hạng"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Tên người nhận"
+                }
+              },
+              "queryRef": "_Measures.Tên người nhận",
+              "nativeQueryRef": "Tên người nhận",
+              "displayName": "Đơn vị nhận thầu"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Người nhận · tỷ VND"
+                }
+              },
+              "queryRef": "_Measures.Người nhận · tỷ VND",
+              "nativeQueryRef": "Người nhận · tỷ VND",
+              "displayName": "Tỷ VND"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_party"
+                    }
+                  },
+                  "Property": "party_key"
+                }
+              },
+              "queryRef": "dim_party.party_key",
+              "nativeQueryRef": "party_key",
+              "displayName": "Định danh"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Người nhận · tỷ VND"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
     "objects": {
       "columnHeaders": [
         {
@@ -25,14 +142,14 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
                 }
               }
             },
             "columnAdjustment": {
               "expr": {
                 "Literal": {
-                  "Value": "'fixedWidth'"
+                  "Value": "'fitToContent'"
                 }
               }
             },
@@ -40,6 +157,13 @@
               "expr": {
                 "Literal": {
                   "Value": "true"
+                }
+              }
+            },
+            "defaultColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "90D"
                 }
               }
             }
@@ -72,7 +196,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "44D"
+                  "Value": "46D"
                 }
               }
             }
@@ -86,7 +210,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "338D"
+                  "Value": "311D"
                 }
               }
             }
@@ -114,7 +238,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "139D"
+                  "Value": "164D"
                 }
               }
             }
@@ -124,11 +248,28 @@
           }
         }
       ],
+      "grid": [
+        {
+          "properties": {
+            "rowPadding": {
+              "expr": {
+                "Literal": {
+                  "Value": "5D"
+                }
+              }
+            },
+            "gridVertical": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
       "columnFormatting": [
         {
-          "selector": {
-            "metadata": "_Measures.Người nhận · tỷ VND"
-          },
           "properties": {
             "dataBars": {
               "positiveColor": {
@@ -136,16 +277,9 @@
                   "color": {
                     "expr": {
                       "Literal": {
-                        "Value": "'#A8CDF5'"
+                        "Value": "'#94BCEF'"
                       }
                     }
-                  }
-                }
-              },
-              "hideText": {
-                "expr": {
-                  "Literal": {
-                    "Value": "false"
                   }
                 }
               },
@@ -171,21 +305,31 @@
                   }
                 }
               },
-              "totalMatchingOption": {
-                "expr": {
-                  "Literal": {
-                    "Value": "1L"
-                  }
-                }
-              },
               "reverseDirection": {
                 "expr": {
                   "Literal": {
                     "Value": "false"
                   }
                 }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "totalMatchingOption": {
+                "expr": {
+                  "Literal": {
+                    "Value": "1L"
+                  }
+                }
               }
             }
+          },
+          "selector": {
+            "metadata": "_Measures.Người nhận · tỷ VND"
           }
         }
       ]
@@ -365,123 +509,6 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Hạng người nhận"
-                }
-              },
-              "queryRef": "_Measures.Hạng người nhận",
-              "nativeQueryRef": "Hạng người nhận",
-              "displayName": "Hạng"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Tên người nhận"
-                }
-              },
-              "queryRef": "_Measures.Tên người nhận",
-              "nativeQueryRef": "Tên người nhận",
-              "displayName": "Đơn vị nhận thầu"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Người nhận · tỷ VND"
-                }
-              },
-              "queryRef": "_Measures.Người nhận · tỷ VND",
-              "nativeQueryRef": "Người nhận · tỷ VND",
-              "displayName": "Tỷ VND"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_party"
-                    }
-                  },
-                  "Property": "party_key"
-                }
-              },
-              "queryRef": "dim_party.party_key",
-              "nativeQueryRef": "party_key",
-              "displayName": "Định danh"
-            }
-          ]
-        },
-        "Tooltips": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Khóa người nhận"
-                }
-              },
-              "queryRef": "_Measures.Khóa người nhận",
-              "nativeQueryRef": "Khóa người nhận"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Mẫu giá người nhận"
-                }
-              },
-              "queryRef": "_Measures.Mẫu giá người nhận",
-              "nativeQueryRef": "Mẫu giá người nhận"
-            }
-          ]
-        }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "_Measures"
-                  }
-                },
-                "Property": "Người nhận · tỷ VND"
-              }
-            },
-            "direction": "Descending"
-          }
-        ]
-      }
     }
   },
   "filterConfig": {
@@ -499,7 +526,6 @@
           }
         },
         "type": "TopN",
-        "howCreated": "User",
         "filter": {
           "Version": 2,
           "From": [
@@ -627,7 +653,8 @@
               }
             }
           ]
-        }
+        },
+        "howCreated": "User"
       }
     ]
   }

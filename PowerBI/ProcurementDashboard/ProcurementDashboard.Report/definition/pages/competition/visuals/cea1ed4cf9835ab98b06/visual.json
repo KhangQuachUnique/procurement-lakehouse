@@ -4,10 +4,10 @@
   "position": {
     "x": 228,
     "y": 600,
-    "z": 23,
+    "z": 26000,
     "height": 276,
     "width": 456,
-    "tabOrder": 23
+    "tabOrder": 26000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -216,6 +216,44 @@
           },
           "selector": {
             "metadata": "_Measures.Tỷ lệ một nhà thầu"
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]

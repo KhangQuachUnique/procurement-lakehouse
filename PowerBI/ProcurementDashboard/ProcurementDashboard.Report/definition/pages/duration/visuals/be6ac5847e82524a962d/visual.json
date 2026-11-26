@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "be6ac5847e82524a962d",
   "position": {
     "x": 1290,
     "y": 272,
+    "z": 30000,
+    "height": 66,
     "width": 286,
-    "height": 54,
-    "z": 26,
-    "tabOrder": 26
+    "tabOrder": 30000
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "◉   Trọng tâm phân tích",
+                    "value": "Thời gian quan sát",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "16pt",
+                      "fontSize": "15pt",
                       "color": "#935009"
                     }
                   }
