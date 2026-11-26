@@ -356,5 +356,51 @@
         }
       ]
     }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "37b35c8807bc0fbe2ad5",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_date"
+              }
+            },
+            "Property": "month_start"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "bf5310a24027aa8fc8ff",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Kế hoạch · tỷ VND"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "31dad325c23eed827260",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Trúng thầu · tỷ VND"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }
