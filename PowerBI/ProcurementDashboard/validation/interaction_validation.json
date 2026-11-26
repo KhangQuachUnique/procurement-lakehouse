@@ -16,6 +16,13 @@
       "status": "passed"
     },
     {
+      "name": "filtered_insight",
+      "measure": "Giá trị nhóm từ 100 tỷ",
+      "expected_rendered": "45,52%",
+      "actual_rendered": "45,52%",
+      "status": "passed"
+    },
+    {
       "name": "sector_sync",
       "measure": "Lượt mở thầu",
       "expected_rendered": "170.156",
@@ -37,6 +44,13 @@
       "status": "passed"
     },
     {
+      "name": "empty_insight",
+      "measure": "Biên độ cạnh tranh",
+      "expected_rendered": "—",
+      "actual_rendered": "—",
+      "status": "passed"
+    },
+    {
       "name": "reset_all",
       "measure": "Kế hoạch · tỷ VND",
       "expected_rendered": "5.305.409,39",
@@ -44,5 +58,5 @@
       "status": "passed"
     }
   ],
-  "method": "Actual slicer mouse input at inspected UIA rectangles; rendered card accessible names compared with SQL; default state restored."
+  "method": "Sidebar Ctrl+click and actual slicer input at UIA rectangles; rendered card accessible names compared with SQL; default state restored."
 }

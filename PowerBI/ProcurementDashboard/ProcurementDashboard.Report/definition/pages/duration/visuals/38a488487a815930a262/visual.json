@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "38a488487a815930a262",
   "position": {
-    "x": 24,
-    "y": 580,
-    "z": 14,
-    "height": 248,
-    "width": 684,
-    "tabOrder": 14
+    "x": 228,
+    "y": 600,
+    "z": 24,
+    "height": 276,
+    "width": 548,
+    "tabOrder": 24
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -207,7 +207,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#142D4E'"
+                      "Value": "'#174EA6'"
                     }
                   }
                 }
@@ -258,7 +258,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }
@@ -337,15 +355,20 @@
             },
             "text": {
               "expr": {
-                "Literal": {
-                  "Value": "'Thời gian bình quân theo phương thức'"
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Tiêu đề thời gian methods"
                 }
               }
             },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "13D"
                 }
               }
             },
@@ -354,7 +377,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#172B4D'"
+                      "Value": "'#0F172A'"
                     }
                   }
                 }

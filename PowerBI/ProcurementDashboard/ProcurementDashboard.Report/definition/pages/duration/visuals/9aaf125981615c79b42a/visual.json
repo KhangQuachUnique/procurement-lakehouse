@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "9aaf125981615c79b42a",
   "position": {
-    "x": 712,
-    "y": 16,
-    "width": 704,
-    "height": 56,
-    "z": 2,
-    "tabOrder": 2
+    "x": 228,
+    "y": 98,
+    "width": 735,
+    "height": 38,
+    "z": 13,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Chỉ 5 metric có thể diễn giải theo nhãn nguồn.\nKhông dùng mốc đầy đủ trùng dữ liệu hoặc độ lệch kế hoạch chưa rõ dấu.",
+                    "value": "Chọn một khoảng thời gian để so sánh bình quân và chất lượng mẫu.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "10pt",
+                      "fontSize": "12pt",
                       "color": "#64748B"
                     }
                   }

@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "20fa1278dd6b51c5921a",
   "position": {
-    "x": 24,
-    "y": 12,
-    "width": 620,
-    "height": 20,
+    "x": 0,
+    "y": 0,
+    "width": 204,
+    "height": 98,
     "z": 0,
     "tabOrder": 0
   },
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "MUA SẮM CÔNG VIỆT NAM  /  PHÂN TÍCH THỊ TRƯỜNG",
+                    "value": "◈  Procurement\n     Analytics",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "10pt",
-                      "color": "#64748B"
+                      "fontSize": "15pt",
+                      "color": "#FFFFFF"
                     }
                   }
                 ]
@@ -40,7 +40,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#14243D'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }
@@ -56,6 +74,24 @@
                   "Value": "false"
                 }
               }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
             }
           }
         }
@@ -63,31 +99,17 @@
       "padding": [
         {
           "properties": {
-            "top": {
-              "expr": {
-                "Literal": {
-                  "Value": "0D"
-                }
-              }
-            },
-            "bottom": {
-              "expr": {
-                "Literal": {
-                  "Value": "0D"
-                }
-              }
-            },
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "16D"
                 }
               }
             },
-            "right": {
+            "top": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "16D"
                 }
               }
             }

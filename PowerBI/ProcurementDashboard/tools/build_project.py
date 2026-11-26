@@ -10,8 +10,8 @@ import pyarrow.parquet as pq
 MODEL = PROJECT / 'ProcurementDashboard.SemanticModel'
 REPORT = PROJECT / 'ProcurementDashboard.Report'
 BASE = 'https://developer.microsoft.com/json-schemas/fabric/'
-NAVY, TEAL, INK, MUTED, BG = '#142D4E', '#087F8C', '#172B4D', '#64748B', '#F7F9FC'
-STEEL, OCHRE, SAGE, NEUTRAL = '#6487AD', '#A87945', '#86B8A9', '#ADB5BD'
+NAVY, TEAL, INK, MUTED, BG = '#174EA6', '#4385E8', '#0F172A', '#64748B', '#F5F6F8'
+STEEL, OCHRE, SAGE, NEUTRAL = '#A8CDF5', '#D97706', '#719ED7', '#CBD5E1'
 PALETTE = [NAVY, TEAL, STEEL, OCHRE, SAGE, NEUTRAL]
 SERIES_COLORS = {
     'Trúng thầu · tỷ VND': TEAL, 'Phân bổ · tỷ VND': TEAL,
@@ -227,11 +227,11 @@ class Page:
            'position':{'x':x,'y':y,'width':w,'height':h,'z':len(self.visuals),'tabOrder':len(self.visuals)},
            'visual':{'visualType':typ,'objects':objects or {}}}
         vc={'background':obj(show=lit(True),color=color('#FFFFFF'),transparency=lit(0)),
-            'border':obj(show=lit(False)), 'padding':obj(top=lit(8),bottom=lit(8),left=lit(12),right=lit(12)),
+            'border':obj(show=lit(True),color=color('#E2E8F0'),radius=lit(8)), 'padding':obj(top=lit(8),bottom=lit(8),left=lit(12),right=lit(12)),
             'visualTooltip':obj(show=lit(True)),
             'general':obj(altText=lit(alt or title or key))}
         if title:
-            vc['title']=obj(show=lit(True),text=lit(title),fontSize=lit(11),fontColor=color(INK),fontFamily=lit('Segoe UI Semibold'),titleWrap=lit(True))
+            vc['title']=obj(show=lit(True),text=lit(title),fontSize=lit(13),fontColor=color(INK),fontFamily=lit('Segoe UI Semibold'),titleWrap=lit(True))
         else:
             vc['title']=obj(show=lit(False))
         v['visual']['visualContainerObjects']=vc
@@ -296,7 +296,7 @@ def report():
         'background':BG,'foreground':INK,'tableAccent':TEAL,
         'textClasses':{'title':{'fontFace':'Segoe UI Semibold','fontSize':12,'color':INK},'label':{'fontFace':'Segoe UI','fontSize':10,'color':MUTED},'callout':{'fontFace':'Segoe UI Semibold','fontSize':24,'color':NAVY}},
         'visualStyles':{'*':{'*':{'visualHeader':[{'show':False}],'dropShadow':[{'show':False}]}},
-            'tableEx':{'*':{'grid':[{'gridVertical':False,'rowPadding':4}],'columnHeaders':[{'fontSize':10,'fontColor':{'solid':{'color':INK}},'backColor':{'solid':{'color':'#DDF3F2'}}}],'values':[{'fontSize':10}]}},
+            'tableEx':{'*':{'grid':[{'gridVertical':False,'rowPadding':4}],'columnHeaders':[{'fontSize':10,'fontColor':{'solid':{'color':INK}},'backColor':{'solid':{'color':'#EAF1FF'}}}],'values':[{'fontSize':10}]}},
             'pivotTable':{'*':{'columnHeaders':[{'fontSize':10}],'rowHeaders':[{'fontSize':10}],'values':[{'fontSize':10}]}}}}
     save(PROJECT/'theme.json',theme)
     save(REPORT/'StaticResources/RegisteredResources/ProcurementTheme.json',theme)

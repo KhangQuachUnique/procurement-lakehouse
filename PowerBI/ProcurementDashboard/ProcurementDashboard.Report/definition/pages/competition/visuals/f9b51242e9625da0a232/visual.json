@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "f9b51242e9625da0a232",
   "position": {
-    "x": 732,
-    "y": 308,
-    "z": 12,
-    "height": 248,
-    "width": 684,
-    "tabOrder": 12
+    "x": 792,
+    "y": 272,
+    "z": 22,
+    "height": 312,
+    "width": 484,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -122,7 +122,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Tỷ lệ một nhà thầu"
+                "Property": "Lượt mở thầu"
               }
             },
             "direction": "Descending"
@@ -221,7 +221,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#142D4E'"
+                      "Value": "'#174EA6'"
                     }
                   }
                 }
@@ -239,7 +239,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#A87945'"
+                      "Value": "'#D97706'"
                     }
                   }
                 }
@@ -290,7 +290,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }
@@ -377,7 +395,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "13D"
                 }
               }
             },
@@ -386,7 +404,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#172B4D'"
+                      "Value": "'#0F172A'"
                     }
                   }
                 }

@@ -1,21 +1,21 @@
 {
   "name": "Procurement Enterprise",
   "dataColors": [
-    "#142D4E",
-    "#087F8C",
-    "#6487AD",
-    "#A87945",
-    "#86B8A9",
-    "#ADB5BD"
+    "#174EA6",
+    "#4385E8",
+    "#A8CDF5",
+    "#D97706",
+    "#719ED7",
+    "#CBD5E1"
   ],
-  "background": "#F7F9FC",
-  "foreground": "#172B4D",
-  "tableAccent": "#087F8C",
+  "background": "#F5F6F8",
+  "foreground": "#0F172A",
+  "tableAccent": "#4385E8",
   "textClasses": {
     "title": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 12,
-      "color": "#172B4D"
+      "color": "#0F172A"
     },
     "label": {
       "fontFace": "Segoe UI",
@@ -25,7 +25,7 @@
     "callout": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 24,
-      "color": "#142D4E"
+      "color": "#174EA6"
     }
   },
   "visualStyles": {
@@ -56,12 +56,12 @@
             "fontSize": 10,
             "fontColor": {
               "solid": {
-                "color": "#172B4D"
+                "color": "#0F172A"
               }
             },
             "backColor": {
               "solid": {
-                "color": "#DDF3F2"
+                "color": "#EAF1FF"
               }
             }
           }

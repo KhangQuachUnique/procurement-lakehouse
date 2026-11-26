@@ -19,9 +19,10 @@ def grab(window):
     if len(areas) != 1:
         raise RuntimeError('Expected a single report canvas')
     rect = areas[0]
-    # FitToPage centers the 1440 x 900 generated page in the available canvas.
-    scale = min(rect.width() / 1440, rect.height() / 900)
-    width, height = round(1440 * scale), round(900 * scale)
+    page=json.loads((ROOT/'ProcurementDashboard.Report/definition/pages/overview/page.json').read_text(encoding='utf-8'))
+    canvas_width,canvas_height=page['width'],page['height']
+    scale = min(rect.width() / canvas_width, rect.height() / canvas_height)
+    width, height = round(canvas_width * scale), round(canvas_height * scale)
     left = rect.left + (rect.width() - width) // 2
     top = rect.top + (rect.height() - height) // 2
     return ImageGrab.grab(bbox=(left, top, left + width, top + height))
@@ -52,7 +53,9 @@ def main():
         mouse.click(coords=((rect.left+rect.right)//2, (rect.top+rect.bottom)//2))
         time.sleep(7 if page == 'suppliers' else 3)
         if not tabs[0].is_selected():
-            raise RuntimeError('Page selection not confirmed '+page)
+            tabs[0].select()
+            time.sleep(2)
+            if not tabs[0].is_selected(): raise RuntimeError('Page selection not confirmed '+page)
         window=activate(window)
         bounds=win32gui.GetWindowRect(window.handle)
         win32api.SetCursorPos((bounds[2]-50,bounds[1]+100))

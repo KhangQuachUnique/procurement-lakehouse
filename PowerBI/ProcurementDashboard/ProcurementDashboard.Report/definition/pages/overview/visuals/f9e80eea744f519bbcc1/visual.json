@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "f9e80eea744f519bbcc1",
   "position": {
-    "x": 24,
-    "y": 132,
-    "z": 4,
-    "height": 56,
-    "width": 324,
-    "tabOrder": 4
+    "x": 1008,
+    "y": 12,
+    "z": 14,
+    "height": 52,
+    "width": 274,
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "slicer",
@@ -62,7 +62,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tháng · chọn một hoặc nhiều'"
+                  "Value": "'Tháng'"
                 }
               }
             },
@@ -148,7 +148,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }

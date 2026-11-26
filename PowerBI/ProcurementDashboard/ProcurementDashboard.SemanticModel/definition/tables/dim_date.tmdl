@@ -109,19 +109,19 @@ table dim_date
 		lineageTag: 6624e7b6-81f6-5c79-a8ae-fb9fbb2c1254
 
 		level Năm
-			lineageTag: 343bb67d-6201-44ba-ab31-4765546ca3a7
+			lineageTag: b6c2585f-6ac0-410b-89d3-f96e03979fcc
 			column: year
 
 		level Quý
-			lineageTag: 1c3212be-011b-4917-abd6-9e7993e2e3d6
+			lineageTag: 483eac7f-c3a7-4a1a-bb83-af75435a90c8
 			column: year_quarter
 
 		level Tháng
-			lineageTag: 8646b590-9fd6-47b0-92f2-c8b0f1d5cd76
+			lineageTag: 3dded6d7-e132-4cd7-9c2d-a2053f1438fd
 			column: year_month
 
 		level Ngày
-			lineageTag: b252fffd-3bcf-4820-a8b4-0acc8376108f
+			lineageTag: 7c39b65f-1ead-44d0-9c92-ee1af5e69a9d
 			column: date_key
 
 	partition dim_date = m

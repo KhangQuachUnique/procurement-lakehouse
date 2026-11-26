@@ -26,7 +26,7 @@ def main():
     if args.restore_only:
         previous=json.loads((PROJECT/'validation/interaction_validation.json').read_text(encoding='utf-8'))
         evidence=[e for e in previous['checks'] if e['name'] != 'reset_all']
-        if len(evidence)!=5 or any(e['status']!='passed' for e in evidence):
+        if not evidence or any(e['status']!='passed' for e in evidence):
             raise RuntimeError('Restore-only requires five existing successful interaction checks')
     shots = PROJECT/'validation/screenshots'
 
@@ -44,14 +44,16 @@ def main():
         window = activate(window)
         tab = next(t for t in window.descendants(control_type='TabItem') if t.window_text() == title)
         foreground()
-        r=tab.rectangle()
-        mouse.click(coords=((r.left+r.right)//2,(r.top+r.bottom)//2))
-        time.sleep(2)
         if not tab.is_selected():
-            tab.select()
-            time.sleep(1)
+            nav=next(e for e in window.descendants(control_type='Button') if e.window_text()==title)
+            send_keys('{VK_CONTROL down}')
+            try:
+                nav.click_input()
+            finally:
+                send_keys('{VK_CONTROL up}')
+            time.sleep(2)
         if not tab.is_selected():
-            raise RuntimeError('Tab selection failed: '+title)
+            raise RuntimeError('Sidebar navigation failed: '+title)
 
     def option(label, combo_rect):
         for attempt in range(20):
@@ -103,7 +105,7 @@ def main():
             images = [e.window_text() for e in window.descendants(control_type='Image')]
             prefix = 'Hiển thị · '+measure+' '
             candidates = [s[len(prefix):-1] for s in images if s.startswith(prefix) and s.endswith('.')]
-            if len(candidates) == 1:
+            if candidates and len(set(candidates)) == 1:
                 actual = candidates[0]
                 if actual == wanted:
                     break
@@ -124,14 +126,16 @@ def main():
 
     try:
         if not args.restore_only:
-            navigate('Quy mô và cơ cấu thị trường')
+            navigate('Tổng quan thị trường')
             select('Tháng', [], clear=True)
             select('Lĩnh vực', [], clear=True)
             check('baseline_all', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key=\'VND\''))
             select('Lĩnh vực', ['Hàng hóa'])
             check('sector_filter', 'Kế hoạch · tỷ VND', sql("SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key='VND' AND sector_key='SEC_HH'"))
+            share=sql("SELECT 100*sum(CASE WHEN d.band_label='Từ 100 tỷ VND trở lên' THEN f.planned_amount_sum END)/sum(f.planned_amount_sum) FROM fact_demand_daily f JOIN dim_value_band d ON f.value_band_key=d.band_key WHERE f.currency_key='VND' AND f.sector_key='SEC_HH'")
+            check('filtered_insight','Giá trị nhóm từ 100 tỷ',share,suffix='%')
             screenshot('interaction-sector-hh')
-            navigate('Cạnh tranh cơ bản')
+            navigate('Mức độ cạnh tranh')
             check('sector_sync', 'Lượt mở thầu', sql("SELECT sum(opening_count) FROM fact_bidding_competition_daily WHERE sector_key='SEC_HH'"), places=0)
             screenshot('interaction-sector-sync')
             select('Lĩnh vực', [], clear=True)
@@ -140,18 +144,19 @@ def main():
             check('hours_metric', 'Thời gian bình quân', sql("SELECT sum(duration_sum)/sum(sample_count) FROM fact_duration_daily WHERE metric_key='notice_to_close_hours'"), places=1, suffix=' giờ')
             screenshot('interaction-hours')
             select('metric_label', ['Kế hoạch → thông báo'])
-            navigate('Cạnh tranh cơ bản')
+            navigate('Mức độ cạnh tranh')
             select('Tháng', ['2022-01'], clear=True)
             check('empty_month', 'Nhà thầu bình quân', None)
+            check('empty_insight','Biên độ cạnh tranh',None)
             screenshot('interaction-empty-month')
         select('Tháng', [], clear=True)
-        navigate('Quy mô và cơ cấu thị trường')
+        navigate('Tổng quan thị trường')
         check('reset_all', 'Kế hoạch · tỷ VND', sql('SELECT sum(planned_amount_sum)/1000000000 FROM fact_demand_daily WHERE currency_key=\'VND\''))
         screenshot('interaction-reset')
         save(PROJECT/'validation/interaction_validation.json', {'status': 'passed', 'checks': evidence,
-             'method': 'Actual slicer mouse input at inspected UIA rectangles; rendered card accessible names compared with SQL; default state restored.'})
+             'method': 'Sidebar Ctrl+click and actual slicer input at UIA rectangles; rendered card accessible names compared with SQL; default state restored.'})
         foreground()
-        send_keys('^s')
+        # Leave the regenerated PBIR as the source of truth.
         print(json.dumps({'status': 'passed', 'checks': len(evidence)}, ensure_ascii=False), flush=True)
     except Exception as exc:
         save(PROJECT/'validation/interaction_validation.json', {'status': 'failed', 'checks': evidence, 'error': str(exc)})

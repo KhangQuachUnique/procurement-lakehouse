@@ -1,0 +1,133 @@
+﻿[
+    {
+        "status":  "passed",
+        "name":  "all",
+        "rows":  [
+                     {
+                         "[Nền Dòng · notice]":  "#DCEAFE",
+                         "[Tiêu đề thời gian sectors]":  "Bình quân theo lĩnh vực",
+                         "[Nền Dòng · award]":  "#DCEAFE",
+                         "[Hiển thị · Giá trị nhóm từ 100 tỷ]":  "46,44%",
+                         "[Biên độ cạnh tranh]":  19.862711512556828,
+                         "[Hiển thị · Số gói nhóm từ 100 tỷ]":  "0,27%",
+                         "[Tiêu đề thời gian trend]":  "Bình quân theo tháng",
+                         "[Tiêu đề thời gian methods]":  "Bình quân theo phương thức",
+                         "[Tên người nhận]":  null,
+                         "[Nền Dòng · bidding_competition]":  "#DCEAFE",
+                         "[Nền Dòng · savings]":  "#DCEAFE",
+                         "[Nền Dòng · demand]":  "#DCEAFE",
+                         "[Tiêu đề cơ cấu lĩnh vực]":  "Giá trúng theo lĩnh vực · 2.162,5 nghìn tỷ VND",
+                         "[Giá trị nhóm từ 100 tỷ]":  0.4644193036439459,
+                         "[Nền Dòng · status]":  "#DCEAFE",
+                         "[Hiển thị · Biên độ cạnh tranh]":  "19,9",
+                         "[Số gói nhóm từ 100 tỷ]":  0.0027461555139484685,
+                         "[Nền Dòng · duration]":  "#DCEAFE",
+                         "[Hạng người nhận]":  null,
+                         "[Nền Dòng · supplier]":  "#DCEAFE"
+                     }
+                 ],
+        "elapsed_ms":  56.417
+    },
+    {
+        "status":  "passed",
+        "name":  "goods",
+        "rows":  [
+                     {
+                         "[Nền Dòng · notice]":  "#DCEAFE",
+                         "[Tiêu đề thời gian sectors]":  "Bình quân theo lĩnh vực",
+                         "[Nền Dòng · award]":  "#DCEAFE",
+                         "[Hiển thị · Giá trị nhóm từ 100 tỷ]":  "45,52%",
+                         "[Biên độ cạnh tranh]":  null,
+                         "[Hiển thị · Số gói nhóm từ 100 tỷ]":  "0,44%",
+                         "[Tiêu đề thời gian trend]":  "Bình quân theo tháng",
+                         "[Tiêu đề thời gian methods]":  "Bình quân theo phương thức",
+                         "[Tên người nhận]":  null,
+                         "[Nền Dòng · bidding_competition]":  "#DCEAFE",
+                         "[Nền Dòng · savings]":  "#DCEAFE",
+                         "[Nền Dòng · demand]":  "#DCEAFE",
+                         "[Tiêu đề cơ cấu lĩnh vực]":  "Giá trúng theo lĩnh vực · 960,1 nghìn tỷ VND",
+                         "[Giá trị nhóm từ 100 tỷ]":  0.45524833853830637,
+                         "[Nền Dòng · status]":  "#DCEAFE",
+                         "[Hiển thị · Biên độ cạnh tranh]":  "—",
+                         "[Số gói nhóm từ 100 tỷ]":  0.00444616121257479,
+                         "[Nền Dòng · duration]":  "#DCEAFE",
+                         "[Hạng người nhận]":  null,
+                         "[Nền Dòng · supplier]":  "#DCEAFE"
+                     }
+                 ],
+        "elapsed_ms":  32.333400000000005
+    },
+    {
+        "status":  "passed",
+        "name":  "empty",
+        "rows":  [
+                     {
+                         "[Nền Dòng · notice]":  "#F5F6F8",
+                         "[Tiêu đề thời gian sectors]":  "Bình quân theo lĩnh vực",
+                         "[Nền Dòng · award]":  "#F5F6F8",
+                         "[Hiển thị · Giá trị nhóm từ 100 tỷ]":  "—",
+                         "[Biên độ cạnh tranh]":  null,
+                         "[Hiển thị · Số gói nhóm từ 100 tỷ]":  "—",
+                         "[Tiêu đề thời gian trend]":  "Bình quân theo tháng",
+                         "[Tiêu đề thời gian methods]":  "Bình quân theo phương thức",
+                         "[Tên người nhận]":  null,
+                         "[Nền Dòng · bidding_competition]":  "#F5F6F8",
+                         "[Nền Dòng · savings]":  "#F5F6F8",
+                         "[Nền Dòng · demand]":  "#F5F6F8",
+                         "[Tiêu đề cơ cấu lĩnh vực]":  "Giá trúng theo lĩnh vực",
+                         "[Giá trị nhóm từ 100 tỷ]":  null,
+                         "[Nền Dòng · status]":  "#F5F6F8",
+                         "[Hiển thị · Biên độ cạnh tranh]":  "—",
+                         "[Số gói nhóm từ 100 tỷ]":  null,
+                         "[Nền Dòng · duration]":  "#F5F6F8",
+                         "[Hạng người nhận]":  null,
+                         "[Nền Dòng · supplier]":  "#F5F6F8"
+                     }
+                 ],
+        "elapsed_ms":  25.3715
+    },
+    {
+        "status":  "passed",
+        "name":  "hours",
+        "rows":  [
+                     {
+                         "[Nền Dòng · notice]":  "#DCEAFE",
+                         "[Tiêu đề thời gian sectors]":  "Bình quân theo lĩnh vực · giờ",
+                         "[Nền Dòng · award]":  "#DCEAFE",
+                         "[Hiển thị · Giá trị nhóm từ 100 tỷ]":  "46,44%",
+                         "[Biên độ cạnh tranh]":  19.862711512556828,
+                         "[Hiển thị · Số gói nhóm từ 100 tỷ]":  "0,27%",
+                         "[Tiêu đề thời gian trend]":  "Bình quân theo tháng · giờ",
+                         "[Tiêu đề thời gian methods]":  "Bình quân theo phương thức · giờ",
+                         "[Tên người nhận]":  null,
+                         "[Nền Dòng · bidding_competition]":  "#DCEAFE",
+                         "[Nền Dòng · savings]":  "#DCEAFE",
+                         "[Nền Dòng · demand]":  "#DCEAFE",
+                         "[Tiêu đề cơ cấu lĩnh vực]":  "Giá trúng theo lĩnh vực · 2.162,5 nghìn tỷ VND",
+                         "[Giá trị nhóm từ 100 tỷ]":  0.4644193036439459,
+                         "[Nền Dòng · status]":  "#DCEAFE",
+                         "[Hiển thị · Biên độ cạnh tranh]":  "19,9",
+                         "[Số gói nhóm từ 100 tỷ]":  0.0027461555139484685,
+                         "[Nền Dòng · duration]":  "#DCEAFE",
+                         "[Hạng người nhận]":  null,
+                         "[Nền Dòng · supplier]":  "#DCEAFE"
+                     }
+                 ],
+        "elapsed_ms":  25.4033
+    },
+    {
+        "status":  "passed",
+        "name":  "benchmark",
+        "rows":  [
+                     {
+                         "dim_sector[sector_name]":  "Xây lắp",
+                         "[benchmark]":  0.60932341568706616
+                     },
+                     {
+                         "dim_sector[sector_name]":  "Hàng hóa",
+                         "[benchmark]":  0.60932341568706616
+                     }
+                 ],
+        "elapsed_ms":  3.7891000000000004
+    }
+]

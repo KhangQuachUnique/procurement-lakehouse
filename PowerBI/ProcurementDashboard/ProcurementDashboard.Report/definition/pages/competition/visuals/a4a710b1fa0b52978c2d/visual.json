@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "a4a710b1fa0b52978c2d",
   "position": {
-    "x": 712,
-    "y": 16,
-    "width": 704,
-    "height": 56,
-    "z": 2,
-    "tabOrder": 2
+    "x": 228,
+    "y": 98,
+    "width": 735,
+    "height": 38,
+    "z": 13,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "textbox",
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Lượt tham gia, không phải nhà thầu duy nhất.\nLoại khỏi báo cáo KPI kỹ thuật và tiền dự thầu chưa xác minh.",
+                    "value": "So sánh tỷ lệ một nhà thầu theo thời gian, lĩnh vực và phương thức.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "10pt",
+                      "fontSize": "12pt",
                       "color": "#64748B"
                     }
                   }

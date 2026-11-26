@@ -684,7 +684,7 @@ table _Measures
 		lineageTag: f2d52695-6c98-5672-95b5-67918f9723dd
 
 	/// Màu cạnh tranh
-	measure 'Màu cạnh tranh' = VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#F0F7F6", r<0.5,"#CCE8E6", r<0.75,"#9ACFCC","#65B6B2"))
+	measure 'Màu cạnh tranh' = VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#EFF5FC", r<0.5,"#D5E6FA", r<0.75,"#A8CDF5","#76A8E0"))
 		displayFolder: Cạnh tranh
 		lineageTag: 9e1ed731-a506-5234-bb95-1b68ccd510de
 
@@ -736,10 +736,113 @@ table _Measures
 		displayFolder: Hiển thị
 		lineageTag: c755834a-0e97-5d49-a9ee-1749f3b3e401
 
+	/// Số gói nhóm từ 100 tỷ
+	measure 'Số gói nhóm từ 100 tỷ' = CALCULATE(DIVIDE(CALCULATE([Số gói kế hoạch], KEEPFILTERS(dim_value_band[band_label]="Từ 100 tỷ VND trở lên")), [Số gói kế hoạch]), KEEPFILTERS(dim_currency[currency_code]="VND"))
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Phân tích
+		lineageTag: 793da805-3d08-5aa6-9359-0a1761609936
+
+	/// Giá trị nhóm từ 100 tỷ
+	measure 'Giá trị nhóm từ 100 tỷ' = CALCULATE(DIVIDE(CALCULATE([Kế hoạch · tỷ VND], KEEPFILTERS(dim_value_band[band_label]="Từ 100 tỷ VND trở lên")), [Kế hoạch · tỷ VND]), KEEPFILTERS(dim_currency[currency_code]="VND"))
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Phân tích
+		lineageTag: bfaf25fe-4fe5-5c38-9396-13b00e42fcef
+
+	/// Biên độ cạnh tranh
+	measure 'Biên độ cạnh tranh' = VAR sectors=FILTER(ALLSELECTED(dim_sector[sector_name]), [Lượt mở thầu]>=30) RETURN IF(COUNTROWS(sectors)>1, (MAXX(sectors,[Tỷ lệ một nhà thầu])-MINX(sectors,[Tỷ lệ một nhà thầu]))*100)
+		formatString: 0.0
+		displayFolder: Phân tích
+		lineageTag: 10f3570f-426b-53ae-afe3-c3d4ac7b661c
+
+	/// Nền Dòng · demand
+	measure 'Nền Dòng · demand' = IF(NOT ISBLANK([Dòng · demand]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: e2623cd7-b4b9-5c73-b558-c4c57aa05332
+
+	/// Nền Dòng · award
+	measure 'Nền Dòng · award' = IF(NOT ISBLANK([Dòng · award]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: e32cb18b-902d-50de-bfbb-d90ec2910ea9
+
+	/// Nền Dòng · savings
+	measure 'Nền Dòng · savings' = IF(NOT ISBLANK([Dòng · savings]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: 69036314-8f43-55ff-ba79-35c3c19cf6b5
+
+	/// Nền Dòng · bidding_competition
+	measure 'Nền Dòng · bidding_competition' = IF(NOT ISBLANK([Dòng · bidding_competition]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: 093015e2-a013-5690-8047-e490d05e1fe6
+
+	/// Nền Dòng · duration
+	measure 'Nền Dòng · duration' = IF(NOT ISBLANK([Dòng · duration]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: 0f6d429a-faff-57fe-9c63-824f0e85835a
+
+	/// Nền Dòng · supplier
+	measure 'Nền Dòng · supplier' = IF(NOT ISBLANK([Dòng · supplier]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: 9fc6e961-cd7b-59db-9856-4bff62378799
+
+	/// Nền Dòng · notice
+	measure 'Nền Dòng · notice' = IF(NOT ISBLANK([Dòng · notice]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: b956db0f-cb8b-5d80-bbc6-70031a22f2f9
+
+	/// Nền Dòng · status
+	measure 'Nền Dòng · status' = IF(NOT ISBLANK([Dòng · status]), "#DCEAFE", "#F5F6F8")
+		displayFolder: Phân tích
+		lineageTag: 0c6ef197-80bd-51da-b0af-c6a36a541aeb
+
+	/// Tên người nhận
+	measure 'Tên người nhận' = SELECTEDVALUE(dim_party[party_name])
+		displayFolder: Hiển thị
+		lineageTag: d80b1e0d-a08b-5d9b-b6d2-8fca6c39185d
+
+	/// Hạng người nhận
+	measure 'Hạng người nhận' = VAR k=SELECTEDVALUE(dim_party[party_key]) VAR v=[Người nhận · tỷ VND] VAR candidates=CALCULATETABLE(VALUES(dim_party[party_key]),ALLSELECTED(dim_party[party_key])) VAR ranked=ADDCOLUMNS(candidates,"_amount",CALCULATE([Người nhận · tỷ VND])) RETURN IF(ISINSCOPE(dim_party[party_key]) && NOT ISBLANK(v),1+COUNTROWS(FILTER(ranked,[_amount]>v || ([_amount]=v && dim_party[party_key]<k))))
+		displayFolder: Hiển thị
+		lineageTag: 93a0f55f-26e5-524d-894d-b19e5ab965ad
+
+	/// Tiêu đề thời gian trend
+	measure 'Tiêu đề thời gian trend' = "Bình quân theo tháng" & IF(NOT ISBLANK([Đơn vị thời gian]), " · " & [Đơn vị thời gian])
+		displayFolder: Hiển thị
+		lineageTag: 15de8651-8990-579c-8ffa-cade8246e96c
+
+	/// Tiêu đề thời gian sectors
+	measure 'Tiêu đề thời gian sectors' = "Bình quân theo lĩnh vực" & IF(NOT ISBLANK([Đơn vị thời gian]), " · " & [Đơn vị thời gian])
+		displayFolder: Hiển thị
+		lineageTag: 58893972-31b8-57f9-b4e4-0d91d99f045d
+
+	/// Tiêu đề thời gian methods
+	measure 'Tiêu đề thời gian methods' = "Bình quân theo phương thức" & IF(NOT ISBLANK([Đơn vị thời gian]), " · " & [Đơn vị thời gian])
+		displayFolder: Hiển thị
+		lineageTag: 279005cd-57bd-582e-a614-792e97dac7cf
+
+	/// Tiêu đề cơ cấu lĩnh vực
+	measure 'Tiêu đề cơ cấu lĩnh vực' = VAR v=[Trúng thầu · tỷ VND] RETURN "Giá trúng theo lĩnh vực" & IF(NOT ISBLANK(v), " · " & FORMAT(v/1000,"#,0.0","vi-VN") & " nghìn tỷ VND")
+		displayFolder: Hiển thị
+		lineageTag: 692ccbd5-80a2-502b-a422-eb7f5fa3db75
+
+	/// Hiển thị · Số gói nhóm từ 100 tỷ
+	measure 'Hiển thị · Số gói nhóm từ 100 tỷ' = IF(ISBLANK([Số gói nhóm từ 100 tỷ]), "—", FORMAT([Số gói nhóm từ 100 tỷ], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: d18eb92c-9c86-53b6-b152-3463eddf276e
+
+	/// Hiển thị · Giá trị nhóm từ 100 tỷ
+	measure 'Hiển thị · Giá trị nhóm từ 100 tỷ' = IF(ISBLANK([Giá trị nhóm từ 100 tỷ]), "—", FORMAT([Giá trị nhóm từ 100 tỷ], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: d5e3bae9-4b8d-510e-b5e8-dd04e8bf5fe7
+
+	/// Hiển thị · Biên độ cạnh tranh
+	measure 'Hiển thị · Biên độ cạnh tranh' = IF(ISBLANK([Biên độ cạnh tranh]), "—", FORMAT([Biên độ cạnh tranh], "0.0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: c83c03e4-d5f4-56db-9110-c37cc93976a2
+
 	column _placeholder
 		dataType: int64
 		isHidden
-		lineageTag: e628bc5a-5a22-466d-b71e-b3b803951460
+		lineageTag: 3bb065e5-3d64-4a4f-9b41-22a4c35ef528
 		sourceColumn: _placeholder
 
 	partition _Measures = m

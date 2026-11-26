@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
   "name": "d103ee7b5b5c55fc9f64",
   "position": {
-    "x": 378,
-    "y": 204,
-    "width": 330,
-    "height": 84,
-    "z": 9,
-    "tabOrder": 9
+    "x": 568,
+    "y": 152,
+    "width": 328,
+    "height": 104,
+    "z": 19,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "22D"
+                  "Value": "30D"
                 }
               }
             },
@@ -27,7 +27,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#142D4E'"
+                      "Value": "'#174EA6'"
                     }
                   }
                 }
@@ -95,7 +95,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }
@@ -175,14 +193,14 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Giá trúng mô tả · tỷ VND'"
+                  "Value": "'◈   Giá trúng mô tả · tỷ VND'"
                 }
               }
             },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "13D"
                 }
               }
             },
@@ -191,7 +209,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#172B4D'"
+                      "Value": "'#0F172A'"
                     }
                   }
                 }

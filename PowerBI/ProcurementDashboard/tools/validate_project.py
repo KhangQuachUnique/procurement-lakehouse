@@ -50,8 +50,9 @@ def main():
             elif isinstance(x,list):
                 for v in x: walk(v)
         walk(j)
+        page_doc=json.loads((p.parents[2]/'page.json').read_text(encoding='utf-8'))
         pos=j['position']
-        if min(pos['x'],pos['y'])<0 or pos['x']+pos['width']>1440 or pos['y']+pos['height']>900: errors.append(f'{p}: canvas overflow')
+        if min(pos['x'],pos['y'])<0 or pos['x']+pos['width']>page_doc['width'] or pos['y']+pos['height']>page_doc['height']: errors.append(f'{p}: canvas overflow')
     theme_schema=json.loads((contracts/'theme-schema.json').read_text(encoding='utf-8-sig'))
     theme=json.loads((PROJECT/'theme.json').read_text(encoding='utf-8'))
     errors += [f'Theme {list(e.path)}: {e.message}' for e in jsonschema.Draft7Validator(theme_schema).iter_errors(theme)]

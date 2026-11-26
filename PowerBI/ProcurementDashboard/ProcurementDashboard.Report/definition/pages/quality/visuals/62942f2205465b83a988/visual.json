@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "62942f2205465b83a988",
   "position": {
-    "x": 24,
-    "y": 580,
-    "z": 10,
-    "height": 248,
-    "width": 684,
-    "tabOrder": 10
+    "x": 746,
+    "y": 600,
+    "z": 20,
+    "height": 276,
+    "width": 530,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "barChart",
@@ -193,7 +193,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#087F8C'"
+                      "Value": "'#4385E8'"
                     }
                   }
                 }
@@ -211,7 +211,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#ADB5BD'"
+                      "Value": "'#CBD5E1'"
                     }
                   }
                 }
@@ -262,7 +262,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }
@@ -349,7 +367,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "13D"
                 }
               }
             },
@@ -358,7 +376,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#172B4D'"
+                      "Value": "'#0F172A'"
                     }
                   }
                 }

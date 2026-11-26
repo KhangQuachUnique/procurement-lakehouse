@@ -2,33 +2,33 @@
   "pages": [
     {
       "name": "overview",
-      "displayName": "Quy mô và cơ cấu thị trường",
-      "visuals": 16
+      "displayName": "Tổng quan thị trường",
+      "visuals": 29
     },
     {
       "name": "competition",
-      "displayName": "Cạnh tranh cơ bản",
-      "visuals": 17
+      "displayName": "Mức độ cạnh tranh",
+      "visuals": 29
     },
     {
       "name": "savings",
-      "displayName": "Chênh lệch mô tả",
-      "visuals": 17
+      "displayName": "Dự toán và giá trúng",
+      "visuals": 30
     },
     {
       "name": "duration",
       "displayName": "Thời gian quy trình",
-      "visuals": 17
+      "visuals": 30
     },
     {
       "name": "suppliers",
-      "displayName": "Đơn vị nhận thầu",
-      "visuals": 15
+      "displayName": "Thị trường nhà cung cấp",
+      "visuals": 28
     },
     {
       "name": "quality",
       "displayName": "Chất lượng dữ liệu",
-      "visuals": 13
+      "visuals": 26
     }
   ]
 }

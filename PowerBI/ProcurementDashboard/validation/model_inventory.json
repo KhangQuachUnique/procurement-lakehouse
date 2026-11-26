@@ -609,7 +609,7 @@
       "description": "Đối sánh tập chọn"
     },
     "Màu cạnh tranh": {
-      "dax": "VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,\"#F0F7F6\", r<0.5,\"#CCE8E6\", r<0.75,\"#9ACFCC\",\"#65B6B2\"))",
+      "dax": "VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,\"#EFF5FC\", r<0.5,\"#D5E6FA\", r<0.75,\"#A8CDF5\",\"#76A8E0\"))",
       "format": null,
       "folder": "Cạnh tranh",
       "description": "Màu cạnh tranh"
@@ -643,6 +643,108 @@
       "format": "#,0.00;(#,0.00);0.00",
       "folder": "Chất lượng",
       "description": "Giá chưa phân bổ"
+    },
+    "Số gói nhóm từ 100 tỷ": {
+      "dax": "CALCULATE(DIVIDE(CALCULATE([Số gói kế hoạch], KEEPFILTERS(dim_value_band[band_label]=\"Từ 100 tỷ VND trở lên\")), [Số gói kế hoạch]), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Phân tích",
+      "description": "Số gói nhóm từ 100 tỷ"
+    },
+    "Giá trị nhóm từ 100 tỷ": {
+      "dax": "CALCULATE(DIVIDE(CALCULATE([Kế hoạch · tỷ VND], KEEPFILTERS(dim_value_band[band_label]=\"Từ 100 tỷ VND trở lên\")), [Kế hoạch · tỷ VND]), KEEPFILTERS(dim_currency[currency_code]=\"VND\"))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Phân tích",
+      "description": "Giá trị nhóm từ 100 tỷ"
+    },
+    "Biên độ cạnh tranh": {
+      "dax": "VAR sectors=FILTER(ALLSELECTED(dim_sector[sector_name]), [Lượt mở thầu]>=30) RETURN IF(COUNTROWS(sectors)>1, (MAXX(sectors,[Tỷ lệ một nhà thầu])-MINX(sectors,[Tỷ lệ một nhà thầu]))*100)",
+      "format": "0.0",
+      "folder": "Phân tích",
+      "description": "Biên độ cạnh tranh"
+    },
+    "Nền Dòng · demand": {
+      "dax": "IF(NOT ISBLANK([Dòng · demand]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · demand"
+    },
+    "Nền Dòng · award": {
+      "dax": "IF(NOT ISBLANK([Dòng · award]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · award"
+    },
+    "Nền Dòng · savings": {
+      "dax": "IF(NOT ISBLANK([Dòng · savings]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · savings"
+    },
+    "Nền Dòng · bidding_competition": {
+      "dax": "IF(NOT ISBLANK([Dòng · bidding_competition]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · bidding_competition"
+    },
+    "Nền Dòng · duration": {
+      "dax": "IF(NOT ISBLANK([Dòng · duration]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · duration"
+    },
+    "Nền Dòng · supplier": {
+      "dax": "IF(NOT ISBLANK([Dòng · supplier]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · supplier"
+    },
+    "Nền Dòng · notice": {
+      "dax": "IF(NOT ISBLANK([Dòng · notice]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · notice"
+    },
+    "Nền Dòng · status": {
+      "dax": "IF(NOT ISBLANK([Dòng · status]), \"#DCEAFE\", \"#F5F6F8\")",
+      "format": null,
+      "folder": "Phân tích",
+      "description": "Nền Dòng · status"
+    },
+    "Tên người nhận": {
+      "dax": "SELECTEDVALUE(dim_party[party_name])",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Tên người nhận"
+    },
+    "Hạng người nhận": {
+      "dax": "VAR k=SELECTEDVALUE(dim_party[party_key]) VAR v=[Người nhận · tỷ VND] VAR candidates=CALCULATETABLE(VALUES(dim_party[party_key]),ALLSELECTED(dim_party[party_key])) VAR ranked=ADDCOLUMNS(candidates,\"_amount\",CALCULATE([Người nhận · tỷ VND])) RETURN IF(ISINSCOPE(dim_party[party_key]) && NOT ISBLANK(v),1+COUNTROWS(FILTER(ranked,[_amount]>v || ([_amount]=v && dim_party[party_key]<k))))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hạng người nhận"
+    },
+    "Tiêu đề thời gian trend": {
+      "dax": "\"Bình quân theo tháng\" & IF(NOT ISBLANK([Đơn vị thời gian]), \" · \" & [Đơn vị thời gian])",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Tiêu đề thời gian trend"
+    },
+    "Tiêu đề thời gian sectors": {
+      "dax": "\"Bình quân theo lĩnh vực\" & IF(NOT ISBLANK([Đơn vị thời gian]), \" · \" & [Đơn vị thời gian])",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Tiêu đề thời gian sectors"
+    },
+    "Tiêu đề thời gian methods": {
+      "dax": "\"Bình quân theo phương thức\" & IF(NOT ISBLANK([Đơn vị thời gian]), \" · \" & [Đơn vị thời gian])",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Tiêu đề thời gian methods"
+    },
+    "Tiêu đề cơ cấu lĩnh vực": {
+      "dax": "VAR v=[Trúng thầu · tỷ VND] RETURN \"Giá trúng theo lĩnh vực\" & IF(NOT ISBLANK(v), \" · \" & FORMAT(v/1000,\"#,0.0\",\"vi-VN\") & \" nghìn tỷ VND\")",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Tiêu đề cơ cấu lĩnh vực"
     },
     "Hiển thị · Số gói kế hoạch": {
       "dax": "IF(ISBLANK([Số gói kế hoạch]), \"—\", FORMAT([Số gói kế hoạch], \"#,0\", \"vi-VN\"))",
@@ -1027,6 +1129,24 @@
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Giá chưa phân bổ"
+    },
+    "Hiển thị · Số gói nhóm từ 100 tỷ": {
+      "dax": "IF(ISBLANK([Số gói nhóm từ 100 tỷ]), \"—\", FORMAT([Số gói nhóm từ 100 tỷ], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Số gói nhóm từ 100 tỷ"
+    },
+    "Hiển thị · Giá trị nhóm từ 100 tỷ": {
+      "dax": "IF(ISBLANK([Giá trị nhóm từ 100 tỷ]), \"—\", FORMAT([Giá trị nhóm từ 100 tỷ], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Giá trị nhóm từ 100 tỷ"
+    },
+    "Hiển thị · Biên độ cạnh tranh": {
+      "dax": "IF(ISBLANK([Biên độ cạnh tranh]), \"—\", FORMAT([Biên độ cạnh tranh], \"0.0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Biên độ cạnh tranh"
     }
   },
   "relationships": 37

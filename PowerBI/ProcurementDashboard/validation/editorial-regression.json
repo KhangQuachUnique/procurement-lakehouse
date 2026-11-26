@@ -1,0 +1,8 @@
+{
+  "baseline": "ca22fb692ab26f6adc7f1b3391e214b233009dea",
+  "queries": 225,
+  "changed": [],
+  "benchmark_sql": 0.6093234156870662,
+  "generator_runs": 2,
+  "identical_files_per_run": 210
+}
