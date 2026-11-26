@@ -10,10 +10,10 @@
     "tabOrder": 14
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,8 +28,31 @@
               },
               "queryRef": "dim_geography.province_display",
               "nativeQueryRef": "province_display",
+              "active": true,
               "displayName": "Địa phương · phiên bản"
-            },
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Mẫu giá trúng VND"
+                }
+              },
+              "queryRef": "_Measures.Mẫu giá trúng VND",
+              "nativeQueryRef": "Mẫu giá trúng VND"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -67,20 +90,27 @@
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -90,38 +120,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -131,37 +154,34 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "445D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "dim_geography.province_display"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "170D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
@@ -270,7 +290,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Địa phương xác định theo giá trúng · tỷ VND'"
+                  "Value": "'5 địa phương có giá trúng cao nhất · tỷ VND'"
                 }
               }
             }
@@ -290,7 +310,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Địa phương xác định theo giá trúng · tỷ VND'"
+                  "Value": "'5 địa phương có giá trúng cao nhất · tỷ VND'"
                 }
               }
             },
@@ -334,7 +354,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "a87f1317a4ab5d9fa9d42e3469f40d84",
+        "name": "0bca5f458b345e36b17ftop",
         "field": {
           "Column": {
             "Expression": {
@@ -345,24 +365,124 @@
             "Property": "geography_key"
           }
         },
-        "type": "Categorical",
+        "type": "TopN",
         "filter": {
           "Version": 2,
           "From": [
             {
-              "Name": "d",
-              "Entity": "dim_geography",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "Not": {
-                  "Expression": {
-                    "In": {
-                      "Expressions": [
-                        {
+              "Name": "s",
+              "Expression": {
+                "Subquery": {
+                  "Query": {
+                    "Version": 2,
+                    "From": [
+                      {
+                        "Name": "d",
+                        "Entity": "dim_geography",
+                        "Type": 0
+                      },
+                      {
+                        "Name": "m",
+                        "Entity": "_Measures",
+                        "Type": 0
+                      }
+                    ],
+                    "Select": [
+                      {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Source": "d"
+                            }
+                          },
+                          "Property": "geography_key"
+                        },
+                        "Name": "field"
+                      }
+                    ],
+                    "Where": [
+                      {
+                        "Condition": {
+                          "Not": {
+                            "Expression": {
+                              "Comparison": {
+                                "ComparisonKind": 0,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Source": "m"
+                                      }
+                                    },
+                                    "Property": "Trúng thầu · tỷ VND"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "null"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "Not": {
+                            "Expression": {
+                              "In": {
+                                "Expressions": [
+                                  {
+                                    "Column": {
+                                      "Expression": {
+                                        "SourceRef": {
+                                          "Source": "d"
+                                        }
+                                      },
+                                      "Property": "geography_key"
+                                    }
+                                  }
+                                ],
+                                "Values": [
+                                  [
+                                    {
+                                      "Literal": {
+                                        "Value": "'GEO_UNKNOWN'"
+                                      }
+                                    }
+                                  ],
+                                  [
+                                    {
+                                      "Literal": {
+                                        "Value": "'GEO_MULTI_UNALLOCATED'"
+                                      }
+                                    }
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "OrderBy": [
+                      {
+                        "Direction": 2,
+                        "Expression": {
+                          "Measure": {
+                            "Expression": {
+                              "SourceRef": {
+                                "Source": "m"
+                              }
+                            },
+                            "Property": "Trúng thầu · tỷ VND"
+                          }
+                        }
+                      },
+                      {
+                        "Direction": 1,
+                        "Expression": {
                           "Column": {
                             "Expression": {
                               "SourceRef": {
@@ -372,23 +492,39 @@
                             "Property": "geography_key"
                           }
                         }
-                      ],
-                      "Values": [
-                        [
-                          {
-                            "Literal": {
-                              "Value": "'GEO_UNKNOWN'"
-                            }
+                      }
+                    ],
+                    "Top": 5
+                  }
+                }
+              },
+              "Type": 2
+            },
+            {
+              "Name": "d",
+              "Entity": "dim_geography",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "d"
                           }
-                        ],
-                        [
-                          {
-                            "Literal": {
-                              "Value": "'GEO_MULTI_UNALLOCATED'"
-                            }
-                          }
-                        ]
-                      ]
+                        },
+                        "Property": "geography_key"
+                      }
+                    }
+                  ],
+                  "Table": {
+                    "SourceRef": {
+                      "Source": "s"
                     }
                   }
                 }
@@ -397,6 +533,48 @@
           ]
         },
         "howCreated": "User"
+      },
+      {
+        "name": "d4adbcb627ab54fb2c9e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_geography"
+              }
+            },
+            "Property": "province_display"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "db5f2e06c78fe7d170eb",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Trúng thầu · tỷ VND"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "c5d53c82c0882606f032",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Mẫu giá trúng VND"
+          }
+        },
+        "type": "Advanced"
       }
     ]
   }

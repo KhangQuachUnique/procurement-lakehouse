@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
-  "name": "a2a04edb281856eca659",
+  "name": "8ca9fb6cabc0564092a9",
   "position": {
     "x": 732,
     "y": 308,
-    "z": 11,
+    "z": 9,
     "height": 248,
     "width": 684,
-    "tabOrder": 11
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -20,15 +20,48 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_progress_status"
+                      "Entity": "dim_sector"
                     }
                   },
-                  "Property": "status_label"
+                  "Property": "sector_name"
                 }
               },
-              "queryRef": "dim_progress_status.status_label",
-              "nativeQueryRef": "status_label",
-              "active": true
+              "queryRef": "dim_sector.sector_name",
+              "nativeQueryRef": "sector_name",
+              "active": true,
+              "displayName": "Lĩnh vực"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Lượt kết quả hiệu lực"
+                }
+              },
+              "queryRef": "_Measures.Lượt kết quả hiệu lực",
+              "nativeQueryRef": "Lượt kết quả hiệu lực"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Phạm vi so sánh"
+                }
+              },
+              "queryRef": "_Measures.Phạm vi so sánh",
+              "nativeQueryRef": "Phạm vi so sánh"
             }
           ]
         },
@@ -42,11 +75,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Gói theo trạng thái quan sát"
+                  "Property": "Độ phủ giá trúng"
                 }
               },
-              "queryRef": "_Measures.Gói theo trạng thái quan sát",
-              "nativeQueryRef": "Gói theo trạng thái quan sát"
+              "queryRef": "_Measures.Độ phủ giá trúng",
+              "nativeQueryRef": "Độ phủ giá trúng"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Độ phủ mẫu mô tả"
+                }
+              },
+              "queryRef": "_Measures.Độ phủ mẫu mô tả",
+              "nativeQueryRef": "Độ phủ mẫu mô tả"
             }
           ]
         }
@@ -61,7 +108,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Gói theo trạng thái quan sát"
+                "Property": "Độ phủ giá trúng"
               }
             },
             "direction": "Descending"
@@ -77,7 +124,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
                 }
               }
             },
@@ -168,7 +215,25 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Gói theo trạng thái quan sát"
+            "metadata": "_Measures.Độ phủ giá trúng"
+          }
+        },
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#087F8C'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Độ phủ mẫu mô tả"
           }
         }
       ]
@@ -271,7 +336,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Trạng thái tại ngày cuối có bản ghi trong tập chọn'"
+                  "Value": "'Độ phủ trong từng tập mẫu · %'"
                 }
               }
             }
@@ -291,7 +356,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Trạng thái tại ngày cuối có bản ghi trong tập chọn'"
+                  "Value": "'Độ phủ trong từng tập mẫu · %'"
                 }
               }
             },

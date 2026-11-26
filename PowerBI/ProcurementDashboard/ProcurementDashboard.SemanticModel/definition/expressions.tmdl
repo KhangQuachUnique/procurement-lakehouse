@@ -1,8 +1,6 @@
 expression DataRoot = "D:/Project/procurement-lakehouse/PowerBI/export/parquet" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
 	lineageTag: 36f73539-1011-55cb-910a-680ba979646e
 
-	annotation PBI_ResultType = Text
-
 expression ReadParquetTable =
 		(tableName as text, expectedColumns as list) as table =>
 		let

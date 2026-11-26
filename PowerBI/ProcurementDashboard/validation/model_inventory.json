@@ -602,6 +602,48 @@
       "folder": "Độ phủ",
       "description": "Luồng có quan sát"
     },
+    "Đối sánh tập chọn": {
+      "dax": "CALCULATE([Tỷ lệ một nhà thầu], ALLSELECTED(dim_sector[sector_name]))",
+      "format": "0.00%;(0.00%);0.00%",
+      "folder": "Cạnh tranh",
+      "description": "Đối sánh tập chọn"
+    },
+    "Màu cạnh tranh": {
+      "dax": "VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,\"#F0F7F6\", r<0.5,\"#CCE8E6\", r<0.75,\"#9ACFCC\",\"#65B6B2\"))",
+      "format": null,
+      "folder": "Cạnh tranh",
+      "description": "Màu cạnh tranh"
+    },
+    "Lưu ý cỡ mẫu": {
+      "dax": "IF([Lượt mở thầu]>0 && [Lượt mở thầu]<30, \"Ít hơn 30 lượt mở\")",
+      "format": null,
+      "folder": "Cạnh tranh",
+      "description": "Lưu ý cỡ mẫu"
+    },
+    "Mẫu ngoài so sánh": {
+      "dax": "IF(NOT ISBLANK([Phạm vi so sánh]) && NOT ISBLANK([Mẫu mô tả]), [Phạm vi so sánh]-[Mẫu mô tả])",
+      "format": "#,0",
+      "folder": "Chất lượng",
+      "description": "Mẫu ngoài so sánh"
+    },
+    "Khóa người nhận": {
+      "dax": "SELECTEDVALUE(dim_party[party_key])",
+      "format": null,
+      "folder": "Người nhận",
+      "description": "Khóa người nhận"
+    },
+    "Giá trúng thiếu địa phương": {
+      "dax": "CALCULATE([Trúng thầu · tỷ VND], KEEPFILTERS(dim_geography[geography_key] IN {\"GEO_UNKNOWN\",\"GEO_MULTI_UNALLOCATED\"}))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Chất lượng",
+      "description": "Giá trúng thiếu địa phương"
+    },
+    "Giá chưa phân bổ": {
+      "dax": "CALCULATE([Phân bổ · tỷ VND], KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]<>\"single_recipient\"))",
+      "format": "#,0.00;(#,0.00);0.00",
+      "folder": "Chất lượng",
+      "description": "Giá chưa phân bổ"
+    },
     "Hiển thị · Số gói kế hoạch": {
       "dax": "IF(ISBLANK([Số gói kế hoạch]), \"—\", FORMAT([Số gói kế hoạch], \"#,0\", \"vi-VN\"))",
       "format": null,
@@ -961,6 +1003,30 @@
       "format": null,
       "folder": "Hiển thị",
       "description": "Hiển thị · Dòng · status"
+    },
+    "Hiển thị · Đối sánh tập chọn": {
+      "dax": "IF(ISBLANK([Đối sánh tập chọn]), \"—\", FORMAT([Đối sánh tập chọn], \"0.00%;(0.00%);0.00%\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Đối sánh tập chọn"
+    },
+    "Hiển thị · Mẫu ngoài so sánh": {
+      "dax": "IF(ISBLANK([Mẫu ngoài so sánh]), \"—\", FORMAT([Mẫu ngoài so sánh], \"#,0\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Mẫu ngoài so sánh"
+    },
+    "Hiển thị · Giá trúng thiếu địa phương": {
+      "dax": "IF(ISBLANK([Giá trúng thiếu địa phương]), \"—\", FORMAT([Giá trúng thiếu địa phương], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Giá trúng thiếu địa phương"
+    },
+    "Hiển thị · Giá chưa phân bổ": {
+      "dax": "IF(ISBLANK([Giá chưa phân bổ]), \"—\", FORMAT([Giá chưa phân bổ], \"#,0.00;(#,0.00);0.00\", \"vi-VN\"))",
+      "format": null,
+      "folder": "Hiển thị",
+      "description": "Hiển thị · Giá chưa phân bổ"
     }
   },
   "relationships": 37

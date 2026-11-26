@@ -6,8 +6,8 @@
     "y": 594,
     "width": 652,
     "height": 224,
-    "z": 13,
-    "tabOrder": 13
+    "z": 11,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "GIỚI HẠN CẦN BIẾT\n\n• Xem cỡ mẫu xác minh và hợp đồng ở trên.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Hai mốc kết quả có dữ liệu trùng; bỏ mốc đầy đủ.\n• Không có hồ sơ gói thầu để tra cứu cá thể.\n• Tháng thiếu quan sát hiển thị trống.\n• Trạng thái quan sát không phải tiến độ hợp đồng.",
+                    "value": "GIỚI HẠN CẦN BIẾT\n\n• Có bản ghi chưa chứng minh thu thập đầy đủ.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Ô trống biểu thị thiếu quan sát hoặc thiếu mẫu hợp lệ.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "12pt",

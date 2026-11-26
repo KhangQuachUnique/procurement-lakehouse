@@ -1,0 +1,73 @@
+{
+  "regenerated_files": 133,
+  "different_files": [],
+  "baseline_queries": 225,
+  "current_queries": 225,
+  "changed_results": [],
+  "median_engine_ms_before": 31.401500000000002,
+  "median_engine_ms_after": 4.555400000000001,
+  "timing_scope": "Historical vs live DAX suite; not a controlled canvas timing.",
+  "page_order_for_ms": [
+    "competition",
+    "savings",
+    "duration",
+    "suppliers",
+    "quality",
+    "overview"
+  ],
+  "first_page_switch_before_ms": [
+    434,
+    615,
+    796,
+    1826,
+    776,
+    833
+  ],
+  "first_page_switch_review_2_ms": [
+    640,
+    585,
+    561,
+    1375,
+    607,
+    593
+  ],
+  "weighted_benchmark_sql": 0.6093234156870662,
+  "additional_dax": [
+    {
+      "status": "passed",
+      "name": "weighted_selection",
+      "rows": [
+        {
+          "dim_sector[sector_name]": "Xây lắp",
+          "[benchmark]": 0.6093234156870662,
+          "[rate]": 0.7022307991226973
+        },
+        {
+          "dim_sector[sector_name]": "Hàng hóa",
+          "[benchmark]": 0.6093234156870662,
+          "[rate]": 0.5264228120078046
+        }
+      ],
+      "elapsed_ms": 57.340300000000006
+    },
+    {
+      "status": "passed",
+      "name": "missing",
+      "rows": [
+        {
+          "[unallocated]": 63746.95222151191,
+          "[unknown_geo]": 211175.0409734757
+        }
+      ],
+      "elapsed_ms": 7.916300000000001
+    }
+  ],
+  "first_page_switch_final_ms": [
+    436,
+    500,
+    596,
+    1535,
+    509,
+    544
+  ]
+}

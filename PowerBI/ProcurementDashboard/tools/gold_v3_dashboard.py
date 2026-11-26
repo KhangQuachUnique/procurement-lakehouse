@@ -91,6 +91,13 @@ def define_measures():
               'notice': 'Thông báo', 'status': 'Trạng thái'}
     observed = ', '.join(f'IF([Dòng · {fact}] > 0, "{label}")' for fact, label in labels.items())
     add('Luồng có quan sát', 'VAR streams=FILTER({' + observed + '}, NOT ISBLANK([Value])) RETURN IF(COUNTROWS(streams)>0, CONCATENATEX(streams,[Value],", ",[Value],ASC))', None, 'Độ phủ')
+    add('Đối sánh tập chọn', 'CALCULATE([Tỷ lệ một nhà thầu], ALLSELECTED(dim_sector[sector_name]))', pct, 'Cạnh tranh')
+    add('Màu cạnh tranh', 'VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#F0F7F6", r<0.5,"#CCE8E6", r<0.75,"#9ACFCC","#65B6B2"))', None, 'Cạnh tranh')
+    add('Lưu ý cỡ mẫu', 'IF([Lượt mở thầu]>0 && [Lượt mở thầu]<30, "Ít hơn 30 lượt mở")', None, 'Cạnh tranh')
+    add('Mẫu ngoài so sánh', 'IF(NOT ISBLANK([Phạm vi so sánh]) && NOT ISBLANK([Mẫu mô tả]), [Phạm vi so sánh]-[Mẫu mô tả])', folder='Chất lượng')
+    add('Khóa người nhận', 'SELECTEDVALUE(dim_party[party_key])', None, 'Người nhận')
+    add('Giá trúng thiếu địa phương', 'CALCULATE([Trúng thầu · tỷ VND], KEEPFILTERS(dim_geography[geography_key] IN {"GEO_UNKNOWN","GEO_MULTI_UNALLOCATED"}))', money, 'Chất lượng')
+    add('Giá chưa phân bổ', 'CALCULATE([Phân bổ · tỷ VND], KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]<>"single_recipient"))', money, 'Chất lượng')
     # Cards use explicit Vietnamese formatting; numerical originals remain available to charts.
     for name, definition in list(b.MEASURES.items()):
         if definition['format'] is None:
@@ -135,13 +142,13 @@ class Page(b.Page):
     def chart(self, key, typ, category, measures, x, y, w=684, h=248, title=None, tooltips=None):
         return super().chart(key, typ, category, measures, x, y, w, h, title, tooltips)
 
-    def table(self, key, specs, x, y, title, widths, w=684, h=248, rank=None):
-        v = self.add(key, 'tableEx', x, y, w, h, roles={'Values': specs}, title=title,
-                     objects={'grid': b.obj(rowPadding=b.lit(3))})
-        b.table_widths(v, widths)
-        if rank:
-            v['visual']['query']['sortDefinition'] = {'sort': [{'field': b.field('_Measures', rank, 'Measure'), 'direction': 'Descending'}], 'isDefaultSort': True}
-        return v
+    def matrix(self, key, roles, title, x, y, shades):
+        objects = {'values': []}
+        for measure, expression in shades.items():
+            objects['values'].append({'selector': {'metadata': '_Measures.' + measure,
+                'data': [{'dataViewWildcard': {'matchingOption': 1}}]},
+                'properties': {'backColor': {'solid': {'color': expression}}}})
+        return self.add(key, 'pivotTable', x, y, 684, 248, roles=roles, title=title, objects=objects)
 
     def foot(self, value):
         self.text('foot', value, 24, 850, 1392, 30, 10, b.MUTED)
@@ -155,6 +162,24 @@ class Page(b.Page):
         b.save(b.REPORT/f'definition/pages/{self.key}/page.json', self.doc)
         for v in self.visuals:
             b.save(b.REPORT/f'definition/pages/{self.key}/visuals/{v["name"]}/visual.json', v)
+
+
+def top_filter(v, table, key, measure, count, exclusions=None):
+    identity = b.field('d', key, alias=True)
+    amount = b.field('m', measure, 'Measure', alias=True)
+    ranked = {'Version': 2, 'From': [{'Name': 'd', 'Entity': table, 'Type': 0},
+                                    {'Name': 'm', 'Entity': '_Measures', 'Type': 0}],
+              'Select': [dict(identity, Name='field')],
+              'Where': [{'Condition': {'Not': {'Expression': {'Comparison': {'ComparisonKind': 0,
+                         'Left': amount, 'Right': {'Literal': {'Value': 'null'}}}}}}}],
+              'OrderBy': [{'Direction': 2, 'Expression': amount}, {'Direction': 1, 'Expression': identity}], 'Top': count}
+    if exclusions:
+        ranked['Where'].extend(exclusions['filter']['Where'])
+    v['filterConfig'] = {'filters': [{'name': v['name']+'top', 'field': b.field(table,key),
+        'type': 'TopN', 'howCreated': 'User', 'filter': {'Version': 2,
+        'From': [{'Name': 's', 'Expression': {'Subquery': {'Query': ranked}}, 'Type': 2},
+                 {'Name': 'd', 'Entity': table, 'Type': 0}],
+        'Where': [{'Condition': {'In': {'Expressions': [identity], 'Table': {'SourceRef': {'Source': 's'}}}}}]}}]}
 
 
 def report_pages():
@@ -177,34 +202,39 @@ def report_pages():
     p = Page('overview', 'Quy mô và cơ cấu thị trường', 'Số lượt gồm mọi tiền tệ. Giá trị tính trên mẫu VND có giá hợp lệ.')
     p.filters(geography=True)
     p.cards(['Số gói kế hoạch', 'Kế hoạch · tỷ VND', 'Lượt kết quả hiệu lực', 'Trúng thầu · tỷ VND'])
-    p.chart('trend', 'lineChart', month, ['Kế hoạch · tỷ VND', 'Trúng thầu · tỷ VND'], 24, 308, title='Hai luồng công bố độc lập theo tháng · tỷ VND')
-    p.chart('sectors', 'clusteredBarChart', sector, ['Trúng thầu · tỷ VND'], 732, 308, title='Giá trị trúng theo lĩnh vực · tỷ VND', tooltips=['Mẫu giá trúng VND'])
-    p.table('bands', [band, m('Tỷ trọng gói VND'), m('Tỷ trọng giá kế hoạch VND')], 24, 580, 'Cơ cấu kế hoạch VND theo quy mô', [265, 160, 180], rank='Tỷ trọng giá kế hoạch VND')
-    v = p.table('geo', [c('dim_geography', 'province_display'), m('Trúng thầu · tỷ VND')], 732, 580, 'Địa phương xác định theo giá trúng · tỷ VND', [445, 170], rank='Trúng thầu · tỷ VND')
+    p.chart('trend', 'lineChart', month, ['Kế hoạch · tỷ VND', 'Trúng thầu · tỷ VND'], 24, 308, w=844, title='Giá trị kế hoạch và giá trúng theo tháng · tỷ VND')
+    p.add('sectors', 'donutChart', 892, 308, 524, 248, title='Cơ cấu giá trị trúng theo lĩnh vực',
+          roles={'Category':[sector], 'Y':[m('Trúng thầu · tỷ VND')], 'Tooltips':[m('Mẫu giá trúng VND')]},
+          objects={'legend':b.obj(show=b.lit(True), position=b.lit('Right'), showTitle=b.lit(False), fontSize=b.lit(10)),
+                   'labels':b.obj(show=b.lit(False))})
+    p.chart('bands', 'clusteredBarChart', band, ['Tỷ trọng giá kế hoạch VND', 'Tỷ trọng gói VND'], 24, 580, title='Quy mô gói · tỷ trọng giá trị và số gói VND')
+    v = p.chart('geo', 'clusteredBarChart', c('dim_geography','province_display'), ['Trúng thầu · tỷ VND'], 732, 580, title='5 địa phương có giá trúng cao nhất · tỷ VND', tooltips=['Mẫu giá trúng VND'])
     excluded = b.categorical('dim_geography', 'geography_key', ['GEO_UNKNOWN', 'GEO_MULTI_UNALLOCATED'])
     predicate = excluded['filter']['Where'][0]
     predicate['Condition'] = {'Not': {'Expression': predicate['Condition']}}
-    v['filterConfig'] = {'filters': [excluded]}
-    p.foot('Hai ngày công bố phản ánh hai tập sự kiện. Tổng thị trường bao gồm cả nhóm nhiều địa phương và chưa xác định.')
+    top_filter(v, 'dim_geography', 'geography_key', 'Trúng thầu · tỷ VND', 5, excluded)
+    p.foot('Toàn kỳ nguồn: nhóm từ 100 tỷ VND chiếm 0,27% số gói và 46,44% giá kế hoạch. Biểu đồ cập nhật theo bộ lọc.')
     pages.append(p)
 
+    competition_tips = ['Lượt mở thầu','Lượt một nhà thầu','Lưu ý cỡ mẫu']
     p = Page('competition', 'Cạnh tranh cơ bản', 'Lượt tham gia, không phải nhà thầu duy nhất.\nLoại khỏi báo cáo KPI kỹ thuật và tiền dự thầu chưa xác minh.')
     p.filters(geography=True, method=True)
     p.cards(['Lượt mở thầu', 'Nhà thầu bình quân', 'Tỷ lệ một nhà thầu'])
-    p.chart('trend', 'lineChart', month, ['Tỷ lệ một nhà thầu'], 24, 308, title='Tỷ lệ một nhà thầu theo tháng', tooltips=['Lượt mở thầu'])
-    p.table('sectorchart', [sector, m('Lượt mở thầu'), m('Tỷ lệ một nhà thầu'), m('Chênh so với tập chọn · đpt')], 732, 308, 'Một nhà thầu theo lĩnh vực · đối sánh với tập chọn', [175, 125, 150, 170], rank='Lượt mở thầu')
-    p.table('methods', [method, m('Lượt mở thầu'), m('Nhà thầu bình quân'), m('Tỷ lệ một nhà thầu')], 24, 580, 'Cạnh tranh theo phương thức', [285, 100, 120, 130], rank='Lượt mở thầu')
-    p.table('bands', [band, m('Lượt mở thầu'), m('Nhà thầu bình quân'), m('Tỷ lệ một nhà thầu')], 732, 580, 'Cạnh tranh theo quy mô', [285, 100, 120, 130], rank='Lượt mở thầu')
+    p.chart('trend', 'lineChart', month, ['Tỷ lệ một nhà thầu'], 24, 308, title='Tỷ lệ một nhà thầu theo tháng', tooltips=competition_tips)
+    p.chart('sectorchart', 'clusteredBarChart', sector, ['Tỷ lệ một nhà thầu','Đối sánh tập chọn'], 732, 308, title='Một nhà thầu theo lĩnh vực · đối sánh gia quyền', tooltips=competition_tips)
+    p.chart('methods', 'clusteredBarChart', method, ['Tỷ lệ một nhà thầu'], 24, 580, title='Một nhà thầu theo phương thức · % lượt mở', tooltips=competition_tips)
+    p.matrix('bands', {'Rows':[band], 'Columns':[sector], 'Values':[m('Tỷ lệ một nhà thầu')], 'Tooltips':[m(n) for n in competition_tips]}, 'Một nhà thầu · lĩnh vực × quy mô (%)', 732, 580, {'Tỷ lệ một nhà thầu': {'expr': b.field('_Measures', 'Màu cạnh tranh', 'Measure')}})
+    p.text('small_sample', 'Dưới 30 lượt mở: đọc tỷ lệ cùng cỡ mẫu trong tooltip.', 1086, 215, 320, 64, 11, b.MUTED)
     p.foot('Một nhà thầu là chỉ báo để rà soát, không kết luận sai phạm. Không gán tiền tệ VND cho các trường tiền cạnh tranh.')
     pages.append(p)
 
     p = Page('savings', 'Chênh lệch mô tả', 'Dự toán và giá trúng trên cùng mẫu descriptive · VND.\nChưa phải tiết kiệm xác minh; giữ nguyên chênh lệch âm.', True)
     p.filters(geography=True, method=True)
     p.cards(['Dự toán mô tả · tỷ VND', 'Giá trúng mô tả · tỷ VND', 'Chênh lệch mô tả · tỷ VND', 'Tỷ lệ chênh lệch mô tả'])
-    p.chart('trend', 'lineChart', month, ['Dự toán mô tả · tỷ VND', 'Giá trúng mô tả · tỷ VND'], 24, 308, title='Dự toán và giá trúng cùng mẫu · tỷ VND', tooltips=['Mẫu mô tả'])
+    p.chart('trend', 'clusteredColumnChart', month, ['Chênh lệch mô tả · tỷ VND'], 24, 308, title='Chênh lệch mô tả theo tháng · tỷ VND', tooltips=['Mẫu mô tả'])
     p.chart('rates', 'lineChart', month, ['Tỷ lệ chênh lệch mô tả'], 732, 308, title='Tỷ lệ chênh lệch mô tả theo tháng', tooltips=['Mẫu mô tả', 'Độ phủ mẫu mô tả'])
-    p.table('sectors', [sector, m('Mẫu mô tả'), m('Chênh lệch mô tả · tỷ VND'), m('Tỷ lệ chênh lệch mô tả')], 24, 580, 'Chênh lệch theo lĩnh vực', [200, 110, 180, 145], rank='Chênh lệch mô tả · tỷ VND')
-    p.table('bands', [band, m('Mẫu mô tả'), m('Độ phủ mẫu mô tả'), m('Chênh lệch mô tả · tỷ VND')], 732, 580, 'Mẫu và chênh lệch theo quy mô', [265, 100, 115, 150], rank='Chênh lệch mô tả · tỷ VND')
+    p.chart('sectors', 'clusteredBarChart', sector, ['Chênh lệch mô tả · tỷ VND'], 24, 580, title='Dự toán trừ giá trúng theo lĩnh vực · tỷ VND', tooltips=['Mẫu mô tả','Tỷ lệ chênh lệch mô tả'])
+    p.chart('bands', 'hundredPercentStackedBarChart', band, ['Mẫu mô tả', 'Mẫu ngoài so sánh'], 732, 580, title='Điều kiện so sánh theo quy mô · % phạm vi', tooltips=['Phạm vi so sánh'])
     p.foot('Tỷ lệ tính từ tổng cùng mẫu, không bình quân tỷ lệ. Độ phủ là số mẫu mô tả trên tổng phạm vi so sánh.')
     pages.append(p)
 
@@ -214,42 +244,41 @@ def report_pages():
     p.doc['filterConfig']['filters'].append(b.categorical('dim_duration_metric', 'metric_key', SUPPORTED_METRICS))
     p.slicer('metric', c('dim_duration_metric', 'metric_label'), 'Chỉ số · chọn một', 720, 132, 324, 56, select=labels[0])
     p.cards(['Thời gian bình quân', 'Mẫu thời gian', 'Mẫu thời gian bị loại', 'Tỷ lệ mẫu bị loại'])
-    p.chart('trend', 'lineChart', month, ['Thời gian bình quân'], 24, 308, title='Bình quân theo tháng · đơn vị trên card', tooltips=['Mẫu thời gian'])
-    p.chart('sectors', 'clusteredBarChart', sector, ['Thời gian bình quân'], 732, 308, title='Bình quân theo lĩnh vực', tooltips=['Mẫu thời gian'])
-    p.table('methods', [method, m('Thời gian bình quân'), m('Mẫu thời gian'), m('Tỷ lệ mẫu bị loại')], 24, 580, 'Thời gian theo phương thức', [285, 120, 110, 120], rank='Mẫu thời gian')
-    p.table('months', [c('dim_date', 'year_month'), m('Thời gian bình quân'), m('Mẫu thời gian'), m('Mẫu thời gian bị loại')], 732, 580, 'Mẫu hợp lệ và bị loại theo tháng', [150, 140, 170, 170])
+    p.chart('trend', 'lineChart', month, ['Thời gian bình quân'], 24, 308, title='Bình quân theo tháng · đơn vị trên card', tooltips=['Mẫu thời gian','Đơn vị thời gian'])
+    p.chart('sectors', 'clusteredBarChart', sector, ['Thời gian bình quân'], 732, 308, title='Bình quân theo lĩnh vực', tooltips=['Mẫu thời gian','Đơn vị thời gian'])
+    p.chart('methods', 'clusteredBarChart', method, ['Thời gian bình quân'], 24, 580, title='Thời gian bình quân theo phương thức', tooltips=['Đơn vị thời gian','Mẫu thời gian','Tỷ lệ mẫu bị loại'])
+    p.chart('months', 'columnChart', month, ['Mẫu thời gian','Mẫu thời gian bị loại'], 732, 580, title='Mẫu hợp lệ và bị loại mỗi tháng · lượt', tooltips=['Tỷ lệ mẫu bị loại'])
     p.foot('Bình quân = tổng duration_sum / tổng sample_count của đúng một metric. Không cộng metric; không suy ra P90 hoặc quá hạn.')
     pages.append(p)
 
     p = Page('suppliers', 'Đơn vị nhận thầu', 'Xếp hạng single_recipient, VND, có mẫu tiền hợp lệ.\nKhông chia đều giá trị liên danh hoặc nhiều người nhận.', True)
     p.filters(geography=True)
     p.cards(['Người nhận · tỷ VND', 'Số khóa người nhận', 'Độ phủ giá trị người nhận', 'Tỷ trọng Top 10 người nhận'])
-    v = p.table('ranking', [c('dim_party', 'party_display'), m('Mẫu giá người nhận'), m('Người nhận · tỷ VND')], 24, 308, 'Top 10 khóa người nhận theo giá trị · tỷ VND', [470, 90, 170], w=790, h=520, rank='Người nhận · tỷ VND')
-    # Use the same eligibility measure and stable identity as CR10.
-    identity = b.field('d', 'party_key', alias=True)
-    amount = b.field('m', 'Người nhận · tỷ VND', 'Measure', alias=True)
-    ranked = {'Version': 2, 'From': [{'Name': 'd', 'Entity': 'dim_party', 'Type': 0},
-                                    {'Name': 'm', 'Entity': '_Measures', 'Type': 0}],
-              'Select': [dict(identity, Name='field')],
-              'Where': [{'Condition': {'Not': {'Expression': {'Comparison': {'ComparisonKind': 0,
-                         'Left': amount, 'Right': {'Literal': {'Value': 'null'}}}}}}}],
-              'OrderBy': [{'Direction': 2, 'Expression': amount}, {'Direction': 1, 'Expression': identity}], 'Top': 10}
-    v['filterConfig'] = {'filters': [{'name': v['name']+'top', 'field': b.field('dim_party','party_key'),
-        'type': 'TopN', 'howCreated': 'User', 'filter': {'Version': 2,
-        'From': [{'Name': 's', 'Expression': {'Subquery': {'Query': ranked}}, 'Type': 2},
-                 {'Name': 'd', 'Entity': 'dim_party', 'Type': 0}],
-        'Where': [{'Condition': {'In': {'Expressions': [identity], 'Table': {'SourceRef': {'Source': 's'}}}}}]}}]}
+    amount_name = 'Người nhận · tỷ VND'
+    v = p.add('ranking', 'tableEx', 24, 308, 790, 520, title='10 người nhận có giá trị cao nhất · tỷ VND',
+              roles={'Values':[c('dim_party','party_display'), m(amount_name)], 'Tooltips':[m('Khóa người nhận'), m('Mẫu giá người nhận')]})
+    b.table_widths(v, [520, 204])
+    v['visual']['objects']['columnFormatting'] = [{
+        'selector': {'metadata':'_Measures.' + amount_name},
+        'properties': {'dataBars': {'positiveColor': b.color('#9ACFCC'), 'hideText': b.lit(False),
+                                                  'negativeColor': b.color('#64748B'), 'axisColor': b.color(b.MUTED),
+                                        'totalMatchingOption': {'expr': {'Literal': {'Value':'1L'}}},
+                                        'reverseDirection': b.lit(False)}}}]
+    v['visual']['query']['sortDefinition'] = {'sort':[{'field':b.field('_Measures', amount_name, 'Measure'), 'direction':'Descending'}]}
+    top_filter(v, 'dim_party', 'party_key', 'Người nhận · tỷ VND', 10)
     p.chart('concentration', 'clusteredBarChart', sector, ['Tỷ trọng Top 10 người nhận'], 838, 308, w=578, title='Tỷ trọng Top 10 trong từng lĩnh vực', tooltips=['Số khóa người nhận', 'Người nhận · tỷ VND'])
-    p.table('allocation', [c('fact_supplier_daily', 'allocation_label'), m('Phân bổ · số lượt'), m('Phân bổ · tỷ VND')], 838, 580, 'Toàn bộ trạng thái phân bổ theo nguồn', [260, 110, 145], w=578)
+    p.chart('allocation', 'clusteredBarChart', c('fact_supplier_daily','allocation_label'), ['Phân bổ · tỷ VND'], 838, 580, w=578, title='Giá trị theo trạng thái phân bổ · tỷ VND')
     p.foot('Số khóa không đồng nghĩa số pháp nhân đã chuẩn hóa. Giữ party_key để phân biệt trùng tên; không có lọc phương thức hoặc quy mô.')
     pages.append(p)
 
     p = Page('quality', 'Chất lượng dữ liệu', 'Phạm vi theo tháng và lĩnh vực đang chọn. Ngày sự kiện phụ thuộc từng fact.')
-    p.cards(['Mẫu mô tả', 'Mẫu xác minh', 'Mẫu hợp đồng', 'Độ phủ mẫu mô tả'])
-    p.table('coverage', [c('dim_date', 'year_month'), m('Luồng có quan sát')], 24, 308, 'Luồng sự kiện có quan sát theo tháng', [112, 520])
-    p.chart('status', 'clusteredBarChart', c('dim_progress_status', 'status_label'), ['Gói theo trạng thái quan sát'], 732, 308, title='Trạng thái tại ngày cuối có bản ghi trong tập chọn')
-    p.table('notices', [c('fact_notice_daily', 'notice_family'), m('Thông báo'), m('Thông báo hủy quan sát'), m('Tỷ lệ hủy quan sát')], 24, 580, 'Thông báo theo họ nguồn · hủy quan sát', [160, 140, 170, 160])
-    p.text('limits', 'GIỚI HẠN CẦN BIẾT\n\n• Xem cỡ mẫu xác minh và hợp đồng ở trên.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Hai mốc kết quả có dữ liệu trùng; bỏ mốc đầy đủ.\n• Không có hồ sơ gói thầu để tra cứu cá thể.\n• Tháng thiếu quan sát hiển thị trống.\n• Trạng thái quan sát không phải tiến độ hợp đồng.', 748, 594, 652, 224, 12, b.INK)
+    p.card('missinggeo', 'Giá trúng thiếu địa phương', 24, 204, 684, 84, label='Chưa xác định hoặc nhiều địa phương · tỷ VND')
+    p.card('missingparty', 'Giá chưa phân bổ', 732, 204, 684, 84, label='Ngoài trạng thái một người nhận · tỷ VND')
+    streams = [n for n in b.MEASURES if n.startswith('Dòng · ')]
+    p.matrix('coverage', {'Rows':[c('dim_date','year_month')], 'Values':[m(n) for n in streams]}, 'Nhóm có bản ghi theo tháng và nguồn', 24, 308, {n: b.lit('#DDF3F2') for n in streams})
+    p.chart('coverage_rates', 'clusteredBarChart', sector, ['Độ phủ giá trúng','Độ phủ mẫu mô tả'], 732, 308, title='Độ phủ trong từng tập mẫu · %', tooltips=['Lượt kết quả hiệu lực','Phạm vi so sánh'])
+    p.chart('samples', 'barChart', sector, ['Mẫu mô tả','Mẫu ngoài so sánh'], 24, 580, title='Phạm vi so sánh theo lĩnh vực · lượt', tooltips=['Độ phủ mẫu mô tả'])
+    p.text('limits', 'GIỚI HẠN CẦN BIẾT\n\n• Có bản ghi chưa chứng minh thu thập đầy đủ.\n• Kỹ thuật và tiền dự thầu: cần xác minh cách tổng hợp.\n• Ô trống biểu thị thiếu quan sát hoặc thiếu mẫu hợp lệ.', 748, 594, 652, 224, 12, b.INK)
     p.foot('Ô trống cho biết thiếu quan sát hoặc thiếu mẫu đủ điều kiện. Các tỷ lệ chỉ đại diện cho phạm vi được ghi nhận.')
     pages.append(p)
 

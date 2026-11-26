@@ -10,10 +10,10 @@
     "tabOrder": 15
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "hundredPercentStackedBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,8 +28,31 @@
               },
               "queryRef": "dim_value_band.band_label",
               "nativeQueryRef": "band_label",
+              "active": true,
               "displayName": "Quy mô gói"
-            },
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Phạm vi so sánh"
+                }
+              },
+              "queryRef": "_Measures.Phạm vi so sánh",
+              "nativeQueryRef": "Phạm vi so sánh"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -52,25 +75,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Độ phủ mẫu mô tả"
+                  "Property": "Mẫu ngoài so sánh"
                 }
               },
-              "queryRef": "_Measures.Độ phủ mẫu mô tả",
-              "nativeQueryRef": "Độ phủ mẫu mô tả"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Chênh lệch mô tả · tỷ VND"
-                }
-              },
-              "queryRef": "_Measures.Chênh lệch mô tả · tỷ VND",
-              "nativeQueryRef": "Chênh lệch mô tả · tỷ VND"
+              "queryRef": "_Measures.Mẫu ngoài so sánh",
+              "nativeQueryRef": "Mẫu ngoài so sánh"
             }
           ]
         }
@@ -85,7 +94,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Chênh lệch mô tả · tỷ VND"
+                "Property": "Mẫu mô tả"
               }
             },
             "direction": "Descending"
@@ -95,20 +104,27 @@
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -118,38 +134,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -159,37 +168,34 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "265D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "dim_value_band.band_label"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "100D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
@@ -200,30 +206,20 @@
         },
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "115D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#087F8C'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Độ phủ mẫu mô tả"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "150D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Chênh lệch mô tả · tỷ VND"
+            "metadata": "_Measures.Mẫu ngoài so sánh"
           }
         }
       ]
@@ -326,7 +322,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Mẫu và chênh lệch theo quy mô'"
+                  "Value": "'Điều kiện so sánh theo quy mô · % phạm vi'"
                 }
               }
             }
@@ -346,7 +342,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Mẫu và chênh lệch theo quy mô'"
+                  "Value": "'Điều kiện so sánh theo quy mô · % phạm vi'"
                 }
               }
             },

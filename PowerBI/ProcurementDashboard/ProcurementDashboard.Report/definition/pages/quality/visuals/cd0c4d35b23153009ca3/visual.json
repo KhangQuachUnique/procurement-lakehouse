@@ -4,16 +4,16 @@
   "position": {
     "x": 24,
     "y": 308,
-    "z": 10,
+    "z": 8,
     "height": 248,
     "width": 684,
-    "tabOrder": 10
+    "tabOrder": 8
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "pivotTable",
     "query": {
       "queryState": {
-        "Values": {
+        "Rows": {
           "projections": [
             {
               "field": {
@@ -28,7 +28,27 @@
               },
               "queryRef": "dim_date.year_month",
               "nativeQueryRef": "year_month",
+              "active": true,
               "displayName": "Tháng"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · demand"
+                }
+              },
+              "queryRef": "_Measures.Dòng · demand",
+              "nativeQueryRef": "Dòng · demand",
+              "displayName": "Nhu cầu"
             },
             {
               "field": {
@@ -38,118 +58,307 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Luồng có quan sát"
+                  "Property": "Dòng · award"
                 }
               },
-              "queryRef": "_Measures.Luồng có quan sát",
-              "nativeQueryRef": "Luồng có quan sát"
+              "queryRef": "_Measures.Dòng · award",
+              "nativeQueryRef": "Dòng · award",
+              "displayName": "Kết quả"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · savings"
+                }
+              },
+              "queryRef": "_Measures.Dòng · savings",
+              "nativeQueryRef": "Dòng · savings",
+              "displayName": "So giá"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · bidding_competition"
+                }
+              },
+              "queryRef": "_Measures.Dòng · bidding_competition",
+              "nativeQueryRef": "Dòng · bidding_competition",
+              "displayName": "Cạnh tranh"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · duration"
+                }
+              },
+              "queryRef": "_Measures.Dòng · duration",
+              "nativeQueryRef": "Dòng · duration",
+              "displayName": "Thời gian"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · supplier"
+                }
+              },
+              "queryRef": "_Measures.Dòng · supplier",
+              "nativeQueryRef": "Dòng · supplier",
+              "displayName": "Người nhận"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · notice"
+                }
+              },
+              "queryRef": "_Measures.Dòng · notice",
+              "nativeQueryRef": "Dòng · notice",
+              "displayName": "Thông báo"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Dòng · status"
+                }
+              },
+              "queryRef": "_Measures.Dòng · status",
+              "nativeQueryRef": "Dòng · status",
+              "displayName": "Trạng thái"
             }
           ]
         }
       }
     },
     "objects": {
-      "grid": [
-        {
-          "properties": {
-            "rowPadding": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "columnHeaders": [
-        {
-          "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "autoSizeColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "columnAdjustment": {
-              "expr": {
-                "Literal": {
-                  "Value": "'fitToContent'"
-                }
-              }
-            },
-            "wordWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "values": [
         {
           "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "wordWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "columnWidth": [
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "112D"
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "dim_date.year_month"
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · demand"
           }
         },
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "520D"
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Luồng có quan sát"
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · award"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · savings"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · bidding_competition"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · duration"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · supplier"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · notice"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DDF3F2'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Dòng · status"
           }
         }
       ]
@@ -252,7 +461,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Luồng sự kiện có quan sát theo tháng'"
+                  "Value": "'Nhóm có bản ghi theo tháng và nguồn'"
                 }
               }
             }
@@ -272,7 +481,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Luồng sự kiện có quan sát theo tháng'"
+                  "Value": "'Nhóm có bản ghi theo tháng và nguồn'"
                 }
               }
             },

@@ -10,10 +10,10 @@
     "tabOrder": 14
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,8 +28,13 @@
               },
               "queryRef": "dim_procurement_method.method_category",
               "nativeQueryRef": "method_category",
+              "active": true,
               "displayName": "Phương thức"
-            },
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -38,11 +43,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Thời gian bình quân"
+                  "Property": "Đơn vị thời gian"
                 }
               },
-              "queryRef": "_Measures.Thời gian bình quân",
-              "nativeQueryRef": "Thời gian bình quân"
+              "queryRef": "_Measures.Đơn vị thời gian",
+              "nativeQueryRef": "Đơn vị thời gian"
             },
             {
               "field": {
@@ -73,6 +78,24 @@
               "nativeQueryRef": "Tỷ lệ mẫu bị loại"
             }
           ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Thời gian bình quân"
+                }
+              },
+              "queryRef": "_Measures.Thời gian bình quân",
+              "nativeQueryRef": "Thời gian bình quân"
+            }
+          ]
         }
       },
       "sortDefinition": {
@@ -85,7 +108,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Mẫu thời gian"
+                "Property": "Thời gian bình quân"
               }
             },
             "direction": "Descending"
@@ -95,20 +118,27 @@
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -118,38 +148,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -159,71 +182,40 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "285D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "dim_procurement_method.method_category"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "120D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
             "metadata": "_Measures.Thời gian bình quân"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "110D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Mẫu thời gian"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "120D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Tỷ lệ mẫu bị loại"
           }
         }
       ]
@@ -326,7 +318,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Thời gian theo phương thức'"
+                  "Value": "'Thời gian bình quân theo phương thức'"
                 }
               }
             }
@@ -346,7 +338,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Thời gian theo phương thức'"
+                  "Value": "'Thời gian bình quân theo phương thức'"
                 }
               }
             },

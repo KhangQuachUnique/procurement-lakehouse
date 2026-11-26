@@ -350,51 +350,5 @@
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "87ccc0eff597d0a367a6",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_sector"
-              }
-            },
-            "Property": "sector_name"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "053f5f1b302214c4c82f",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Mẫu giá trúng VND"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "75754e387ad6d62a5eb8",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Trúng thầu · tỷ VND"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

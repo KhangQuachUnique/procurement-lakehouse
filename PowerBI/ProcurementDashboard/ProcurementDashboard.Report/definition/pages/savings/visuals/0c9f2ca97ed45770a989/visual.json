@@ -10,10 +10,10 @@
     "tabOrder": 14
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,8 +28,13 @@
               },
               "queryRef": "dim_sector.sector_name",
               "nativeQueryRef": "sector_name",
+              "active": true,
               "displayName": "Lĩnh vực"
-            },
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -52,12 +57,16 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Chênh lệch mô tả · tỷ VND"
+                  "Property": "Tỷ lệ chênh lệch mô tả"
                 }
               },
-              "queryRef": "_Measures.Chênh lệch mô tả · tỷ VND",
-              "nativeQueryRef": "Chênh lệch mô tả · tỷ VND"
-            },
+              "queryRef": "_Measures.Tỷ lệ chênh lệch mô tả",
+              "nativeQueryRef": "Tỷ lệ chênh lệch mô tả"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -66,11 +75,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Tỷ lệ chênh lệch mô tả"
+                  "Property": "Chênh lệch mô tả · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Tỷ lệ chênh lệch mô tả",
-              "nativeQueryRef": "Tỷ lệ chênh lệch mô tả"
+              "queryRef": "_Measures.Chênh lệch mô tả · tỷ VND",
+              "nativeQueryRef": "Chênh lệch mô tả · tỷ VND"
             }
           ]
         }
@@ -95,20 +104,27 @@
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -118,38 +134,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -159,71 +168,40 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "200D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "dim_sector.sector_name"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "110D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Mẫu mô tả"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "180D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
             "metadata": "_Measures.Chênh lệch mô tả · tỷ VND"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "145D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Tỷ lệ chênh lệch mô tả"
           }
         }
       ]
@@ -326,7 +304,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chênh lệch theo lĩnh vực'"
+                  "Value": "'Dự toán trừ giá trúng theo lĩnh vực · tỷ VND'"
                 }
               }
             }
@@ -346,7 +324,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Chênh lệch theo lĩnh vực'"
+                  "Value": "'Dự toán trừ giá trúng theo lĩnh vực · tỷ VND'"
                 }
               }
             },

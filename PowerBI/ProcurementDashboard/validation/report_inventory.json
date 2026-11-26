@@ -8,7 +8,7 @@
     {
       "name": "competition",
       "displayName": "Cạnh tranh cơ bản",
-      "visuals": 16
+      "visuals": 17
     },
     {
       "name": "savings",
@@ -28,7 +28,7 @@
     {
       "name": "quality",
       "displayName": "Chất lượng dữ liệu",
-      "visuals": 15
+      "visuals": 13
     }
   ]
 }

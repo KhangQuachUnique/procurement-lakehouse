@@ -47,6 +47,34 @@
               },
               "queryRef": "_Measures.Lượt mở thầu",
               "nativeQueryRef": "Lượt mở thầu"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Lượt một nhà thầu"
+                }
+              },
+              "queryRef": "_Measures.Lượt một nhà thầu",
+              "nativeQueryRef": "Lượt một nhà thầu"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Lưu ý cỡ mẫu"
+                }
+              },
+              "queryRef": "_Measures.Lưu ý cỡ mẫu",
+              "nativeQueryRef": "Lưu ý cỡ mẫu"
             }
           ]
         },

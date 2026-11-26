@@ -10,10 +10,10 @@
     "tabOrder": 13
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,22 +28,13 @@
               },
               "queryRef": "fact_supplier_daily.allocation_label",
               "nativeQueryRef": "allocation_label",
+              "active": true,
               "displayName": "Trạng thái phân bổ"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Phân bổ · số lượt"
-                }
-              },
-              "queryRef": "_Measures.Phân bổ · số lượt",
-              "nativeQueryRef": "Phân bổ · số lượt"
-            },
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -60,23 +51,48 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Phân bổ · tỷ VND"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -86,38 +102,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -127,51 +136,34 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "260D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fact_supplier_daily.allocation_label"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "110D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Phân bổ · số lượt"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "145D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
@@ -280,7 +272,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Toàn bộ trạng thái phân bổ theo nguồn'"
+                  "Value": "'Giá trị theo trạng thái phân bổ · tỷ VND'"
                 }
               }
             }
@@ -300,7 +292,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Toàn bộ trạng thái phân bổ theo nguồn'"
+                  "Value": "'Giá trị theo trạng thái phân bổ · tỷ VND'"
                 }
               }
             },

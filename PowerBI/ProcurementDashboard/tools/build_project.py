@@ -153,9 +153,9 @@ expression ReadParquetTable =
     body='table _Measures\n\tlineageTag: '+uid('_Measures')+'\n'
     for n,m in MEASURES.items():
         body+=f"\n\t/// {m['description']}\n\tmeasure '{n}' = {m['dax']}\n\t\tlineageTag: {uid(n)}\n\t\tdisplayFolder: {m['folder']}\n"
-        if m['format'] and n!='Thời gian trung bình':
+        if m['format'] and n!='Thời gian bình quân':
             body+='\t\tformatString: '+m['format']+'\n'
-        if n=='Thời gian trung bình':
+        if n=='Thời gian bình quân':
             body+='\t\tformatStringDefinition = IF(SELECTEDVALUE(dim_duration_metric[duration_unit]) = "hours", "0.0 \\"giờ\\"", "0.0 \\"ngày\\"")\n'.replace('\\"','""')
     body+='\n\tcolumn _placeholder\n\t\tdataType: int64\n\t\tisHidden\n\t\tsourceColumn: _placeholder\n\n\tpartition _Measures = m\n\t\tmode: import\n\t\tsource = #table(type table [_placeholder = Int64.Type], {{0}})\n'
     text(MODEL/'definition/tables/_Measures.tmdl',body)
@@ -193,7 +193,7 @@ def m(n): return ('_Measures',n,'Measure')
 
 def projection(spec):
     t,p,k=spec
-    aliases={'province_name':'Địa phương','sector_name':'Lĩnh vực','band_label':'Quy mô gói','year_month':'Tháng','notice_family':'Họ thông báo', 'Dòng · demand':'Nhu cầu','Dòng · award':'Kết quả','Dòng · bidding_competition':'Cạnh tranh','Dòng · duration':'Thời gian','province_display':'Địa phương · phiên bản','party_display':'Đơn vị','party_kind':'Loại','allocation_label':'Trạng thái phân bổ','recipient_allocation_state':'Phân bổ','method_category':'Phương thức',
+    aliases={'province_name':'Địa phương','sector_name':'Lĩnh vực','band_label':'Quy mô gói','year_month':'Tháng','notice_family':'Họ thông báo', 'Dòng · savings':'So giá','Dòng · supplier':'Người nhận','Dòng · notice':'Thông báo','Dòng · status':'Trạng thái','Dòng · demand':'Nhu cầu','Dòng · award':'Kết quả','Dòng · bidding_competition':'Cạnh tranh','Dòng · duration':'Thời gian','province_display':'Địa phương · phiên bản','party_display':'Đơn vị','party_kind':'Loại','allocation_label':'Trạng thái phân bổ','recipient_allocation_state':'Phân bổ','method_category':'Phương thức',
         'Dự toán xác minh · tỷ VNĐ':'Dự toán','Giá trúng xác minh · tỷ VNĐ':'Giá trúng','Tiết kiệm xác minh · tỷ VNĐ':'Tiết kiệm','Tỷ lệ tiết kiệm xác minh':'Tỷ lệ',
         'Giá trị phân bổ · tỷ VNĐ':'Tỷ VNĐ','Giá trị trúng thầu · tỷ VNĐ':'Trúng thầu · tỷ VNĐ','Giá trị kế hoạch · tỷ VNĐ':'Kế hoạch · tỷ VNĐ'}
     result={'field':field(t,p,k),'queryRef':t+'.'+p,'nativeQueryRef':p}
@@ -266,7 +266,7 @@ class Page:
             'categoryAxis':obj(fontSize=lit(10),showAxisTitle=lit(False),preferredCategoryWidth=lit(14),maxMarginFactor=lit(40)),
             'valueAxis':obj(fontSize=lit(10),showAxisTitle=lit(False),labelDisplayUnits=lit(1)),
             'dataPoint':[{'properties':{'fill':color([NAVY,TEAL,'#F59E0B','#64748B'][i%4])},'selector':{'metadata':'_Measures.'+n}} for i,n in enumerate(measures)]})
-        v['visual']['query']['sortDefinition']={'sort':[{'field':field(*category[:2]) if typ=='lineChart' else field('_Measures',measures[0],'Measure'),'direction':'Ascending' if typ=='lineChart' else 'Descending'}],'isDefaultSort':True}
+        v['visual']['query']['sortDefinition']={'sort':[{'field':field(*category[:2]) if category[0]=='dim_date' else field('_Measures',measures[0],'Measure'),'direction':'Ascending' if category[0]=='dim_date' else 'Descending'}],'isDefaultSort':True}
         if typ=='lineChart':
             v['visual']['objects']['categoryAxis']=obj(fontSize=lit(10),axisType=lit('Scalar'),showAxisTitle=lit(False))
         return v

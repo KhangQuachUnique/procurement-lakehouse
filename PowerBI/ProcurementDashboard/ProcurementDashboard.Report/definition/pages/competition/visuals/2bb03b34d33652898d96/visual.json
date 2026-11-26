@@ -10,10 +10,30 @@
     "tabOrder": 14
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "pivotTable",
     "query": {
       "queryState": {
-        "Values": {
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_sector"
+                    }
+                  },
+                  "Property": "sector_name"
+                }
+              },
+              "queryRef": "dim_sector.sector_name",
+              "nativeQueryRef": "sector_name",
+              "active": true,
+              "displayName": "Lĩnh vực"
+            }
+          ]
+        },
+        "Rows": {
           "projections": [
             {
               "field": {
@@ -28,8 +48,13 @@
               },
               "queryRef": "dim_value_band.band_label",
               "nativeQueryRef": "band_label",
+              "active": true,
               "displayName": "Quy mô gói"
-            },
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -52,12 +77,30 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Nhà thầu bình quân"
+                  "Property": "Lượt một nhà thầu"
                 }
               },
-              "queryRef": "_Measures.Nhà thầu bình quân",
-              "nativeQueryRef": "Nhà thầu bình quân"
+              "queryRef": "_Measures.Lượt một nhà thầu",
+              "nativeQueryRef": "Lượt một nhà thầu"
             },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Lưu ý cỡ mẫu"
+                }
+              },
+              "queryRef": "_Measures.Lưu ý cỡ mẫu",
+              "nativeQueryRef": "Lưu ý cỡ mẫu"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -74,155 +117,37 @@
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "_Measures"
-                  }
-                },
-                "Property": "Lượt mở thầu"
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
     },
     "objects": {
-      "grid": [
-        {
-          "properties": {
-            "rowPadding": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "columnHeaders": [
-        {
-          "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "autoSizeColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "columnAdjustment": {
-              "expr": {
-                "Literal": {
-                  "Value": "'fitToContent'"
-                }
-              }
-            },
-            "wordWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "values": [
         {
           "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "wordWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "columnWidth": [
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "285D"
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Màu cạnh tranh"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "dim_value_band.band_label"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "100D"
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
                 }
               }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Lượt mở thầu"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "120D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Nhà thầu bình quân"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "130D"
-                }
-              }
-            }
-          },
-          "selector": {
+            ],
             "metadata": "_Measures.Tỷ lệ một nhà thầu"
           }
         }
@@ -326,7 +251,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cạnh tranh theo quy mô'"
+                  "Value": "'Một nhà thầu · lĩnh vực × quy mô (%)'"
                 }
               }
             }
@@ -346,7 +271,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cạnh tranh theo quy mô'"
+                  "Value": "'Một nhà thầu · lĩnh vực × quy mô (%)'"
                 }
               }
             },

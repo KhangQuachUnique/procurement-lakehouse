@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
-  "name": "66b7def1d9ee596d9e8a",
+  "name": "857f5746b58d51909bfb",
   "position": {
     "x": 732,
     "y": 204,
-    "width": 330,
+    "width": 684,
     "height": 84,
-    "z": 8,
-    "tabOrder": 8
+    "z": 7,
+    "tabOrder": 7
   },
   "visual": {
     "visualType": "card",
@@ -18,7 +18,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "22D"
+                  "Value": "24D"
                 }
               }
             },
@@ -155,7 +155,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tổng fact_savings_daily[contract_sample_count] trong phạm vi chọn; không phải số dòng tổng hợp.'"
+                  "Value": "'Giá chưa phân bổ'"
                 }
               }
             }
@@ -175,7 +175,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Mẫu hợp đồng'"
+                  "Value": "'Ngoài trạng thái một người nhận · tỷ VND'"
                 }
               }
             },
@@ -227,11 +227,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hiển thị · Mẫu hợp đồng"
+                  "Property": "Hiển thị · Giá chưa phân bổ"
                 }
               },
-              "queryRef": "_Measures.Hiển thị · Mẫu hợp đồng",
-              "nativeQueryRef": "Hiển thị · Mẫu hợp đồng"
+              "queryRef": "_Measures.Hiển thị · Giá chưa phân bổ",
+              "nativeQueryRef": "Hiển thị · Giá chưa phân bổ"
             }
           ]
         }

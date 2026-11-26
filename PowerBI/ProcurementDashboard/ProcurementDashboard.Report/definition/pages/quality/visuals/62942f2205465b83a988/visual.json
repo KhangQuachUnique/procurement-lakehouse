@@ -1,34 +1,71 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
-  "name": "657e82bd20e552939d3d",
+  "name": "62942f2205465b83a988",
   "position": {
     "x": 24,
     "y": 580,
-    "z": 12,
+    "z": 10,
     "height": 248,
     "width": 684,
-    "tabOrder": 12
+    "tabOrder": 10
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "barChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_notice_daily"
+                      "Entity": "dim_sector"
                     }
                   },
-                  "Property": "notice_family"
+                  "Property": "sector_name"
                 }
               },
-              "queryRef": "fact_notice_daily.notice_family",
-              "nativeQueryRef": "notice_family",
-              "displayName": "Họ thông báo"
+              "queryRef": "dim_sector.sector_name",
+              "nativeQueryRef": "sector_name",
+              "active": true,
+              "displayName": "Lĩnh vực"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Độ phủ mẫu mô tả"
+                }
+              },
+              "queryRef": "_Measures.Độ phủ mẫu mô tả",
+              "nativeQueryRef": "Độ phủ mẫu mô tả"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Mẫu mô tả"
+                }
+              },
+              "queryRef": "_Measures.Mẫu mô tả",
+              "nativeQueryRef": "Mẫu mô tả"
             },
             {
               "field": {
@@ -38,59 +75,56 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Thông báo"
+                  "Property": "Mẫu ngoài so sánh"
                 }
               },
-              "queryRef": "_Measures.Thông báo",
-              "nativeQueryRef": "Thông báo"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Thông báo hủy quan sát"
-                }
-              },
-              "queryRef": "_Measures.Thông báo hủy quan sát",
-              "nativeQueryRef": "Thông báo hủy quan sát"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Tỷ lệ hủy quan sát"
-                }
-              },
-              "queryRef": "_Measures.Tỷ lệ hủy quan sát",
-              "nativeQueryRef": "Tỷ lệ hủy quan sát"
+              "queryRef": "_Measures.Mẫu ngoài so sánh",
+              "nativeQueryRef": "Mẫu ngoài so sánh"
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Mẫu mô tả"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -100,38 +134,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -141,71 +168,58 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "160D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fact_notice_daily.notice_family"
+            "metadata": "_Measures.Mẫu mô tả"
           }
         },
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "140D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#087F8C'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Thông báo"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "170D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Thông báo hủy quan sát"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "160D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Tỷ lệ hủy quan sát"
+            "metadata": "_Measures.Mẫu ngoài so sánh"
           }
         }
       ]
@@ -308,7 +322,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Thông báo theo họ nguồn · hủy quan sát'"
+                  "Value": "'Phạm vi so sánh theo lĩnh vực · lượt'"
                 }
               }
             }
@@ -328,7 +342,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Thông báo theo họ nguồn · hủy quan sát'"
+                  "Value": "'Phạm vi so sánh theo lĩnh vực · lượt'"
                 }
               }
             },

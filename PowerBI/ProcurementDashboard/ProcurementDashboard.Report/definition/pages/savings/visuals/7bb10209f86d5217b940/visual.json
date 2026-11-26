@@ -10,7 +10,7 @@
     "tabOrder": 12
   },
   "visual": {
-    "visualType": "lineChart",
+    "visualType": "clusteredColumnChart",
     "query": {
       "queryState": {
         "Category": {
@@ -60,25 +60,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Dự toán mô tả · tỷ VND"
+                  "Property": "Chênh lệch mô tả · tỷ VND"
                 }
               },
-              "queryRef": "_Measures.Dự toán mô tả · tỷ VND",
-              "nativeQueryRef": "Dự toán mô tả · tỷ VND"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Giá trúng mô tả · tỷ VND"
-                }
-              },
-              "queryRef": "_Measures.Giá trúng mô tả · tỷ VND",
-              "nativeQueryRef": "Giá trúng mô tả · tỷ VND"
+              "queryRef": "_Measures.Chênh lệch mô tả · tỷ VND",
+              "nativeQueryRef": "Chênh lệch mô tả · tỷ VND"
             }
           ]
         }
@@ -109,7 +95,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -133,17 +119,24 @@
                 }
               }
             },
-            "axisType": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Scalar'"
-                }
-              }
-            },
             "showAxisTitle": {
               "expr": {
                 "Literal": {
                   "Value": "false"
+                }
+              }
+            },
+            "preferredCategoryWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            },
+            "maxMarginFactor": {
+              "expr": {
+                "Literal": {
+                  "Value": "40D"
                 }
               }
             }
@@ -193,25 +186,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Dự toán mô tả · tỷ VND"
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#087F8C'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Giá trúng mô tả · tỷ VND"
+            "metadata": "_Measures.Chênh lệch mô tả · tỷ VND"
           }
         }
       ]
@@ -314,7 +289,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dự toán và giá trúng cùng mẫu · tỷ VND'"
+                  "Value": "'Chênh lệch mô tả theo tháng · tỷ VND'"
                 }
               }
             }
@@ -334,7 +309,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dự toán và giá trúng cùng mẫu · tỷ VND'"
+                  "Value": "'Chênh lệch mô tả theo tháng · tỷ VND'"
                 }
               }
             },

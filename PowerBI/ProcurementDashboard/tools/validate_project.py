@@ -13,8 +13,9 @@ def main():
     resources={u:json.loads((contracts/f).read_text()) for u,f in index.items()}
     registry=Registry().with_resources((u,Resource.from_contents(j)) for u,j in resources.items())
     inventory=json.loads((PROJECT/'validation/model_inventory.json').read_text(encoding='utf-8'))
-    roles={'card':{'Values'},'cardVisual':{'Data'},'lineChart':{'Category','Y','Y2','Series','Tooltips','Rows'},
+    roles={'donutChart':{'Category','Y','Tooltips'},'card':{'Values'},'cardVisual':{'Data'},'lineChart':{'Category','Y','Y2','Series','Tooltips','Rows'},
         'clusteredBarChart':{'Category','Y','Series','Tooltips'},'clusteredColumnChart':{'Category','Y','Series','Tooltips'},
+        **{typ:{'Category','Y','Series','Tooltips'} for typ in ['barChart','columnChart','hundredPercentStackedBarChart']},
         'scatterChart':{'Category','X','Y','Size','Series','Tooltips'},'pivotTable':{'Rows','Columns','Values','Tooltips'},
         'tableEx':{'Values','Tooltips'},'slicer':{'Values'},'textbox':set(),'pageNavigator':set()}
     errors=[]; checks=[]; visuals=0

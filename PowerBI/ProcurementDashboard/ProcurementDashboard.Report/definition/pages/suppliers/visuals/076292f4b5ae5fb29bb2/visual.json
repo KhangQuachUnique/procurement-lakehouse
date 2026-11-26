@@ -13,6 +13,38 @@
     "visualType": "tableEx",
     "query": {
       "queryState": {
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Khóa người nhận"
+                }
+              },
+              "queryRef": "_Measures.Khóa người nhận",
+              "nativeQueryRef": "Khóa người nhận"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Mẫu giá người nhận"
+                }
+              },
+              "queryRef": "_Measures.Mẫu giá người nhận",
+              "nativeQueryRef": "Mẫu giá người nhận"
+            }
+          ]
+        },
         "Values": {
           "projections": [
             {
@@ -29,20 +61,6 @@
               "queryRef": "dim_party.party_display",
               "nativeQueryRef": "party_display",
               "displayName": "Đơn vị"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Mẫu giá người nhận"
-                }
-              },
-              "queryRef": "_Measures.Mẫu giá người nhận",
-              "nativeQueryRef": "Mẫu giá người nhận"
             },
             {
               "field": {
@@ -76,24 +94,10 @@
             },
             "direction": "Descending"
           }
-        ],
-        "isDefaultSort": true
+        ]
       }
     },
     "objects": {
-      "grid": [
-        {
-          "properties": {
-            "rowPadding": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "columnHeaders": [
         {
           "properties": {
@@ -161,7 +165,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "470D"
+                  "Value": "520D"
                 }
               }
             }
@@ -175,21 +179,72 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "90D"
+                  "Value": "204D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Mẫu giá người nhận"
+            "metadata": "_Measures.Người nhận · tỷ VND"
           }
-        },
+        }
+      ],
+      "columnFormatting": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "170D"
+            "dataBars": {
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#9ACFCC'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#64748B'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#64748B'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "totalMatchingOption": {
+                "expr": {
+                  "Literal": {
+                    "Value": "1L"
+                  }
                 }
               }
             }
@@ -298,7 +353,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Top 10 khóa người nhận theo giá trị · tỷ VND'"
+                  "Value": "'10 người nhận có giá trị cao nhất · tỷ VND'"
                 }
               }
             }
@@ -318,7 +373,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Top 10 khóa người nhận theo giá trị · tỷ VND'"
+                  "Value": "'10 người nhận có giá trị cao nhất · tỷ VND'"
                 }
               }
             },

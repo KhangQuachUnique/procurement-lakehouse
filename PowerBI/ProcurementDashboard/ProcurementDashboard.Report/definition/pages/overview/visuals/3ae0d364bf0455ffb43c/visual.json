@@ -10,10 +10,10 @@
     "tabOrder": 13
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
@@ -28,7 +28,26 @@
               },
               "queryRef": "dim_value_band.band_label",
               "nativeQueryRef": "band_label",
+              "active": true,
               "displayName": "Quy mô gói"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Tỷ trọng giá kế hoạch VND"
+                }
+              },
+              "queryRef": "_Measures.Tỷ trọng giá kế hoạch VND",
+              "nativeQueryRef": "Tỷ trọng giá kế hoạch VND"
             },
             {
               "field": {
@@ -43,20 +62,6 @@
               },
               "queryRef": "_Measures.Tỷ trọng gói VND",
               "nativeQueryRef": "Tỷ trọng gói VND"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Tỷ trọng giá kế hoạch VND"
-                }
-              },
-              "queryRef": "_Measures.Tỷ trọng giá kế hoạch VND",
-              "nativeQueryRef": "Tỷ trọng giá kế hoạch VND"
             }
           ]
         }
@@ -81,20 +86,27 @@
       }
     },
     "objects": {
-      "grid": [
+      "legend": [
         {
           "properties": {
-            "rowPadding": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
                 }
               }
             }
           }
         }
       ],
-      "columnHeaders": [
+      "categoryAxis": [
         {
           "properties": {
             "fontSize": {
@@ -104,38 +116,31 @@
                 }
               }
             },
-            "autoSizeColumnWidth": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
-            "columnAdjustment": {
+            "preferredCategoryWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "'fitToContent'"
+                  "Value": "14D"
                 }
               }
             },
-            "wordWrap": {
+            "maxMarginFactor": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "defaultColumnWidth": {
-              "expr": {
-                "Literal": {
-                  "Value": "90D"
+                  "Value": "40D"
                 }
               }
             }
           }
         }
       ],
-      "values": [
+      "valueAxis": [
         {
           "properties": {
             "fontSize": {
@@ -145,57 +150,58 @@
                 }
               }
             },
-            "wordWrap": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
           }
         }
       ],
-      "columnWidth": [
+      "dataPoint": [
         {
           "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "265D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "dim_value_band.band_label"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "160D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "_Measures.Tỷ trọng gói VND"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "180D"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#142D4E'"
+                    }
+                  }
                 }
               }
             }
           },
           "selector": {
             "metadata": "_Measures.Tỷ trọng giá kế hoạch VND"
+          }
+        },
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#087F8C'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Tỷ trọng gói VND"
           }
         }
       ]
@@ -298,7 +304,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cơ cấu kế hoạch VND theo quy mô'"
+                  "Value": "'Quy mô gói · tỷ trọng giá trị và số gói VND'"
                 }
               }
             }
@@ -318,7 +324,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cơ cấu kế hoạch VND theo quy mô'"
+                  "Value": "'Quy mô gói · tỷ trọng giá trị và số gói VND'"
                 }
               }
             },

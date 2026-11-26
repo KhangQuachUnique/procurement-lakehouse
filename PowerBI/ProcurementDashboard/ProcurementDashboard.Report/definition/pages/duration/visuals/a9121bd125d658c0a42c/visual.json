@@ -48,6 +48,20 @@
               },
               "queryRef": "_Measures.Mẫu thời gian",
               "nativeQueryRef": "Mẫu thời gian"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Đơn vị thời gian"
+                }
+              },
+              "queryRef": "_Measures.Đơn vị thời gian",
+              "nativeQueryRef": "Đơn vị thời gian"
             }
           ]
         },

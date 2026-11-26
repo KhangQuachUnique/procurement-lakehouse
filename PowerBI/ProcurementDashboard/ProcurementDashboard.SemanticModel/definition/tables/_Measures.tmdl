@@ -225,9 +225,10 @@ table _Measures
 
 	/// Thời gian bình quân
 	measure 'Thời gian bình quân' = IF(HASONEVALUE(dim_duration_metric[metric_key]), DIVIDE(SUM(fact_duration_daily[duration_sum]), [Mẫu thời gian]))
-		formatString: 0.0
 		displayFolder: Thời gian
 		lineageTag: 95d888db-1ba4-5cee-b6a1-b65de346d612
+
+		formatStringDefinition = IF(SELECTEDVALUE(dim_duration_metric[duration_unit]) = "hours", "0.0 ""giờ""", "0.0 ""ngày""")
 
 	/// Tỷ lệ mẫu bị loại
 	measure 'Tỷ lệ mẫu bị loại' = DIVIDE([Mẫu thời gian bị loại], [Khoảng thời gian])
@@ -676,10 +677,69 @@ table _Measures
 		displayFolder: Độ phủ
 		lineageTag: 21cb00e8-6f8d-5da0-922f-34e6e14f2972
 
+	/// Đối sánh tập chọn
+	measure 'Đối sánh tập chọn' = CALCULATE([Tỷ lệ một nhà thầu], ALLSELECTED(dim_sector[sector_name]))
+		formatString: 0.00%;(0.00%);0.00%
+		displayFolder: Cạnh tranh
+		lineageTag: f2d52695-6c98-5672-95b5-67918f9723dd
+
+	/// Màu cạnh tranh
+	measure 'Màu cạnh tranh' = VAR r=[Tỷ lệ một nhà thầu] RETURN IF(NOT ISBLANK(r), SWITCH(TRUE(), r<0.25,"#F0F7F6", r<0.5,"#CCE8E6", r<0.75,"#9ACFCC","#65B6B2"))
+		displayFolder: Cạnh tranh
+		lineageTag: 9e1ed731-a506-5234-bb95-1b68ccd510de
+
+	/// Lưu ý cỡ mẫu
+	measure 'Lưu ý cỡ mẫu' = IF([Lượt mở thầu]>0 && [Lượt mở thầu]<30, "Ít hơn 30 lượt mở")
+		displayFolder: Cạnh tranh
+		lineageTag: 39ef88db-a261-5bed-89e8-b8e1c81b7715
+
+	/// Mẫu ngoài so sánh
+	measure 'Mẫu ngoài so sánh' = IF(NOT ISBLANK([Phạm vi so sánh]) && NOT ISBLANK([Mẫu mô tả]), [Phạm vi so sánh]-[Mẫu mô tả])
+		formatString: #,0
+		displayFolder: Chất lượng
+		lineageTag: 82d5dcd7-7bed-5c41-bbf1-b067d0eace5a
+
+	/// Khóa người nhận
+	measure 'Khóa người nhận' = SELECTEDVALUE(dim_party[party_key])
+		displayFolder: Người nhận
+		lineageTag: ebc9ba51-4bee-5989-84ee-947350c7a556
+
+	/// Giá trúng thiếu địa phương
+	measure 'Giá trúng thiếu địa phương' = CALCULATE([Trúng thầu · tỷ VND], KEEPFILTERS(dim_geography[geography_key] IN {"GEO_UNKNOWN","GEO_MULTI_UNALLOCATED"}))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Chất lượng
+		lineageTag: 4ee93aa8-cf97-5f19-bc1d-c9d5f6eefe6f
+
+	/// Giá chưa phân bổ
+	measure 'Giá chưa phân bổ' = CALCULATE([Phân bổ · tỷ VND], KEEPFILTERS(fact_supplier_daily[recipient_allocation_state]<>"single_recipient"))
+		formatString: #,0.00;(#,0.00);0.00
+		displayFolder: Chất lượng
+		lineageTag: e0e867ac-d37d-502f-9291-181c3ac217d8
+
+	/// Hiển thị · Đối sánh tập chọn
+	measure 'Hiển thị · Đối sánh tập chọn' = IF(ISBLANK([Đối sánh tập chọn]), "—", FORMAT([Đối sánh tập chọn], "0.00%;(0.00%);0.00%", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: fe76246c-9c38-5a45-9cd5-34c70cc088c2
+
+	/// Hiển thị · Mẫu ngoài so sánh
+	measure 'Hiển thị · Mẫu ngoài so sánh' = IF(ISBLANK([Mẫu ngoài so sánh]), "—", FORMAT([Mẫu ngoài so sánh], "#,0", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: a40bc631-6e9c-5c3b-95ad-d3a5dca728a4
+
+	/// Hiển thị · Giá trúng thiếu địa phương
+	measure 'Hiển thị · Giá trúng thiếu địa phương' = IF(ISBLANK([Giá trúng thiếu địa phương]), "—", FORMAT([Giá trúng thiếu địa phương], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: d4f3e575-6033-5297-b65e-9996993b317b
+
+	/// Hiển thị · Giá chưa phân bổ
+	measure 'Hiển thị · Giá chưa phân bổ' = IF(ISBLANK([Giá chưa phân bổ]), "—", FORMAT([Giá chưa phân bổ], "#,0.00;(#,0.00);0.00", "vi-VN"))
+		displayFolder: Hiển thị
+		lineageTag: c755834a-0e97-5d49-a9ee-1749f3b3e401
+
 	column _placeholder
 		dataType: int64
 		isHidden
-		lineageTag: 6c11883c-cf8a-40f0-9276-d101acb90c6d
+		lineageTag: e628bc5a-5a22-466d-b71e-b3b803951460
 		sourceColumn: _placeholder
 
 	partition _Measures = m
