@@ -1,0 +1,314 @@
+[
+  {
+    "name": "all/planned_nt",
+    "kind": "numeric",
+    "value": "5305.409387853473",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "all/award_nt",
+    "kind": "numeric",
+    "value": "2162.4733976576003",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "all/diff_nt",
+    "kind": "numeric",
+    "value": "148.9841882912193",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "year2025/planned_nt",
+    "kind": "numeric",
+    "value": "1886.526167109525",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "year2025/award_nt",
+    "kind": "numeric",
+    "value": "823.3314354608046",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "year2025/diff_nt",
+    "kind": "numeric",
+    "value": "58.91389302124602",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "jan2025_hh/planned_nt",
+    "kind": "numeric",
+    "value": "31.773399746008",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "jan2025_hh/award_nt",
+    "kind": "numeric",
+    "value": "21.175018807327902",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "jan2025_hh/diff_nt",
+    "kind": "numeric",
+    "value": "1.595517401166099",
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "empty_month/planned_nt",
+    "kind": "numeric",
+    "value": null,
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "empty_month/award_nt",
+    "kind": "numeric",
+    "value": null,
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "empty_month/diff_nt",
+    "kind": "numeric",
+    "value": null,
+    "tolerance": "1e-6"
+  },
+  {
+    "name": "scope/all",
+    "kind": "string",
+    "exact": "16/09/2022 – 31/12/2025",
+    "contains": []
+  },
+  {
+    "name": "scope/2025",
+    "kind": "string",
+    "exact": "01/01/2025 – 31/12/2025",
+    "contains": []
+  },
+  {
+    "name": "scope/empty",
+    "kind": "string",
+    "exact": "Ngoài phạm vi có dữ liệu",
+    "contains": []
+  },
+  {
+    "name": "compact/packages_all",
+    "kind": "string",
+    "exact": "2,28 triệu",
+    "contains": []
+  },
+  {
+    "name": "compact/planned_all",
+    "kind": "string",
+    "exact": "5.305,4 nghìn tỷ",
+    "contains": []
+  },
+  {
+    "name": "compact/award_all",
+    "kind": "string",
+    "exact": "2.162,5 nghìn tỷ",
+    "contains": []
+  },
+  {
+    "name": "compact/empty_planned",
+    "kind": "string",
+    "exact": "—",
+    "contains": []
+  },
+  {
+    "name": "insight/overview_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "0,27%",
+      "46,44%"
+    ]
+  },
+  {
+    "name": "insight/overview_body_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "6.257",
+      "54,83%",
+      "0,81%",
+      "Hàng hóa"
+    ]
+  },
+  {
+    "name": "insight/overview_hh",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "≥100 tỷ"
+    ]
+  },
+  {
+    "name": "insight/overview_empty",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "Không có dữ liệu"
+    ]
+  },
+  {
+    "name": "insight/comp_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "61,61%",
+      "427.841"
+    ]
+  },
+  {
+    "name": "insight/comp_body_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "Tư vấn",
+      "Hàng hóa",
+      "không kết luận sai phạm"
+    ]
+  },
+  {
+    "name": "insight/comp_khac",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "dưới 30 lượt mở"
+    ]
+  },
+  {
+    "name": "insight/comp_empty",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "Không có lượt mở thầu"
+    ]
+  },
+  {
+    "name": "insight/sav_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "6,45%"
+    ]
+  },
+  {
+    "name": "insight/sav_body_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "87,66%",
+      "chưa phải tiết kiệm xác minh"
+    ]
+  },
+  {
+    "name": "insight/sav_empty",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "Không có mẫu"
+    ]
+  },
+  {
+    "name": "insight/dur_days",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "16,4 ngày"
+    ]
+  },
+  {
+    "name": "insight/dur_hours",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "238,0 giờ"
+    ]
+  },
+  {
+    "name": "insight/dur_multi",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "không có mẫu hợp lệ"
+    ]
+  },
+  {
+    "name": "insight/sup_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "5,90%",
+      "160.481"
+    ]
+  },
+  {
+    "name": "insight/sup_hh_body",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "46,64%"
+    ]
+  },
+  {
+    "name": "insight/qual_all",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "8/8 nguồn",
+      "97,29%"
+    ]
+  },
+  {
+    "name": "insight/qual_empty",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "Không có quan sát"
+    ]
+  },
+  {
+    "name": "title/dur_hours",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "giờ"
+    ]
+  },
+  {
+    "name": "title/dur_days",
+    "kind": "string",
+    "exact": null,
+    "contains": [
+      "ngày"
+    ]
+  },
+  {
+    "name": "matrix/demand_2023_05",
+    "kind": "numeric",
+    "value": "11393",
+    "tolerance": "0"
+  },
+  {
+    "name": "matrix/comp_honhop_2023_05",
+    "kind": "numeric",
+    "value": "0",
+    "tolerance": "0"
+  },
+  {
+    "name": "matrix/empty_2022_01",
+    "kind": "numeric",
+    "value": null,
+    "tolerance": "0"
+  },
+  {
+    "name": "matrix/color_missing",
+    "kind": "string",
+    "exact": "#F1F5F9",
+    "contains": []
+  },
+  {
+    "name": "rank/top10_suppliers",
+    "kind": "rank10"
+  }
+]

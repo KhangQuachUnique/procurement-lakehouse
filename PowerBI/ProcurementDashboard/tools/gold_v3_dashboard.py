@@ -152,11 +152,11 @@ PAGE_TITLES = {
 }
 NARRATIVES = {
  'overview': ('Giá trị tập trung ở đâu?', 'Giá trị nhóm từ 100 tỷ', '"Nhóm từ 100 tỷ VND chiếm " & [Hiển thị · Số gói nhóm từ 100 tỷ] & " số gói và " & [Hiển thị · Giá trị nhóm từ 100 tỷ] & " giá trị kế hoạch."', 'Hai tỷ trọng cùng tính trên phạm vi VND đang chọn.'),
- 'competition': ('Khoảng cách giữa lĩnh vực','Biên độ cạnh tranh','"Tỷ lệ một nhà thầu giữa lĩnh vực cao nhất và thấp nhất cách nhau " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm."','So sánh các lĩnh vực có từ 30 lượt mở. Ô màu kem đánh dấu mẫu nhỏ.'),
- 'savings': ('Phạm vi so sánh giá','Tỷ lệ chênh lệch mô tả','"Trên " & [Hiển thị · Mẫu mô tả] & " mẫu đủ điều kiện, chênh lệch dự toán trừ giá trúng bằng " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán."','Chênh lệch quan sát cần được xác minh trước khi diễn giải là tiết kiệm.'),
+ 'competition': ('Khoảng cách giữa lĩnh vực','Biên độ cạnh tranh','"Biên độ tỷ lệ một nhà thầu: " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm."','So sánh các lĩnh vực có từ 30 lượt mở. Ô màu kem đánh dấu mẫu nhỏ.'),
+ 'savings': ('Phạm vi so sánh giá','Tỷ lệ chênh lệch mô tả','"Mẫu đủ điều kiện: " & [Hiển thị · Mẫu mô tả] & "; chênh lệch: " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán."','Chênh lệch quan sát cần được xác minh trước khi diễn giải là tiết kiệm.'),
  'duration': ('Thời gian quan sát','Thời gian bình quân','"Bình quân " & [Hiển thị · Thời gian bình quân] & " dựa trên " & [Hiển thị · Mẫu thời gian] & " khoảng hợp lệ. Tỷ lệ bị loại là " & [Hiển thị · Tỷ lệ mẫu bị loại] & "."','Bộ chọn chỉ số xác định hai mốc thời gian và đơn vị đo.'),
- 'suppliers': ('Mức tập trung giá trị','Tỷ trọng Top 10 người nhận','"Mười người nhận đứng đầu chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị trong tập xếp hạng. Giá trị xác định người nhận đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ."','Xếp hạng theo định danh trên mẫu VND đủ điều kiện.'),
- 'quality': ('Khả năng sử dụng dữ liệu','Phạm vi so sánh','"Mẫu đủ điều kiện so giá chiếm " & [Hiển thị · Độ phủ mẫu mô tả] & " phạm vi so sánh. Trong tập kết quả hiệu lực, độ phủ giá trúng là " & [Hiển thị · Độ phủ giá trúng] & "."','Độ phủ dùng mẫu số riêng cho từng chỉ tiêu.'),
+ 'suppliers': ('Mức tập trung giá trị','Tỷ trọng Top 10 người nhận','"Top 10 chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị; định danh đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ."','Xếp hạng theo định danh trên mẫu VND đủ điều kiện.'),
+ 'quality': ('Khả năng sử dụng dữ liệu','Phạm vi so sánh','"Mẫu đủ điều kiện so giá: " & [Hiển thị · Độ phủ mẫu mô tả] & ". Độ phủ giá trúng: " & [Hiển thị · Độ phủ giá trúng] & "."','Độ phủ dùng mẫu số riêng cho từng chỉ tiêu.'),
 }
 
 class Page(b.Page):

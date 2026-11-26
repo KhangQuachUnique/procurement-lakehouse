@@ -576,6 +576,102 @@
     "dax": "EVALUATE ROW(\"value\",[Luồng có quan sát])"
   },
   {
+    "name": "compile/Đối sánh tập chọn",
+    "dax": "EVALUATE ROW(\"value\",[Đối sánh tập chọn])"
+  },
+  {
+    "name": "compile/Màu cạnh tranh",
+    "dax": "EVALUATE ROW(\"value\",[Màu cạnh tranh])"
+  },
+  {
+    "name": "compile/Lưu ý cỡ mẫu",
+    "dax": "EVALUATE ROW(\"value\",[Lưu ý cỡ mẫu])"
+  },
+  {
+    "name": "compile/Mẫu ngoài so sánh",
+    "dax": "EVALUATE ROW(\"value\",[Mẫu ngoài so sánh])"
+  },
+  {
+    "name": "compile/Khóa người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Khóa người nhận])"
+  },
+  {
+    "name": "compile/Giá trúng thiếu địa phương",
+    "dax": "EVALUATE ROW(\"value\",[Giá trúng thiếu địa phương])"
+  },
+  {
+    "name": "compile/Giá chưa phân bổ",
+    "dax": "EVALUATE ROW(\"value\",[Giá chưa phân bổ])"
+  },
+  {
+    "name": "compile/Số gói nhóm từ 100 tỷ",
+    "dax": "EVALUATE ROW(\"value\",[Số gói nhóm từ 100 tỷ])"
+  },
+  {
+    "name": "compile/Giá trị nhóm từ 100 tỷ",
+    "dax": "EVALUATE ROW(\"value\",[Giá trị nhóm từ 100 tỷ])"
+  },
+  {
+    "name": "compile/Biên độ cạnh tranh",
+    "dax": "EVALUATE ROW(\"value\",[Biên độ cạnh tranh])"
+  },
+  {
+    "name": "compile/Nền Dòng · demand",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · demand])"
+  },
+  {
+    "name": "compile/Nền Dòng · award",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · award])"
+  },
+  {
+    "name": "compile/Nền Dòng · savings",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · savings])"
+  },
+  {
+    "name": "compile/Nền Dòng · bidding_competition",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · bidding_competition])"
+  },
+  {
+    "name": "compile/Nền Dòng · duration",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · duration])"
+  },
+  {
+    "name": "compile/Nền Dòng · supplier",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · supplier])"
+  },
+  {
+    "name": "compile/Nền Dòng · notice",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · notice])"
+  },
+  {
+    "name": "compile/Nền Dòng · status",
+    "dax": "EVALUATE ROW(\"value\",[Nền Dòng · status])"
+  },
+  {
+    "name": "compile/Tên người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Tên người nhận])"
+  },
+  {
+    "name": "compile/Hạng người nhận",
+    "dax": "EVALUATE ROW(\"value\",[Hạng người nhận])"
+  },
+  {
+    "name": "compile/Tiêu đề thời gian trend",
+    "dax": "EVALUATE ROW(\"value\",[Tiêu đề thời gian trend])"
+  },
+  {
+    "name": "compile/Tiêu đề thời gian sectors",
+    "dax": "EVALUATE ROW(\"value\",[Tiêu đề thời gian sectors])"
+  },
+  {
+    "name": "compile/Tiêu đề thời gian methods",
+    "dax": "EVALUATE ROW(\"value\",[Tiêu đề thời gian methods])"
+  },
+  {
+    "name": "compile/Tiêu đề cơ cấu lĩnh vực",
+    "dax": "EVALUATE ROW(\"value\",[Tiêu đề cơ cấu lĩnh vực])"
+  },
+  {
     "name": "compile/Hiển thị · Số gói kế hoạch",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Số gói kế hoạch])"
   },
@@ -814,6 +910,90 @@
   {
     "name": "compile/Hiển thị · Dòng · status",
     "dax": "EVALUATE ROW(\"value\",[Hiển thị · Dòng · status])"
+  },
+  {
+    "name": "compile/Hiển thị · Đối sánh tập chọn",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Đối sánh tập chọn])"
+  },
+  {
+    "name": "compile/Hiển thị · Mẫu ngoài so sánh",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Mẫu ngoài so sánh])"
+  },
+  {
+    "name": "compile/Hiển thị · Giá trúng thiếu địa phương",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Giá trúng thiếu địa phương])"
+  },
+  {
+    "name": "compile/Hiển thị · Giá chưa phân bổ",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Giá chưa phân bổ])"
+  },
+  {
+    "name": "compile/Hiển thị · Số gói nhóm từ 100 tỷ",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Số gói nhóm từ 100 tỷ])"
+  },
+  {
+    "name": "compile/Hiển thị · Giá trị nhóm từ 100 tỷ",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Giá trị nhóm từ 100 tỷ])"
+  },
+  {
+    "name": "compile/Hiển thị · Biên độ cạnh tranh",
+    "dax": "EVALUATE ROW(\"value\",[Hiển thị · Biên độ cạnh tranh])"
+  },
+  {
+    "name": "compile/Nhận định · overview",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · overview])"
+  },
+  {
+    "name": "compile/Nhận định · competition",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · competition])"
+  },
+  {
+    "name": "compile/Nhận định · savings",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · savings])"
+  },
+  {
+    "name": "compile/Nhận định · duration",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · duration])"
+  },
+  {
+    "name": "compile/Nhận định · suppliers",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · suppliers])"
+  },
+  {
+    "name": "compile/Nhận định · quality",
+    "dax": "EVALUATE ROW(\"value\",[Nhận định · quality])"
+  },
+  {
+    "name": "compile/KPI · Kế hoạch · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Kế hoạch · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Trúng thầu · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Trúng thầu · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Dự toán mô tả · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Dự toán mô tả · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Giá trúng mô tả · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Giá trúng mô tả · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Chênh lệch mô tả · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Chênh lệch mô tả · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Người nhận · tỷ VND",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Người nhận · tỷ VND])"
+  },
+  {
+    "name": "compile/KPI · Giá trúng thiếu địa phương",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Giá trúng thiếu địa phương])"
+  },
+  {
+    "name": "compile/KPI · Giá chưa phân bổ",
+    "dax": "EVALUATE ROW(\"value\",[KPI · Giá chưa phân bổ])"
   },
   {
     "name": "rowcount/dim_currency",

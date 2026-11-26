@@ -590,13 +590,13 @@
   {
     "name": "top10/2023",
     "sql": "WITH parties AS (SELECT party_key,sum(award_amount_sum)/1000000000 AS v FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND year(report_date)=2023 GROUP BY 1), top_people AS (SELECT * FROM parties ORDER BY v DESC,party_key LIMIT 10) SELECT (SELECT sum(v) FROM top_people)/(SELECT sum(v) FROM parties)",
-    "value": "0.06358243663977975",
+    "value": "0.06358243663977996",
     "absolute_tolerance": "1E-9"
   },
   {
     "name": "top10/2025",
     "sql": "WITH parties AS (SELECT party_key,sum(award_amount_sum)/1000000000 AS v FROM fact_supplier_daily WHERE currency_key='VND' AND recipient_allocation_state='single_recipient' AND eligible_amount_count>0 AND party_key IN (SELECT party_key FROM dim_party WHERE party_kind<>'UNKNOWN') AND year(report_date)=2025 GROUP BY 1), top_people AS (SELECT * FROM parties ORDER BY v DESC,party_key LIMIT 10) SELECT (SELECT sum(v) FROM top_people)/(SELECT sum(v) FROM parties)",
-    "value": "0.07749852237886813",
+    "value": "0.077498522378868",
     "absolute_tolerance": "1E-9"
   }
 ]

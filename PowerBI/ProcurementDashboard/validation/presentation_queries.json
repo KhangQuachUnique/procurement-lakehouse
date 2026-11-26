@@ -1,0 +1,178 @@
+[
+  {
+    "name": "all/planned_nt",
+    "dax": "EVALUATE ROW(\"value\", [Kế hoạch · nghìn tỷ VND])"
+  },
+  {
+    "name": "all/award_nt",
+    "dax": "EVALUATE ROW(\"value\", [Trúng thầu · nghìn tỷ VND])"
+  },
+  {
+    "name": "all/diff_nt",
+    "dax": "EVALUATE ROW(\"value\", [Chênh lệch mô tả · nghìn tỷ VND])"
+  },
+  {
+    "name": "year2025/planned_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Kế hoạch · nghìn tỷ VND], dim_date[year]=2025))"
+  },
+  {
+    "name": "year2025/award_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Trúng thầu · nghìn tỷ VND], dim_date[year]=2025))"
+  },
+  {
+    "name": "year2025/diff_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Chênh lệch mô tả · nghìn tỷ VND], dim_date[year]=2025))"
+  },
+  {
+    "name": "jan2025_hh/planned_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Kế hoạch · nghìn tỷ VND], dim_date[year_month]=\"2025-01\", dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "jan2025_hh/award_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Trúng thầu · nghìn tỷ VND], dim_date[year_month]=\"2025-01\", dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "jan2025_hh/diff_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Chênh lệch mô tả · nghìn tỷ VND], dim_date[year_month]=\"2025-01\", dim_sector[sector_key]=\"SEC_HH\"))"
+  },
+  {
+    "name": "empty_month/planned_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Kế hoạch · nghìn tỷ VND], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "empty_month/award_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Trúng thầu · nghìn tỷ VND], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "empty_month/diff_nt",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Chênh lệch mô tả · nghìn tỷ VND], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "scope/all",
+    "dax": "EVALUATE ROW(\"value\", [Phạm vi dữ liệu thực tế])"
+  },
+  {
+    "name": "scope/2025",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Phạm vi dữ liệu thực tế], dim_date[year]=2025))"
+  },
+  {
+    "name": "scope/empty",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Phạm vi dữ liệu thực tế], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "compact/packages_all",
+    "dax": "EVALUATE ROW(\"value\", [Rút gọn · Số gói kế hoạch])"
+  },
+  {
+    "name": "compact/planned_all",
+    "dax": "EVALUATE ROW(\"value\", [Rút gọn · Kế hoạch · tỷ VND])"
+  },
+  {
+    "name": "compact/award_all",
+    "dax": "EVALUATE ROW(\"value\", [Rút gọn · Trúng thầu · tỷ VND])"
+  },
+  {
+    "name": "compact/empty_planned",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Rút gọn · Kế hoạch · tỷ VND], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "insight/overview_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Tổng quan · Tiêu đề])"
+  },
+  {
+    "name": "insight/overview_body_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Tổng quan · Nội dung])"
+  },
+  {
+    "name": "insight/overview_hh",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Tổng quan · Tiêu đề], dim_sector[sector_name]=\"Hàng hóa\"))"
+  },
+  {
+    "name": "insight/overview_empty",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Tổng quan · Tiêu đề], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "insight/comp_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Cạnh tranh · Tiêu đề])"
+  },
+  {
+    "name": "insight/comp_body_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Cạnh tranh · Nội dung])"
+  },
+  {
+    "name": "insight/comp_khac",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Cạnh tranh · Nội dung], dim_sector[sector_name]=\"KHAC\"))"
+  },
+  {
+    "name": "insight/comp_empty",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Cạnh tranh · Tiêu đề], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "insight/sav_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · So giá · Tiêu đề])"
+  },
+  {
+    "name": "insight/sav_body_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · So giá · Nội dung])"
+  },
+  {
+    "name": "insight/sav_empty",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · So giá · Tiêu đề], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "insight/dur_days",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Thời gian · Tiêu đề], dim_duration_metric[metric_key]=\"plan_to_notice_days\"))"
+  },
+  {
+    "name": "insight/dur_hours",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Thời gian · Tiêu đề], dim_duration_metric[metric_key]=\"notice_to_close_hours\"))"
+  },
+  {
+    "name": "insight/dur_multi",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Thời gian · Tiêu đề])"
+  },
+  {
+    "name": "insight/sup_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Người nhận · Tiêu đề])"
+  },
+  {
+    "name": "insight/sup_hh_body",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Người nhận · Tiêu đề], dim_sector[sector_name]=\"Hỗn hợp\"))"
+  },
+  {
+    "name": "insight/qual_all",
+    "dax": "EVALUATE ROW(\"value\", [Insight · Chất lượng · Tiêu đề])"
+  },
+  {
+    "name": "insight/qual_empty",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Insight · Chất lượng · Tiêu đề], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "title/dur_hours",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Tiêu đề · Xu hướng thời gian], dim_duration_metric[metric_key]=\"notice_to_close_hours\"))"
+  },
+  {
+    "name": "title/dur_days",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Tiêu đề · Xu hướng thời gian], dim_duration_metric[metric_key]=\"plan_to_notice_days\"))"
+  },
+  {
+    "name": "matrix/demand_2023_05",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Ma trận · demand], dim_date[year_month]=\"2023-05\"))"
+  },
+  {
+    "name": "matrix/comp_honhop_2023_05",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Ma trận · bidding_competition], dim_date[year_month]=\"2023-05\", dim_sector[sector_name]=\"Hỗn hợp\"))"
+  },
+  {
+    "name": "matrix/empty_2022_01",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Ma trận · demand], dim_date[year_month]=\"2022-01\"))"
+  },
+  {
+    "name": "matrix/color_missing",
+    "dax": "EVALUATE ROW(\"value\", CALCULATE([Màu nền ma trận · bidding_competition], dim_date[year_month]=\"2023-05\", dim_sector[sector_name]=\"Hỗn hợp\"))"
+  },
+  {
+    "name": "rank/top10_suppliers",
+    "dax": "EVALUATE TOPN(10, FILTER(SUMMARIZECOLUMNS(dim_party[party_name_clean], dim_party[party_id_compact], \"rank\", [Hạng người nhận], \"val\", [Người nhận · tỷ VND]), NOT ISBLANK([val])), [val], DESC, dim_party[party_id_compact], ASC) ORDER BY [val] DESC"
+  }
+]

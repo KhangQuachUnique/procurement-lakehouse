@@ -18,112 +18,112 @@
       "items": [
         {
           "name": "ProcurementTheme",
-          "path": "ProcurementTheme",
+          "path": "ProcurementTheme.json",
           "type": "CustomTheme"
         },
         {
           "name": "procurement-brand",
-          "path": "procurement-brand",
+          "path": "procurement-brand.svg",
           "type": "Image"
         },
         {
           "name": "overview-active",
-          "path": "overview-active",
+          "path": "overview-active.svg",
           "type": "Image"
         },
         {
           "name": "competition-nav",
-          "path": "competition-nav",
+          "path": "competition-nav.svg",
           "type": "Image"
         },
         {
           "name": "savings-nav",
-          "path": "savings-nav",
+          "path": "savings-nav.svg",
           "type": "Image"
         },
         {
           "name": "duration-nav",
-          "path": "duration-nav",
+          "path": "duration-nav.svg",
           "type": "Image"
         },
         {
           "name": "suppliers-nav",
-          "path": "suppliers-nav",
+          "path": "suppliers-nav.svg",
           "type": "Image"
         },
         {
           "name": "quality-nav",
-          "path": "quality-nav",
+          "path": "quality-nav.svg",
           "type": "Image"
         },
         {
           "name": "overview-badge",
-          "path": "overview-badge",
+          "path": "overview-badge.svg",
           "type": "Image"
         },
         {
           "name": "savings-focus",
-          "path": "savings-focus",
+          "path": "savings-focus.svg",
           "type": "Image"
         },
         {
           "name": "quality-badge",
-          "path": "quality-badge",
+          "path": "quality-badge.svg",
           "type": "Image"
         },
         {
           "name": "competition-badge",
-          "path": "competition-badge",
+          "path": "competition-badge.svg",
           "type": "Image"
         },
         {
           "name": "overview-nav",
-          "path": "overview-nav",
+          "path": "overview-nav.svg",
           "type": "Image"
         },
         {
           "name": "competition-active",
-          "path": "competition-active",
+          "path": "competition-active.svg",
           "type": "Image"
         },
         {
           "name": "savings-badge",
-          "path": "savings-badge",
+          "path": "savings-badge.svg",
           "type": "Image"
         },
         {
           "name": "quality-focus",
-          "path": "quality-focus",
+          "path": "quality-focus.svg",
           "type": "Image"
         },
         {
           "name": "savings-active",
-          "path": "savings-active",
+          "path": "savings-active.svg",
           "type": "Image"
         },
         {
           "name": "competition-focus",
-          "path": "competition-focus",
+          "path": "competition-focus.svg",
           "type": "Image"
         },
         {
           "name": "duration-active",
-          "path": "duration-active",
+          "path": "duration-active.svg",
           "type": "Image"
         },
         {
           "name": "overview-focus",
-          "path": "overview-focus",
+          "path": "overview-focus.svg",
           "type": "Image"
         },
         {
           "name": "suppliers-active",
-          "path": "suppliers-active",
+          "path": "suppliers-active.svg",
           "type": "Image"
         },
         {
           "name": "quality-active",
-          "path": "quality-active",
+          "path": "quality-active.svg",
           "type": "Image"
         }
       ]

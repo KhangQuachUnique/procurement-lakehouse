@@ -845,12 +845,12 @@ table _Measures
 		lineageTag: 0966b37c-e478-58f9-abd6-ed66541db8ab
 
 	/// Nhận định · competition
-	measure 'Nhận định · competition' = IF(ISBLANK([Biên độ cạnh tranh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Tỷ lệ một nhà thầu giữa lĩnh vực cao nhất và thấp nhất cách nhau " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm.")
+	measure 'Nhận định · competition' = IF(ISBLANK([Biên độ cạnh tranh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Biên độ tỷ lệ một nhà thầu: " & [Hiển thị · Biên độ cạnh tranh] & " điểm phần trăm.")
 		displayFolder: Hiển thị
 		lineageTag: ee7e45e9-66a5-5eab-9a03-84166d120dbc
 
 	/// Nhận định · savings
-	measure 'Nhận định · savings' = IF(ISBLANK([Tỷ lệ chênh lệch mô tả]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Trên " & [Hiển thị · Mẫu mô tả] & " mẫu đủ điều kiện, chênh lệch dự toán trừ giá trúng bằng " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán.")
+	measure 'Nhận định · savings' = IF(ISBLANK([Tỷ lệ chênh lệch mô tả]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mẫu đủ điều kiện: " & [Hiển thị · Mẫu mô tả] & "; chênh lệch: " & [Hiển thị · Tỷ lệ chênh lệch mô tả] & " dự toán.")
 		displayFolder: Hiển thị
 		lineageTag: 41817a74-4563-5d6e-9e16-a8ab7adbafcf
 
@@ -860,12 +860,12 @@ table _Measures
 		lineageTag: 977722a3-8286-5219-ae3d-fc5216e1bbf8
 
 	/// Nhận định · suppliers
-	measure 'Nhận định · suppliers' = IF(ISBLANK([Tỷ trọng Top 10 người nhận]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mười người nhận đứng đầu chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị trong tập xếp hạng. Giá trị xác định người nhận đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ.")
+	measure 'Nhận định · suppliers' = IF(ISBLANK([Tỷ trọng Top 10 người nhận]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Top 10 chiếm " & [Hiển thị · Tỷ trọng Top 10 người nhận] & " giá trị; định danh đạt " & [Hiển thị · Độ phủ giá trị người nhận] & " tổng phân bổ.")
 		displayFolder: Hiển thị
 		lineageTag: fcb9e715-c20b-5006-8885-6d0de902996c
 
 	/// Nhận định · quality
-	measure 'Nhận định · quality' = IF(ISBLANK([Phạm vi so sánh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mẫu đủ điều kiện so giá chiếm " & [Hiển thị · Độ phủ mẫu mô tả] & " phạm vi so sánh. Trong tập kết quả hiệu lực, độ phủ giá trúng là " & [Hiển thị · Độ phủ giá trúng] & ".")
+	measure 'Nhận định · quality' = IF(ISBLANK([Phạm vi so sánh]), "Chưa đủ quan sát để diễn giải trong phạm vi đã chọn.", "Mẫu đủ điều kiện so giá: " & [Hiển thị · Độ phủ mẫu mô tả] & ". Độ phủ giá trúng: " & [Hiển thị · Độ phủ giá trúng] & ".")
 		displayFolder: Hiển thị
 		lineageTag: 74a33937-61ea-5fae-9e25-43ccdac0d439
 
