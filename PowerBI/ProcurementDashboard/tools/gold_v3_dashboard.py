@@ -203,8 +203,8 @@ def report_pages():
     p.filters(geography=True)
     p.cards(['Số gói kế hoạch', 'Kế hoạch · tỷ VND', 'Lượt kết quả hiệu lực', 'Trúng thầu · tỷ VND'])
     p.chart('trend', 'lineChart', month, ['Kế hoạch · tỷ VND', 'Trúng thầu · tỷ VND'], 24, 308, w=844, title='Giá trị kế hoạch và giá trúng theo tháng · tỷ VND')
-    sector_colors = {'Hàng hóa': b.TEAL, 'Xây lắp': b.NAVY, 'Phi tư vấn': '#6487AD',
-                     'Tư vấn': '#A87945', 'Hỗn hợp': '#86B8A9', 'Chưa xác định': '#ADB5BD'}
+    sector_colors = {'Hàng hóa': b.TEAL, 'Xây lắp': b.NAVY, 'Phi tư vấn': b.STEEL,
+                     'Tư vấn': b.OCHRE, 'Hỗn hợp': b.SAGE, 'Chưa xác định': b.NEUTRAL}
     slices = [
         {'properties': {'fill': b.color(fill)}, 'selector': {'data': [{'scopeId': {'Comparison': {
             'ComparisonKind': 0, 'Left': b.field(*sector[:2]), 'Right': b.lit(label)['expr']}}}]}}

@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
   "name": "c2747cd1d474524a86d0",
   "position": {
-    "x": 23.920317518682342,
-    "y": 307.97408805303513,
+    "x": 24,
+    "y": 308,
     "z": 11,
-    "height": 248.17329425632931,
-    "width": 858.141390982729,
+    "height": 248,
+    "width": 844,
     "tabOrder": 11
   },
   "visual": {
@@ -296,7 +296,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Hai luồng công bố độc lập theo tháng · tỷ VND'"
+                  "Value": "'Giá trị kế hoạch và giá trúng theo tháng · tỷ VND'"
                 }
               }
             }
@@ -316,7 +316,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Hai luồng công bố độc lập theo tháng · tỷ VND'"
+                  "Value": "'Giá trị kế hoạch và giá trúng theo tháng · tỷ VND'"
                 }
               }
             },
@@ -356,51 +356,5 @@
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "fc870b0e0e40776dd6de",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_date"
-              }
-            },
-            "Property": "month_start"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "2a5e85d2e798e6a52678",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Kế hoạch · tỷ VND"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "ac2177558abf7f0847f3",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Trúng thầu · tỷ VND"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -179,7 +179,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#142D4E'"
+                      "Value": "'#087F8C'"
                     }
                   }
                 }
@@ -533,48 +533,6 @@
           ]
         },
         "howCreated": "User"
-      },
-      {
-        "name": "d4adbcb627ab54fb2c9e",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_geography"
-              }
-            },
-            "Property": "province_display"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "db5f2e06c78fe7d170eb",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Trúng thầu · tỷ VND"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "c5d53c82c0882606f032",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Mẫu giá trúng VND"
-          }
-        },
-        "type": "Advanced"
       }
     ]
   }

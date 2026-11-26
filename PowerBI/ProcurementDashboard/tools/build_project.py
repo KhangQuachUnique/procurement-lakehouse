@@ -11,6 +11,16 @@ MODEL = PROJECT / 'ProcurementDashboard.SemanticModel'
 REPORT = PROJECT / 'ProcurementDashboard.Report'
 BASE = 'https://developer.microsoft.com/json-schemas/fabric/'
 NAVY, TEAL, INK, MUTED, BG = '#142D4E', '#087F8C', '#172B4D', '#64748B', '#F7F9FC'
+STEEL, OCHRE, SAGE, NEUTRAL = '#6487AD', '#A87945', '#86B8A9', '#ADB5BD'
+PALETTE = [NAVY, TEAL, STEEL, OCHRE, SAGE, NEUTRAL]
+SERIES_COLORS = {
+    'Trúng thầu · tỷ VND': TEAL, 'Phân bổ · tỷ VND': TEAL,
+    'Độ phủ giá trúng': TEAL, 'Độ phủ mẫu mô tả': NAVY,
+    'Tỷ trọng giá kế hoạch VND': NAVY, 'Tỷ trọng gói VND': STEEL,
+    'Mẫu mô tả': TEAL, 'Mẫu thời gian': TEAL,
+    'Mẫu ngoài so sánh': NEUTRAL, 'Mẫu thời gian bị loại': NEUTRAL,
+    'Đối sánh tập chọn': OCHRE, 'Tỷ trọng Top 10 người nhận': TEAL,
+}
 MEASURES = {}
 MONEY = '#,0.00;(#,0.00);0.00'
 COUNT = '#,0'
@@ -265,7 +275,7 @@ class Page:
             'legend':obj(show=lit(len(measures)>1),fontSize=lit(9)),
             'categoryAxis':obj(fontSize=lit(10),showAxisTitle=lit(False),preferredCategoryWidth=lit(14),maxMarginFactor=lit(40)),
             'valueAxis':obj(fontSize=lit(10),showAxisTitle=lit(False),labelDisplayUnits=lit(1)),
-            'dataPoint':[{'properties':{'fill':color([NAVY,TEAL,'#F59E0B','#64748B'][i%4])},'selector':{'metadata':'_Measures.'+n}} for i,n in enumerate(measures)]})
+            'dataPoint':[{'properties':{'fill':color(SERIES_COLORS.get(n, PALETTE[i % len(PALETTE)]))},'selector':{'metadata':'_Measures.'+n}} for i,n in enumerate(measures)]})
         v['visual']['query']['sortDefinition']={'sort':[{'field':field(*category[:2]) if category[0]=='dim_date' else field('_Measures',measures[0],'Measure'),'direction':'Ascending' if category[0]=='dim_date' else 'Descending'}],'isDefaultSort':True}
         if typ=='lineChart':
             v['visual']['objects']['categoryAxis']=obj(fontSize=lit(10),axisType=lit('Scalar'),showAxisTitle=lit(False))
@@ -282,7 +292,7 @@ def categorical(t,p,values):
 def report():
     save(REPORT/'definition.pbir',{'$schema':BASE+'item/report/definitionProperties/2.0.0/schema.json','version':'4.0','datasetReference':{'byPath':{'path':'../'+MODEL.name}}})
     save(REPORT/'definition/version.json',{'$schema':BASE+'item/report/definition/versionMetadata/1.0.0/schema.json','version':'2.0.0'})
-    theme={'name':'Procurement Enterprise','dataColors':[NAVY,TEAL,'#F59E0B','#64748B','#DC4C4C','#DDF3F2'],
+    theme={'name':'Procurement Enterprise','dataColors':PALETTE,
         'background':BG,'foreground':INK,'tableAccent':TEAL,
         'textClasses':{'title':{'fontFace':'Segoe UI Semibold','fontSize':12,'color':INK},'label':{'fontFace':'Segoe UI','fontSize':10,'color':MUTED},'callout':{'fontFace':'Segoe UI Semibold','fontSize':24,'color':NAVY}},
         'visualStyles':{'*':{'*':{'visualHeader':[{'show':False}],'dropShadow':[{'show':False}]}},
