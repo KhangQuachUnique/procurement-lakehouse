@@ -9,6 +9,8 @@ annotation PBI_TimeIntelligenceEnabled = 0
 
 annotation PBI_ProTooling = ["DevMode"]
 
+annotation PBI_QueryOrder = ["dim_currency","dim_date","dim_duration_metric","dim_geography","dim_party","dim_procurement_method","dim_progress_status","dim_sector","dim_value_band","fact_award_daily","fact_bidding_competition_daily","fact_demand_daily","fact_duration_daily","fact_notice_daily","fact_savings_daily","fact_status_daily","fact_supplier_daily","_Measures","DataRoot","ReadParquetTable"]
+
 ref table dim_currency
 ref table dim_date
 ref table dim_duration_metric
