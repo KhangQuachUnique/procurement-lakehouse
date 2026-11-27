@@ -8,7 +8,8 @@ from typing import Any
 
 import pyarrow as pa
 
-from procurement.common.silver_gold_contract import INPUT_TABLES, projection
+from procurement.common.silver_gold_contract import INPUT_TABLES
+from procurement.gold.application.silver_adapter import adapt_projection
 from procurement.gold.domain.models import SilverReadyInput, Snapshot, identifier
 from procurement.gold.ports.outbound.silver_reader import SilverReaderPort
 
@@ -39,7 +40,7 @@ class IcebergReader(SilverReaderPort):
             raise ValueError("Unexpected source table")
         relation = f"lake.{self.namespace}.{snapshot.table}"
         columns = [r[0] for r in self.db.execute("DESCRIBE " + relation).fetchall()]
-        select = ",".join(projection(columns, snapshot.table))
+        select = ",".join(adapt_projection(columns, snapshot.table))
         if snapshot.snapshot_id is not None:
             relation += f" AT (VERSION => {snapshot.snapshot_id})"
             return f"SELECT {select} FROM {relation}"

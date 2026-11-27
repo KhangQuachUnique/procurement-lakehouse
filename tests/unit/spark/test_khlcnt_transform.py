@@ -166,10 +166,14 @@ def test_khlcnt_transform_plan_package_locations_lots_and_quarantine(spark):
     assert len(dq_issues) == 0
     assert len(plans) == 1
     assert plans[0]["plan_no"] == "PL2500001"
+    assert plans[0]["project_id"] == "proj-uuid-1"
+    assert "source_project_id" not in out.tables["plan_revision"].columns
     assert plans[0]["total_investment"] == Decimal("9876543210987654321.123456")
     assert plans[0]["bid_pack"] == 5
 
     assert len(pkgs) == 1
+    assert pkgs[0]["plan_id"] == "plan-uuid-1"
+    assert "source_plan_id" not in out.tables["package_revision"].columns
     assert pkgs[0]["bid_price"] == Decimal("104834825617.400000")
     assert pkgs[0]["dq_status"] == "VALID"
     assert pkgs[0]["is_domestic"] is True

@@ -3,6 +3,12 @@
 from typing import Protocol
 
 from procurement.gold.domain.models import INPUT_TABLES, Snapshot, identifier
+from .silver_adapter import (
+    ROOT_REVISION_TABLES,
+    adapt_projection,
+    ensure_observation_table,
+    table_exists,
+)
 from .source_cache import capture_from_journal
 
 
@@ -65,27 +71,32 @@ def freeze(db, plan, reader: SnapshotReader):
     try:
         db.execute("DROP SCHEMA IF EXISTS frozen CASCADE")
         db.execute("CREATE SCHEMA frozen")
-        db.execute(
-            "CREATE TABLE frozen.observation AS SELECT * FROM capture.observation WHERE source_date<=?",
-            [plan.source_cutoff],
-        )
-        for name in (
-            "package_revision",
-            "notice_revision",
-            "result_revision",
-            "plan_revision",
-            "opening_revision",
-            "contract_revision",
-            "contract_performance_revision",
-        ):
-            bad = db.execute(
-                f"SELECT count(*) FROM capture.{name} r WHERE r.observation_id IS NULL OR NOT EXISTS (SELECT 1 FROM capture.observation o WHERE o.observation_id=r.observation_id)"
-            ).fetchone()[0]
-            if bad:
-                raise ValueError("Missing observation lineage: " + name)
+        if table_exists(db, "capture", "observation"):
             db.execute(
-                f"CREATE TABLE frozen.{name} AS SELECT r.* FROM capture.{name} r JOIN frozen.observation o USING(observation_id)"
+                "CREATE TABLE frozen.observation AS SELECT * FROM capture.observation WHERE source_date<=?",
+                [plan.source_cutoff],
             )
+            for name in ROOT_REVISION_TABLES:
+                bad = db.execute(
+                    f"SELECT count(*) FROM capture.{name} r WHERE r.observation_id IS NULL OR NOT EXISTS (SELECT 1 FROM capture.observation o WHERE o.observation_id=r.observation_id)"
+                ).fetchone()[0]
+                if bad:
+                    raise ValueError("Missing observation lineage: " + name)
+                db.execute(
+                    f"CREATE TABLE frozen.{name} AS SELECT r.* FROM capture.{name} r JOIN frozen.observation o USING(observation_id)"
+                )
+        else:
+            for name in ROOT_REVISION_TABLES:
+                cols = [r[0] for r in db.execute(f"DESCRIBE capture.{name}").fetchall()]
+                select_sql = ", ".join(adapt_projection(cols, name))
+                if "source_date" in cols:
+                    db.execute(
+                        f"CREATE TABLE frozen.{name} AS SELECT {select_sql} FROM capture.{name} WHERE source_date<=?",
+                        [plan.source_cutoff],
+                    )
+                else:
+                    db.execute(f"CREATE TABLE frozen.{name} AS SELECT {select_sql} FROM capture.{name}")
+            ensure_observation_table(db, schema="frozen")
         for name, parent in (
             ("package_location", "package_revision"),
             ("award_lot", "result_revision"),
@@ -110,7 +121,7 @@ def freeze(db, plan, reader: SnapshotReader):
         raise
     return {
         "input_id": plan.source.input_id,
-        "tables": len(INPUT_TABLES),
+        "tables": len(plan.source.tables),
         "projection_version": plan.source.projection_version,
         "capture_strategies": dict(
             db.execute(

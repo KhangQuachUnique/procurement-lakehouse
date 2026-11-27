@@ -98,6 +98,12 @@ def _transform_family(
     guar_src = "bidGuaranteeValue" if family == "vk_adb" else "guaranteeValue"
     raw_guar = clean_text(root.getField(guar_src))
     guar_amt = parse_decimal_38_6(raw_guar)
+    guar_form_primary = "bidGuaranteeForm" if family == "vk_adb" else "guaranteeForm"
+    guar_form_fallback = "guaranteeForm" if family == "vk_adb" else "bidGuaranteeForm"
+    guarantee_form = F.coalesce(
+        clean_text(root.getField(guar_form_primary)),
+        clean_text(root.getField(guar_form_fallback)),
+    )
     raw_init = clean_text(root.getField("priceInit"))
     init_price = parse_decimal_38_6(raw_init)
     raw_step = clean_text(root.getField("priceStep"))
@@ -151,6 +157,7 @@ def _transform_family(
     raw_pub = clean_text(root.getField("publicDate"))
     pub_date = parse_vn_date(raw_pub)
     pub_ts = parse_vn_timestamp(raw_pub)
+    orig_pub_ts = parse_vn_timestamp(root.getField("originalPublicDate"))
     open_ts = parse_vn_timestamp(root.getField("bidOpenDate"))
     close_ts = parse_vn_timestamp(root.getField("bidCloseDate"))
     raw_plan_dec = clean_text(root.getField("planDecisionDate"))
@@ -212,6 +219,7 @@ def _transform_family(
         guar_amt.alias("guarantee_amount"),
         raw_guar.alias("_raw_guar"),
         guar_curr.alias("guarantee_currency"),
+        guarantee_form.alias("guarantee_form"),
         init_price.alias("initial_price"),
         step_price.alias("price_step"),
         reoffer_curr.alias("reoffer_currency"),
@@ -230,6 +238,7 @@ def _transform_family(
         pub_date.alias("public_date"),
         raw_pub.alias("_raw_pub"),
         pub_ts.alias("published_at"),
+        orig_pub_ts.alias("original_published_at"),
         open_ts.alias("bid_open_date"),
         close_ts.alias("bid_close_date"),
         plan_dec_date.alias("plan_decision_date"),
@@ -370,6 +379,7 @@ def _transform_family(
         "estimate_currency",
         "guarantee_amount",
         "guarantee_currency",
+        "guarantee_form",
         "initial_price",
         "price_step",
         "reoffer_currency",
@@ -383,6 +393,7 @@ def _transform_family(
         "is_prequalification",
         "public_date",
         "published_at",
+        "original_published_at",
         "bid_open_date",
         "bid_close_date",
         "plan_decision_date",

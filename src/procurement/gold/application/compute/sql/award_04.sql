@@ -40,7 +40,7 @@ scope_decisions AS (
 SELECT
     sd.* EXCLUDE (ref_baseline),
     CASE
-        WHEN UPPER(COALESCE(sd.status_raw, '')) IN ('CANCELLED', 'REVOKED', 'HUY_THAU', 'HUY', 'HỦY KẾT QUẢ')
+        WHEN UPPER(COALESCE(sd.status_raw, '')) IN ('CANCELED', 'CANCELLED', 'REVOKED', 'HUY_THAU', 'HUY', 'HỦY KẾT QUẢ')
         THEN 'cancelled'
         WHEN sd.decisions_count > 1
         THEN 'unresolved_overlap'

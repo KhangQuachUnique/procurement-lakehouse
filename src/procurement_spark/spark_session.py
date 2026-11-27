@@ -84,5 +84,8 @@ def build_spark_session(
         # Bound columnar batch sizes so wide raw-JSON Parquet rows never spike JVM heap
         .config("spark.sql.inMemoryColumnarStorage.batchSize", "1000")
         .config("spark.sql.parquet.columnarReaderBatchSize", "1024")
+        # Bound Spark UI / SQL execution history so long-lived Drivers never leak heap
+        .config("spark.ui.retainedStages", "100")
+        .config("spark.sql.ui.retainedExecutions", "50")
     )
     return builder.getOrCreate()

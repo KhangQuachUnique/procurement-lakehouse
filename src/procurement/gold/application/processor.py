@@ -16,7 +16,11 @@ from typing import Any
 import duckdb
 
 from procurement.common.settings import Settings
-from procurement.common.silver_gold_contract import projection
+from procurement.gold.application.silver_adapter import (
+    adapt_projection,
+    ensure_observation_table,
+    table_exists,
+)
 from procurement.gold.domain.models import (
     INPUT_TABLES,
     ResourceBudget,
@@ -220,11 +224,15 @@ def _pull_upstream_references(
     for target_tbl, local_missing_sql, remote_pred in _UPSTREAM_FALLBACK_SPECS:
         missing_refs = local.execute(local_missing_sql).to_arrow_table()
         if len(missing_refs) > 0:
+            target_cols = {
+                r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{target_tbl}").fetchall()
+            }
+            current_pred = "AND is_current = TRUE " if "is_current" in target_cols else ""
             conn.register("_missing_refs", missing_refs)
             try:
                 append_fn(
                     target_tbl,
-                    f"public_date < '{start_date}' AND is_current = TRUE AND ({remote_pred})",
+                    f"public_date < '{start_date}' {current_pred}AND ({remote_pred})",
                 )
             finally:
                 conn.unregister("_missing_refs")
@@ -251,7 +259,7 @@ def process_gold_range(
         # 1. Extract Silver tables using the standard canonical projection
         def _extract_table(table_name: str, where_sql: str) -> int:
             cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
-            select_cols = ", ".join(projection(cols, table_name))
+            select_cols = ", ".join(adapt_projection(cols, table_name))
             arrow_tbl = conn.execute(f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} WHERE {where_sql}").to_arrow_table()
             count = len(arrow_tbl)
             temp_name = f"_tmp_{table_name}"
@@ -262,7 +270,7 @@ def process_gold_range(
 
         def _append_table(table_name: str, where_sql: str) -> int:
             cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
-            select_cols = ", ".join(projection(cols, table_name))
+            select_cols = ", ".join(adapt_projection(cols, table_name))
             arrow_tbl = conn.execute(
                 f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} WHERE {where_sql}"
             ).to_arrow_table()
@@ -285,7 +293,7 @@ def process_gold_range(
             rev_arrow = local.execute(f"SELECT DISTINCT revision_id FROM frozen.{parent_table} WHERE revision_id IS NOT NULL").to_arrow_table()
             if len(rev_arrow) == 0:
                 cols = [r[0] for r in conn.execute(f"DESCRIBE lake.{silver_namespace}.{table_name}").fetchall()]
-                select_cols = ", ".join(projection(cols, table_name))
+                select_cols = ", ".join(adapt_projection(cols, table_name))
                 empty_tbl = conn.execute(f"SELECT {select_cols} FROM lake.{silver_namespace}.{table_name} LIMIT 0").to_arrow_table()
                 local.register("_tmp_empty", empty_tbl)
                 local.execute(f"CREATE TABLE frozen.{table_name} AS SELECT * FROM _tmp_empty")
@@ -333,29 +341,11 @@ def process_gold_range(
         ).fetchone()[0]
         if has_notice_loc:
             _extract_child_by_revisions("notice_location", "notice_revision")
-        _extract_table("observation", f"source_date >= '{start_date}' AND source_date < '{end_date}'")
-
-        # Synthetic observations for any orphaned revisions
-        for tbl in ("package_revision", "notice_revision", "result_revision", "plan_revision", "opening_revision", "contract_revision", "contract_performance_revision"):
-            local.execute(f"""
-                INSERT INTO frozen.observation (
-                    observation_id, resource, source_date, run_id, table_name,
-                    file_key, file_sha256, row_ordinal, observed_at, source_id, source_version, content_hash
-                )
-                SELECT DISTINCT
-                    r.observation_id, '{tbl}', '{start_date}'::DATE, 'range_run', '{tbl}',
-                    'k', 's', 0, coalesce(r.public_date, '{start_date}'::DATE)::TIMESTAMP, r.entity_id, 1, 'h'
-                FROM frozen.{tbl} r
-                WHERE NOT EXISTS (SELECT 1 FROM frozen.observation o WHERE o.observation_id = r.observation_id)
-            """)
-
-        local.execute("""
-            CREATE OR REPLACE TABLE frozen.observation AS
-            SELECT * EXCLUDE (rn) FROM (
-                SELECT *, row_number() OVER (PARTITION BY observation_id ORDER BY observed_at DESC) as rn
-                FROM frozen.observation
-            ) WHERE rn = 1
-        """)
+        if table_exists(conn, silver_namespace, "observation", catalog="lake"):
+            _extract_table("observation", f"source_date >= '{start_date}' AND source_date < '{end_date}'")
+        # Synthesize or backfill frozen.observation from root revisions (supports Spark Silver
+        # namespaces without an observation table as well as legacy silver_v3 orphaned revisions).
+        ensure_observation_table(local, schema="frozen", fallback_date=start_date)
 
         t_extract = time.perf_counter() - t0
 

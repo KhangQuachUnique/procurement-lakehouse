@@ -94,8 +94,16 @@ def execute(conn, context):
                 sub.contractor_name,
                 sub.tech_result,
                 sub.discount_rate,
-                norm_bid_price(sub.bid_price, ctx.ref_baseline) AS clean_bid_price,
-                norm_bid_price(sub.final_bid_price, ctx.ref_baseline) AS clean_final_bid_price
+                CASE
+                    WHEN sub.currency IS NULL OR TRIM(sub.currency) = '' OR UPPER(TRIM(sub.currency)) = 'VND'
+                    THEN norm_bid_price(sub.bid_price, ctx.ref_baseline)
+                    ELSE NULL
+                END AS clean_bid_price,
+                CASE
+                    WHEN sub.currency IS NULL OR TRIM(sub.currency) = '' OR UPPER(TRIM(sub.currency)) = 'VND'
+                    THEN norm_bid_price(sub.final_bid_price, ctx.ref_baseline)
+                    ELSE NULL
+                END AS clean_final_bid_price
             FROM {rel_open_sub} sub
             LEFT JOIN _gtmp_opening_pkg_ctx ctx ON sub.revision_id = ctx.revision_id
         )

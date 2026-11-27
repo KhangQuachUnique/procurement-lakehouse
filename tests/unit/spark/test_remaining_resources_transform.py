@@ -84,8 +84,10 @@ def test_notice_transform_all_three_families(spark):
             "bidPrice": 104834825617.4,
             "bidPriceUnit": "VND",
             "bidEstimatePrice": 100000000000,
+            "guaranteeForm": "Thư bảo lãnh",
             "isDomestic": True,
             "publicDate": "2025-01-15T08:00:00Z",
+            "originalPublicDate": "2025-01-10T07:30:00Z",
             "bidOpenDate": "2025-01-25T09:00:00Z",
             "bidCloseDate": "2025-01-25T08:00:00Z",
             "lotDTOList": [{"id": "lot-1", "lotNo": "1", "lotName": "Phần 1", "lotPrice": 50000000000}],
@@ -103,7 +105,9 @@ def test_notice_transform_all_three_families(spark):
             "bidPriceUnit": "USD",
             "bidGuaranteeValue": 50000,
             "bidGuaranteeUnit": "USD",
+            "bidGuaranteeForm": "Bank Guarantee",
             "publicDate": "2025-01-15",
+            "originalPublicDate": "2025-01-12T06:00:00Z",
         }
     }
     reoffer_payload = {
@@ -140,8 +144,14 @@ def test_notice_transform_all_three_families(spark):
     assert revs["standard"]["bid_price"] == Decimal("104834825617.400000")
     assert revs["standard"]["plan_id"] == "plan-1"
     assert revs["standard"]["estimate_currency"] == "VND"
+    assert revs["standard"]["guarantee_form"] == "Thư bảo lãnh"
+    assert revs["standard"]["original_published_at"] is not None
     assert revs["vk_adb"]["guarantee_amount"] == Decimal("50000.000000")
+    assert revs["vk_adb"]["guarantee_form"] == "Bank Guarantee"
+    assert revs["vk_adb"]["original_published_at"] is not None
     assert revs["reoffer"]["reoffer_no"] == "RE2500001"
+    assert revs["reoffer"]["guarantee_form"] is None
+    assert revs["reoffer"]["original_published_at"] is None
     assert out.tables["notice_lot"].count() == 1
     assert out.tables["notice_location"].count() == 1
     assert out.tables["notice_reoffer_submission"].count() == 1

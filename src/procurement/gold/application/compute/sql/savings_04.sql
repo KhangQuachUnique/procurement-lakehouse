@@ -126,8 +126,10 @@ SELECT
     CASE
         WHEN (
             fa.award_state = 'effective'
-            AND fa.scope_key LIKE '%:PACKAGE%'
-            AND COALESCE(plc.lot_count, 0) = 0
+            AND (
+                (fa.scope_key LIKE '%:PACKAGE%' AND COALESCE(plc.lot_count, 0) = 0)
+                OR (fa.scope_key LIKE '%:LOT:%' AND COALESCE(plc.lot_count, 0) = 1 AND COALESCE(rsc.scope_count, 0) = 1)
+            )
             AND sb.baseline_amount IS NOT NULL
             AND sb.baseline_amount > 0
             AND cs.contract_price IS NOT NULL
@@ -140,8 +142,10 @@ SELECT
     CASE
         WHEN (
             fa.award_state = 'effective'
-            AND fa.scope_key LIKE '%:PACKAGE%'
-            AND COALESCE(plc.lot_count, 0) = 0
+            AND (
+                (fa.scope_key LIKE '%:PACKAGE%' AND COALESCE(plc.lot_count, 0) = 0)
+                OR (fa.scope_key LIKE '%:LOT:%' AND COALESCE(plc.lot_count, 0) = 1 AND COALESCE(rsc.scope_count, 0) = 1)
+            )
             AND sb.baseline_amount IS NOT NULL
             AND sb.baseline_amount > 0
             AND cs.contract_price IS NOT NULL
@@ -153,8 +157,10 @@ SELECT
     END AS contract_saving_amount,
     COALESCE(
         fa.award_state = 'effective'
-        AND fa.scope_key LIKE '%:PACKAGE%'
-        AND COALESCE(plc.lot_count, 0) = 0
+        AND (
+            (fa.scope_key LIKE '%:PACKAGE%' AND COALESCE(plc.lot_count, 0) = 0)
+            OR (fa.scope_key LIKE '%:LOT:%' AND COALESCE(plc.lot_count, 0) = 1 AND COALESCE(rsc.scope_count, 0) = 1)
+        )
         AND sb.baseline_amount IS NOT NULL
         AND sb.baseline_amount > 0
         AND cs.contract_price IS NOT NULL
@@ -165,5 +171,11 @@ SELECT
 FROM {p10}fact_award fa
 JOIN _gtmp_scope_baselines sb ON fa.award_business_key = sb.award_business_key
 LEFT JOIN _gtmp_package_lot_counts plc ON fa.package_key = plc.package_key AND split_part(fa.scope_key, ':ROUND:', 2) = plc.scope_round_key
+LEFT JOIN (
+    SELECT split_part(award_business_key, ':', 2) AS result_revision_id, COUNT(*) AS scope_count
+    FROM {p10}fact_award
+    WHERE release_id = '{p11}'
+    GROUP BY 1
+) rsc ON split_part(fa.award_business_key, ':', 2) = rsc.result_revision_id
 LEFT JOIN _gtmp_contract_savings cs ON split_part(fa.award_business_key, ':', 2) = cs.result_revision_id
 WHERE fa.release_id = '{p11}';
