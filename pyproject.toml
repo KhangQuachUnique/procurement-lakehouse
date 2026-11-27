@@ -51,6 +51,9 @@ orchestration = [
     # Dagster's PostgreSQL backend currently uses the psycopg2 driver.
     "sqlalchemy>=2,<2.1",
 ]
+spark = [
+    "pyspark>=4.0,<4.1",
+]
 
 [tool.dagster]
 module_name = "procurement.orchestration.definitions"

@@ -1,13 +1,17 @@
 name: procurement-lakehouse
 
 # ==============================================================================
-# PROCUREMENT LAKEHOUSE - UNIFIED DOCKER COMPOSE CONFIGURATION
+# PROCUREMENT LAKEHOUSE - SIMPLIFIED & PORTABLE DOCKER COMPOSE
 #
-# Khởi chạy toàn bộ hệ sinh thái:
+# Core stack (SeaweedFS S3 + Iceberg REST + 1 PostgreSQL + Dagster):
 #   docker compose up -d
 #
-# Dừng toàn bộ hệ sinh thái:
-#   docker compose down
+# Core stack + Spark Standalone cluster (Master + N Workers):
+#   docker compose --profile spark up -d
+#   docker compose --profile spark up -d --scale spark-worker=2
+#
+# Stop all:
+#   docker compose --profile spark down
 # ==============================================================================
 
 x-logging: &default-logging
@@ -19,7 +23,7 @@ x-logging: &default-logging
 x-dagster: &dagster
   build:
     context: .
-    dockerfile: Dockerfile
+    dockerfile: infra/docker/Dockerfile.app
     args:
       UV_EXTRA: orchestration
   environment: &dagster-env
@@ -35,7 +39,7 @@ x-dagster: &dagster
 
 services:
   # ----------------------------------------------------------------------------
-  # 1. HẠ TẦNG LƯU TRỮ (SeaweedFS S3 + Apache Iceberg REST Catalog)
+  # 1. STORAGE & CATALOG (SeaweedFS S3 + Apache Iceberg REST Catalog)
   # ----------------------------------------------------------------------------
   object-storage:
     image: ${OBJECT_STORAGE_IMAGE:-chrislusf/seaweedfs:4.46}
@@ -52,9 +56,6 @@ services:
     ports:
       - "${OBJECT_STORAGE_BIND_ADDRESS:-127.0.0.1}:${OBJECT_STORAGE_API_PORT:-8333}:8333"
       - "${ICEBERG_CATALOG_BIND_ADDRESS:-127.0.0.1}:${ICEBERG_CATALOG_PORT:-8181}:8181"
-      - "127.0.0.1:8888:8888"
-      - "127.0.0.1:9333:9333"
-      - "127.0.0.1:23646:23646"
     volumes:
       - object-storage-data:/data
     ulimits:
@@ -63,7 +64,7 @@ services:
         hard: 65536
 
   # ----------------------------------------------------------------------------
-  # 2. CƠ SỞ DỮ LIỆU METADATA ỨNG DỤNG (PostgreSQL 17)
+  # 2. CONSOLIDATED METADATA DATABASE (PostgreSQL 17: procurement + dagster DBs)
   # ----------------------------------------------------------------------------
   app-postgres:
     image: postgres:17
@@ -77,6 +78,7 @@ services:
       - "${APP_POSTGRES_PORT:-25432}:5432"
     volumes:
       - app-postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres-init.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
     healthcheck:
       test: [CMD-SHELL, "pg_isready -U ${APP_POSTGRES_USER:-procurement} -d ${APP_POSTGRES_DB:-procurement}"]
       interval: 5s
@@ -84,69 +86,25 @@ services:
       retries: 5
 
   # ----------------------------------------------------------------------------
-  # 3. OPS DASHBOARD & GIÁM SÁT TIẾN ĐỘ THẦU (FastAPI + Web UI)
+  # 3. ONE-SHOT SCHEMA MIGRATION (Alembic)
   # ----------------------------------------------------------------------------
-  ops:
+  db-migrate:
     build:
       context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
+      dockerfile: infra/docker/Dockerfile.app
+      args:
+        UV_EXTRA: metadata
+    restart: "no"
     logging: *default-logging
-    command: [uvicorn, procurement.api.main:app, --host, 0.0.0.0, --port, "8000"]
+    command: [alembic, upgrade, head]
     environment:
-      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
-      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
-      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
-      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change_this_to_a_long_random_password}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      OPS_INDEX_PATH: /var/lib/procurement/ops/index.sqlite3
-      BID_OPENING_WATCH_PATH: /var/lib/procurement/watch/bid_opening.sqlite3
-      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
-      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
-      OPS_SYNC_INTERVAL_SECONDS: ${OPS_SYNC_INTERVAL_SECONDS:-5}
-      OPS_RECONCILE_INTERVAL_SECONDS: ${OPS_RECONCILE_INTERVAL_SECONDS:-300}
-      OPS_SYNC_WORKERS: ${OPS_SYNC_WORKERS:-8}
-      OPS_STALE_AFTER_SECONDS: ${OPS_STALE_AFTER_SECONDS:-600}
       APP_DATABASE_URL: ${CONTAINER_APP_DATABASE_URL:-postgresql+psycopg://${APP_POSTGRES_USER:-procurement}:${APP_POSTGRES_PASSWORD:-password}@app-postgres:5432/${APP_POSTGRES_DB:-procurement}}
-      ORCHESTRATION_ENABLED: "true"
-    volumes:
-      - ops-state:/var/lib/procurement/ops
-      - watch-state:/var/lib/procurement/watch:ro
-      - ingestion-state:/var/lib/procurement
-    ports:
-      - "127.0.0.1:8000:8000"
     depends_on:
-      object-storage:
-        condition: service_started
       app-postgres:
         condition: service_healthy
-    healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   # ----------------------------------------------------------------------------
-  # 4. DATABASE QUẢN LÝ RUNS/EVENTS CỦA DAGSTER (PostgreSQL 17)
-  # ----------------------------------------------------------------------------
-  dagster-postgres:
-    image: postgres:17
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: dagster
-      POSTGRES_DB: dagster
-      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
-    volumes:
-      - dagster-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: [CMD-SHELL, "pg_isready -U dagster -d dagster"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ----------------------------------------------------------------------------
-  # 5. DAGSTER CODE LOCATION (gRPC Server thực thi Asset/Pipeline)
+  # 4. DAGSTER ORCHESTRATION (Code Location + Webserver + Daemon)
   # ----------------------------------------------------------------------------
   dagster-code-location:
     <<: *dagster
@@ -154,9 +112,6 @@ services:
     environment:
       <<: *dagster-env
       ORCHESTRATION_ENABLED: "true"
-      GOLD_SILVER_READINESS_ROOT: /var/lib/procurement/data/manual-result-history
-      BENCHMARK_STATE_DIR: /var/lib/procurement/benchmarks
-      BENCHMARK_EXPORT_DIR: /var/lib/procurement/benchmark-artifacts
       OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-procurement-lakehouse}
       OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-procurement_admin}
@@ -165,8 +120,8 @@ services:
       ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE:-s3://warehouse}
       SILVER_TARGET_NAMESPACE: ${SILVER_TARGET_NAMESPACE:-silver}
       GOLD_TARGET_NAMESPACE: ${GOLD_TARGET_NAMESPACE:-gold}
-      MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mpi.gov.vn}
-      MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN}
+      MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mof.gov.vn}
+      MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN:-}
       MUASAMCONG_TIMEOUT_SECONDS: ${MUASAMCONG_TIMEOUT_SECONDS:-30}
       MUASAMCONG_MAX_ATTEMPTS: ${MUASAMCONG_MAX_ATTEMPTS:-3}
       MUASAMCONG_MAX_RETRY_DELAY_SECONDS: ${MUASAMCONG_MAX_RETRY_DELAY_SECONDS:-30}
@@ -187,13 +142,12 @@ services:
       - ./infra/dagster/dagster.yaml:/var/lib/procurement/dagster/dagster.yaml:ro
       - ingestion-state:/var/lib/procurement
       - watch-state:/var/lib/procurement/watch
-      - ./data:/var/lib/procurement/data:ro
-      - ./data/gold/reporting:/var/lib/procurement/gold/reporting
+      - reporting-data:/var/lib/procurement/gold/reporting
     depends_on:
-      dagster-postgres:
-        condition: service_healthy
       app-postgres:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       object-storage:
         condition: service_started
     healthcheck:
@@ -202,9 +156,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # ----------------------------------------------------------------------------
-  # 6. DAGSTER WEBSERVER (Giao diện trực quan Dashboard)
-  # ----------------------------------------------------------------------------
   dagster-webserver:
     <<: *dagster
     command: [dagster-webserver, --host, 0.0.0.0, --port, "3000", --workspace, /opt/dagster/workspace.yaml]
@@ -219,9 +170,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # ----------------------------------------------------------------------------
-  # 7. DAGSTER DAEMON (Bộ điều phối Lịch trình & Sensor chạy nền)
-  # ----------------------------------------------------------------------------
   dagster-daemon:
     <<: *dagster
     command: [dagster-daemon, run, --workspace, /opt/dagster/workspace.yaml]
@@ -235,11 +183,56 @@ services:
       retries: 5
       start_period: 60s
 
+  # ----------------------------------------------------------------------------
+  # 5. APACHE SPARK 4.0 STANDALONE CLUSTER (Optional: --profile spark)
+  #    Pre-baked with Iceberg 1.10 + S3A JARs (0s Maven download, offline-ready)
+  # ----------------------------------------------------------------------------
+  spark-master:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.spark
+    image: ${SPARK_IMAGE:-procurement-spark:4.0.0}
+    profiles: [spark]
+    restart: unless-stopped
+    logging: *default-logging
+    command: [/opt/spark/bin/spark-class, org.apache.spark.deploy.master.Master, --host, 0.0.0.0, --port, "7077", --webui-port, "8080"]
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_LOCAL_DIRS: /var/tmp/spark-scratch
+    volumes:
+      - ./src:/app/src:ro
+    ports:
+      - "${SPARK_MASTER_BIND_ADDRESS:-127.0.0.1}:${SPARK_MASTER_PORT:-7077}:7077"
+      - "${SPARK_UI_BIND_ADDRESS:-127.0.0.1}:${SPARK_MASTER_UI_PORT:-8080}:8080"
+    depends_on:
+      object-storage:
+        condition: service_started
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.spark
+    image: ${SPARK_IMAGE:-procurement-spark:4.0.0}
+    profiles: [spark]
+    restart: unless-stopped
+    logging: *default-logging
+    command: [/opt/spark/bin/spark-class, org.apache.spark.deploy.worker.Worker, spark://spark-master:7077]
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_LOCAL_DIRS: /var/tmp/spark-scratch
+      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-6}
+      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-4g}
+    volumes:
+      - spark-scratch:/var/tmp/spark-scratch
+    depends_on:
+      spark-master:
+        condition: service_started
+
 volumes:
   object-storage-data:
   app-postgres-data:
-  ops-state:
   watch-state:
   ingestion-state:
-  dagster-postgres-data:
+  reporting-data:
   dagster-state:
+  spark-scratch:

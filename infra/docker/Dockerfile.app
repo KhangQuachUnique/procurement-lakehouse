@@ -18,6 +18,8 @@ WORKDIR /app
 # Iceberg/DuckDB may stage local files beneath the working directory.
 RUN mkdir -p /app/data /app/.tmp && chown procurement:procurement /app/data /app/.tmp
 COPY --from=builder /app/.venv /app/.venv
+COPY alembic.ini ./
+COPY migrations ./migrations
 COPY infra/dagster/workspace.yaml /opt/dagster/workspace.yaml
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

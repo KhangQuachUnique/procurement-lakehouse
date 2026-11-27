@@ -3,11 +3,11 @@ revision = 5
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
-    "(python_full_version >= '3.14' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.14' and sys_platform == 'emscripten')",
+    "python_full_version >= '3.14' and (platform_python_implementation == 'PyPy' or sys_platform == 'emscripten')",
     "python_full_version == '3.13.*' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
-    "(python_full_version == '3.13.*' and platform_python_implementation == 'PyPy') or (python_full_version == '3.13.*' and sys_platform == 'emscripten')",
+    "python_full_version == '3.13.*' and (platform_python_implementation == 'PyPy' or sys_platform == 'emscripten')",
     "python_full_version < '3.13' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
-    "(python_full_version < '3.13' and platform_python_implementation == 'PyPy') or (python_full_version < '3.13' and sys_platform == 'emscripten')",
+    "python_full_version < '3.13' and (platform_python_implementation == 'PyPy' or sys_platform == 'emscripten')",
 ]
 
 [[package]]
@@ -1376,9 +1376,13 @@ source = { editable = "." }
 dependencies = [
     { name = "dlt", extra = ["filesystem", "parquet"] },
     { name = "duckdb" },
+    { name = "fsspec" },
     { name = "httpx" },
+    { name = "psycopg2-binary" },
+    { name = "pyarrow" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "rich" },
     { name = "s3fs" },
     { name = "sqlalchemy" },
     { name = "typer" },
@@ -1406,6 +1410,9 @@ orchestration = [
     { name = "dagster-webserver" },
     { name = "sqlalchemy" },
 ]
+spark = [
+    { name = "pyspark" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1421,12 +1428,17 @@ requires-dist = [
     { name = "dlt", extras = ["filesystem", "parquet"], specifier = ">=1.30,<2" },
     { name = "duckdb", specifier = ">=1.5.5,<2" },
     { name = "fastapi", marker = "extra == 'ops'", specifier = ">=0.116,<1" },
+    { name = "fsspec", specifier = ">=2026.7,<2027" },
     { name = "httpx", specifier = ">=0.28,<1" },
+    { name = "psycopg2-binary", specifier = ">=2.9,<3" },
     { name = "psycopg2-binary", marker = "extra == 'metadata'", specifier = ">=2.9,<3" },
     { name = "psycopg2-binary", marker = "extra == 'ops'", specifier = ">=2.9,<3" },
+    { name = "pyarrow", specifier = ">=20,<26" },
     { name = "pydantic", specifier = ">=2.11,<3" },
+    { name = "pyspark", marker = "extra == 'spark'", specifier = ">=4.0,<4.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<9" },
     { name = "python-dotenv", specifier = ">=1,<2" },
+    { name = "rich", specifier = ">=13,<16" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12,<1" },
     { name = "s3fs", specifier = ">=2026.7,<2027" },
     { name = "sqlalchemy", specifier = ">=2,<2.1" },
@@ -1436,7 +1448,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.16,<1" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'ops'", specifier = ">=0.35,<1" },
 ]
-provides-extras = ["metadata", "dev", "ops", "orchestration"]
+provides-extras = ["metadata", "dev", "ops", "orchestration", "spark"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pyright", specifier = ">=1.1.414" }]
@@ -1586,6 +1598,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/df/22f4aec952cd5b2dd02f438399583ed69f7d04b90e7c31659d9571bbe188/psycopg2_binary-2.9.13-cp314-cp314-musllinux_1_2_riscv64.whl", hash = "sha256:dde942b46ce20f6c4464cdf551f3293207f803f4e4354454eb1f5599c3eb1fa1", size = 3052935, upload-time = "2026-09-09T23:55:55.117Z" },
     { url = "https://files.pythonhosted.org/packages/95/42/aab651bc22bafa961806ca3b21027bb0739a2730b0e6f7f0778baeb95e67/psycopg2_binary-2.9.13-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:215777c62ce81c3b487cefdb6a41969944eb982309f91349ff3ca0323d6f17ed", size = 3355387, upload-time = "2026-09-09T23:55:57.366Z" },
     { url = "https://files.pythonhosted.org/packages/bc/af/3b8220633eaf955e95ea7be67d76e81a0d1cd3c76362ea504b91ffa079db/psycopg2_binary-2.9.13-cp314-cp314-win_amd64.whl", hash = "sha256:f3088eb80f58ed933c62d87128741d31e786edc862e23266d3c286763d646de0", size = 2863890, upload-time = "2026-09-09T23:55:59.056Z" },
+]
+
+[[package]]
+name = "py4j"
+version = "0.10.9.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/31/0b210511177070c8d5d3059556194352e5753602fa64b85b7ab81ec1a009/py4j-0.10.9.9.tar.gz", hash = "sha256:f694cad19efa5bd1dee4f3e5270eb406613c974394035e5bfc4ec1aba870b879", size = 761089, upload-time = "2025-01-15T03:53:18.624Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/db/ea0203e495be491c85af87b66e37acfd3bf756fd985f87e46fc5e3bf022c/py4j-0.10.9.9-py2.py3-none-any.whl", hash = "sha256:c7c26e4158defb37b0bb124933163641a2ff6e3a3913f7811b0ddbe07ed61533", size = 203008, upload-time = "2025-01-15T03:53:15.648Z" },
 ]
 
 [[package]]
@@ -1744,6 +1765,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/e1/1b/244c7b710031ada80
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/ba/18b6e682ead424ad24bcc134339ae5d1b931cd9ae260540592a058a91279/pyright-1.1.414-py3-none-any.whl", hash = "sha256:2a6b4b3298c9eec174c5ed83bd338de6eee82df2992f3e1930e6199d381be36f", size = 6225049, upload-time = "2026-09-10T12:26:51.427Z" },
 ]
+
+[[package]]
+name = "pyspark"
+version = "4.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "py4j" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3e/ee/2377eee07ee94739e953231558040a5ee671092780a3eed0a9e175f059e7/pyspark-4.0.5.tar.gz", hash = "sha256:a0d44b0e7faf0458ad83b7aa664e7ed8b96beed8a55d66ce3b0dfac2309dfca6", size = 434376598, upload-time = "2026-10-27T18:39:58.059Z" }
 
 [[package]]
 name = "pytest"
