@@ -5,18 +5,46 @@ import json
 from datetime import date
 from typing import Any
 
+try:
+    import orjson
+except ImportError:  # pragma: no cover
+    orjson = None  # type: ignore[assignment]
+
 from procurement.common.catalog import get_resource
 from procurement.storage.committed import select_committed_days
 from procurement.storage.control import read_day_manifest
 
+_CANONICAL_ENCODER = json.JSONEncoder(
+    sort_keys=True,
+    separators=(",", ":"),
+    ensure_ascii=False,
+    default=str,
+)
+_PRIMITIVE_DIGEST_TYPES = (str, int, bool, type(None))
+
+
+def _is_fast_digestable(value: Any) -> bool:
+    if isinstance(value, (list, tuple)):
+        return all(
+            type(item) in _PRIMITIVE_DIGEST_TYPES
+            or (
+                type(item) is dict
+                and all(type(k) is str and type(v) in _PRIMITIVE_DIGEST_TYPES for k, v in item.items())
+            )
+            for item in value
+        )
+    return False
+
 
 def digest(value: Any) -> str:
     """Deterministic, sorted SHA-256 digest of any JSON-serializable structure."""
-    return hashlib.sha256(
-        json.dumps(
-            value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
-        ).encode()
-    ).hexdigest()
+    if orjson is not None and _is_fast_digestable(value):
+        try:
+            raw = orjson.dumps(value, option=orjson.OPT_SORT_KEYS, default=str)
+            return hashlib.sha256(raw).hexdigest()
+        except TypeError:
+            pass
+    return hashlib.sha256(_CANONICAL_ENCODER.encode(value).encode()).hexdigest()
 
 
 def file_hash(fs: Any, key: str) -> str:

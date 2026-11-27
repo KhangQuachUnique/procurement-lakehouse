@@ -14,6 +14,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from procurement.common.silver_gold_contract import INPUT_TABLES, PROJECTION_VERSION
+from procurement.common.sql import identifier
 from procurement.source_quality import NullSourceException, SourceException, validate_policy
 
 SCHEMA_VERSION = "gold_compact_v2"
@@ -21,12 +22,6 @@ SCHEMA_VERSION = "gold_compact_v2"
 
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-
-
-def identifier(value: str) -> str:
-    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
-        raise ValueError(f"Unsafe identifier: {value!r}")
-    return value
 
 
 def canonical(value) -> str:

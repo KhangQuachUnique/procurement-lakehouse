@@ -7,15 +7,16 @@ packages, plans, notices, and locations in O(1) without full-table scans or
 repeated Union-Find runs.
 """
 
-from array import array
 import contextlib
 import ctypes
 import time
+from array import array
 from typing import Any
+
 import pyarrow as pa
 
-from procurement.gold.domain.clustering.union_find import UnionFind
-from procurement.gold.domain.models import identifier
+from procurement.common.sql import identifier
+from procurement.common.union_find import UnionFind
 
 
 def _trim_memory() -> None:

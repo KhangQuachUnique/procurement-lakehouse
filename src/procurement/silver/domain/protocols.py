@@ -111,21 +111,74 @@ class TransformedRecord:
     quarantine: QuarantineRecord | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the canonical assembler/cache contract without duplicate field lists."""
-        references = []
-        for reference in self.references:
-            row = asdict(reference)
-            row["field"] = row.pop("field_name")
-            references.append(row)
+        """Serialize the canonical assembler/cache contract without recursive asdict() overhead."""
+        entity = self.entity
+        revision = self.revision
+        quarantine = self.quarantine
         return {
             "observation": self.observation,
-            "entity": asdict(self.entity) if self.entity else None,
-            "revision": asdict(self.revision) if self.revision else None,
+            "entity": {
+                "entity_id": entity.entity_id,
+                "namespace": entity.namespace,
+                "entity_type": entity.entity_type,
+                "id_scheme": entity.id_scheme,
+                "source_identity": entity.source_identity,
+            }
+            if entity is not None
+            else None,
+            "revision": {
+                "revision_id": revision.revision_id,
+                "entity_id": revision.entity_id,
+                "source_version": revision.source_version,
+                "semantic_hash": revision.semantic_hash,
+                "mapping_version": revision.mapping_version,
+                "payload_json": revision.payload_json,
+            }
+            if revision is not None
+            else None,
             "typed": self.typed_attributes,
-            "references": references,
-            "children": [asdict(child) for child in self.children],
-            "issues": [asdict(issue) for issue in self.issues],
-            "quarantine": asdict(self.quarantine) if self.quarantine else None,
+            "references": [
+                {
+                    "relationship_id": r.relationship_id,
+                    "from_revision_id": r.from_revision_id,
+                    "target_type": r.target_type,
+                    "id_scheme": r.id_scheme,
+                    "target_identity": r.target_identity,
+                    "field": r.field_name,
+                }
+                for r in self.references
+            ],
+            "children": [
+                {
+                    "child_id": c.child_id,
+                    "revision_id": c.revision_id,
+                    "kind": c.kind,
+                    "role": c.role,
+                    "path": c.path,
+                    "ordinal": c.ordinal,
+                    "source_id": c.source_id,
+                    "payload_json": c.payload_json,
+                    "typed_table": c.typed_table,
+                    "typed_attributes": c.typed_attributes,
+                }
+                for c in self.children
+            ],
+            "issues": [
+                {
+                    "issue_id": i.issue_id,
+                    "observation_id": i.observation_id,
+                    "code": i.code,
+                    "path": i.path,
+                    "severity": i.severity,
+                }
+                for i in self.issues
+            ],
+            "quarantine": {
+                "observation_id": quarantine.observation_id,
+                "reason": quarantine.reason,
+            }
+            if quarantine is not None
+            else None,
         }
 
 

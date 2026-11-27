@@ -98,8 +98,32 @@ class ProjectDetailTransformer(BaseResourceTransformer):
             )
 
         # Temporal validation: decision date should not be after publication date
-        pub_date = parse_date(root.get("publicDate"))
-        dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
+        try:
+            pub_date = parse_date(root.get("publicDate"))
+        except ValueError:
+            pub_date = None
+            issues.append(
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date", "publicDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date",
+                    path="projectDTO.publicDate",
+                    severity="warn",
+                )
+            )
+        try:
+            dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
+        except ValueError:
+            dec_date = None
+            issues.append(
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date", "decisionDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date",
+                    path="projectDTO.decisionDate",
+                    severity="warn",
+                )
+            )
         if dec_date and pub_date and dec_date > pub_date:
             issues.append(
                 QualityIssue(

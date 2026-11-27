@@ -174,12 +174,20 @@ def repair_date_year(value: str, anchor_date: Any = None) -> str:
     text_val = value.strip()
     year_part = ""
     rest = ""
-    if len(text_val) >= 9 and text_val[3] == "-":
+    if len(text_val) >= 10 and text_val[4] == "-":
+        year_part = text_val[:4]
+        if year_part.isdigit():
+            y_int = int(year_part)
+            if 1900 <= y_int <= 2030:
+                if anchor_date is None:
+                    return value
+                anchor_str = str(anchor_date).strip()
+                if len(anchor_str) >= 4 and anchor_str[:4].isdigit() and y_int <= int(anchor_str[:4]) + 1:
+                    return value
+        rest = text_val[4:]
+    elif len(text_val) >= 9 and text_val[3] == "-":
         year_part = text_val[:3]
         rest = text_val[3:]
-    elif len(text_val) >= 10 and text_val[4] == "-":
-        year_part = text_val[:4]
-        rest = text_val[4:]
     else:
         return value
 
@@ -192,10 +200,8 @@ def repair_date_year(value: str, anchor_date: Any = None) -> str:
             anchor_year = int(anchor_str[:4])
             if repaired_year.isdigit():
                 ry_int = int(repaired_year)
-                # If parsed year leaps into unreasonable future (> anchor_year + 1), snap to anchor year
                 if ry_int > anchor_year + 1:
                     repaired_year = str(anchor_year)
-                # Historical projects (<= anchor_year, e.g. 1977, 1984, 2000) are safely preserved!
 
     return repaired_year + rest
 
@@ -282,7 +288,10 @@ def sanitize_procurement_date(value: Any, min_year: int = 2010, max_year: int = 
     Returns None if date cannot be parsed or lies outside the valid bounds,
     preventing catastrophic dimensional expansion in Gold (dim_date).
     """
-    d_str = parse_date(value)
+    try:
+        d_str = parse_date(value)
+    except ValueError:
+        return None
     if not d_str:
         return None
     try:

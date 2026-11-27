@@ -298,78 +298,92 @@ def execute_resource(
     return merge_run_reports(sorted(chunk_reports, key=lambda r: r.get("start_date", "")))
 
 
-@app.command("notice")
-@app.command("tbmt", hidden=True)
-def notice(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
-    family: Annotated[
-        NoticeFamily | None, typer.Option(help="Optional: process one family only.")
-    ] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 15).",
-        ),
-    ] = 15,
-):
-    """Process standard, VK/ADB and reoffer automatically for each day."""
+DateOpt = Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")]
+StartDateOpt = Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")]
+EndDateOpt = Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")]
+ContinueOnErrorOpt = Annotated[
+    bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
+]
+SkipExistingOpt = Annotated[
+    bool,
+    typer.Option(
+        "--skip-existing",
+        help="Skip processing for days where Silver data already exists in storage.",
+    ),
+]
+IcebergOpt = Annotated[
+    bool,
+    typer.Option(
+        "--iceberg/--no-iceberg",
+        help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
+    ),
+]
+ParallelOpt = Annotated[
+    bool,
+    typer.Option(
+        "--parallel/--no-parallel",
+        help="Automatically run multi-year ranges in parallel worker threads.",
+    ),
+]
+WorkersOpt = Annotated[
+    int | None,
+    typer.Option(
+        "--workers",
+        "-w",
+        help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
+    ),
+]
+NamespaceOpt = Annotated[
+    str,
+    typer.Option(
+        "--namespace",
+        "-n",
+        help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
+    ),
+]
+BatchSizeOpt = Annotated[
+    int,
+    typer.Option(
+        "--batch-size",
+        "-b",
+        help="Number of days to accumulate before committing to Iceberg.",
+    ),
+]
+
+
+def _run_resource_command(
+    resource: str,
+    *,
+    day: str | None,
+    start: str | None,
+    end: str | None,
+    family: str | None = None,
+    show_family: bool = False,
+    summary_label: str | None = None,
+    continue_on_error: bool = False,
+    skip_existing: bool = False,
+    iceberg: bool = True,
+    parallel: bool = True,
+    workers: int | None = None,
+    namespace: str = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: int = 15,
+) -> None:
     try:
         first, last = date_range(day, start, end)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     fs, bucket = get_storage()
-    typer.echo(f"notice | {first} .. {last} | family={family.value if family else 'all'}")
+    if show_family:
+        typer.echo(f"{resource} | {first} .. {last} | family={family or 'all'}")
+    else:
+        typer.echo(f"{resource} | {first} .. {last}")
     report = execute_resource(
         fs,
         bucket,
-        "notice",
+        resource,
         first,
         last,
-        family=family.value if family else None,
+        family=family,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -385,82 +399,68 @@ def notice(
             f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
         )
     typer.echo(
-        "Output published to Silver Lakehouse tables (s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
+        f"Output published to Silver Lakehouse tables (s3://{bucket}/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
     )
-    display_run_summary(report, "notice", iceberg, namespace=namespace)
+    display_run_summary(report, summary_label or resource, iceberg, namespace=namespace)
     if report["status"] != "completed":
         raise typer.Exit(code=1)
+
+
+@app.command("notice")
+@app.command("tbmt", hidden=True)
+def notice(
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
+    family: Annotated[
+        NoticeFamily | None, typer.Option(help="Optional: process one family only.")
+    ] = None,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 15,
+):
+    """Process standard, VK/ADB and reoffer automatically for each day."""
+    _run_resource_command(
+        "notice",
+        day=day,
+        start=start,
+        end=end,
+        family=family.value if family else None,
+        show_family=True,
+        continue_on_error=continue_on_error,
+        skip_existing=skip_existing,
+        iceberg=iceberg,
+        parallel=parallel,
+        workers=workers,
+        namespace=namespace,
+        batch_size=batch_size,
+    )
 
 
 @app.command("project")
 @app.command("du_an", hidden=True)
 def project(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 15).",
-        ),
-    ] = 15,
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 15,
 ):
     """Process investment project (du_an) automatically for each day."""
-    try:
-        first, last = date_range(day, start, end)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    fs, bucket = get_storage()
-    typer.echo(f"project | {first} .. {last}")
-    report = execute_resource(
-        fs,
-        bucket,
+    _run_resource_command(
         "project",
-        first,
-        last,
-        family=None,
+        day=day,
+        start=start,
+        end=end,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -469,91 +469,30 @@ def project(
         namespace=namespace,
         batch_size=batch_size,
     )
-    typer.echo(f"Status: {report['status']}")
-    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    if iceberg:
-        typer.echo(
-            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
-        )
-    typer.echo(
-        "Output published to Silver Lakehouse tables "
-        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
-    )
-    display_run_summary(report, "project", iceberg, namespace=namespace)
-    if report["status"] != "completed":
-        raise typer.Exit(code=1)
 
 
 @app.command("result")
 @app.command("kq_lcnt", hidden=True)
 @app.command("contractor_result", hidden=True)
 def result(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 15).",
-        ),
-    ] = 15,
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 15,
 ):
     """Process contractor selection result (kq_lcnt) automatically for each day."""
-    try:
-        first, last = date_range(day, start, end)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    fs, bucket = get_storage()
-    typer.echo(f"contractor_result | {first} .. {last}")
-    report = execute_resource(
-        fs,
-        bucket,
+    _run_resource_command(
         "contractor_result",
-        first,
-        last,
-        family=None,
+        summary_label="result",
+        day=day,
+        start=start,
+        end=end,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -562,90 +501,28 @@ def result(
         namespace=namespace,
         batch_size=batch_size,
     )
-    typer.echo(f"Status: {report['status']}")
-    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    if iceberg:
-        typer.echo(
-            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
-        )
-    typer.echo(
-        "Output published to Silver Lakehouse tables "
-        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
-    )
-    display_run_summary(report, "result", iceberg, namespace=namespace)
-    if report["status"] != "completed":
-        raise typer.Exit(code=1)
 
 
 @app.command("bid_opening")
 @app.command("opening", hidden=True)
 def bid_opening(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 30).",
-        ),
-    ] = 30,
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 30,
 ):
     """Process bid opening (bien ban mo thau) automatically for each day."""
-    try:
-        first, last = date_range(day, start, end)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    fs, bucket = get_storage()
-    typer.echo(f"bid_opening | {first} .. {last}")
-    report = execute_resource(
-        fs,
-        bucket,
+    _run_resource_command(
         "bid_opening",
-        first,
-        last,
-        family=None,
+        day=day,
+        start=start,
+        end=end,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -654,89 +531,27 @@ def bid_opening(
         namespace=namespace,
         batch_size=batch_size,
     )
-    typer.echo(f"Status: {report['status']}")
-    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    if iceberg:
-        typer.echo(
-            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
-        )
-    typer.echo(
-        "Output published to Silver Lakehouse tables "
-        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
-    )
-    display_run_summary(report, "bid_opening", iceberg, namespace=namespace)
-    if report["status"] != "completed":
-        raise typer.Exit(code=1)
 
 
 @app.command("contract_performance")
 def contract_performance(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 15).",
-        ),
-    ] = 15,
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 15,
 ):
     """Process published execution reports and their referenced contract versions."""
-    try:
-        first, last = date_range(day, start, end)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    fs, bucket = get_storage()
-    typer.echo(f"contract_performance | {first} .. {last}")
-    report = execute_resource(
-        fs,
-        bucket,
+    _run_resource_command(
         "contract_performance",
-        first,
-        last,
-        family=None,
+        day=day,
+        start=start,
+        end=end,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -745,19 +560,6 @@ def contract_performance(
         namespace=namespace,
         batch_size=batch_size,
     )
-    typer.echo(f"Status: {report['status']}")
-    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    if iceberg:
-        typer.echo(
-            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
-        )
-    typer.echo(
-        "Output published to Silver Lakehouse tables "
-        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
-    )
-    display_run_summary(report, "contract_performance", iceberg, namespace=namespace)
-    if report["status"] != "completed":
-        raise typer.Exit(code=1)
 
 
 class KHLCNTFamily(StrEnum):
@@ -769,75 +571,28 @@ class KHLCNTFamily(StrEnum):
 @app.command("plan", hidden=True)
 @app.command("package", hidden=True)
 def khlcnt(
-    day: Annotated[str | None, typer.Option("--date", help="One source day: YYYY-MM-DD.")] = None,
-    start: Annotated[str | None, typer.Option("--start-date", help="Inclusive first day.")] = None,
-    end: Annotated[str | None, typer.Option("--end-date", help="Inclusive last day.")] = None,
+    day: DateOpt = None,
+    start: StartDateOpt = None,
+    end: EndDateOpt = None,
     family: Annotated[
         KHLCNTFamily | None, typer.Option(help="Optional: process plan or package only.")
     ] = None,
-    continue_on_error: Annotated[
-        bool, typer.Option(help="Continue later days; still exit nonzero on errors.")
-    ] = False,
-    skip_existing: Annotated[
-        bool,
-        typer.Option(
-            "--skip-existing",
-            help="Skip processing for days where Silver data already exists in storage.",
-        ),
-    ] = False,
-    iceberg: Annotated[
-        bool,
-        typer.Option(
-            "--iceberg/--no-iceberg",
-            help="Publish into Apache Iceberg Format v2 tables (REST catalog).",
-        ),
-    ] = True,
-    parallel: Annotated[
-        bool,
-        typer.Option(
-            "--parallel/--no-parallel",
-            help="Automatically run multi-year ranges in parallel worker threads.",
-        ),
-    ] = True,
-    workers: Annotated[
-        int | None,
-        typer.Option(
-            "--workers",
-            "-w",
-            help="Maximum concurrent workers (defaults to number of years, up to CPU count).",
-        ),
-    ] = None,
-    namespace: Annotated[
-        str,
-        typer.Option(
-            "--namespace",
-            "-n",
-            help="Target Iceberg catalog namespace (e.g. 'silver' or 'silver_v2').",
-        ),
-    ] = settings.SILVER_TARGET_NAMESPACE,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            "--batch-size",
-            "-b",
-            help="Number of days to accumulate before committing to Iceberg (default 15).",
-        ),
-    ] = 15,
+    continue_on_error: ContinueOnErrorOpt = False,
+    skip_existing: SkipExistingOpt = False,
+    iceberg: IcebergOpt = True,
+    parallel: ParallelOpt = True,
+    workers: WorkersOpt = None,
+    namespace: NamespaceOpt = settings.SILVER_TARGET_NAMESPACE,
+    batch_size: BatchSizeOpt = 15,
 ):
     """Process procurement plan & package (KHLCNT) automatically for each day."""
-    try:
-        first, last = date_range(day, start, end)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    fs, bucket = get_storage()
-    typer.echo(f"khlcnt | {first} .. {last} | family={family.value if family else 'all'}")
-    report = execute_resource(
-        fs,
-        bucket,
+    _run_resource_command(
         "khlcnt",
-        first,
-        last,
+        day=day,
+        start=start,
+        end=end,
         family=family.value if family else None,
+        show_family=True,
         continue_on_error=continue_on_error,
         skip_existing=skip_existing,
         iceberg=iceberg,
@@ -846,19 +601,6 @@ def khlcnt(
         namespace=namespace,
         batch_size=batch_size,
     )
-    typer.echo(f"Status: {report['status']}")
-    typer.echo(f"Report: s3://{report['output_prefix']}/report.json")
-    if iceberg:
-        typer.echo(
-            f"Apache Iceberg Format v2 tables updated: lake.{namespace}.* (views: {namespace}.v_latest_*)."
-        )
-    typer.echo(
-        "Output published to Silver Lakehouse tables "
-        "(s3://procurement-lakehouse/silver/<table>/source_date=YYYY-MM-DD/data.parquet)."
-    )
-    display_run_summary(report, "khlcnt", iceberg, namespace=namespace)
-    if report["status"] != "completed":
-        raise typer.Exit(code=1)
 
 
 @app.command("all")
@@ -1258,16 +1000,22 @@ def sync_iceberg(
 ):
     """Đồng bộ hàng loạt các bảng Silver Parquet từ S3 vào Apache Iceberg Format v2."""
     from procurement.common.settings import settings
+    from procurement.common.sql import identifier
     from procurement.silver.application.resources import get_silver_resource
     from procurement.silver.application.warehouse import ensure_views
     from procurement.silver.domain.schema import (
-        get_primary_key,
+        get_partition_spec,
         get_silver_schemas,
+        get_table_column_types,
         metadata,
         to_iceberg_ddl,
     )
     from procurement.storage.iceberg import connect
 
+    if year is not None and not (len(year) == 4 and year.isdigit()):
+        raise typer.BadParameter("Year must be a 4-digit string such as 2024")
+
+    clean_ns = identifier(settings.SILVER_TARGET_NAMESPACE)
     fs, bucket = get_storage()
     all_schemas = get_silver_schemas()
     execution_tables = {"contract_revision", "contract_performance_revision"}
@@ -1324,15 +1072,16 @@ def sync_iceberg(
 
     try:
         for tbl_name in target_tables:
-            clean_schema = all_schemas.get(tbl_name)
+            clean_tbl = identifier(tbl_name)
+            clean_schema = all_schemas.get(clean_tbl)
             if not clean_schema:
-                console.print(f"  [dim]- Bỏ qua {tbl_name}: không tìm thấy định nghĩa schema.[/]")
+                console.print(f"  [dim]- Bỏ qua {clean_tbl}: không tìm thấy định nghĩa schema.[/]")
                 continue
 
-            table_prefix = f"{bucket}/silver/{tbl_name}"
-            if resource in {"result", "kq_lcnt", "contractor_result", "contract_performance"} and tbl_name in {"observation", "quality_issue", "quarantine"}:
+            table_prefix = f"{bucket}/silver/{clean_tbl}"
+            if resource in {"result", "kq_lcnt", "contractor_result", "contract_performance"} and clean_tbl in {"observation", "quality_issue", "quarantine"}:
                 governance_resource = "contract_performance" if resource == "contract_performance" else "contractor_result"
-                table_prefix = f"{bucket}/silver/_governance/{governance_resource}/{tbl_name}"
+                table_prefix = f"{bucket}/silver/_governance/{governance_resource}/{clean_tbl}"
             partition_paths = fs.glob(f"{table_prefix}/source_date=*-*")
             discovered_months = set()
             for p in partition_paths:
@@ -1346,33 +1095,35 @@ def sync_iceberg(
 
             if not months_to_sync:
                 console.print(
-                    f"  [dim]- {tbl_name:25}: Không tìm thấy phân vùng nào trên S3, bỏ qua.[/]"
+                    f"  [dim]- {clean_tbl:25}: Không tìm thấy phân vùng nào trên S3, bỏ qua.[/]"
                 )
                 continue
 
             # 1. Clean sync preparation
             if not year:
                 # Full sync: recreate clean Iceberg table directly from S3 Parquet source of truth
-                db.execute(f"DROP TABLE IF EXISTS lake.silver.{tbl_name}")
-                db.execute(to_iceberg_ddl(tbl_name, clean_schema, "silver"))
+                db.execute(f"DROP TABLE IF EXISTS lake.{clean_ns}.{clean_tbl}")
+                db.execute(to_iceberg_ddl(clean_tbl, clean_schema, clean_ns))
             else:
-                db.execute(to_iceberg_ddl(tbl_name, clean_schema, "silver"))
-                spec = get_partition_spec(tbl_name)
+                db.execute(to_iceberg_ddl(clean_tbl, clean_schema, clean_ns))
+                spec = get_partition_spec(clean_tbl)
                 if spec:
                     import contextlib
 
+                    clean_spec = identifier(spec)
                     with contextlib.suppress(Exception):
                         db.execute(
-                            f"DELETE FROM lake.silver.{tbl_name} WHERE {spec} >= '{year}-01-01' AND {spec} <= '{year}-12-31'"
+                            f"DELETE FROM lake.{clean_ns}.{clean_tbl} WHERE {clean_spec} >= ? AND {clean_spec} <= ?",
+                            [f"{year}-01-01", f"{year}-12-31"],
                         )
 
             # 2. Select only exact table columns (exclude Hive partition source_date if not in schema)
-            sa_table = metadata.tables.get(f"silver.{tbl_name}")
+            sa_table = metadata.tables.get(f"silver.{clean_tbl}")
             if sa_table is not None:
                 col_names = [c.name for c in sa_table.columns]
             else:
-                col_names = [col.split()[0].strip('", ') for col in clean_schema.split(",")]
-            cols_sql = ", ".join(f'"{c}"' for c in col_names)
+                col_names = list(get_table_column_types(clean_tbl).keys())
+            cols_sql = ", ".join(f'"{identifier(c)}"' for c in col_names)
 
             tbl_total_rows = 0
             tbl_total_partitions = 0
@@ -1393,7 +1144,7 @@ def sync_iceberg(
                     row_count = cand_res[0] if cand_res else 0
                 except Exception as e:
                     console.print(
-                        f"  [yellow]⚠ {tbl_name:25} ({m}): Lỗi đọc Parquet từ S3 ({e}), bỏ qua.[/]"
+                        f"  [yellow]⚠ {clean_tbl:25} ({m}): Lỗi đọc Parquet từ S3 ({e}), bỏ qua.[/]"
                     )
                     continue
 
@@ -1404,13 +1155,13 @@ def sync_iceberg(
                 db.execute("BEGIN TRANSACTION")
                 try:
                     db.execute(
-                        f"INSERT INTO lake.silver.{tbl_name} ({cols_sql}) SELECT {cols_sql} FROM _cand"
+                        f"INSERT INTO lake.{clean_ns}.{clean_tbl} ({cols_sql}) SELECT {cols_sql} FROM _cand"
                     )
                     db.execute("COMMIT")
                 except Exception as exc:
                     db.execute("ROLLBACK")
                     console.print(
-                        f"  [bold red]✘ {tbl_name:25} ({m}): Lỗi khi commit vào Iceberg: {exc}[/]"
+                        f"  [bold red]✘ {clean_tbl:25} ({m}): Lỗi khi commit vào Iceberg: {exc}[/]"
                     )
                     continue
                 finally:
@@ -1426,17 +1177,17 @@ def sync_iceberg(
 
             if tbl_total_rows > 0:
                 console.print(
-                    f"  [bold green]✔[/] [bold white]{tbl_name:25}[/]: [bold cyan]{tbl_total_rows:,}[/] dòng ({tbl_total_partitions} phân vùng) ➔ Iceberg"
+                    f"  [bold green]✔[/] [bold white]{clean_tbl:25}[/]: [bold cyan]{tbl_total_rows:,}[/] dòng ({tbl_total_partitions} phân vùng) ➔ Iceberg"
                 )
-                synced_tables.append(tbl_name)
+                synced_tables.append(clean_tbl)
                 total_synced_rows += tbl_total_rows
 
         # 4. Refresh deduplication views
         console.print(
-            "\n[bold sky_blue2]Đang cập nhật các Views SIMD khử trùng (silver.v_latest_*)...[/]"
+            f"\n[bold sky_blue2]Đang cập nhật các Views SIMD khử trùng ({clean_ns}.v_latest_*)...[/]"
         )
         try:
-            created_views = ensure_views(db, "silver")
+            created_views = ensure_views(db, clean_ns)
             for v in created_views:
                 console.print(f"  [bold green]✔[/] [dim]View:[/] [bold cyan]{v}[/]")
         except Exception as exc:

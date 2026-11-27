@@ -220,6 +220,9 @@ def build_silver_multi_asset(group: SilverResourceGroup):
             family=config.family,
             skip_existing=config.skip_existing,
             iceberg=config.publish_iceberg,
+            iceberg_namespace=config.iceberg_namespace,
+            iceberg_memory_limit=config.iceberg_memory_limit,
+            iceberg_threads=config.iceberg_threads,
             **readiness_kwargs,
         )
 
@@ -353,7 +356,7 @@ class LinkageIndexConfig(Config):
     """Runtime configuration for Silver Union-Find linkage_index materialization."""
 
     namespace: str = settings.SILVER_TARGET_NAMESPACE
-    mode: str = "full"
+    mode: str = "incremental"
     memory_limit: str = "2GB"
     threads: int = 4
 

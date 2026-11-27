@@ -142,7 +142,15 @@ class NoticeTransformer(BaseResourceTransformer):
                     )
                 # Fallback for fields residing in embedded plan detail
                 if attrs.get("is_multi_lot") is None and "isMultiLot" in context:
-                    attrs["is_multi_lot"] = parse_boolean(context.get("isMultiLot"))
+                    try:
+                        attrs["is_multi_lot"] = parse_boolean(context.get("isMultiLot"))
+                    except ValueError:
+                        self.issue(
+                            result.issues,
+                            result.observation["observation_id"],
+                            "invalid_boolean",
+                            f"{prefix}.isMultiLot",
+                        )
                 if attrs.get("bid_field") is None and "bidField" in context:
                     attrs["bid_field"] = clean_text(context.get("bidField"))
                 if attrs.get("contract_duration_raw") is None and "cperiod" in context:
@@ -150,7 +158,15 @@ class NoticeTransformer(BaseResourceTransformer):
                     attrs["contract_duration_unit"] = clean_text(context.get("cperiodUnit"))
 
             if attrs.get("is_multi_lot") is None and isinstance(envelope.payload.get("bidoBidStatus"), dict):
-                attrs["is_multi_lot"] = parse_boolean(envelope.payload["bidoBidStatus"].get("isMultiLot"))
+                try:
+                    attrs["is_multi_lot"] = parse_boolean(envelope.payload["bidoBidStatus"].get("isMultiLot"))
+                except ValueError:
+                    self.issue(
+                        result.issues,
+                        result.observation["observation_id"],
+                        "invalid_boolean",
+                        "bidoBidStatus.isMultiLot",
+                    )
 
             # Temporal cross-field validation
             close_dt = attrs.get("bid_close_date")
@@ -319,13 +335,17 @@ class NoticeTransformer(BaseResourceTransformer):
             buyer_name=attrs["procuring_entity_name"],
             amount=attrs["bid_price"],
         )
-        # For standard domestic notices, guarantee and estimate prices share the tender's currency
+        # For standard notices, guarantee and estimate prices inherit the tender's currency;
+        # only default to VND for domestic tenders (never when is_domestic is explicitly False).
         if self.family == "standard":
-            primary_currency = attrs.get("currency") or "VND"
-            if attrs.get("estimate_currency") is None and attrs.get("estimate_price") is not None:
-                attrs["estimate_currency"] = primary_currency
-            if attrs.get("guarantee_currency") is None and attrs.get("guarantee_amount") is not None:
-                attrs["guarantee_currency"] = primary_currency
+            primary_currency = attrs.get("currency")
+            if primary_currency is None and attrs.get("is_domestic") is not False:
+                primary_currency = "VND"
+            if primary_currency is not None:
+                if attrs.get("estimate_currency") is None and attrs.get("estimate_price") is not None:
+                    attrs["estimate_currency"] = primary_currency
+                if attrs.get("guarantee_currency") is None and attrs.get("guarantee_amount") is not None:
+                    attrs["guarantee_currency"] = primary_currency
 
         for amount, currency in (
             ("bid_price", "currency"),

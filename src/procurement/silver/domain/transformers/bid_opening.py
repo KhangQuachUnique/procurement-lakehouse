@@ -247,6 +247,19 @@ class BidOpeningTransformer(BaseResourceTransformer):
     ) -> dict[str, Any]:
         notify_no = clean_text(root.get("notifyNo"))
         public_date_raw = clean_text(root.get("publicDate"))
+        try:
+            parsed_public_date = parse_date(public_date_raw)
+        except ValueError:
+            parsed_public_date = None
+            issues.append(
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date", "publicDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date",
+                    path="root.publicDate",
+                    severity="warn",
+                )
+            )
 
         return {
             "revision_id": revision_id,
@@ -273,7 +286,7 @@ class BidOpeningTransformer(BaseResourceTransformer):
             "cancel_reason": None,
             "collection_status": None,
             "total_bidders": None,
-            "public_date": parse_date(public_date_raw),
+            "public_date": parsed_public_date,
             "public_date_raw": public_date_raw,
             "status_raw": clean_text(root.get("status")),
         }

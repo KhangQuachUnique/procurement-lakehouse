@@ -6,7 +6,7 @@ from procurement.silver.domain.parsers import clean_text, parse_boolean, parse_d
 from procurement.silver.domain.protocols import QualityIssue, RawRecordEnvelope
 from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
-from procurement.silver.domain.transformers.base import BaseResourceTransformer, canonical_json
+from procurement.silver.domain.transformers.base import BaseResourceTransformer
 
 CONTRACT_TEXT_FIELDS = {
     "source_contract_id": "id",
@@ -118,7 +118,8 @@ class _ExecutionTransformer(BaseResourceTransformer):
                     "observed_at": envelope.ingested_at.isoformat(),
                 }
             )
-            status = envelope.payload.get("resolution", {}).get("status")
+            resolution = envelope.payload.get("resolution")
+            status = resolution.get("status") if isinstance(resolution, dict) else None
             if self.entity_type == "contract_performance" and status != "resolved":
                 result.issues.append(
                     self.issue(

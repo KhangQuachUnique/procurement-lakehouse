@@ -1,5 +1,6 @@
 """Transformer for Contractor Selection Result (table: contractor_result_detail)."""
 
+import threading
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from typing import Any
@@ -20,10 +21,9 @@ from procurement.silver.domain.protocols import (
 )
 from procurement.silver.domain.registry import register_transformer
 from procurement.silver.domain.selection import digest
-from procurement.silver.domain.transformers.base import (
-    BaseResourceTransformer,
-    canonical_json,
-)
+from procurement.silver.domain.transformers.base import BaseResourceTransformer
+
+_RESULT_PARSE_CACHE = threading.local()
 
 
 @dataclass(frozen=True)
@@ -732,12 +732,38 @@ class ContractorResultTransformer(BaseResourceTransformer):
         package_no = clean_text(root.get("bidNo"))
         business_number = notify_no or package_no
 
-        root_curr, _parsed_lots, _root_win_dec, root_win_str = self._parse_result_structure(
-            root, obs_id=obs_id, issues=issues
-        )
+        parsed_res = self._parse_result_structure(root, obs_id=obs_id, issues=issues)
+        _RESULT_PARSE_CACHE.last = (obs_id, id(root), parsed_res)
+        root_curr, _parsed_lots, _root_win_dec, root_win_str = parsed_res
 
-        pub_date = parse_date(root.get("publicDate"))
-        dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
+        try:
+            pub_date = parse_date(root.get("publicDate"))
+        except ValueError:
+            pub_date = None
+            _add_issue(
+                issues,
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date", "publicDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date",
+                    path="bideContractorInputResultDTO.publicDate",
+                    severity="warn",
+                ),
+            )
+        try:
+            dec_date = parse_date(root.get("decisionDate"), anchor_date=pub_date)
+        except ValueError:
+            dec_date = None
+            _add_issue(
+                issues,
+                QualityIssue(
+                    issue_id=digest([obs_id, "invalid_date", "decisionDate"]),
+                    observation_id=obs_id,
+                    code="invalid_date",
+                    path="bideContractorInputResultDTO.decisionDate",
+                    severity="warn",
+                ),
+            )
         if dec_date and pub_date and dec_date > pub_date:
             _add_issue(
                 issues,
@@ -854,9 +880,14 @@ class ContractorResultTransformer(BaseResourceTransformer):
         if not isinstance(root, dict):
             root = payload if isinstance(payload, dict) and "id" in payload else {}
 
-        _root_curr, parsed_lots, _root_win_dec, _root_win_str = self._parse_result_structure(
-            root, obs_id=obs_id, issues=issues
-        )
+        cached = getattr(_RESULT_PARSE_CACHE, "last", None)
+        if cached is not None and cached[0] == obs_id and cached[1] == id(root):
+            _RESULT_PARSE_CACHE.last = None
+            _root_curr, parsed_lots, _root_win_dec, _root_win_str = cached[2]
+        else:
+            _root_curr, parsed_lots, _root_win_dec, _root_win_str = self._parse_result_structure(
+                root, obs_id=obs_id, issues=issues
+            )
 
         for lot in parsed_lots:
             award_lot_child_id = digest([revision_id, "award_lot", lot.ordinal, lot.lot_id or lot.lot_no])

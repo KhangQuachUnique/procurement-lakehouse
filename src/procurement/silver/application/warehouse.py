@@ -1,3 +1,4 @@
+import logging
 import threading
 from datetime import date
 from typing import Any
@@ -13,6 +14,8 @@ from procurement.silver.domain.schema import (
     to_iceberg_ddl,
 )
 from procurement.storage.iceberg import identifier
+
+logger = logging.getLogger(__name__)
 
 SCHEMAS = get_silver_schemas()
 

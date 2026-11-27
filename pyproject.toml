@@ -11,9 +11,13 @@ requires-python = ">=3.12,<3.15"
 dependencies = [
     "dlt[filesystem,parquet]>=1.30,<2",
     "duckdb>=1.5.5,<2",
+    "fsspec>=2026.7,<2027",
     "httpx>=0.28,<1",
+    "psycopg2-binary>=2.9,<3",
+    "pyarrow>=20,<26",
     "pydantic>=2.11,<3",
     "python-dotenv>=1,<2",
+    "rich>=13,<16",
     "s3fs>=2026.7,<2027",
     "sqlalchemy>=2,<2.1",
     "typer>=0.16,<1",

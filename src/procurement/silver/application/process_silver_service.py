@@ -321,15 +321,17 @@ class ProcessSilverService(ProcessSilverUseCase):
                     query = f"""
                         SELECT DISTINCT CAST(source_date AS VARCHAR)
                         FROM lake.{clean_ns}.observation
-                        WHERE resource = '{res_tag}'
-                          AND source_date BETWEEN DATE '{start_date.isoformat()}' AND DATE '{end_date.isoformat()}'
+                        WHERE resource = ?
+                          AND source_date BETWEEN CAST(? AS DATE) AND CAST(? AS DATE)
                     """
-                    obs_rows = iceberg_db.execute(query).fetchall()
+                    obs_rows = iceberg_db.execute(
+                        query, [res_tag, start_date.isoformat(), end_date.isoformat()]
+                    ).fetchall()
                     existing_iceberg_dates = {str(r[0]) for r in obs_rows if r[0]}
                 except Exception:
                     existing_iceberg_dates = set()
 
-                if active_batch_size > 1:
+                if active_batch_size > 1 and not self.readiness_evidence:
                     active_writer = SharedIcebergBatchBuffer(
                         iceberg_db,
                         iceberg_catalog,
@@ -529,6 +531,8 @@ class ProcessSilverService(ProcessSilverUseCase):
                     if active_batch_size > 1 and active_writer is not None and tables_with_data is not None:
                         active_writer.add_day(entry, tables_with_data)
                         del tables_with_data
+                        if self.readiness_evidence:
+                            active_writer.flush()
                     if self.readiness_evidence and entry["status"] == "completed":
                         if iceberg_catalog is None:
                             raise ValueError(

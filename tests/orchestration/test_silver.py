@@ -119,6 +119,9 @@ def test_silver_asset_materialize_success(storage, monkeypatch, group):
         family=None,
         skip_existing=False,
         iceberg=True,
+        iceberg_namespace=settings.SILVER_TARGET_NAMESPACE,
+        iceberg_memory_limit="4GB",
+        iceberg_threads=4,
     )
 
     # Check asset check evaluations (3 checks on primary table)
