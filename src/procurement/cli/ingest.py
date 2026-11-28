@@ -14,7 +14,7 @@ from procurement.common.dates import today_vn, validate_closed_range
 from procurement.common.errors import sanitize_error_message
 from procurement.ingestion.contracts import MaterializeDayRequest
 from procurement.metadata.models import PartitionIdentity
-from procurement.tools.ui import (
+from procurement.cli.ui import (
     is_rich_enabled,
     render_ingestion_summary,
 )

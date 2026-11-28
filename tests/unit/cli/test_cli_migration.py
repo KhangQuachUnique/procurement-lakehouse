@@ -109,4 +109,8 @@ def test_all_resources_use_same_new_service_and_unique_request_ids(monkeypatch):
     'procurement.cli.repair_bronze_quality', 'procurement.cli.watch_bid_opening',
 ])
 def test_retired_entry_points_are_removed(module):
-    assert importlib.util.find_spec(module) is None
+    try:
+        spec = importlib.util.find_spec(module)
+    except ModuleNotFoundError:
+        spec = None
+    assert spec is None

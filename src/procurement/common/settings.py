@@ -46,14 +46,7 @@ class Settings(BaseModel):
     GOLD_TARGET_NAMESPACE: str = "gold"
     DLT_PIPELINES_DIR: str | None = None
     INGESTION_LOCK_DIR: str = "data/locks"
-    SILVER_CHANGE_JOURNAL_ROOT: str | None = None
-    OPS_INDEX_PATH: str = "data/ops/index.sqlite3"
-    OPS_SYNC_INTERVAL_SECONDS: float = Field(default=5, ge=1, le=3600)
-    OPS_RECONCILE_INTERVAL_SECONDS: float = Field(default=300, ge=5, le=86400)
     OPS_SYNC_WORKERS: int = Field(default=8, ge=1, le=32)
-    OPS_STALE_AFTER_SECONDS: float = Field(default=600, ge=30)
-    BENCHMARK_STATE_DIR: str = "data/benchmarks"
-    BENCHMARK_EXPORT_DIR: str = "exports/benchmarks"
 
     @field_validator("MUASAMCONG_BASE_URL", "OBJECT_STORAGE_ENDPOINT", "ICEBERG_CATALOG_URI")
     @classmethod
