@@ -12,7 +12,7 @@ def application_database_url(value: str | None = None) -> URL:
         raise ValueError("APP_DATABASE_URL is required for application metadata")
     try:
         url = make_url(value)
-    except Exception:  # noqa: BLE001
+    except Exception:
         raise ValueError("APP_DATABASE_URL must be a PostgreSQL URL") from None
     if url.drivername not in {"postgresql", "postgresql+psycopg2", "postgresql+psycopg"} or not url.database:
         raise ValueError("APP_DATABASE_URL must name a PostgreSQL database")

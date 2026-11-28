@@ -2,26 +2,30 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from procurement.silver.cli import main as silver_spark_cli_main
+from procurement.silver.runner import (
+    _build_arg_parser as build_runner_parser,
+)
+from procurement.silver.runner import (
+    run_spark_silver_all,
+    run_spark_silver_incremental,
+)
 from procurement.spark.cli_common import render_maintenance_summary, render_runner_summary
 from procurement.spark.config import SparkSilverSettings
 from procurement.spark.maintenance import (
     MaintenanceOptions,
-    _build_arg_parser as build_maint_parser,
     discover_namespace_tables,
     maintain_iceberg_table,
     run_iceberg_maintenance,
 )
-from procurement.silver.runner import (
-    _build_arg_parser as build_runner_parser,
-    run_spark_silver_all,
-    run_spark_silver_incremental,
+from procurement.spark.maintenance import (
+    _build_arg_parser as build_maint_parser,
 )
 
 
@@ -83,7 +87,7 @@ def test_maintain_iceberg_table_executes_four_procedures() -> None:
         }
     )
 
-    now = datetime(2026, 11, 28, 12, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 11, 28, 12, 0, 0, tzinfo=UTC)
     opts = MaintenanceOptions(
         retain_last_snapshots=5,
         expire_older_than_days=7,

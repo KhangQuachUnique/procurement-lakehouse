@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -48,10 +48,10 @@ def spark():
 
 
 def _register_full_silver_fixtures(spark) -> None:
-    t_pkg = datetime(2025, 6, 1, 8, 0, tzinfo=timezone.utc)
-    t_not = datetime(2025, 6, 6, 8, 0, tzinfo=timezone.utc)
-    t_close = datetime(2025, 6, 16, 8, 0, tzinfo=timezone.utc)  # 240h after notice
-    t_open = datetime(2025, 6, 16, 10, 0, tzinfo=timezone.utc)  # 2h after close
+    t_pkg = datetime(2025, 6, 1, 8, 0, tzinfo=UTC)
+    t_not = datetime(2025, 6, 6, 8, 0, tzinfo=UTC)
+    t_close = datetime(2025, 6, 16, 8, 0, tzinfo=UTC)  # 240h after notice
+    t_open = datetime(2025, 6, 16, 10, 0, tzinfo=UTC)  # 2h after close
 
     pkg_schema = StructType(
         [
@@ -81,9 +81,9 @@ def _register_full_silver_fixtures(spark) -> None:
     spark.createDataFrame(
         [
             # pkg1: single-lot award + contract -> eligible for contract savings
-            ("rev_p1", "pkg1", "src_p1", date(2025, 6, 1), t_pkg, date(2025, 6, 1), "PKG001", "Single lot pkg", "plan1", "PL001", Decimal("1000000000"), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 6, 2),
+            ("rev_p1", "pkg1", "src_p1", date(2025, 6, 1), t_pkg, date(2025, 6, 1), "PKG001", "Single lot pkg", "plan1", "PL001", Decimal(1000000000), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 6, 2),
             # pkg2: multi-lot award + contract -> NOT eligible for ambiguous package-level contract savings
-            ("rev_p2", "pkg2", "src_p2", date(2025, 6, 1), t_pkg, date(2025, 6, 1), "PKG002", "Multi lot pkg", "plan1", "PL001", Decimal("2000000000"), "VND", "XL", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 6, 2),
+            ("rev_p2", "pkg2", "src_p2", date(2025, 6, 1), t_pkg, date(2025, 6, 1), "PKG002", "Multi lot pkg", "plan1", "PL001", Decimal(2000000000), "VND", "XL", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 6, 2),
         ],
         schema=pkg_schema,
     ).createOrReplaceTempView("silver_package_revision")
@@ -160,7 +160,7 @@ def _register_full_silver_fixtures(spark) -> None:
                 "rev_n1", "not1", "VN", "IB2500001", "01", "01", date(2025, 6, 6), t_not,
                 t_not, t_not, date(2025, 6, 6), t_close, None, None, "IS_PUBLISH",
                 "src_p1", "PKG001", "INV01", "Investor A", "PROC01", "Procurer A",
-                Decimal("1000000000"), "VND", None, None, None, None,
+                Decimal(1000000000), "VND", None, None, None, None,
                 "DAY", "90 ngay", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI",
             ),
         ],
@@ -188,8 +188,8 @@ def _register_full_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("rev_r1", "res1", "rid1", "00", "00", date(2025, 6, 25), t_open, date(2025, 6, 25), date(2025, 6, 24), "src_p1", "PKG001", "IB2500001", "VND", Decimal("950000000"), "IS_PUBLISH"),
-            ("rev_r2", "res2", "rid2", "00", "00", date(2025, 6, 26), t_open, date(2025, 6, 26), date(2025, 6, 25), "src_p2", "PKG002", None, "VND", Decimal("1800000000"), "IS_PUBLISH"),
+            ("rev_r1", "res1", "rid1", "00", "00", date(2025, 6, 25), t_open, date(2025, 6, 25), date(2025, 6, 24), "src_p1", "PKG001", "IB2500001", "VND", Decimal(950000000), "IS_PUBLISH"),
+            ("rev_r2", "res2", "rid2", "00", "00", date(2025, 6, 26), t_open, date(2025, 6, 26), date(2025, 6, 25), "src_p2", "PKG002", None, "VND", Decimal(1800000000), "IS_PUBLISH"),
         ],
         schema=res_schema,
     ).createOrReplaceTempView("silver_result_revision")
@@ -208,10 +208,10 @@ def _register_full_silver_fixtures(spark) -> None:
     spark.createDataFrame(
         [
             # Single-lot result rev_r1
-            ("lot_1", "rev_r1", "1", "Lo duy nhat", Decimal("1000000000"), Decimal("950000000"), "VND"),
+            ("lot_1", "rev_r1", "1", "Lo duy nhat", Decimal(1000000000), Decimal(950000000), "VND"),
             # Multi-lot result rev_r2 (2 lots)
-            ("lot_2a", "rev_r2", "1", "Lo 2A", Decimal("1000000000"), Decimal("900000000"), "VND"),
-            ("lot_2b", "rev_r2", "2", "Lo 2B", Decimal("1000000000"), Decimal("900000000"), "VND"),
+            ("lot_2a", "rev_r2", "1", "Lo 2A", Decimal(1000000000), Decimal(900000000), "VND"),
+            ("lot_2b", "rev_r2", "2", "Lo 2B", Decimal(1000000000), Decimal(900000000), "VND"),
         ],
         schema=lot_schema,
     ).createOrReplaceTempView("silver_award_lot")
@@ -234,9 +234,9 @@ def _register_full_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("ac1", "rev_r1", "lot_1", "VN01", "Cong ty A", "0101", False, None, None, Decimal("950000000"), "PRIMARY", 1),
-            ("ac2", "rev_r2", "lot_2a", "VN02", "Cong ty B", "0102", False, None, None, Decimal("900000000"), "PRIMARY", 1),
-            ("ac3", "rev_r2", "lot_2b", "VN03", "Cong ty C", "0103", False, None, None, Decimal("900000000"), "PRIMARY", 1),
+            ("ac1", "rev_r1", "lot_1", "VN01", "Cong ty A", "0101", False, None, None, Decimal(950000000), "PRIMARY", 1),
+            ("ac2", "rev_r2", "lot_2a", "VN02", "Cong ty B", "0102", False, None, None, Decimal(900000000), "PRIMARY", 1),
+            ("ac3", "rev_r2", "lot_2b", "VN03", "Cong ty C", "0103", False, None, None, Decimal(900000000), "PRIMARY", 1),
         ],
         schema=ctr_schema,
     ).createOrReplaceTempView("silver_award_contractor")
@@ -253,8 +253,8 @@ def _register_full_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("ctr1", "HD001", "rid1", "IB2500001", Decimal("900000000")),
-            ("ctr2", "HD002", "rid2", None, Decimal("1750000000")),
+            ("ctr1", "HD001", "rid1", "IB2500001", Decimal(900000000)),
+            ("ctr2", "HD002", "rid2", None, Decimal(1750000000)),
         ],
         schema=c_schema,
     ).createOrReplaceTempView("silver_contract_revision")
@@ -307,11 +307,11 @@ def _register_full_silver_fixtures(spark) -> None:
     spark.createDataFrame(
         [
             # VND bidder 1 with discount (980M -> 960M)
-            ("rev_o1", "s1", "VN01", "Cong ty A", "1", Decimal("2.0408"), "VND", Decimal("980000000"), Decimal("960000000")),
+            ("rev_o1", "s1", "VN01", "Cong ty A", "1", Decimal("2.0408"), "VND", Decimal(980000000), Decimal(960000000)),
             # VND bidder 2 normal (990M)
-            ("rev_o1", "s2", "VN02", "Cong ty B", "0", Decimal("0"), "VND", Decimal("990000000"), Decimal("990000000")),
+            ("rev_o1", "s2", "VN02", "Cong ty B", "0", Decimal(0), "VND", Decimal(990000000), Decimal(990000000)),
             # USD bidder 3: counted in bidder/tech counts, EXCLUDED from VND monetary sums!
-            ("rev_o1", "s3", "US01", "Global Corp", "1", Decimal("0"), "USD", Decimal("50000"), Decimal("50000")),
+            ("rev_o1", "s3", "US01", "Global Corp", "1", Decimal(0), "USD", Decimal(50000), Decimal(50000)),
         ],
         schema=sub_schema,
     ).createOrReplaceTempView("silver_opening_submission")

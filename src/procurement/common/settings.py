@@ -1,11 +1,7 @@
 import os
-from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-if TYPE_CHECKING:
-    from procurement.storage.iceberg import IcebergConfig
 
 
 class Settings(BaseModel):

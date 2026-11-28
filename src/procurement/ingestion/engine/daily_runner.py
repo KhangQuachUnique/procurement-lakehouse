@@ -159,7 +159,7 @@ def run_daily_resource(
                 break
             except INTERRUPTIONS:
                 raise
-            except Exception as exc:  # noqa: BLE001 -- source extension boundary
+            except Exception as exc:
                 outcome = PageOutcome(
                     stats=PageStats(),
                     errors=[

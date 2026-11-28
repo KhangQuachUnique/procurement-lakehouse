@@ -126,12 +126,11 @@ def test_gold_spark_cli_dispatch() -> None:
             "table_counts": {"dim_date": 10},
             "wall_s": 1.0,
         },
-    ) as mock_rebuild:
-        with patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
-            mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
-            rc = gold_spark_cli_main(["rebuild", "--k3s", "--namespace", "gold_spark_test"])
-            assert rc == 0
-            assert mock_rebuild.call_args.kwargs["gold_namespace"] == "gold_spark_test"
+    ) as mock_rebuild, patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
+        mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
+        rc = gold_spark_cli_main(["rebuild", "--k3s", "--namespace", "gold_spark_test"])
+        assert rc == 0
+        assert mock_rebuild.call_args.kwargs["gold_namespace"] == "gold_spark_test"
 
     with patch("procurement.gold.cli.maintenance_main", return_value=0) as mock_maint:
         assert gold_spark_cli_main(["maintain", "--k3s", "--dry-run-orphans"]) == 0

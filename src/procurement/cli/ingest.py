@@ -9,15 +9,15 @@ from uuid import UUID, uuid4
 from dotenv import load_dotenv
 
 from procurement.bootstrap import get_ingestion_service, get_metadata_service
+from procurement.cli.ui import (
+    is_rich_enabled,
+    render_ingestion_summary,
+)
 from procurement.common.catalog import DEFAULT_SOURCE, SUPPORTED_RESOURCES
 from procurement.common.dates import today_vn, validate_closed_range
 from procurement.common.errors import sanitize_error_message
 from procurement.ingestion.contracts import MaterializeDayRequest
 from procurement.metadata.models import PartitionIdentity
-from procurement.cli.ui import (
-    is_rich_enabled,
-    render_ingestion_summary,
-)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -212,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(json.dumps(report, indent=2))
         return 0 if report["status"] == "success" else 1
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         err_report = {
             "source": args.source,
             "resource": args.resource,

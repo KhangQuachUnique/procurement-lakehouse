@@ -9,12 +9,12 @@ from decimal import Decimal
 import pytest
 from pyspark.sql import types as T
 
-from procurement.spark.config import SparkSilverSettings
 from procurement.silver.control.manifest import BronzeDayManifest, BronzeFileSpec
 from procurement.silver.control.planner import plan_batches
 from procurement.silver.control.receipts import SilverReceipt
-from procurement.silver.resources.project import PROJECT_QUALITY_RULES, transform_project
 from procurement.silver.quality.rules import evaluate_inline_rules
+from procurement.silver.resources.project import PROJECT_QUALITY_RULES, transform_project
+from procurement.spark.config import SparkSilverSettings
 from procurement.spark.spark_session import build_spark_session
 
 

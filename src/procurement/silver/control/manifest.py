@@ -91,17 +91,16 @@ def resolve_bronze_manifests(
         if src_date not in grouped:
             grouped[src_date] = (commit_id, attempt_id, expected_records, [])
 
-        if tbl_name and bucket and obj_key:
-            if table_names is None or tbl_name in table_names:
-                grouped[src_date][3].append(
-                    BronzeFileSpec(
-                        table_name=tbl_name,
-                        bucket=bucket,
-                        object_key=obj_key,
-                        row_count=row_count,
-                        sha256=sha256,
-                    )
+        if tbl_name and bucket and obj_key and (table_names is None or tbl_name in table_names):
+            grouped[src_date][3].append(
+                BronzeFileSpec(
+                    table_name=tbl_name,
+                    bucket=bucket,
+                    object_key=obj_key,
+                    row_count=row_count,
+                    sha256=sha256,
                 )
+            )
 
     return {
         d: BronzeDayManifest(

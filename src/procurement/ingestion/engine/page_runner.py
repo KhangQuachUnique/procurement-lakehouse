@@ -51,7 +51,7 @@ def run_page(
             outcome.bronze_records = writer.write_page(grouped)
     except INTERRUPTIONS:
         raise
-    except Exception as exc:  # noqa: BLE001 -- source/writer extension boundary
+    except Exception as exc:
         if isinstance(exc, BronzeWriteError):
             outcome.bronze_records = exc.persisted_records
             exc = exc.cause

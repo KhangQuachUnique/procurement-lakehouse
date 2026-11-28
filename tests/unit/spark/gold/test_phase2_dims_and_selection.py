@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -39,8 +39,8 @@ def spark():
 
 
 def _register_fixture_silver_views(spark) -> None:
-    ts1 = datetime(2025, 6, 1, 8, 0, tzinfo=timezone.utc)
-    ts2 = datetime(2025, 6, 2, 8, 0, tzinfo=timezone.utc)
+    ts1 = datetime(2025, 6, 1, 8, 0, tzinfo=UTC)
+    ts2 = datetime(2025, 6, 2, 8, 0, tzinfo=UTC)
 
     # package_revision: pkg1 has 2 versions (ts2 wins); pkg_tie has same ts with different price; garbage date 1202
     pkg_schema = StructType(
@@ -67,10 +67,10 @@ def _register_fixture_silver_views(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("rev_p1_v1", "pkg1", "src_p1", date(2025, 6, 1), ts1, date(2025, 6, 1), "PKG001", "Goi 1 old", "plan1", "PL001", Decimal("1000000000"), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI"),
-            ("rev_p1_v2", "pkg1", "src_p1", date(2025, 6, 2), ts2, date(2025, 6, 2), "PKG001", "Goi 1 new", "plan1", "PL001", Decimal("1200000000"), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI"),
-            ("rev_tie_a", "pkg_tie", "src_tie", date(2025, 6, 1), ts1, date(1202, 10, 18), "PKGTIE", "Tie A", None, None, Decimal("500000000"), "JPY", "XL", "CDT", None, False, False, None),
-            ("rev_tie_b", "pkg_tie", "src_tie", date(2025, 6, 1), ts1, date(2025, 6, 1), "PKGTIE", "Tie B", None, None, Decimal("600000000"), "JPY", "XL", "CDT", None, False, False, None),
+            ("rev_p1_v1", "pkg1", "src_p1", date(2025, 6, 1), ts1, date(2025, 6, 1), "PKG001", "Goi 1 old", "plan1", "PL001", Decimal(1000000000), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI"),
+            ("rev_p1_v2", "pkg1", "src_p1", date(2025, 6, 2), ts2, date(2025, 6, 2), "PKG001", "Goi 1 new", "plan1", "PL001", Decimal(1200000000), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI"),
+            ("rev_tie_a", "pkg_tie", "src_tie", date(2025, 6, 1), ts1, date(1202, 10, 18), "PKGTIE", "Tie A", None, None, Decimal(500000000), "JPY", "XL", "CDT", None, False, False, None),
+            ("rev_tie_b", "pkg_tie", "src_tie", date(2025, 6, 1), ts1, date(2025, 6, 1), "PKGTIE", "Tie B", None, None, Decimal(600000000), "JPY", "XL", "CDT", None, False, False, None),
         ],
         schema=pkg_schema,
     ).createOrReplaceTempView("silver_package_revision")

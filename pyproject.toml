@@ -67,6 +67,10 @@ markers = ["integration: real DLT/filesystem or isolated S3 integration tests"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+extend-exclude = [".agents", "PowerBI"]
+
+[tool.ruff.lint]
+ignore = ["BLE001", "S110"]
 
 [dependency-groups]
 dev = [

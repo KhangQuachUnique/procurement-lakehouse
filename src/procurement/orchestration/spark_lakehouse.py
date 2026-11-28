@@ -14,6 +14,7 @@ from dagster import (
     job,
     op,
 )
+from pydantic import Field
 
 
 class SparkSilverConfig(Config):
@@ -42,7 +43,9 @@ class SparkGoldConfig(Config):
 
 
 class SparkMaintenanceConfig(Config):
-    namespaces: list[str] = ["silver_spark", "gold_spark_core", "gold_spark"]
+    namespaces: list[str] = Field(
+        default_factory=lambda: ["silver_spark", "gold_spark_core", "gold_spark"]
+    )
     retain_last_snapshots: int = 5
     expire_older_than_days: int = 7
     orphan_older_than_days: int = 3
@@ -55,8 +58,8 @@ class SparkMaintenanceConfig(Config):
 @op(name="spark_silver_run")
 def spark_silver_op(context: OpExecutionContext, config: SparkSilverConfig) -> Output[dict[str, Any]]:
     """Run Spark Silver incremental (or backfill) across all 6 procurement resources."""
-    from procurement.spark.config import SparkSilverSettings
     from procurement.silver.runner import run_spark_silver_all
+    from procurement.spark.config import SparkSilverSettings
 
     cfg = SparkSilverSettings.from_environment(
         load_dotenv_file=True,

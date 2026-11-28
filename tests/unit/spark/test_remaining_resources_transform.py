@@ -11,12 +11,12 @@ from pathlib import Path
 import pytest
 from pyspark.sql import types as T
 
-from procurement.spark.config import SparkSilverSettings
 from procurement.silver.resources.bid_opening import transform_bid_opening
 from procurement.silver.resources.contract_performance import transform_contract_performance
 from procurement.silver.resources.contractor_result import transform_contractor_result
 from procurement.silver.resources.notice import transform_notice
 from procurement.silver.resources.registry import SPARK_RESOURCES
+from procurement.spark.config import SparkSilverSettings
 from procurement.spark.spark_session import build_spark_session
 
 

@@ -63,6 +63,6 @@ def cli(main):
     except KeyboardInterrupt:
         print("Interrupted; completed checkpoints have been retained.")
         return 130
-    except Exception as exc:  # noqa: BLE001 -- CLI must not leak token-bearing URLs
+    except Exception as exc:
         print(json.dumps(safe_error(exc), ensure_ascii=False))
         return 1

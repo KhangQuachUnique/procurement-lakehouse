@@ -15,6 +15,8 @@ from procurement.ingestion.sources.muasamcong.search import (
 )
 from procurement.quality.contracts import (
     ENDPOINTS as NOTICE_DETAIL_ENDPOINTS,
+)
+from procurement.quality.contracts import (
     DetailValidationError,
     load_config,
     lookup,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -44,8 +44,8 @@ def spark():
 
 
 def _register_silver_fixtures(spark) -> None:
-    t_pub = datetime(2025, 6, 1, 8, 0, tzinfo=timezone.utc)
-    t_close = datetime(2025, 6, 11, 8, 0, tzinfo=timezone.utc)  # exactly 240.00 hours later
+    t_pub = datetime(2025, 6, 1, 8, 0, tzinfo=UTC)
+    t_close = datetime(2025, 6, 11, 8, 0, tzinfo=UTC)  # exactly 240.00 hours later
 
     pkg_schema = StructType(
         [
@@ -74,8 +74,8 @@ def _register_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("rev_p1", "pkg1", "src_p1", date(2025, 6, 1), t_pub, date(2025, 6, 1), "PKG001", "Goi 1", "plan1", "PL001", Decimal("2000000000"), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 7, 3),
-            ("rev_p2", "pkg2", "src_p2", date(2025, 6, 2), t_pub, date(2025, 6, 2), "PKG002", "Goi 2 huy", "plan1", "PL001", Decimal("500000000"), "VND", "XL", "CDT", None, True, False, None, 2025, None, None),
+            ("rev_p1", "pkg1", "src_p1", date(2025, 6, 1), t_pub, date(2025, 6, 1), "PKG001", "Goi 1", "plan1", "PL001", Decimal(2000000000), "VND", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI", 2025, 7, 3),
+            ("rev_p2", "pkg2", "src_p2", date(2025, 6, 2), t_pub, date(2025, 6, 2), "PKG002", "Goi 2 huy", "plan1", "PL001", Decimal(500000000), "VND", "XL", "CDT", None, True, False, None, 2025, None, None),
         ],
         schema=pkg_schema,
     ).createOrReplaceTempView("silver_package_revision")
@@ -154,7 +154,7 @@ def _register_silver_fixtures(spark) -> None:
                 "rev_n1", "not1", "VN", "IB2500001", "01", "01", date(2025, 6, 1), t_pub,
                 t_pub, t_pub, date(2025, 6, 1), t_close, None, None, "IS_PUBLISH",
                 "src_p1", "PKG001", "INV01", "So Y Te Ha Noi", "PROC01", "Ben moi thau A",
-                Decimal("2000000000"), "VND", None, None, Decimal("20000000"), "Bao lanh",
+                Decimal(2000000000), "VND", None, None, Decimal(20000000), "Bao lanh",
                 "DAY", "90 ngay", "HH", "DTRR", "1_GIAI_DOAN", True, True, "TRON_GOI",
             ),
         ],
@@ -182,8 +182,8 @@ def _register_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("rev_r1", "res1", "rid1", "00", "00", date(2025, 6, 20), t_close, date(2025, 6, 20), date(2025, 6, 19), "src_p1", "PKG001", "IB2500001", "VND", Decimal("1800000000"), "IS_PUBLISH"),
-            ("rev_r2", "res2", "rid2", "00", "00", date(2025, 6, 21), t_close, date(2025, 6, 21), date(2025, 6, 20), "src_p2", "PKG002", None, "VND", Decimal("450000000"), "CANCELED"),
+            ("rev_r1", "res1", "rid1", "00", "00", date(2025, 6, 20), t_close, date(2025, 6, 20), date(2025, 6, 19), "src_p1", "PKG001", "IB2500001", "VND", Decimal(1800000000), "IS_PUBLISH"),
+            ("rev_r2", "res2", "rid2", "00", "00", date(2025, 6, 21), t_close, date(2025, 6, 21), date(2025, 6, 20), "src_p2", "PKG002", None, "VND", Decimal(450000000), "CANCELED"),
         ],
         schema=res_schema,
     ).createOrReplaceTempView("silver_result_revision")
@@ -202,9 +202,9 @@ def _register_silver_fixtures(spark) -> None:
     spark.createDataFrame(
         [
             # Lot 1: 1000x typo in winning_price (950B vs 1B baseline) -> recovered to 950M
-            ("lot_1", "rev_r1", "1", "Lo 1", Decimal("1000000000"), Decimal("950000000000"), "VND"),
+            ("lot_1", "rev_r1", "1", "Lo 1", Decimal(1000000000), Decimal(950000000000), "VND"),
             # Lot 2: consortium lot
-            ("lot_2", "rev_r1", "2", "Lo 2", Decimal("1000000000"), Decimal("850000000"), "VND"),
+            ("lot_2", "rev_r1", "2", "Lo 2", Decimal(1000000000), Decimal(850000000), "VND"),
         ],
         schema=lot_schema,
     ).createOrReplaceTempView("silver_award_lot")
@@ -227,10 +227,10 @@ def _register_silver_fixtures(spark) -> None:
     )
     spark.createDataFrame(
         [
-            ("ac1", "rev_r1", "lot_1", "VN01", "Cong ty A", "0101", False, None, None, Decimal("950000000"), "PRIMARY", 1),
+            ("ac1", "rev_r1", "lot_1", "VN01", "Cong ty A", "0101", False, None, None, Decimal(950000000), "PRIMARY", 1),
             ("ac2", "rev_r1", "lot_2", "VN02", "Cong ty B", "0102", True, "LD01", "Lien danh BC", None, "LEAD", 1),
             ("ac3", "rev_r1", "lot_2", "VN03", "Cong ty C", "0103", True, "LD01", "Lien danh BC", None, "MEMBER", 1),
-            ("ac4", "rev_r2", None, "VN04", "Cong ty D", "0104", False, None, None, Decimal("450000000"), "PRIMARY", 1),
+            ("ac4", "rev_r2", None, "VN04", "Cong ty D", "0104", False, None, None, Decimal(450000000), "PRIMARY", 1),
         ],
         schema=ctr_schema,
     ).createOrReplaceTempView("silver_award_contractor")

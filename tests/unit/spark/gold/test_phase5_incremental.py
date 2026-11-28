@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from procurement.gold.cli import main as gold_spark_cli_main
 from procurement.gold.runner import run_spark_gold_incremental
 from procurement.spark.config import SparkSilverSettings
@@ -112,8 +110,7 @@ def test_gold_spark_cli_run_dispatch() -> None:
             "table_counts": {},
             "wall_s": 0.4,
         },
-    ) as mock_inc:
-        with patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
-            mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
-            assert gold_spark_cli_main(["run", "--k3s", "--namespace", "gold_spark"]) == 0
-            mock_inc.assert_called_once()
+    ) as mock_inc, patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
+        mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
+        assert gold_spark_cli_main(["run", "--k3s", "--namespace", "gold_spark"]) == 0
+        mock_inc.assert_called_once()

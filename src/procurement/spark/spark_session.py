@@ -47,12 +47,10 @@ def build_spark_session(
         return builder.getOrCreate()
 
     if not settings.spark_use_bundled_jars:
-        packages = ",".join(
-            [
-                settings.iceberg_spark_package,
-                settings.iceberg_aws_bundle_package,
-                settings.hadoop_aws_package,
-            ]
+        packages = (
+            f"{settings.iceberg_spark_package},"
+            f"{settings.iceberg_aws_bundle_package},"
+            f"{settings.hadoop_aws_package}"
         )
         builder = builder.config("spark.jars.packages", packages)
 
