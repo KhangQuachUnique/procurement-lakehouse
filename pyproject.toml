@@ -54,7 +54,7 @@ orchestration = [
     "sqlalchemy>=2,<2.1",
 ]
 spark = [
-    "pyspark>=4.0,<4.1",
+    "pyspark==4.0.0",
 ]
 
 [tool.dagster]
