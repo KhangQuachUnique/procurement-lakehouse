@@ -200,11 +200,43 @@ _CANONICAL_GEO_SCHEMA = StructType(
 )
 
 
+def _sql_lit(val: str | bool | None) -> str:
+    if val is None:
+        return "CAST(NULL AS STRING)"
+    if isinstance(val, bool):
+        return "TRUE" if val else "FALSE"
+    escaped = val.replace("'", "''")
+    return f"'{escaped}'"
+
+
 def register_geography_views(spark: SparkSession, *, geography_version: str = "v1") -> None:
-    """Create broadcast-friendly ``_gtmp_province_map`` and ``_gtmp_canonical_geography`` TempViews."""
-    spark.createDataFrame(
-        get_province_code_mapping_rows(), schema=_PROVINCE_MAP_SCHEMA
+    """Create broadcast-friendly ``_gtmp_province_map`` and ``_gtmp_canonical_geography`` TempViews.
+
+    Uses pure Spark SQL ``VALUES`` so zero PythonRDD/PythonWorker is ever spawned on remote K3s workers.
+    """
+    pm_values = ",\n        ".join(
+        f"({', '.join(_sql_lit(v) for v in row)})" for row in get_province_code_mapping_rows()
+    )
+    spark.sql(
+        f"""
+        SELECT
+            raw_code, canonical_code, geography_key, province_name, region_name, is_multi, is_unknown
+        FROM VALUES
+            {pm_values}
+        AS t(raw_code, canonical_code, geography_key, province_name, region_name, is_multi, is_unknown)
+        """
     ).createOrReplaceTempView("_gtmp_province_map")
-    spark.createDataFrame(
-        get_canonical_geography_rows(geography_version), schema=_CANONICAL_GEO_SCHEMA
+
+    cg_values = ",\n        ".join(
+        f"({', '.join(_sql_lit(v) for v in row)})"
+        for row in get_canonical_geography_rows(geography_version)
+    )
+    spark.sql(
+        f"""
+        SELECT
+            geography_key, geography_version, province_code, province_name, region_name, is_multi_geography, is_unknown
+        FROM VALUES
+            {cg_values}
+        AS t(geography_key, geography_version, province_code, province_name, region_name, is_multi_geography, is_unknown)
+        """
     ).createOrReplaceTempView("_gtmp_canonical_geography")

@@ -26,6 +26,7 @@ x-dagster: &dagster
     dockerfile: infra/docker/Dockerfile.app
     args:
       UV_EXTRA: orchestration
+      INSTALL_SPARK: "true"
   environment: &dagster-env
     DAGSTER_HOME: /var/lib/procurement/dagster
     DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD:-dagster}
@@ -120,6 +121,9 @@ services:
       ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE:-s3://warehouse}
       SILVER_TARGET_NAMESPACE: ${SILVER_TARGET_NAMESPACE:-silver}
       GOLD_TARGET_NAMESPACE: ${GOLD_TARGET_NAMESPACE:-gold}
+      SPARK_SILVER_NAMESPACE: ${SPARK_SILVER_NAMESPACE:-silver_spark}
+      SPARK_K3S_MASTER: ${SPARK_K3S_MASTER:-}
+      SPARK_LOCAL_IP: ${SPARK_LOCAL_IP:-}
       MUASAMCONG_BASE_URL: ${MUASAMCONG_BASE_URL:-https://muasamcong.mof.gov.vn}
       MUASAMCONG_TOKEN: ${MUASAMCONG_TOKEN:-}
       MUASAMCONG_TIMEOUT_SECONDS: ${MUASAMCONG_TIMEOUT_SECONDS:-30}

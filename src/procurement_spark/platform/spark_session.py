@@ -18,7 +18,10 @@ def build_spark_session(
     """Create a SparkSession for either full S3A+Iceberg execution or lightweight local unit tests."""
     if settings.java_home:
         os.environ["JAVA_HOME"] = settings.java_home
-    os.environ["PYSPARK_PYTHON"] = sys.executable
+    if settings.spark_master.startswith("spark://"):
+        os.environ["PYSPARK_PYTHON"] = "python3"
+    else:
+        os.environ["PYSPARK_PYTHON"] = sys.executable
     os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
     builder = (

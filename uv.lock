@@ -1435,7 +1435,7 @@ requires-dist = [
     { name = "psycopg2-binary", marker = "extra == 'ops'", specifier = ">=2.9,<3" },
     { name = "pyarrow", specifier = ">=20,<26" },
     { name = "pydantic", specifier = ">=2.11,<3" },
-    { name = "pyspark", marker = "extra == 'spark'", specifier = ">=4.0,<4.1" },
+    { name = "pyspark", marker = "extra == 'spark'", specifier = "==4.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<9" },
     { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "rich", specifier = ">=13,<16" },
@@ -1768,12 +1768,12 @@ wheels = [
 
 [[package]]
 name = "pyspark"
-version = "4.0.5"
+version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "py4j" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/ee/2377eee07ee94739e953231558040a5ee671092780a3eed0a9e175f059e7/pyspark-4.0.5.tar.gz", hash = "sha256:a0d44b0e7faf0458ad83b7aa664e7ed8b96beed8a55d66ce3b0dfac2309dfca6", size = 434376598, upload-time = "2026-10-27T18:39:58.059Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/0e/5b38d51f1b1c2618cccfbf35093268665af9a3bdb493e5a3ecd991def633/pyspark-4.0.0.tar.gz", hash = "sha256:38db1b4f6095a080d7605e578d775528990e66dc326311d93e94a71cfc24e5a5", size = 434132212, upload-time = "2025-05-23T03:29:33.916Z" }
 
 [[package]]
 name = "pytest"
