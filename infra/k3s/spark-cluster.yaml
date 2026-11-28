@@ -41,15 +41,6 @@ roleRef:
   name: spark-driver-role
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: spark-config
-  namespace: procurement
-data:
-  # Set to the LAN IP of your K3s control-plane node (where spark-master runs)
-  SPARK_MASTER_HOST: "192.168.1.11"
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,6 +59,7 @@ spec:
         app: spark-master
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       enableServiceLinks: false
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -86,6 +78,10 @@ spec:
           env:
             - name: SPARK_NO_DAEMONIZE
               value: "true"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           ports:
             - containerPort: 7077
               name: spark
@@ -131,22 +127,18 @@ spec:
         app: spark-worker
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       enableServiceLinks: false
       containers:
         - name: spark-worker
           image: apache/spark:4.0.0-python3
           command:
-            - /bin/sh
-            - -c
-            - exec /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker "spark://${SPARK_MASTER_HOST}:7077"
+            - /opt/spark/bin/spark-class
+            - org.apache.spark.deploy.worker.Worker
+            - spark://spark-master.procurement.svc.cluster.local:7077
           env:
             - name: SPARK_NO_DAEMONIZE
               value: "true"
-            - name: SPARK_MASTER_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: spark-config
-                  key: SPARK_MASTER_HOST
             - name: SPARK_LOCAL_IP
               valueFrom:
                 fieldRef:

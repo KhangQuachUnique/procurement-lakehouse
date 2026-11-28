@@ -4,18 +4,18 @@ COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock ./
-ARG UV_EXTRA=ops
+ARG UV_EXTRA=metadata
 ARG INSTALL_SPARK=false
 RUN if [ "$INSTALL_SPARK" = "true" ]; then \
-      uv sync --locked --extra ops --extra ${UV_EXTRA} --extra spark --no-install-project --no-editable; \
+      uv sync --locked --extra ${UV_EXTRA} --extra spark --no-install-project --no-editable; \
     else \
-      uv sync --locked --extra ops --extra ${UV_EXTRA} --no-install-project --no-editable; \
+      uv sync --locked --extra ${UV_EXTRA} --no-install-project --no-editable; \
     fi
 COPY src ./src
 RUN if [ "$INSTALL_SPARK" = "true" ]; then \
-      uv sync --locked --extra ops --extra ${UV_EXTRA} --extra spark --no-editable; \
+      uv sync --locked --extra ${UV_EXTRA} --extra spark --no-editable; \
     else \
-      uv sync --locked --extra ops --extra ${UV_EXTRA} --no-editable; \
+      uv sync --locked --extra ${UV_EXTRA} --no-editable; \
     fi
 
 FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
@@ -26,10 +26,9 @@ RUN if [ "$INSTALL_SPARK" = "true" ]; then \
     fi
 RUN groupadd --gid 10001 procurement \
     && useradd --uid 10001 --gid procurement --create-home procurement \
-    && mkdir -p /var/lib/procurement/ops /var/lib/procurement/watch /var/lib/procurement/dagster /var/lib/procurement/benchmarks /var/lib/procurement/benchmark-artifacts \
+    && mkdir -p /var/lib/procurement/watch /var/lib/procurement/dagster /var/lib/procurement/pipelines /var/lib/procurement/locks \
     && chown -R procurement:procurement /var/lib/procurement
 WORKDIR /app
-# Iceberg/DuckDB may stage local files beneath the working directory.
 RUN mkdir -p /app/data /app/.tmp && chown procurement:procurement /app/data /app/.tmp
 COPY --from=builder /app/.venv /app/.venv
 COPY alembic.ini ./
@@ -40,8 +39,6 @@ ENV PATH="/app/.venv/bin:$PATH" \
     APP_ENV=production \
     DLT_PIPELINES_DIR=/var/lib/procurement/pipelines \
     INGESTION_LOCK_DIR=/var/lib/procurement/locks \
-    BENCHMARK_STATE_DIR=/var/lib/procurement/benchmarks \
-    BENCHMARK_EXPORT_DIR=/var/lib/procurement/benchmark-artifacts \
     RUNTIME__DLTHUB_TELEMETRY=false
 USER procurement
 CMD ["python", "-m", "procurement.cli.ingest", "--help"]
