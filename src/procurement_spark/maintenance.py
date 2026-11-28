@@ -26,6 +26,11 @@ from typing import Any
 
 from pyspark.sql import SparkSession
 
+from procurement_spark.cli_common import (
+    add_spark_runtime_args,
+    render_maintenance_summary,
+    settings_from_cli_args,
+)
 from procurement_spark.config import SparkSilverSettings
 from procurement_spark.spark_session import build_spark_session
 
@@ -352,6 +357,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         dest="as_json",
         help="Emit full summary as JSON.",
     )
+    add_spark_runtime_args(parser)
     return parser
 
 
@@ -362,6 +368,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.tables.strip().lower() == "all"
         else [t.strip() for t in args.tables.split(",") if t.strip()]
     )
+    cfg = settings_from_cli_args(args, namespace=args.namespace)
     opts = MaintenanceOptions(
         target_file_size_bytes=args.target_file_size_mb * 1024 * 1024,
         min_input_files=args.min_input_files,
@@ -376,26 +383,15 @@ def main(argv: list[str] | None = None) -> int:
         dry_run_orphans=args.dry_run_orphans,
     )
     summary = run_iceberg_maintenance(
-        namespace=args.namespace,
+        namespace=cfg.iceberg_namespace,
         tables=tables,
         options=opts,
+        settings=cfg,
     )
     if args.as_json:
         print(json.dumps(summary, indent=2))
     else:
-        t = summary["totals"]
-        print(
-            f"[iceberg-maintenance] {summary['catalog']}.{summary['namespace']} "
-            f"status={summary['status']} tables={summary['tables_total']} "
-            f"rewritten_files={t['rewritten_data_files_count']}->{t['added_data_files_count']} "
-            f"rewritten_manifests={t['rewritten_manifests_count']}->{t['added_manifests_count']} "
-            f"expired_data_files={t['deleted_data_files_count']} "
-            f"orphans={t['orphan_files_count']}{' (dry-run)' if opts.dry_run_orphans else ''} "
-            f"wall_s={summary['wall_s']}"
-        )
-        for tbl in summary["tables"]:
-            if tbl["status"] != "OK":
-                print(f"  FAILED {tbl['table']}: {tbl['error']}", file=sys.stderr)
+        render_maintenance_summary(summary, master=cfg.spark_master)
     return 0 if summary["status"] == "OK" else 1
 
 

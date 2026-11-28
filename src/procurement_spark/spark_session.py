@@ -32,6 +32,10 @@ def build_spark_session(
         .config("spark.ui.enabled", "false")
     )
 
+    if settings.spark_driver_host and not local_unit_test:
+        os.environ.setdefault("SPARK_LOCAL_IP", settings.spark_driver_host)
+        builder = builder.config("spark.driver.host", settings.spark_driver_host)
+
     if settings.spark_local_dir and not local_unit_test:
         os.makedirs(settings.spark_local_dir, exist_ok=True)
         builder = builder.config("spark.local.dir", settings.spark_local_dir)

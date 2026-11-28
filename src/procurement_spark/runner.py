@@ -16,6 +16,11 @@ from pyspark.sql import SparkSession
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, make_url
 
+from procurement_spark.cli_common import (
+    add_spark_runtime_args,
+    render_runner_summary,
+    settings_from_cli_args,
+)
 from procurement_spark.config import SparkSilverSettings
 from procurement_spark.control import (
     PlannedBatch,
@@ -651,6 +656,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         dest="as_json",
         help="Emit full JSON summary.",
     )
+    add_spark_runtime_args(parser)
     return parser
 
 
@@ -661,10 +667,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.resource.strip().lower() == "all"
         else [r.strip() for r in args.resource.split(",") if r.strip()]
     )
-    cfg = SparkSilverSettings.from_environment(
-        namespace=args.namespace,
-        load_dotenv_file=True,
-    )
+    cfg = settings_from_cli_args(args, namespace=args.namespace)
     summary = run_spark_silver_all(
         resources=resources,
         mode=args.mode,
@@ -676,21 +679,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_json:
         print(json.dumps(summary, indent=2))
     else:
-        print(
-            f"[spark-silver] namespace={summary['namespace']} mode={summary['mode']} "
-            f"status={summary['status']} wall_s={summary['wall_s']}"
-        )
-        for item in summary["results"]:
-            print(
-                f"  - {item['resource']}: status={item['status']} "
-                f"batches={len(item['batches'])} missing_days={len(item['missing_bronze_dates'])} "
-                f"wall_s={item['wall_s']}"
-            )
-        if summary["resources_failed"]:
-            print(
-                f"  FAILED resources: {', '.join(summary['resources_failed'])}",
-                file=sys.stderr,
-            )
+        render_runner_summary(summary, master=cfg.spark_master)
     return 0 if summary["status"] != "FAILED" else 1
 
 

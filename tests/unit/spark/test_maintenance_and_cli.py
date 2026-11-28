@@ -8,6 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from procurement_spark.cli import main as silver_spark_cli_main
+from procurement_spark.cli_common import render_maintenance_summary, render_runner_summary
 from procurement_spark.config import SparkSilverSettings
 from procurement_spark.maintenance import (
     MaintenanceOptions,
@@ -237,9 +239,108 @@ def test_cli_parsers() -> None:
     assert m_args.retain_last == 3
 
     r_args = build_runner_parser().parse_args(
-        ["--resource", "notice,khlcnt", "--mode", "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31"]
+        ["--resource", "notice,khlcnt", "--mode", "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31", "--k3s"]
     )
     assert r_args.resource == "notice,khlcnt"
     assert r_args.mode == "backfill"
     assert r_args.start_date == "2025-01-01"
     assert r_args.end_date == "2025-01-31"
+    assert r_args.k3s is True
+
+
+def test_k3s_auto_detects_lan_ip(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_DATABASE_URL", "postgresql://test:test@localhost/test")
+    monkeypatch.delenv("SPARK_MASTER", raising=False)
+    monkeypatch.delenv("SPARK_K3S_MASTER", raising=False)
+    monkeypatch.delenv("SPARK_LOCAL_IP", raising=False)
+    monkeypatch.delenv("SPARK_DRIVER_MEMORY", raising=False)
+
+    with patch("procurement_spark.config.detect_lan_ip", return_value="192.168.1.11"):
+        cfg = SparkSilverSettings.from_environment(k3s=True)
+
+    assert cfg.spark_master == "spark://192.168.1.11:7077"
+    assert cfg.spark_driver_host == "192.168.1.11"
+    assert cfg.spark_driver_memory == "3g"
+
+
+def test_remote_master_auto_detects_driver_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_DATABASE_URL", "postgresql://test:test@localhost/test")
+    monkeypatch.delenv("SPARK_LOCAL_IP", raising=False)
+
+    with patch("procurement_spark.config.detect_lan_ip", return_value="192.168.1.90") as mock_ip:
+        cfg = SparkSilverSettings.from_environment(spark_master="spark://192.168.1.11:7077")
+
+    mock_ip.assert_called_once_with("192.168.1.11")
+    assert cfg.spark_master == "spark://192.168.1.11:7077"
+    assert cfg.spark_driver_host == "192.168.1.90"
+
+
+def test_silver_spark_cli_dispatch() -> None:
+    with patch("procurement_spark.cli.runner_main", return_value=0) as mock_run:
+        assert silver_spark_cli_main(["run", "--k3s"]) == 0
+        mock_run.assert_called_once_with(["--mode", "incremental", "--k3s"])
+
+    with patch("procurement_spark.cli.runner_main", return_value=0) as mock_backfill:
+        assert silver_spark_cli_main(["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31"]) == 0
+        mock_backfill.assert_called_once_with(
+            ["--mode", "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31"]
+        )
+
+    with patch("procurement_spark.cli.maintenance_main", return_value=0) as mock_maint:
+        assert silver_spark_cli_main(["maintain", "--k3s", "--dry-run-orphans"]) == 0
+        mock_maint.assert_called_once_with(["--k3s", "--dry-run-orphans"])
+
+
+def test_rich_renderers_smoke() -> None:
+    render_runner_summary(
+        {
+            "namespace": "silver_spark",
+            "mode": "incremental",
+            "status": "NO_OP",
+            "wall_s": 0.12,
+            "resources_failed": [],
+            "results": [
+                {
+                    "resource": "project",
+                    "status": "NO_OP",
+                    "batches": [],
+                    "missing_bronze_dates": [],
+                    "wall_s": 0.05,
+                }
+            ],
+        },
+        master="spark://192.168.1.11:7077",
+    )
+    render_maintenance_summary(
+        {
+            "catalog": "lake",
+            "namespace": "silver_spark",
+            "status": "OK",
+            "tables_total": 1,
+            "wall_s": 1.23,
+            "options": {"dry_run_orphans": True},
+            "totals": {
+                "rewritten_data_files_count": 2,
+                "added_data_files_count": 1,
+                "rewritten_manifests_count": 3,
+                "added_manifests_count": 1,
+                "deleted_data_files_count": 1,
+                "orphan_files_count": 0,
+            },
+            "tables": [
+                {
+                    "table": "project_revision",
+                    "status": "OK",
+                    "rewritten_data_files_count": 2,
+                    "added_data_files_count": 1,
+                    "rewritten_manifests_count": 3,
+                    "added_manifests_count": 1,
+                    "deleted_data_files_count": 1,
+                    "orphan_files_count": 0,
+                    "wall_s": 1.23,
+                    "error": None,
+                }
+            ],
+        },
+        master="spark://192.168.1.11:7077",
+    )
