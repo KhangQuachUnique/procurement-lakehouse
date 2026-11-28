@@ -9,9 +9,9 @@ from decimal import Decimal
 import pytest
 from pyspark.sql import types as T
 
-from procurement_spark.platform.config import SparkSilverSettings
-from procurement_spark.silver.resources.khlcnt import transform_khlcnt
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.spark.config import SparkSilverSettings
+from procurement.silver.resources.khlcnt import transform_khlcnt
+from procurement.spark.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")

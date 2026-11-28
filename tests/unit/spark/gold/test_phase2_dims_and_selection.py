@@ -17,11 +17,11 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-from procurement_spark.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
-from procurement_spark.gold.core.dimensions_biz import build_business_dimensions
-from procurement_spark.gold.core.selection import build_selection_views
-from procurement_spark.platform.config import SparkSilverSettings, _detect_java_home
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
+from procurement.gold.core.dimensions_biz import build_business_dimensions
+from procurement.gold.core.selection import build_selection_views
+from procurement.spark.config import SparkSilverSettings, _detect_java_home
+from procurement.spark.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")

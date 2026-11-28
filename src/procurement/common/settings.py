@@ -73,25 +73,6 @@ class Settings(BaseModel):
             raise ValueError("Unsupported log level")
         return value
 
-    def iceberg_config(
-        self,
-        *,
-        catalog_uri: str | None = None,
-        warehouse: str | None = None,
-        s3_endpoint: str | None = None,
-        access_key: str | None = None,
-        secret_key: str | None = None,
-    ) -> "IcebergConfig":
-        from procurement.storage.iceberg import IcebergConfig
-
-        return IcebergConfig(
-            catalog_uri=catalog_uri or self.ICEBERG_CATALOG_URI,
-            warehouse=warehouse or self.ICEBERG_WAREHOUSE,
-            s3_endpoint=s3_endpoint or self.OBJECT_STORAGE_ENDPOINT,
-            access_key=access_key or self.OBJECT_STORAGE_ACCESS_KEY or "",
-            secret_key=secret_key or self.OBJECT_STORAGE_SECRET_KEY or "",
-        )
-
     @classmethod
     def from_environment(cls, *, dotenv: bool = True) -> "Settings":
         if dotenv:

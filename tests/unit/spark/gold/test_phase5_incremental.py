@@ -6,10 +6,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from procurement_spark.gold.cli import main as gold_spark_cli_main
-from procurement_spark.gold.runner import run_spark_gold_incremental
-from procurement_spark.platform.config import SparkSilverSettings
-from procurement_spark.platform.iceberg_writer import merge_into_table
+from procurement.gold.cli import main as gold_spark_cli_main
+from procurement.gold.runner import run_spark_gold_incremental
+from procurement.spark.config import SparkSilverSettings
+from procurement.spark.iceberg_writer import merge_into_table
 
 
 def _test_cfg() -> SparkSilverSettings:
@@ -42,10 +42,10 @@ def test_incremental_bootstraps_via_rebuild_when_no_watermark() -> None:
     fake_store.get_latest_published_watermarks.return_value = None
 
     with (
-        patch("procurement_spark.gold.runner._create_pg_engine", return_value=fake_engine),
-        patch("procurement_spark.gold.runner.GoldWatermarkStore", return_value=fake_store),
+        patch("procurement.gold.runner._create_pg_engine", return_value=fake_engine),
+        patch("procurement.gold.runner.GoldWatermarkStore", return_value=fake_store),
         patch(
-            "procurement_spark.gold.runner.run_spark_gold_rebuild",
+            "procurement.gold.runner.run_spark_gold_rebuild",
             return_value={"status": "PUBLISHED", "mode": "rebuild"},
         ) as mock_rebuild,
     ):
@@ -63,10 +63,10 @@ def test_incremental_returns_noop_when_snapshots_unchanged() -> None:
     fake_spark = MagicMock()
 
     with (
-        patch("procurement_spark.gold.runner._create_pg_engine", return_value=fake_engine),
-        patch("procurement_spark.gold.runner.GoldWatermarkStore", return_value=fake_store),
-        patch("procurement_spark.gold.runner.read_silver_snapshot_ids", return_value=dict(snaps)),
-        patch("procurement_spark.gold.runner.load_silver_incremental_deltas") as mock_deltas,
+        patch("procurement.gold.runner._create_pg_engine", return_value=fake_engine),
+        patch("procurement.gold.runner.GoldWatermarkStore", return_value=fake_store),
+        patch("procurement.gold.runner.read_silver_snapshot_ids", return_value=dict(snaps)),
+        patch("procurement.gold.runner.load_silver_incremental_deltas") as mock_deltas,
     ):
         res = run_spark_gold_incremental(settings=_test_cfg(), spark=fake_spark)
 
@@ -83,15 +83,15 @@ def test_incremental_falls_back_to_rebuild_on_expired_snapshot() -> None:
     fake_spark = MagicMock()
 
     with (
-        patch("procurement_spark.gold.runner._create_pg_engine", return_value=fake_engine),
-        patch("procurement_spark.gold.runner.GoldWatermarkStore", return_value=fake_store),
-        patch("procurement_spark.gold.runner.read_silver_snapshot_ids", return_value=curr_snaps),
+        patch("procurement.gold.runner._create_pg_engine", return_value=fake_engine),
+        patch("procurement.gold.runner.GoldWatermarkStore", return_value=fake_store),
+        patch("procurement.gold.runner.read_silver_snapshot_ids", return_value=curr_snaps),
         patch(
-            "procurement_spark.gold.runner.load_silver_incremental_deltas",
+            "procurement.gold.runner.load_silver_incremental_deltas",
             side_effect=RuntimeError("Cannot read incremental: snapshot 1001 expired"),
         ),
         patch(
-            "procurement_spark.gold.runner.run_spark_gold_rebuild",
+            "procurement.gold.runner.run_spark_gold_rebuild",
             return_value={"status": "PUBLISHED", "mode": "rebuild"},
         ) as mock_rebuild,
     ):
@@ -103,7 +103,7 @@ def test_incremental_falls_back_to_rebuild_on_expired_snapshot() -> None:
 
 def test_gold_spark_cli_run_dispatch() -> None:
     with patch(
-        "procurement_spark.gold.cli.run_spark_gold_incremental",
+        "procurement.gold.cli.run_spark_gold_incremental",
         return_value={
             "status": "NO_OP",
             "gold_namespace": "gold_spark",
@@ -113,7 +113,7 @@ def test_gold_spark_cli_run_dispatch() -> None:
             "wall_s": 0.4,
         },
     ) as mock_inc:
-        with patch("procurement_spark.gold.cli.settings_from_cli_args") as mock_cfg:
+        with patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
             mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
             assert gold_spark_cli_main(["run", "--k3s", "--namespace", "gold_spark"]) == 0
             mock_inc.assert_called_once()

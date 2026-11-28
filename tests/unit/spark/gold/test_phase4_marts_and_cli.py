@@ -8,22 +8,22 @@ from unittest.mock import patch
 
 import pytest
 
-from procurement_spark.gold.cli import main as gold_spark_cli_main
-from procurement_spark.gold.core.award import build_award
-from procurement_spark.gold.core.competition import build_competition
-from procurement_spark.gold.core.demand import build_demand
-from procurement_spark.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
-from procurement_spark.gold.core.dimensions_biz import build_business_dimensions
-from procurement_spark.gold.core.duration import build_duration
-from procurement_spark.gold.core.notice import build_notice
-from procurement_spark.gold.core.savings import build_savings
-from procurement_spark.gold.core.selection import build_selection_views
-from procurement_spark.gold.functions import register_gold_functions
-from procurement_spark.gold.marts.dimensions import build_public_dimensions
-from procurement_spark.gold.marts.facts import build_public_facts
-from procurement_spark.gold.schema import MART_PRIMARY_KEYS, MART_SPECS
-from procurement_spark.platform.config import SparkSilverSettings, _detect_java_home
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.gold.cli import main as gold_spark_cli_main
+from procurement.gold.core.award import build_award
+from procurement.gold.core.competition import build_competition
+from procurement.gold.core.demand import build_demand
+from procurement.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
+from procurement.gold.core.dimensions_biz import build_business_dimensions
+from procurement.gold.core.duration import build_duration
+from procurement.gold.core.notice import build_notice
+from procurement.gold.core.savings import build_savings
+from procurement.gold.core.selection import build_selection_views
+from procurement.gold.functions import register_gold_functions
+from procurement.gold.marts.dimensions import build_public_dimensions
+from procurement.gold.marts.facts import build_public_facts
+from procurement.gold.schema import MART_PRIMARY_KEYS, MART_SPECS
+from procurement.spark.config import SparkSilverSettings, _detect_java_home
+from procurement.spark.spark_session import build_spark_session
 from tests.unit.spark.gold.test_phase3b_savings_duration_competition import (
     _register_full_silver_fixtures,
 )
@@ -117,7 +117,7 @@ def test_all_17_public_marts_schema_and_invariants(spark) -> None:
 
 def test_gold_spark_cli_dispatch() -> None:
     with patch(
-        "procurement_spark.gold.cli.run_spark_gold_rebuild",
+        "procurement.gold.cli.run_spark_gold_rebuild",
         return_value={
             "status": "PUBLISHED",
             "gold_namespace": "gold_spark",
@@ -127,12 +127,12 @@ def test_gold_spark_cli_dispatch() -> None:
             "wall_s": 1.0,
         },
     ) as mock_rebuild:
-        with patch("procurement_spark.gold.cli.settings_from_cli_args") as mock_cfg:
+        with patch("procurement.gold.cli.settings_from_cli_args") as mock_cfg:
             mock_cfg.return_value.spark_master = "spark://192.168.1.11:7077"
             rc = gold_spark_cli_main(["rebuild", "--k3s", "--namespace", "gold_spark_test"])
             assert rc == 0
             assert mock_rebuild.call_args.kwargs["gold_namespace"] == "gold_spark_test"
 
-    with patch("procurement_spark.gold.cli.maintenance_main", return_value=0) as mock_maint:
+    with patch("procurement.gold.cli.maintenance_main", return_value=0) as mock_maint:
         assert gold_spark_cli_main(["maintain", "--k3s", "--dry-run-orphans"]) == 0
         mock_maint.assert_called_once_with(["--namespace", "gold_spark", "--k3s", "--dry-run-orphans"])

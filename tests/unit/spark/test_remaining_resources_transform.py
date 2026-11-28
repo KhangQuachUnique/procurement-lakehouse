@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 from pyspark.sql import types as T
 
-from procurement_spark.platform.config import SparkSilverSettings
-from procurement_spark.silver.resources.bid_opening import transform_bid_opening
-from procurement_spark.silver.resources.contract_performance import transform_contract_performance
-from procurement_spark.silver.resources.contractor_result import transform_contractor_result
-from procurement_spark.silver.resources.notice import transform_notice
-from procurement_spark.silver.resources.registry import SPARK_RESOURCES
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.spark.config import SparkSilverSettings
+from procurement.silver.resources.bid_opening import transform_bid_opening
+from procurement.silver.resources.contract_performance import transform_contract_performance
+from procurement.silver.resources.contractor_result import transform_contractor_result
+from procurement.silver.resources.notice import transform_notice
+from procurement.silver.resources.registry import SPARK_RESOURCES
+from procurement.spark.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")
@@ -396,16 +396,21 @@ def test_bid_opening_transform_ldt_and_khac_shapes(spark):
     assert lots["vn099"]["lot_price"] == Decimal("800000000.000000")
 
 
-def test_spark_package_has_zero_legacy_silver_imports():
-    """Enforce clean package isolation: procurement_spark must never import procurement.silver."""
-    root = Path(__file__).resolve().parents[3] / "src" / "procurement_spark"
-    py_files = list(root.rglob("*.py"))
+def test_spark_layers_have_zero_duckdb_or_dlt_imports():
+    """Enforce clean layer isolation: spark/silver/gold must never import duckdb or dlt."""
+    src_root = Path(__file__).resolve().parents[3] / "src" / "procurement"
+    py_files = [
+        p
+        for sub in ("spark", "silver", "gold")
+        for p in (src_root / sub).rglob("*.py")
+    ]
     assert len(py_files) > 15
+    forbidden = ("duckdb", "dlt", "dagster")
     for path in py_files:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    assert not alias.name.startswith("procurement.silver"), f"Forbidden import in {path}: {alias.name}"
+                    assert not alias.name.startswith(forbidden), f"Forbidden import in {path}: {alias.name}"
             elif isinstance(node, ast.ImportFrom) and node.module:
-                assert not node.module.startswith("procurement.silver"), f"Forbidden import in {path}: {node.module}"
+                assert not node.module.startswith(forbidden), f"Forbidden import in {path}: {node.module}"

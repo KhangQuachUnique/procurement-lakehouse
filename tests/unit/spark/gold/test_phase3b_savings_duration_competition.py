@@ -18,18 +18,18 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-from procurement_spark.gold.core.award import build_award
-from procurement_spark.gold.core.competition import build_competition
-from procurement_spark.gold.core.demand import build_demand
-from procurement_spark.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
-from procurement_spark.gold.core.dimensions_biz import build_business_dimensions
-from procurement_spark.gold.core.duration import build_duration
-from procurement_spark.gold.core.notice import build_notice
-from procurement_spark.gold.core.savings import build_savings
-from procurement_spark.gold.core.selection import build_selection_views
-from procurement_spark.gold.functions import register_gold_functions
-from procurement_spark.platform.config import SparkSilverSettings, _detect_java_home
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.gold.core.award import build_award
+from procurement.gold.core.competition import build_competition
+from procurement.gold.core.demand import build_demand
+from procurement.gold.core.dimensions_base import GoldBuildConfig, build_base_dimensions
+from procurement.gold.core.dimensions_biz import build_business_dimensions
+from procurement.gold.core.duration import build_duration
+from procurement.gold.core.notice import build_notice
+from procurement.gold.core.savings import build_savings
+from procurement.gold.core.selection import build_selection_views
+from procurement.gold.functions import register_gold_functions
+from procurement.spark.config import SparkSilverSettings, _detect_java_home
+from procurement.spark.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")

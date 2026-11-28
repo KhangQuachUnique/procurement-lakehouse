@@ -8,17 +8,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from procurement_spark.silver.cli import main as silver_spark_cli_main
-from procurement_spark.platform.cli_common import render_maintenance_summary, render_runner_summary
-from procurement_spark.platform.config import SparkSilverSettings
-from procurement_spark.platform.maintenance import (
+from procurement.silver.cli import main as silver_spark_cli_main
+from procurement.spark.cli_common import render_maintenance_summary, render_runner_summary
+from procurement.spark.config import SparkSilverSettings
+from procurement.spark.maintenance import (
     MaintenanceOptions,
     _build_arg_parser as build_maint_parser,
     discover_namespace_tables,
     maintain_iceberg_table,
     run_iceberg_maintenance,
 )
-from procurement_spark.silver.runner import (
+from procurement.silver.runner import (
     _build_arg_parser as build_runner_parser,
     run_spark_silver_all,
     run_spark_silver_incremental,
@@ -183,9 +183,9 @@ def test_run_spark_silver_incremental_noop_when_no_bronze() -> None:
     )
     fake_engine = MagicMock()
     with (
-        patch("procurement_spark.silver.runner._create_pg_engine", return_value=fake_engine),
-        patch("procurement_spark.silver.runner.resolve_bronze_date_bounds", return_value=None),
-        patch("procurement_spark.silver.runner.build_spark_session") as mock_spark,
+        patch("procurement.silver.runner._create_pg_engine", return_value=fake_engine),
+        patch("procurement.silver.runner.resolve_bronze_date_bounds", return_value=None),
+        patch("procurement.silver.runner.build_spark_session") as mock_spark,
     ):
         res = run_spark_silver_incremental("project", settings=cfg)
 
@@ -202,13 +202,13 @@ def test_run_spark_silver_incremental_selects_daily_vs_backfill_mode() -> None:
     )
     fake_engine = MagicMock()
     with (
-        patch("procurement_spark.silver.runner._create_pg_engine", return_value=fake_engine),
+        patch("procurement.silver.runner._create_pg_engine", return_value=fake_engine),
         patch(
-            "procurement_spark.silver.runner.resolve_bronze_date_bounds",
+            "procurement.silver.runner.resolve_bronze_date_bounds",
             return_value=(date(2026, 10, 28), date(2026, 10, 31)),
         ),
         patch(
-            "procurement_spark.silver.runner.run_spark_silver",
+            "procurement.silver.runner.run_spark_silver",
             return_value={"resource": "project", "status": "PUBLISHED", "batches": []},
         ) as mock_run,
     ):
@@ -255,7 +255,7 @@ def test_k3s_auto_detects_lan_ip(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SPARK_LOCAL_IP", raising=False)
     monkeypatch.delenv("SPARK_DRIVER_MEMORY", raising=False)
 
-    with patch("procurement_spark.platform.config.detect_lan_ip", return_value="192.168.1.11"):
+    with patch("procurement.spark.config.detect_lan_ip", return_value="192.168.1.11"):
         cfg = SparkSilverSettings.from_environment(k3s=True)
 
     assert cfg.spark_master == "spark://192.168.1.11:7077"
@@ -267,7 +267,7 @@ def test_remote_master_auto_detects_driver_host(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("APP_DATABASE_URL", "postgresql://test:test@localhost/test")
     monkeypatch.delenv("SPARK_LOCAL_IP", raising=False)
 
-    with patch("procurement_spark.platform.config.detect_lan_ip", return_value="192.168.1.90") as mock_ip:
+    with patch("procurement.spark.config.detect_lan_ip", return_value="192.168.1.90") as mock_ip:
         cfg = SparkSilverSettings.from_environment(spark_master="spark://192.168.1.11:7077")
 
     mock_ip.assert_called_once_with("192.168.1.11")
@@ -276,17 +276,17 @@ def test_remote_master_auto_detects_driver_host(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_silver_spark_cli_dispatch() -> None:
-    with patch("procurement_spark.silver.cli.runner_main", return_value=0) as mock_run:
+    with patch("procurement.silver.cli.runner_main", return_value=0) as mock_run:
         assert silver_spark_cli_main(["run", "--k3s"]) == 0
         mock_run.assert_called_once_with(["--mode", "incremental", "--k3s"])
 
-    with patch("procurement_spark.silver.cli.runner_main", return_value=0) as mock_backfill:
+    with patch("procurement.silver.cli.runner_main", return_value=0) as mock_backfill:
         assert silver_spark_cli_main(["backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31"]) == 0
         mock_backfill.assert_called_once_with(
             ["--mode", "backfill", "--start-date", "2025-01-01", "--end-date", "2025-01-31"]
         )
 
-    with patch("procurement_spark.silver.cli.maintenance_main", return_value=0) as mock_maint:
+    with patch("procurement.silver.cli.maintenance_main", return_value=0) as mock_maint:
         assert silver_spark_cli_main(["maintain", "--k3s", "--dry-run-orphans"]) == 0
         mock_maint.assert_called_once_with(["--k3s", "--dry-run-orphans"])
 

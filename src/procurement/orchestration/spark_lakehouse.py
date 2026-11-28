@@ -55,8 +55,8 @@ class SparkMaintenanceConfig(Config):
 @op(name="spark_silver_run")
 def spark_silver_op(context: OpExecutionContext, config: SparkSilverConfig) -> Output[dict[str, Any]]:
     """Run Spark Silver incremental (or backfill) across all 6 procurement resources."""
-    from procurement_spark.platform.config import SparkSilverSettings
-    from procurement_spark.silver.runner import run_spark_silver_all
+    from procurement.spark.config import SparkSilverSettings
+    from procurement.silver.runner import run_spark_silver_all
 
     cfg = SparkSilverSettings.from_environment(
         load_dotenv_file=True,
@@ -103,8 +103,8 @@ def spark_silver_op(context: OpExecutionContext, config: SparkSilverConfig) -> O
 def spark_gold_op(context: OpExecutionContext, config: SparkGoldConfig) -> Output[dict[str, Any]]:
     """Run Two-Tier Spark Gold incremental (start-snapshot-id + MERGE INTO) or full rebuild."""
     from procurement.common.dates import VIETNAM_TZ
-    from procurement_spark.gold.runner import run_spark_gold_incremental, run_spark_gold_rebuild
-    from procurement_spark.platform.config import SparkSilverSettings
+    from procurement.gold.runner import run_spark_gold_incremental, run_spark_gold_rebuild
+    from procurement.spark.config import SparkSilverSettings
 
     cfg = SparkSilverSettings.from_environment(
         load_dotenv_file=True,
@@ -169,9 +169,9 @@ def spark_maintenance_op(
     context: OpExecutionContext, config: SparkMaintenanceConfig
 ) -> Output[dict[str, Any]]:
     """Run Iceberg compaction, manifest rewrite, snapshot expiration, and orphan cleanup."""
-    from procurement_spark.platform.config import SparkSilverSettings
-    from procurement_spark.platform.maintenance import MaintenanceOptions, run_iceberg_maintenance
-    from procurement_spark.platform.spark_session import build_spark_session
+    from procurement.spark.config import SparkSilverSettings
+    from procurement.spark.maintenance import MaintenanceOptions, run_iceberg_maintenance
+    from procurement.spark.spark_session import build_spark_session
 
     cfg = SparkSilverSettings.from_environment(
         load_dotenv_file=True,

@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from procurement_spark.gold.functions import (
+from procurement.gold.functions import (
     norm_bid_price_sql,
     recover_award_amount_sql,
     register_gold_functions,
 )
-from procurement_spark.gold.schema import (
+from procurement.gold.schema import (
     CORE_MERGE_KEYS,
     CORE_TABLES,
     GOLD_CORE_DDLS,
@@ -23,9 +23,9 @@ from procurement_spark.gold.schema import (
     MART_PRIMARY_KEYS,
     MART_SPECS,
 )
-from procurement_spark.gold.source import SILVER_INPUT_TABLES
-from procurement_spark.platform.config import SparkSilverSettings, _detect_java_home
-from procurement_spark.platform.spark_session import build_spark_session
+from procurement.gold.source import SILVER_INPUT_TABLES
+from procurement.spark.config import SparkSilverSettings, _detect_java_home
+from procurement.spark.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")
@@ -43,11 +43,11 @@ def spark():
     session.stop()
 
 
-def test_mart_schema_matches_legacy_public_contract() -> None:
-    legacy_path = Path("src/procurement/gold/domain/schema.json")
-    legacy = json.loads(legacy_path.read_text(encoding="utf-8"))
+def test_mart_schema_contract_completeness() -> None:
+    mart_path = Path("src/procurement/gold/mart_schema.json")
+    mart_raw = json.loads(mart_path.read_text(encoding="utf-8"))
 
-    assert set(GOLD_MART_DDLS.keys()) == set(legacy.keys())
+    assert set(GOLD_MART_DDLS.keys()) == set(mart_raw.keys())
     assert len(MART_DIMENSIONS) == 9
     assert len(MART_FACTS) == 8
     assert len(MART_PRIMARY_KEYS) == 17
@@ -59,7 +59,7 @@ def test_mart_schema_matches_legacy_public_contract() -> None:
     for dim_name in MART_DIMENSIONS:
         assert "PARTITIONED BY" not in GOLD_MART_DDLS[dim_name]
 
-    for table_name, cols in legacy.items():
+    for table_name, cols in mart_raw.items():
         expected_col_names = [c["name"] for c in cols]
         actual_col_names = [name for name, _ in MART_SPECS[table_name].columns]
         assert actual_col_names == expected_col_names
