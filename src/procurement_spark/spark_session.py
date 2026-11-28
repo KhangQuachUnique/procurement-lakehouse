@@ -81,6 +81,17 @@ def build_spark_session(
             "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
         )
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+        # Map s3:// scheme to S3AFileSystem so Iceberg remove_orphan_files can list s3:// warehouse paths
+        .config("spark.hadoop.fs.s3.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.hadoop.fs.s3.endpoint", settings.s3_endpoint)
+        .config("spark.hadoop.fs.s3.access.key", settings.s3_access_key)
+        .config("spark.hadoop.fs.s3.secret.key", settings.s3_secret_key)
+        .config("spark.hadoop.fs.s3.path.style.access", "true")
+        .config(
+            "spark.hadoop.fs.s3.aws.credentials.provider",
+            "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
+        )
+        .config("spark.hadoop.fs.s3.connection.ssl.enabled", "false")
         # Bound columnar batch sizes so wide raw-JSON Parquet rows never spike JVM heap
         .config("spark.sql.inMemoryColumnarStorage.batchSize", "1000")
         .config("spark.sql.parquet.columnarReaderBatchSize", "1024")

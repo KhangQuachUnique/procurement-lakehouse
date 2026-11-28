@@ -114,3 +114,34 @@ def resolve_bronze_manifests(
         )
         for d, (cid, aid, exp, flist) in sorted(grouped.items())
     }
+
+
+def resolve_bronze_date_bounds(
+    engine: Engine,
+    resource: str,
+    *,
+    since_date: date | None = None,
+    until_date: date | None = None,
+) -> tuple[date, date] | None:
+    """Return (min_source_date, max_source_date) of committed Bronze partitions for a resource."""
+    clauses = ["resource = :resource", "current_commit_id IS NOT NULL"]
+    params: dict[str, object] = {"resource": resource}
+    if since_date is not None:
+        clauses.append("source_date >= :since_date")
+        params["since_date"] = since_date
+    if until_date is not None:
+        clauses.append("source_date <= :until_date")
+        params["until_date"] = until_date
+
+    query = text(
+        f"""
+        SELECT MIN(source_date), MAX(source_date)
+        FROM bronze_meta.partitions
+        WHERE {' AND '.join(clauses)}
+        """
+    )
+    with engine.connect() as conn:
+        row = conn.execute(query, params).fetchone()
+    if not row or row[0] is None or row[1] is None:
+        return None
+    return (row[0], row[1])

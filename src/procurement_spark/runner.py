@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
+import gc
+import json
+import sys
 import time
 from dataclasses import dataclass
 from datetime import date
@@ -18,6 +22,7 @@ from procurement_spark.control import (
     ReceiptStore,
     SilverReceipt,
     plan_batches,
+    resolve_bronze_date_bounds,
     resolve_bronze_manifests,
 )
 from procurement_spark.io import (
@@ -33,7 +38,7 @@ from procurement_spark.quality import (
     evaluate_inline_rules,
     run_post_load_gate,
 )
-from procurement_spark.resources import get_spark_resource
+from procurement_spark.resources import SPARK_RESOURCES, get_spark_resource
 from procurement_spark.spark_session import build_spark_session
 
 
@@ -396,3 +401,298 @@ def run_spark_silver(
         }
     finally:
         engine.dispose()
+
+
+def run_spark_silver_incremental(
+    resource: str,
+    *,
+    since_date: date | None = None,
+    until_date: date | None = None,
+    batch_mode: Literal["daily", "backfill"] | None = None,
+    force: bool = False,
+    settings: SparkSilverSettings | None = None,
+    spark: SparkSession | None = None,
+) -> dict[str, Any]:
+    """Auto-discover committed Bronze date bounds and process any unpublished or updated days.
+
+    Returns ``status='NO_OP'`` immediately without starting Spark if all committed Bronze
+    days already have matching PUBLISHED receipts.
+    """
+    cfg = settings or SparkSilverSettings.from_environment(load_dotenv_file=True)
+    spec = get_spark_resource(resource)
+    t_total = time.perf_counter()
+
+    engine = _create_pg_engine(cfg.app_database_url)
+    try:
+        bounds = resolve_bronze_date_bounds(
+            engine,
+            spec.bronze_resource,
+            since_date=since_date,
+            until_date=until_date,
+        )
+    finally:
+        engine.dispose()
+
+    if bounds is None:
+        return {
+            "resource": spec.name,
+            "namespace": cfg.iceberg_namespace,
+            "mode": "incremental",
+            "status": "NO_OP",
+            "batches": [],
+            "missing_bronze_dates": [],
+            "wall_s": round(time.perf_counter() - t_total, 2),
+        }
+
+    start_date, end_date = bounds
+    resolved_mode: Literal["daily", "backfill"] = batch_mode or (
+        "backfill" if (end_date - start_date).days > 31 else "daily"
+    )
+    result = run_spark_silver(
+        resource=spec.name,
+        start_date=start_date,
+        end_date=end_date,
+        mode=resolved_mode,
+        force=force,
+        settings=cfg,
+        spark=spark,
+    )
+    result["discovered_start_date"] = start_date.isoformat()
+    result["discovered_end_date"] = end_date.isoformat()
+    result["requested_mode"] = "incremental"
+    return result
+
+
+def run_spark_silver_all(
+    resources: list[str] | tuple[str, ...] | None = None,
+    *,
+    mode: Literal["incremental", "daily", "backfill"] = "incremental",
+    start_date: date | None = None,
+    end_date: date | None = None,
+    force: bool = False,
+    settings: SparkSilverSettings | None = None,
+    spark: SparkSession | None = None,
+) -> dict[str, Any]:
+    """Run multiple (or all 6) Silver resources sharing a single SparkSession when work exists."""
+    cfg = settings or SparkSilverSettings.from_environment(load_dotenv_file=True)
+    target_resources = list(resources) if resources is not None else list(SPARK_RESOURCES.keys())
+    for res in target_resources:
+        get_spark_resource(res)
+
+    if mode in {"daily", "backfill"} and (start_date is None or end_date is None):
+        raise ValueError(f"--start-date and --end-date are required when mode={mode!r}")
+
+    t_total = time.perf_counter()
+    owns_spark = spark is None
+    active_spark: SparkSession | None = spark
+    results: list[dict[str, Any]] = []
+
+    try:
+        for res in target_resources:
+            if mode == "incremental":
+                # Check if work exists before spinning up a SparkSession on an empty run
+                if active_spark is None:
+                    engine = _create_pg_engine(cfg.app_database_url)
+                    try:
+                        spec = get_spark_resource(res)
+                        bounds = resolve_bronze_date_bounds(
+                            engine,
+                            spec.bronze_resource,
+                            since_date=start_date,
+                            until_date=end_date,
+                        )
+                        if bounds is None:
+                            results.append(
+                                {
+                                    "resource": spec.name,
+                                    "namespace": cfg.iceberg_namespace,
+                                    "mode": "incremental",
+                                    "status": "NO_OP",
+                                    "batches": [],
+                                    "missing_bronze_dates": [],
+                                    "wall_s": 0.0,
+                                }
+                            )
+                            continue
+                        receipt_store = ReceiptStore(engine)
+                        receipt_store.ensure_schema()
+                        manifests = resolve_bronze_manifests(
+                            engine,
+                            spec.bronze_resource,
+                            bounds[0],
+                            bounds[1],
+                            table_names=spec.bronze_tables,
+                        )
+                        published = receipt_store.list_published(
+                            cfg.iceberg_namespace,
+                            spec.name,
+                            bounds[0],
+                            bounds[1],
+                        )
+                        batches, missing_dates = plan_batches(
+                            resource=spec.name,
+                            transform_version=spec.transform_version,
+                            manifests=manifests,
+                            published_receipts=published,
+                            start_date=bounds[0],
+                            end_date=bounds[1],
+                            mode="daily",
+                            force=force,
+                        )
+                        if not batches:
+                            results.append(
+                                {
+                                    "resource": spec.name,
+                                    "namespace": cfg.iceberg_namespace,
+                                    "mode": "incremental",
+                                    "status": "NO_OP",
+                                    "batches": [],
+                                    "missing_bronze_dates": [d.isoformat() for d in missing_dates],
+                                    "wall_s": 0.0,
+                                }
+                            )
+                            continue
+                    finally:
+                        engine.dispose()
+                    active_spark = build_spark_session(cfg)
+
+                res_summary = run_spark_silver_incremental(
+                    res,
+                    since_date=start_date,
+                    until_date=end_date,
+                    force=force,
+                    settings=cfg,
+                    spark=active_spark,
+                )
+            else:
+                if active_spark is None:
+                    active_spark = build_spark_session(cfg)
+                assert start_date is not None and end_date is not None
+                res_summary = run_spark_silver(
+                    res,
+                    start_date=start_date,
+                    end_date=end_date,
+                    mode=mode,
+                    force=force,
+                    settings=cfg,
+                    spark=active_spark,
+                )
+
+            results.append(res_summary)
+            if active_spark is not None:
+                try:
+                    active_spark.catalog.clearCache()
+                except Exception:
+                    pass
+                gc.collect()
+    finally:
+        if owns_spark and active_spark is not None:
+            active_spark.stop()
+
+    failed = [r["resource"] for r in results if r["status"] == "FAILED"]
+    overall = (
+        "FAILED"
+        if failed
+        else ("NO_OP" if all(r["status"] == "NO_OP" for r in results) else "PUBLISHED")
+    )
+    return {
+        "namespace": cfg.iceberg_namespace,
+        "mode": mode,
+        "status": overall,
+        "resources_failed": failed,
+        "results": results,
+        "wall_s": round(time.perf_counter() - t_total, 2),
+    }
+
+
+def _parse_iso_date(value: str | None) -> date | None:
+    return date.fromisoformat(value) if value else None
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m procurement_spark.runner",
+        description="Run Spark Silver pipeline (incremental, daily, or monthly backfill).",
+    )
+    parser.add_argument(
+        "--resource",
+        default="all",
+        help="Comma-separated resource names or 'all' (default: all).",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("incremental", "daily", "backfill"),
+        default="incremental",
+        help="Execution mode (default: incremental).",
+    )
+    parser.add_argument(
+        "--start-date",
+        default=None,
+        help="Start date YYYY-MM-DD (required for daily/backfill; optional lower bound for incremental).",
+    )
+    parser.add_argument(
+        "--end-date",
+        default=None,
+        help="End date YYYY-MM-DD (required for daily/backfill; optional upper bound for incremental).",
+    )
+    parser.add_argument(
+        "--namespace",
+        default=None,
+        help="Override Iceberg namespace (default: SPARK_SILVER_NAMESPACE or silver_spark).",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-run dates even if already PUBLISHED with matching commit_id.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help="Emit full JSON summary.",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _build_arg_parser().parse_args(argv)
+    resources = (
+        None
+        if args.resource.strip().lower() == "all"
+        else [r.strip() for r in args.resource.split(",") if r.strip()]
+    )
+    cfg = SparkSilverSettings.from_environment(
+        namespace=args.namespace,
+        load_dotenv_file=True,
+    )
+    summary = run_spark_silver_all(
+        resources=resources,
+        mode=args.mode,
+        start_date=_parse_iso_date(args.start_date),
+        end_date=_parse_iso_date(args.end_date),
+        force=args.force,
+        settings=cfg,
+    )
+    if args.as_json:
+        print(json.dumps(summary, indent=2))
+    else:
+        print(
+            f"[spark-silver] namespace={summary['namespace']} mode={summary['mode']} "
+            f"status={summary['status']} wall_s={summary['wall_s']}"
+        )
+        for item in summary["results"]:
+            print(
+                f"  - {item['resource']}: status={item['status']} "
+                f"batches={len(item['batches'])} missing_days={len(item['missing_bronze_dates'])} "
+                f"wall_s={item['wall_s']}"
+            )
+        if summary["resources_failed"]:
+            print(
+                f"  FAILED resources: {', '.join(summary['resources_failed'])}",
+                file=sys.stderr,
+            )
+    return 0 if summary["status"] != "FAILED" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
