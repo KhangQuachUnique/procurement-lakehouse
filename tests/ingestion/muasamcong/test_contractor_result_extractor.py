@@ -173,3 +173,37 @@ def test_notify_no_falls_back_to_search_item_but_result_version_stays_result_ver
 
     assert records[0].record.source_id == "IB2600000003"
     assert records[0].record.source_version == "01"
+
+
+def test_null_result_dto_falls_back_to_search_item_identity() -> None:
+    class NullDtoClient:
+        def get_result_detail(self, result_id: str) -> dict[str, Any]:
+            return {
+                "bideContractorInputResultDTO": None,
+                "bidpPlanDetailDTO": None,
+            }
+
+    errors: list[ErrorRecord] = []
+    records = list(
+        iter_contractor_result_records(
+            NullDtoClient(),
+            identity=CONTRACTOR_RESULT,
+            search_items=[
+                {
+                    "notifyNo": "IB2600541153",
+                    "notifyVersion": "00",
+                    "inputResultId": "369231ea-775e-4ce2-8af3-0dbe9a4e55de",
+                }
+            ],
+            run_id="run-1",
+            source_date=date(2026, 9, 16),
+            search_page=12,
+            errors=errors,
+            stats=PageStats(),
+        )
+    )
+
+    assert errors == []
+    assert len(records) == 1
+    assert records[0].record.source_id == "IB2600541153"
+    assert records[0].record.source_version is None
