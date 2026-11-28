@@ -135,7 +135,7 @@ class IngestionService:
                         owner_id=request.owner_id,
                         generation=generation,
                     )
-                except Exception as exc:  # noqa: BLE001 — propagate renewal failure to caller
+                except Exception as exc:
                     heartbeat_errors.append(exc)
                     return
 

@@ -1,119 +1,113 @@
 # Tổng Quan Kiến Trúc & Luồng Dữ Liệu (System Architecture & Data Flow)
 
-- **Trạng thái:** CHÍNH THỨC (Single Source of Truth cho Kiến trúc Tổng thể)
-- **Mô hình kiến trúc:** Medallion Lakehouse (Bronze $\rightarrow$ Silver $\rightarrow$ Gold) + Hexagonal Architecture (Ports & Adapters)
-- **Định dạng lưu trữ:** Apache Iceberg Format v2 trên SeaweedFS S3 Object Storage
-- **Engine tính toán:** DuckDB (In-memory OLAP & SIMD Vectorized Engine)
+- **Mô hình kiến trúc:** Medallion Lakehouse 3 Tầng ($Bronze \rightarrow Silver \rightarrow Two\text{-}Tier\ Gold$)
+- **Định dạng lưu trữ:** Apache Iceberg 1.10 (Format v2, Write-Audit-Publish) trên SeaweedFS S3
+- **Engine tính toán:** Apache Spark 4.0.0 (chạy cục bộ `local[N]` hoặc phân tán trên K3s Multi-Node)
+- **Điều phối:** Dagster (Docker Compose với JVM 21 + PySpark 4.0.0 tích hợp sẵn)
 
 ---
 
-## 1. Sơ đồ Luồng Dữ liệu Trực quan (End-to-End Data Flow)
-
-Hệ sinh thái vận hành theo luồng 4 tầng tuần tự, được bảo đảm tính nhất quán và toàn vẹn bằng phân vùng chuẩn Ngày (`YYYY-MM-DD`):
+## 1. Sơ Đồ Luồng Dữ Liệu End-to-End
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. Nguồn Dữ Liệu (Raw Ingestion)"]
-        API["Hệ thống Mạng Đấu thầu Quốc gia<br/>(Muasamcong VNEPS API)"]
-        INGEST["Ingestion Engine<br/>(Async HTTP Client, Backoff & Rate Limit)"]
+    subgraph S1["1. Nguồn Dữ Liệu (Ingestion)"]
+        API["Cổng Mua Sắm Công Quốc gia<br/>(muasamcong.mof.gov.vn)"]
+        INGEST["Ingestion Engine + Bid-Opening Watcher<br/>(httpx, Backoff, Rate Limit, dlt)"]
         API --> INGEST
     end
 
     subgraph S2["2. Tầng Bronze (Raw Parquet Lake)"]
-        BRONZE_S3[("SeaweedFS S3: procurement-lakehouse<br/>raw/{resource}/source_date=YYYY-MM-DD/")]
-        PG_META[("PostgreSQL Metadata Service<br/>(Partitions, Attempts, File Lineage)")]
-        INGEST -->|"Ghi file Parquet thô"| BRONZE_S3
-        INGEST -->|"Ghi nhận Commit UUID"| PG_META
+        BRONZE_S3[("SeaweedFS S3 (:8333)<br/>procurement-lakehouse/raw/{resource}/source_date=YYYY-MM-DD/")]
+        PG_META[("PostgreSQL 17 (:25432)<br/>Bronze Commits · Silver Receipts · Gold Watermarks")]
+        INGEST -->|"Parquet thô"| BRONZE_S3
+        INGEST -->|"Commit UUID & SHA-256"| PG_META
     end
 
-    subgraph S3["3. Tầng Silver (Relational Lakehouse)"]
-        SILVER_TRANS["Silver Transformer & Normalizer<br/>(Pydantic Validation, 1-Hop Relations)"]
-        SILVER_ICEBERG[("Apache Iceberg Format v2<br/>Catalog: lake.silver<br/>(23 Bảng Chuẩn hóa Quan hệ)")]
-        JOURNAL[("Silver Change Journal<br/>(Ghi nhận Delta & Audit Trail)")]
-        
-        BRONZE_S3 --> SILVER_TRANS
-        PG_META --> SILVER_TRANS
-        SILVER_TRANS -->|"Atomic Commit Parquet"| SILVER_ICEBERG
-        SILVER_TRANS -->|"Snapshot delta"| JOURNAL
+    subgraph S3["3. Tầng Silver (Spark 4.0 + Iceberg WAP)"]
+        SILVER_SPARK["Spark Silver Runner<br/>(src/procurement/silver/)"]
+        SILVER_ICEBERG[("Apache Iceberg (:8181)<br/>lake.silver_spark<br/>21 Bảng Quan hệ Chuẩn hóa")]
+        BRONZE_S3 --> SILVER_SPARK
+        PG_META --> SILVER_SPARK
+        SILVER_SPARK -->|"WAP Branch -> DQ Gate -> Fast-Forward"| SILVER_ICEBERG
     end
 
-    subgraph S4["4. Tầng Gold (Business Dimensional Star Schema)"]
-        GOLD_COMPUTE["Gold Analytical Compute Engine<br/>(DuckDB In-Memory OLAP)"]
-        CLUSTERING["Entity Resolution<br/>(Union-Find Graph Clustering)"]
-        GOLD_DIMS[("9 Bảng Chiều (Dimensions)<br/>lake.gold.dim_*")]
-        GOLD_FACTS[("7 Bảng Sự kiện (Facts)<br/>lake.gold.fact_*_daily")]
-        VIEWS[("Zero-Copy Reporting Views<br/>gold.*")]
-        
-        SILVER_ICEBERG --> GOLD_COMPUTE
-        JOURNAL --> CLUSTERING
-        CLUSTERING --> GOLD_COMPUTE
-        GOLD_COMPUTE -->|"Upsert Where Not Exists"| GOLD_DIMS
-        GOLD_COMPUTE -->|"Atomic Partition Overwrite"| GOLD_FACTS
-        GOLD_DIMS --> VIEWS
-        GOLD_FACTS --> VIEWS
+    subgraph S4["4. Tầng Gold Two-Tier (Spark 4.0 + Iceberg WAP)"]
+        GOLD_CORE[("Tier 1: lake.gold_spark_core<br/>12 Bảng Atomic Core Entities<br/>(Incremental MERGE INTO)")]
+        GOLD_MART[("Tier 2: lake.gold_spark<br/>9 dim_* + 8 fact_*_daily<br/>(Partitioned by months(report_date))")]
+        DQ_GATE["Gold Quality & Reconciliation Gate<br/>(0 NULL/dup PK · award == supplier VND)"]
+        SILVER_ICEBERG -->|"start-snapshot-id delta / full"| GOLD_CORE
+        GOLD_CORE --> GOLD_MART
+        GOLD_MART --> DQ_GATE
     end
 
-    subgraph S5["5. Giám sát & Báo cáo (Audit & Consumption)"]
-        RECONCILE["Automated 3-Part Financial Reconciliation<br/>(So khớp Kế hoạch, Trúng thầu, Khóa ngoại)"]
-        DAGSTER["Dagster Webserver & Scheduler (:3002)<br/>(Lineage 4 Cột, Daily Partitions)"]
-        OPS["Ops FastAPI Dashboard (:8000)<br/>(Giám sát tiến độ & trạng thái)"]
-        
-        VIEWS --> RECONCILE
-        RECONCILE --> DAGSTER
-        VIEWS --> OPS
+    subgraph S5["5. Điều Phối & Tiêu Thụ BI"]
+        DAGSTER["Dagster Webserver & Daemon (:3002)<br/>bronze_daily · spark_lakehouse_daily · maintenance"]
+        PBI["Power BI Desktop (6 trang)<br/>(17 Parquet Marts)"]
+        DQ_GATE --> PBI
+        DAGSTER -.-> INGEST
+        DAGSTER -.-> SILVER_SPARK
+        DAGSTER -.-> GOLD_CORE
     end
 ```
 
 ---
 
-## 2. Sơ đồ Cấu trúc Hạ tầng & Dịch vụ (Infrastructure Topology)
-
-Toàn bộ hệ thống được container hóa và điều phối thống nhất thông qua `compose.yaml`:
+## 2. Cấu Trúc Hạ Tầng (Infrastructure Topology)
 
 ```mermaid
 flowchart LR
-    subgraph StorageInfra["Hạ tầng Lưu trữ & Metadata"]
-        S3["SeaweedFS S3 (:8333)<br/>Data Lake Parquet Bucket"]
-        CATALOG["Iceberg REST Catalog (:8181)<br/>lakehouse Catalog Manager"]
-        APP_PG["App PostgreSQL 17 (:25432)<br/>Ingestion Lineage & Metadata"]
-        DAG_PG["Dagster PostgreSQL 17<br/>Runs & Event Logs Storage"]
+    subgraph DockerHost["Docker Compose Stack (Máy Chủ)"]
+        S3["SeaweedFS S3 (:8333)<br/>+ Iceberg REST (:8181)"]
+        PG["PostgreSQL 17 (:25432)<br/>procurement + dagster DBs"]
+        DAG_LOC["Dagster Code Location (:4000)<br/>Java 21 + PySpark 4.0.0"]
+        DAG_DAEMON["Dagster Daemon"]
+        DAG_WEB["Dagster Webserver (:3002)"]
     end
 
-    subgraph Orchestration["Bộ điều phối Dagster Lakehouse"]
-        CODE_LOC["Dagster Code Location (:4000)<br/>(gRPC Server thực thi Assets)"]
-        DAEMON["Dagster Daemon<br/>(Lịch trình & Sensor chạy nền)"]
-        WEBSERVER["Dagster Webserver (:3002)<br/>(UI Dashboard theo dõi Lineage)"]
+    subgraph K3sCluster["Cụm K3s Spark Multi-Node (LAN hoặc Tailscale)"]
+        SM["spark-master (:7077 / UI :8080)"]
+        SW1["spark-worker (Master Node)"]
+        SW2["spark-worker (Worker Linux / Windows WSL2)"]
     end
 
-    subgraph Application["Ứng dụng Giám sát"]
-        OPS_APP["Ops FastAPI Service (:8000)<br/>(Tiến độ thầu & Health API)"]
-    end
-
-    StorageInfra <--> CODE_LOC
-    CODE_LOC <--> DAEMON
-    CODE_LOC <--> WEBSERVER
-    DAG_PG <--> DAEMON
-    DAG_PG <--> WEBSERVER
-    StorageInfra <--> OPS_APP
+    S3 <--> DAG_LOC
+    PG <--> DAG_LOC
+    PG <--> DAG_DAEMON
+    PG <--> DAG_WEB
+    DAG_LOC <--> DAG_DAEMON
+    DAG_LOC <--> DAG_WEB
+    DAG_LOC -->|"Spark Driver"| SM
+    SM <--> SW1
+    SM <--> SW2
+    SW1 <-->|"Read/Write Parquet"| S3
+    SW2 <-->|"Read/Write Parquet"| S3
 ```
 
 ---
 
-## 3. Các Nguyên Tắc Kiến Trúc Bất Biến (Core Principles)
+## 3. Cấu Trúc Mã Nguồn (`src/procurement/`)
 
-1. **Phân vùng Ngày đồng nhất (Daily Partition Homogeneity):**
-   - Mọi thực thể từ Bronze, Silver đến Gold đều sử dụng chung một khóa phân vùng duy nhất: ngày báo cáo/sự kiện (`YYYY-MM-DD`).
-   - Xóa bỏ hoàn toàn tình trạng chạy lệch pha giữa Silver (theo ngày) và Gold (theo tháng).
+```text
+src/procurement/
+├── ingestion/        # Cào API MuaSamCong (6 resources)
+├── watcher/          # Theo dõi lịch mở thầu (bid_opening)
+├── bronze/           # Ghi & xác thực Bronze Parquet
+├── quality/          # Hợp đồng kiểm tra chất lượng đầu vào Bronze
+├── spark/            # Hạ tầng Spark 4.0 + Iceberg 1.10 dùng chung (session, WAP, maintenance)
+├── silver/           # Tầng Silver Spark (21 bảng Iceberg + receipts + DQ gate)
+├── gold/             # Tầng Gold Spark Two-Tier (12 core + 17 marts + watermarks + DQ gate)
+├── orchestration/    # Dagster jobs, schedules & sensors
+├── metadata/         # PostgreSQL partition metadata service
+├── storage/          # S3 / object storage helpers
+├── common/           # Settings, catalog, dates, errors, logging
+└── cli/              # Entrypoint `ingest` + Rich terminal UI
+```
 
-2. **Tính lũy thừa & Ghi đè an toàn (Idempotency & Partition Overwrite):**
-   - Mọi Job có thể chạy lại vô hạn lần cho cùng một ngày mà không sinh ra dữ liệu trùng lặp.
-   - Gold Facts sử dụng cơ chế `DELETE WHERE report_date >= start AND report_date < end` kết hợp `INSERT INTO` trong cùng transaction ACID của Iceberg.
-   - Gold Dimensions áp dụng cơ chế `INSERT ... WHERE NOT EXISTS`.
+---
 
-3. **Kiến trúc Lục giác (Hexagonal Architecture):**
-   - Tầng Domain (`gold.domain`, `silver.domain`) thuần túy chứa logic nghiệp vụ và schema, độc lập 100% với database engine, storage SDK và web framework.
-   - Giao tiếp hạ tầng thông qua các cổng chuẩn (`ports`) và adapter chuyên biệt (`adapters`).
+## 4. Nguyên Tắc Kiến Trúc Cốt Lõi
 
-4. **Zero-Copy Reporting Views (`gold.*`):**
-   - Người dùng và hệ thống BI (Metabase, Looker, Superset) truy vấn thông qua các SQL View logic trong schema `gold.*`.
-   - Các view này trỏ trực tiếp tới release vật lý đang active (ví dụ: `lake.gold.*` hoặc bản thử nghiệm `lake.gold_v2.*`), cho phép chuyển đổi phiên bản (blue-green promote) tức thì mà không cần copy hay di chuyển dữ liệu.
+1. **Write-Audit-Publish (WAP) tuyệt đối:** Cả Silver và Gold đều ghi vào Iceberg branch tạm, kiểm tra chất lượng xong mới `fast_forward` vào `main`. Nếu lỗi, branch tạm bị `abort` nên bảng production không bao giờ bị nửa chừng hay hỏng dữ liệu.
+2. **Two-Tier Gold & Incremental Snapshot Tracking:** Tầng Core lưu 12 thực thể nguyên tử có khóa merge (`CORE_MERGE_KEYS`), cho phép `gold run` hàng ngày chỉ đọc delta từ `start-snapshot-id` của Silver và `MERGE INTO` thay vì tính lại toàn bộ 5 năm.
+3. **Pure-JVM Execution trên K3s:** Toàn bộ transform Silver/Gold chạy thuần Spark SQL / JVM (không dùng Python UDF/RDD trên worker), nên miễn nhiễm khác biệt phiên bản Python giữa host và K3s pod.

@@ -1,5 +1,3 @@
-"""Silver lakehouse layer: Hexagonal domain, ports, adapters, and application services."""
+"""Spark-native Silver layer (Bronze Parquet -> Iceberg WAP)."""
 
-from procurement.silver.service import date_range, run_resource
-
-__all__ = ["date_range", "run_resource"]
+__all__ = []

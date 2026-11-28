@@ -21,7 +21,8 @@ def test_domain_packages_do_not_import_dagster():
 
 
 def test_local_instance_enforces_pool_limit_and_disables_retry(tmp_path):
-    config = yaml.safe_load((ROOT / "infra/dagster/local/dagster.yaml").read_text())
+    config = yaml.safe_load((ROOT / "infra/dagster/dagster.yaml").read_text())
+    config.pop("storage", None)
     with DagsterInstance.local_temp(str(tmp_path), overrides=config) as instance:
         concurrency = instance.get_concurrency_config()
         assert concurrency.pool_config.default_pool_limit == 1

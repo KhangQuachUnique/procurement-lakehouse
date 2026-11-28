@@ -69,7 +69,7 @@ def _pg_committed_bounds(identity: Any) -> tuple[date, date] | None:
         from procurement.bootstrap import get_metadata_service
 
         dates = get_metadata_service().list_committed_dates(identity.source, identity.resource)
-    except Exception:  # noqa: BLE001 -- fallback to S3 manifests when Postgres is unavailable
+    except Exception:
         return None
     if not dates:
         return None
@@ -86,7 +86,7 @@ def _pg_coverage_for_dates(identity: Any, dates: list[date]) -> dict[date, Cover
         snapshots = get_metadata_service().get_snapshot(
             [PartitionIdentity(identity.source, identity.resource, d) for d in dates]
         )
-    except Exception:  # noqa: BLE001 -- fallback to S3 manifests when Postgres is unavailable
+    except Exception:
         return None
     by_date = {
         view.partition.identity.source_date: _snapshot_to_manifest(view)
@@ -554,7 +554,7 @@ def check(
                         manifest = read_day_manifest(fs, identity, run, day)
                     except (
                         Exception
-                    ):  # noqa: BLE001 -- fallback to metadata service when S3 manifest is absent
+                    ):
                         manifest = None
                 if manifest is None:
                     pg_cov = _pg_coverage_for_dates(identity, [day])

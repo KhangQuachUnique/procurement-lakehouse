@@ -10,10 +10,13 @@ requires-python = ">=3.12,<3.15"
 
 dependencies = [
     "dlt[filesystem,parquet]>=1.30,<2",
-    "duckdb>=1.5.5,<2",
+    "fsspec>=2026.7,<2027",
     "httpx>=0.28,<1",
+    "psycopg2-binary>=2.9,<3",
+    "pyarrow>=20,<26",
     "pydantic>=2.11,<3",
     "python-dotenv>=1,<2",
+    "rich>=13,<16",
     "s3fs>=2026.7,<2027",
     "sqlalchemy>=2,<2.1",
     "typer>=0.16,<1",
@@ -21,8 +24,8 @@ dependencies = [
 
 [project.scripts]
 ingest = "procurement.cli.ingest:main"
-silver = "procurement.cli.silver:main"
-gold = "procurement.gold.adapters.driving.cli:main"
+silver = "procurement.silver.cli:main"
+gold = "procurement.gold.cli:main"
 
 [project.optional-dependencies]
 metadata = [
@@ -34,18 +37,15 @@ dev = [
     "pytest>=8,<9",
     "ruff>=0.12,<1",
 ]
-ops = [
-    "fastapi>=0.116,<1",
-    "uvicorn[standard]>=0.35,<1",
-    "sqlalchemy>=2,<2.1",
-    "psycopg2-binary>=2.9,<3",
-]
 orchestration = [
     "dagster>=1.13,<1.14",
     "dagster-webserver>=1.13,<1.14",
     "dagster-postgres>=0.29,<0.30",
     # Dagster's PostgreSQL backend currently uses the psycopg2 driver.
     "sqlalchemy>=2,<2.1",
+]
+spark = [
+    "pyspark==4.0.0",
 ]
 
 [tool.dagster]
@@ -55,12 +55,8 @@ module_name = "procurement.orchestration.definitions"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"procurement.gold.domain" = ["*.json"]
-"procurement.gold.application.compute" = ["*.json"]
-"procurement.gold.application.compute.sql" = ["*.sql"]
+"procurement.gold" = ["*.json"]
 "procurement.quality" = ["*.toml"]
-"procurement.api.ops" = ["static/*.css", "static/*.js", "templates/*.html"]
-"procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -71,6 +67,10 @@ markers = ["integration: real DLT/filesystem or isolated S3 integration tests"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+extend-exclude = [".agents", "PowerBI"]
+
+[tool.ruff.lint]
+ignore = ["BLE001", "S110"]
 
 [dependency-groups]
 dev = [

@@ -35,9 +35,12 @@ def extract_contractor_result_identity(
     payload: dict[str, Any],
     search_item: dict[str, Any],
 ) -> tuple[str, str | None]:
-    result = payload.get("bideContractorInputResultDTO")
-    if not isinstance(result, dict):
+    if "bideContractorInputResultDTO" not in payload:
         raise KeyError("bideContractorInputResultDTO")
+    raw_result = payload.get("bideContractorInputResultDTO")
+    if raw_result is not None and not isinstance(raw_result, dict):
+        raise KeyError("bideContractorInputResultDTO")
+    result = raw_result if isinstance(raw_result, dict) else {}
 
     source_id = (
         _as_string(result.get("notifyNo"))

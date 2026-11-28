@@ -4,7 +4,7 @@ storage:
       username: dagster
       password:
         env: DAGSTER_POSTGRES_PASSWORD
-      hostname: dagster-postgres
+      hostname: app-postgres
       db_name: dagster
       port: 5432
 

@@ -1,0 +1,164 @@
+# Minimal multi-node K3s manifest for Apache Spark 4.0 (Procurement Lakehouse)
+# Supports BOTH:
+#   1. Native Kubernetes mode: --master k8s://https://<k3s-server>:6443 (using spark-driver ServiceAccount)
+#   2. Spark Standalone on K3s: --master spark://spark-master.procurement.svc.cluster.local:7077
+#
+# Apply:
+#   kubectl apply -f infra/k3s/spark-cluster.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: procurement
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-driver
+  namespace: procurement
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-driver-role
+  namespace: procurement
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-driver-binding
+  namespace: procurement
+subjects:
+  - kind: ServiceAccount
+    name: spark-driver
+    namespace: procurement
+roleRef:
+  kind: Role
+  name: spark-driver-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: procurement
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      enableServiceLinks: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      containers:
+        - name: spark-master
+          image: apache/spark:4.0.0-python3
+          command:
+            - /opt/spark/bin/spark-class
+            - org.apache.spark.deploy.master.Master
+            - --host
+            - 0.0.0.0
+            - --port
+            - "7077"
+            - --webui-port
+            - "8080"
+          env:
+            - name: SPARK_NO_DAEMONIZE
+              value: "true"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          ports:
+            - containerPort: 7077
+              name: spark
+            - containerPort: 8080
+              name: webui
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+  namespace: procurement
+spec:
+  selector:
+    app: spark-master
+  ports:
+    - name: spark
+      port: 7077
+      targetPort: 7077
+    - name: webui
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spark-worker
+  namespace: procurement
+spec:
+  # Automatically runs exactly 1 Spark Worker on EVERY K3s node (no manual scaling needed).
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      enableServiceLinks: false
+      containers:
+        - name: spark-worker
+          image: apache/spark:4.0.0-python3
+          command:
+            - /opt/spark/bin/spark-class
+            - org.apache.spark.deploy.worker.Worker
+            - spark://spark-master.procurement.svc.cluster.local:7077
+          env:
+            - name: SPARK_NO_DAEMONIZE
+              value: "true"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: SPARK_LOCAL_DIRS
+              value: "/var/tmp/spark-scratch"
+            - name: SPARK_WORKER_CORES
+              value: "6"
+            - name: SPARK_WORKER_MEMORY
+              value: "4g"
+          volumeMounts:
+            - name: spark-scratch
+              mountPath: /var/tmp/spark-scratch
+          resources:
+            requests:
+              cpu: "2"
+              memory: "3Gi"
+            limits:
+              cpu: "6"
+              memory: "5Gi"
+      volumes:
+        - name: spark-scratch
+          emptyDir: {}

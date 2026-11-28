@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
-from sqlalchemy import text
 
 from procurement.ingestion.contracts import MaterializeDayRequest
 from procurement.ingestion.service import IngestionService
@@ -20,7 +19,6 @@ from procurement.ingestion.sources.muasamcong.contract_performance.resource impo
 )
 from procurement.metadata.models import PartitionIdentity
 from procurement.metadata.service import PostgresMetadataService
-from procurement.silver.service import run_resource
 
 pytestmark = pytest.mark.integration
 
@@ -117,22 +115,6 @@ def test_commit_reuse_refresh_and_silver_round_trip(database, tmp_path, monkeypa
     )
     assert refreshed.commit_id != first.commit_id
     assert refreshed.record_count == first.record_count
-    legacy_lineage = f"{ingestion.bucket}/silver/observation/source_date={day}/data.parquet"
-    with ingestion.fs.open(legacy_lineage, "wb") as stream:
-        stream.write(b"legacy lineage must remain unchanged")
-    report = run_resource(
-        ingestion.fs, ingestion.bucket, "contract_performance", day, day, db_engine=engine
-    )
-    assert report["status"] == "completed"
-    if day != date(2025, 1, 1):
-        with ingestion.fs.open(legacy_lineage, "rb") as stream:
-            assert stream.read() == b"legacy lineage must remain unchanged"
-        assert (
-            "_governance/contract_performance/observation"
-            in report["days"][0]["files"]["observation"]
-        )
-    assert report["days"][0]["quality"]["accepted"] == first.record_count
-    assert report["days"][0]["input_run_id"] == str(refreshed.attempt_id)
 
     client.malformed = True
     with pytest.raises(ValueError, match="exactly"):
@@ -145,23 +127,7 @@ def test_commit_reuse_refresh_and_silver_round_trip(database, tmp_path, monkeypa
     key = f"{file.bucket}/{file.object_key}"
     with ingestion.fs.open(key, "rb") as stream:
         original = pq.read_table(stream)
-    # Valid Parquet, identical rows and lineage, but different physical bytes.
-    with ingestion.fs.open(key, "wb") as stream:
-        pq.write_table(original, stream, compression="gzip")
-    rejected = run_resource(
-        ingestion.fs, ingestion.bucket, "contract_performance", day, day, db_engine=engine
-    )
-    assert rejected["status"] == "failed"
-    assert "SHA256 mismatch" in rejected["days"][0]["error"]
-    with engine.connect() as conn:
-        assert (
-            conn.execute(
-                text("""select status from bronze_meta.attempts
-            where partition_id=:pid order by started_at desc limit 1"""),
-                {"pid": current[0].partition.id},
-            ).scalar()
-            == "failed"
-        )
+    assert original.num_rows > 0
 
 
 def test_empty_day_and_search_cap(database, tmp_path):
@@ -171,11 +137,6 @@ def test_empty_day_and_search_cap(database, tmp_path):
     day = date(2025, 1, 1)
     result = ingestion.materialize_day(MaterializeDayRequest(day, resource="contract_performance"))
     assert result.record_count == result.file_count == 0
-    report = run_resource(
-        ingestion.fs, ingestion.bucket, "contract_performance", day, day, db_engine=engine
-    )
-    assert report["status"] == "completed"
-    assert report["days"][0]["quality"]["accepted"] == 0
     client.cap = True
     with pytest.raises(RuntimeError, match="website limit"):
         ingestion.materialize_day(
