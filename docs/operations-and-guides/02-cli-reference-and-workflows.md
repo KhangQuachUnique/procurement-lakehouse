@@ -1,223 +1,122 @@
-# Bước 2: Sổ Tay Tra Cứu Toàn Bộ Lệnh CLI (CLI Reference & End-to-End Workflows)
+# Bước 2: Sổ Tay Tra Cứu Toàn Bộ Lệnh CLI (`ingest`, `silver`, `gold`)
 
-- **Trạng thái:** CHÍNH THỨC (Cẩm nang hướng dẫn sử dụng dòng lệnh chuẩn 100% mã nguồn)
-- **Công cụ:** CLI Bộ ba Medallion (`ingest`, `silver`, `gold`)
+Hệ thống cung cấp 3 CLI chính thức được cài sẵn trong `.venv/bin/` (`pyproject.toml` `[project.scripts]`):
 
-Hệ thống cung cấp bộ công cụ CLI mạnh mẽ, cho phép thực thi độc lập từng giai đoạn của pipeline dữ liệu mà không bắt buộc phải mở giao diện Dagster.
-
----
-
-## 0. Quy Ước Về Namespace Mặc Định & Cơ Chế Thử Nghiệm
-
-Hệ thống phân tách rạch ròi giữa **Bản phát hành chính thức (Canonical Release)** và **Bản thử nghiệm (Experimental/Candidate)**:
-
-* **Mặc định xuất xưởng (Out-of-the-box):**  
-  Người dùng hoặc kỹ sư mới clone repo về sẽ luôn chạy mặc định trên hai namespace chuẩn là **`silver`** (23 bảng quan hệ) và **`gold`** (16 bảng Star Schema).
-* **Cơ chế dành cho Kỹ sư khi Cải tiến / Thử nghiệm (R&D):**  
-  Khi bạn muốn nâng cấp logic (thêm cột, sửa thuật toán gom cụm) mà **không muốn ảnh hưởng đến dữ liệu chính thức đang chạy**, bạn chỉ cần đặt trong file `.env`:
-  ```ini
-  SILVER_TARGET_NAMESPACE=silver_v2   # hoặc silver_v3, silver_test
-  GOLD_TARGET_NAMESPACE=gold_v2       # hoặc gold_v3, gold_test
-  ```
-  CLI và Dagster sẽ tự động chuyển hướng ghi vào namespace thử nghiệm đó. Sau khi kiểm chứng hoàn tất, dùng lệnh `promote` để đưa sang bản chính.
+| CLI | Mã nguồn | Tầng phụ trách |
+| :--- | :--- | :--- |
+| `ingest` | `src/procurement/cli/ingest.py` | Tầng **Bronze** (cào API Mua Sắm Công → Parquet trên S3 + commit Postgres) |
+| `silver` | `src/procurement/silver/cli.py` | Tầng **Silver** (Spark 4.0 + Iceberg WAP → 21 bảng `lake.silver_spark`) |
+| `gold` | `src/procurement/gold/cli.py` | Tầng **Gold** (Spark 4.0 Two-Tier WAP → 12 bảng Core + 17 bảng Mart `lake.gold_spark`) |
 
 ---
 
-## 1. CLI Thu Thập Dữ Liệu Thô Tầng Bronze (`ingest`)
-
-Đăng ký qua lệnh `ingest` (hoặc `python -m procurement.cli.ingest`).  
-Chức năng: Cào dữ liệu từ API Cổng Thông tin Đấu thầu Quốc gia, đóng gói Parquet lưu lên S3 và ghi nhận Commit Lineage vào PostgreSQL (`app-postgres`).
+## 1. CLI Tầng Bronze (`ingest`)
 
 ```bash
-# 1. Cào toàn bộ 4 tài nguyên chính cho 1 ngày cụ thể
-uv run ingest --resource all --date 2025-10-09
+# Cào toàn bộ 6 tài nguyên cho 1 ngày cụ thể
+.venv/bin/ingest --resource all --date 2026-10-30
 
-# 2. Cào một tài nguyên theo dải ngày (ví dụ: Kế hoạch LCNT trong tháng 10/2025)
-uv run ingest --resource khlcnt --start-date 2025-10-01 --end-date 2025-10-31
+# Cào 1 tài nguyên theo khoảng ngày
+.venv/bin/ingest --resource khlcnt --start-date 2026-10-01 --end-date 2026-10-31
 
-# 3. Chế độ kiểm tra (Dry-run: chỉ đọc PostgreSQL để kiểm tra ngày còn thiếu, không gọi API, không ghi đè)
-uv run ingest --resource project --date 2025-10-09 --dry-run
+# Dry-run: kiểm tra ngày còn thiếu trên Postgres mà không gọi API
+.venv/bin/ingest --resource project --date 2026-10-30 --dry-run
 
-# 4. Ép buộc cào lại ngay cả khi ngày đó đã có commit thành công
-uv run ingest --resource contractor_result --date 2025-10-09 --refresh
+# Ép cào lại dù ngày đó đã có commit
+.venv/bin/ingest --resource contractor_result --date 2026-10-30 --refresh
 ```
 
-*Các tài nguyên (`--resource`) hỗ trợ:* `all`, `khlcnt`, `project`, `notify_contractor`, `contractor_result`, `contract_performance`, `bid_opening`.
+*Tài nguyên hỗ trợ:* `all`, `khlcnt`, `project`, `notify_contractor`, `contractor_result`, `bid_opening`, `contract_performance`.
 
 ---
 
-## 2. CLI Chuẩn Hóa Quan Hệ Tầng Silver (`silver`)
+## 2. CLI Tầng Silver (`silver`)
 
-Đăng ký qua Typer CLI `silver` (mã nguồn: `src/procurement/cli/silver.py`).  
-Chức năng: Đọc Bronze Parquet $\rightarrow$ Kiểm soát chất lượng & chuẩn hóa $\rightarrow$ Xuất bản vào **23 bảng quan hệ Iceberg Format v2**.
+Cả 3 subcommand (`run`, `backfill`, `maintain`) đều hỗ trợ:
+- `--k3s`: tự động dùng `SPARK_K3S_MASTER` và tự nhận diện IP Driver (LAN hoặc `SPARK_LOCAL_IP` từ `.env`).
+- `--master local[4]` / `--driver-memory 4g`: chạy cục bộ trên máy host không cần K3s.
+- `--namespace <ns>`: mặc định `silver_spark`.
 
-### 2.1. Lệnh Thực Thi Chủ Lực (`silver all`)
-Tự động xử lý trọn gói toàn bộ 4 tài nguyên chính và ghi thẳng vào Apache Iceberg:
-
+### 2.1. Chạy Incremental Hàng Ngày (`silver run`)
+Tự động quét các Bronze commit mới chưa có receipt trong Postgres và chỉ xử lý phần thay đổi:
 ```bash
-# 1. Chạy chuẩn hóa cho một ngày cụ thể (mặc định vào target namespace được cấu hình)
-uv run silver all --date 2025-10-09
+# Chạy incremental tất cả 6 tài nguyên trên K3s
+.venv/bin/silver run --k3s
 
-# 2. Chạy dải ngày (tự động kích hoạt đa luồng worker song song theo năm)
-uv run silver all --start-date 2025-10-01 --end-date 2025-10-31 --workers 4
-
-# 3. Chỉ định namespace mục tiêu cụ thể (ví dụ chạy thử nghiệm vào silver_v2)
-uv run silver all --date 2025-10-09 --namespace silver_v2
-
-# 4. Bỏ qua các ngày đã có dữ liệu trong kho (tránh chạy lại)
-uv run silver all --start-date 2025-01-01 --end-date 2025-12-31 --skip-existing
+# Chạy lẻ 1–2 tài nguyên cục bộ
+.venv/bin/silver run --master local[4] --resource notice,khlcnt
 ```
 
-### 2.2. Chạy Lẻ Từng Tài Nguyên Riêng Biệt
+### 2.2. Chạy Backfill Khoảng Ngày (`silver backfill`)
 ```bash
-uv run silver khlcnt --date 2025-10-09              # Kế hoạch & Gói thầu
-uv run silver project --date 2025-10-09             # Dự án đầu tư
-uv run silver notice --date 2025-10-09              # Thông báo mời thầu & HSMT
-uv run silver result --date 2025-10-09              # Kết quả trúng thầu
-uv run silver contract_performance --date 2025-10-09# Hợp đồng pilot
+# Backfill toàn bộ 6 tài nguyên trong khoảng ngày
+.venv/bin/silver backfill --k3s --start-date 2026-01-01 --end-date 2026-10-31
+
+# Ép chạy lại dù đã có receipt (--force)
+.venv/bin/silver backfill --k3s --resource project --start-date 2026-01-01 --end-date 2026-01-31 --force
 ```
 
-### 2.3. Công Cụ Quản Trị & Tra Cứu Kho Silver
+### 2.3. Bảo Trì Iceberg (`silver maintain`)
+Chạy trọn bộ 4 thủ tục Iceberg (`rewrite_data_files`, `rewrite_manifests`, `expire_snapshots`, `remove_orphan_files`):
 ```bash
-# 1. Quét toàn bộ file Parquet trên S3 và đồng bộ hàng loạt vào Iceberg Format v2
-uv run silver sync-iceberg --namespace silver
+# Kiểm tra trước (không xóa file orphan thật)
+.venv/bin/silver maintain --k3s --dry-run-orphans
 
-# 2. Kiểm tra Snapshot ID, số lượng dòng và metadata của 23 bảng trong Iceberg
-uv run silver inspect --namespace silver
-
-# 3. Ánh xạ các bảng vật lý thành Zero-Copy SQL Views (Release Promotion)
-uv run silver promote --from silver_v2 --to silver
-
-# 4. Mở DuckDB Web SQL Studio cục bộ trên trình duyệt để truy vấn SQL trực tiếp
-uv run silver ui --port 8080
-
-# 5. Xem tóm tắt kết quả JSON của lần chạy gần nhất
-uv run silver report
+# Chạy bảo trì chính thức
+.venv/bin/silver maintain --k3s
 ```
 
 ---
 
-## 3. CLI Tính Toán & Báo Cáo Tầng Gold (`gold`)
+## 3. CLI Tầng Gold (`gold`)
 
-Đăng ký qua Typer CLI `gold` (mã nguồn: `src/procurement/gold/adapters/driving/cli.py`).  
-Chức năng: Quản lý vòng đời tính toán **Star Schema 16 bảng** (9 Dim + 7 Fact) theo kiến trúc Hexagonal.
+Hỗ trợ đầy đủ `--k3s`, `--master`, `--driver-memory`, `--silver-namespace` (mặc định `silver_spark`), `--core-namespace` (mặc định `gold_spark_core`), `--namespace` (mặc định `gold_spark`).
 
-### 3.1. Kiểm Tra Hợp Đồng & Mã Băm Logic
+### 3.1. Chạy Incremental Hàng Ngày (`gold run`)
+Đọc `gold_spark_meta.runs` trên Postgres và so với Iceberg snapshot hiện tại của `lake.silver_spark`:
+- Nếu không có snapshot mới → trả về **`NO_OP`** trong ~10 giây.
+- Nếu có snapshot mới → đọc delta bằng Iceberg `start-snapshot-id`, `MERGE INTO` trên `gold_spark_core` qua WAP branch, dựng lại mart bị ảnh hưởng và chạy Quality Gate (đối soát `award == supplier` lệch `0`).
+- Nếu snapshot cũ đã bị expire → tự động fallback sang `rebuild` an toàn.
+
 ```bash
-# Xem chi tiết hợp đồng 16 bảng (Tên cột, kiểu dữ liệu, PK, FK, Grain)
-uv run gold schema
+# Chạy incremental trên K3s
+.venv/bin/gold run --k3s
 
-# Xem mã băm toàn vẹn (64-char logic hash) của mã nguồn tính toán hiện tại
-uv run gold version
+# Chạy incremental cục bộ
+.venv/bin/gold run --master local[4]
 ```
 
-### 3.2. Khởi Tạo Hạ Tầng & Dữ Liệu Danh Mục
+### 3.2. Rebuild Toàn Bộ 5 Năm (`gold rebuild`)
+> **Khuyến nghị tài nguyên:** Với full rebuild toàn bộ 5 năm (`2022-01-01..2026-10-31`), dùng `--master local[4] --driver-memory 4g` chạy ổn định trong ~18 phút (tránh OOMKill ở worker pod khi shuffle nặng bảng `fact_award`). Sau lần rebuild đầu tiên, các lượt `gold run` hàng ngày chạy mượt trên `--k3s`.
+
 ```bash
-# 1. Tự động khởi tạo 16 bảng trong Iceberg (lake.gold) với phân vùng tháng cho Facts
-uv run gold ensure-tables
-
-# 2. Nạp dữ liệu danh mục 63 tỉnh/thành phố chuẩn vào dim_geography
-uv run gold seed-geography
-
-# Hoặc chỉ định namespace thử nghiệm:
-uv run gold ensure-tables --namespace gold_v3
-uv run gold seed-geography --namespace gold_v3
+.venv/bin/gold rebuild \
+  --master local[4] \
+  --driver-memory 4g \
+  --start-date 2022-01-01 \
+  --end-date 2026-10-31 \
+  --namespace gold_spark \
+  --core-namespace gold_spark_core
 ```
 
-### 3.3. Tính Toán Star Schema Tầng Gold (`gold run`)
-Thực thi tính toán chuyển đổi từ Silver sang Star Schema 16 bảng của Gold (tự động upsert Dimensions và partition overwrite Fact theo ngày/tháng):
-
+### 3.3. Bảo Trì Iceberg Tầng Gold (`gold maintain`)
 ```bash
-# 1. Chạy tính toán cho một ngày cụ thể (mặc định silver -> gold)
-uv run gold run --date 2025-10-09
-
-# 2. Chạy tính toán trọn gói cho một tháng (ví dụ tháng 10/2025)
-uv run gold run --month 2025-10
-
-# 3. Chạy dải ngày lịch sử (tự động phân trang xử lý từng tháng để tối ưu RAM)
-uv run gold run --start-date 2022-01-01 --end-date 2025-12-31
-
-# 4. Tùy chọn chỉ định namespace thử nghiệm (ví dụ silver_v3 sang gold_v3)
-uv run gold run --start-date 2022-01-01 --end-date 2025-12-31 --silver-namespace silver_v3 --gold-namespace gold_v3
-```
-
-### 3.4. Chuyển Đổi Views Báo Cáo Không Cần Copy (Zero-Copy Promote)
-```bash
-# Tạo/cập nhật 16 View trong schema gold.* trỏ tới bảng vật lý lake.gold.*
-uv run gold promote
-
-# Hoặc trỏ tới bản thử nghiệm (ví dụ lake.gold_v3.*):
-uv run gold promote --source-namespace gold_v3 --target-schema gold
-```
-
-### 3.5. Kiểm Tra Đối Soát Tài Chính 3 Chiều (Reconciliation Audit)
-```bash
-# So khớp tổng tiền kế hoạch, tổng tiền trúng thầu và khóa ngoại mồ côi (mặc định lake.gold vs lake.silver)
-uv run gold reconcile
-
-# Hoặc chỉ định rõ schema khi kiểm thử đối soát:
-uv run gold reconcile --gold-schema lake.gold_v3 --silver-schema lake.silver_v3
-```
-*Kết quả xuất định dạng JSON: `is_valid: true`, giá trị tiền kế hoạch/trúng thầu, `orphan_fks: 0`.*
-
-### 3.6. Quản Lý RunPlan & Khôi Phục Sự Cố
-```bash
-uv run gold status                          # Xem trạng thái chạy local
-uv run gold plan --source ... --target ...  # Đóng băng kế hoạch tính toán
-uv run gold resume --plan-file ...          # Tiếp tục kế hoạch đang chạy dở
-uv run gold backup --output ...             # Sao lưu local state
-uv run gold verify --root ...               # So sánh đối chiếu snapshot từ xa
+.venv/bin/gold maintain --k3s --namespace gold_spark
+.venv/bin/gold maintain --k3s --namespace gold_spark_core
 ```
 
 ---
 
-## 4. Hướng Dẫn Mẫu: Chạy Vận Hành Một Ngày Từ A $\rightarrow$ Z (Daily Walkthrough)
-
-Quy trình chuẩn thực tế để xử lý trọn vẹn dữ liệu cho ngày `2025-10-09`:
+## 4. Luồng Chạy Trọn Vẹn Một Ngày (Daily E2E)
 
 ```bash
-# =============================================================
-# BƯỚC 1: Cào dữ liệu thô (Bronze)
-# =============================================================
-uv run ingest --resource all --date 2025-10-09
+# 1. Cào Bronze cho ngày hôm qua
+.venv/bin/ingest --resource all --date 2026-10-30
 
-# =============================================================
-# BƯỚC 2: Chuẩn hóa 23 bảng quan hệ (Silver)
-# =============================================================
-uv run silver all --date 2025-10-09
+# 2. Đồng bộ Silver incremental
+.venv/bin/silver run --k3s
 
-# =============================================================
-# BƯỚC 3: Tính toán Star Schema 16 bảng (Gold)
-# =============================================================
-uv run gold run --date 2025-10-09
-
-# =============================================================
-# BƯỚC 4: Kiểm tra Đối soát Toàn vẹn (Reconcile)
-# =============================================================
-uv run gold reconcile
+# 3. Cập nhật Two-Tier Gold incremental + Quality Gate
+.venv/bin/gold run --k3s
 ```
-
----
-
-## 5. Hướng Dẫn Mẫu: Chạy Toàn Bộ Dữ Liệu Lịch Sử 2022 – 2025 (Historical Backfill)
-
-Quy trình chuẩn để tái lập toàn bộ kho dữ liệu từ 2022 đến hết 2025 bằng CLI:
-
-```bash
-# 1. Khởi tạo cấu trúc bảng Gold & nạp 63 tỉnh thành chuẩn
-uv run gold ensure-tables
-uv run gold seed-geography
-
-# 2. Xử lý Silver đa luồng song song 4 năm (Workers=4, Batch Size=30 ngày/commit)
-uv run silver all --start-date 2022-01-01 --end-date 2025-12-31 --workers 4
-
-# 3. Tính toán Star Schema Gold toàn bộ 4 năm (Tự động duyệt 48 tháng)
-uv run gold run --start-date 2022-01-01 --end-date 2025-12-31
-
-# 4. Kiểm toán đối soát tài chính 3 chiều toàn diện
-uv run gold reconcile
-
-# 5. (Tùy chọn) Public Views phục vụ báo cáo BI
-uv run silver promote
-uv run gold promote
-```
+*(Hoặc bật schedule `bronze_daily_schedule` và `spark_lakehouse_daily_schedule` trên Dagster UI `http://127.0.0.1:3002` để chạy hoàn toàn tự động.)*

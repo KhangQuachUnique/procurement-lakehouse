@@ -1,8 +1,8 @@
 # THƯ VIỆN TÀI LIỆU KỸ THUẬT: PROCUREMENT LAKEHOUSE
 
 - **Hệ thống:** Procurement Lakehouse (Hệ thống Hồ Dữ liệu & Phân tích Đấu thầu Quốc gia)
-- **Mô hình:** Medallion Lakehouse 4 Tầng ($Bronze \rightarrow Silver \rightarrow Gold \rightarrow Audit$)
-- **Hạ tầng chính:** Apache Iceberg Format v2 · SeaweedFS S3 · DuckDB Vectorized Engine · Dagster Orchestration
+- **Mô hình:** Medallion Lakehouse 3 Tầng ($Bronze \rightarrow Silver \rightarrow Gold$) với kiến trúc Two-Tier Gold (Core + Marts)
+- **Hạ tầng chính:** Apache Spark 4.0 · Apache Iceberg 1.10 (WAP) · SeaweedFS S3 · PostgreSQL 17 · Dagster Orchestration · K3s Multi-Node
 
 ---
 
@@ -27,7 +27,8 @@
 
 | Thứ tự | Cẩm nang hướng dẫn | Mô tả nội dung chính |
 | :---: | :--- | :--- |
-| **01** | **[Bước 1: Thiết lập Môi trường & Hạ tầng Docker](operations-and-guides/01-environment-setup-and-docker.md)** | Hướng dẫn cài đặt từ đầu: Docker Compose 7 containers, SeaweedFS S3, Iceberg Catalog, Python uv, chạy test. |
+| **01** | **[Bước 1: Thiết lập Môi trường & Hạ tầng Docker](operations-and-guides/01-environment-setup-and-docker.md)** | Hướng dẫn cài đặt từ đầu: Docker Compose (SeaweedFS S3 + Iceberg REST + Postgres + Dagster kèm Java 21/PySpark 4.0), Python `uv`, chạy test. |
+| **01b** | **[Cụm K3s + Spark 4.0 Multi-Node (LAN & Tailscale)](../infra/k3s/README.md)** | Hướng dẫn triển khai cụm Spark nhiều máy (Linux + Windows WSL2) theo **2 flow: mạng LAN/Wi-Fi nội bộ** và **Tailscale VPN xuyên mạng**. |
 | **02** | **[Bước 2: Sổ tay Tra cứu Toàn bộ Lệnh CLI](operations-and-guides/02-cli-reference-and-workflows.md)** | Hướng dẫn toàn bộ lệnh CLI (`ingest`, `silver`, `gold`), ví dụ thực thi trọn vẹn một ngày dữ liệu cụ thể. |
 | **03** | **[Bước 3: Sổ tay Vận hành Điều phối Dagster](operations-and-guides/03-dagster-orchestration-manual.md)** | Hướng dẫn sử dụng UI Dagster (`:3002`), mô hình Lineage 4 cột, chạy partition Ngày, kiểm tra metadata. |
 | **04** | **[Bước 4: Chạy Backfill Lịch sử & Xử lý Sự cố](operations-and-guides/04-backfill-and-troubleshooting.md)** | Quy trình chạy bù dữ liệu 5 năm (2022–2025) và sổ tay xử lý nhanh các sự cố thường gặp trong 30 giây. |

@@ -1,79 +1,68 @@
-# Bước 4: Sổ Tay Chạy Backfill Lịch Sử & Xử Lý Sự Cố (Backfill & Troubleshooting Guide)
+# Bước 4: Backfill Lịch Sử & Sổ Tay Xử Lý Sự Cố (Backfill & Troubleshooting)
 
-- **Trạng thái:** CHÍNH THỨC
-- **Mục tiêu:** Cung cấp quy trình nạp bù dữ liệu 5 năm (2022–2025) và các cẩm nang xử lý sự cố trong 30 giây.
+## 1. Quy Trình Backfill Dữ Liệu Lịch Sử (5 Năm: 2022–2026)
 
----
-
-## 1. Quy Trình Chạy Backfill Dữ Liệu Lịch Sử (Historical Backfill)
-
-Hệ thống hỗ trợ nạp bù dữ liệu lịch sử một cách an toàn mà không làm gián đoạn các luồng dữ liệu đang chạy:
-
-### 1.1. Chạy Backfill Thông qua Giao Diện Dagster (Khuyên dùng)
-1. Truy cập **`http://localhost:3002/jobs/lakehouse_end_to_end`**.
-2. Nhấn vào **Backfill** (bên cạnh nút Materialize).
-3. Nhập dải ngày cần chạy: ví dụ từ `2025-01-01` đến `2025-01-31`.
-4. Thiết lập **Max Concurrent Runs = 1** (bảo đảm an toàn bộ nhớ cho DuckDB và Iceberg).
-5. Nhấn **Submit Backfill**. Daemon Dagster sẽ tự động thực thi tuần tự từng ngày một cách hoàn toàn tự động.
-
-### 1.2. Chạy Backfill Thông qua CLI Script
-Bạn có thể chạy backfill độc lập từng tầng thông qua CLI:
+### 1.1. Backfill Tầng Silver (Spark + Iceberg WAP)
+Chạy theo năm hoặc toàn bộ khoảng ngày; hệ thống tự chia batch theo tháng và ghi receipt idempotent vào Postgres (`silver_spark_meta.receipts`):
 ```bash
-# 1. Backfill tầng Silver cho một khoảng thời gian (tự động gom batch và đa luồng):
-uv run silver all --start-date 2025-01-01 --end-date 2025-01-31
+.venv/bin/silver backfill --k3s --start-date 2022-01-01 --end-date 2026-10-31
+```
+Sau khi backfill xong, nên chạy 1 lượt compaction để gộp nhỏ file Parquet & manifest:
+```bash
+.venv/bin/silver maintain --k3s
+```
 
-# 2. Hoặc chạy script backfill lịch sử toàn diện cho tầng Gold (2022 - 2026):
-python scripts/run_gold_full_backfill.py
+### 1.2. Rebuild Toàn Bộ Tầng Gold (Two-Tier WAP)
+Khuyến nghị chạy `local[4] --driver-memory 4g` cho lần rebuild full 5 năm đầu tiên (~18 phút, 0 OOM):
+```bash
+.venv/bin/gold rebuild \
+  --master local[4] \
+  --driver-memory 4g \
+  --start-date 2022-01-01 \
+  --end-date 2026-10-31 \
+  --namespace gold_spark \
+  --core-namespace gold_spark_core
+```
+Sau khi hoàn tất, kiểm tra watermark bằng:
+```bash
+.venv/bin/gold run --master local[4]   # phải trả về NO_OP
 ```
 
 ---
 
-## 2. Sổ Tay Xử Lý Các Sự Cố Thường Gặp (Troubleshooting Runbooks)
+## 2. Sổ Tay Xử Lý Sự Cố Thường Gặp (Troubleshooting Runbooks)
 
-### Sự cố 1: Sửa mã nguồn trên Host nhưng Dagster vẫn chạy code cũ
-- **Nguyên nhân:** Container Docker không mount thư mục `src/` trực tiếp mà chạy từ thư viện Python đã đóng gói sẵn trong image lúc build (`/app/.venv/lib/python3.12/site-packages/procurement/`).
-- **Cách xử lý nhanh (trong 10 giây):**
+### Sự cố 1: Sửa code Python nhưng Dagster trong Docker vẫn chạy bản cũ
+- **Nguyên nhân:** Container Dagster chạy package đã cài trong `/app/.venv` lúc build image.
+- **Cách xử lý chuẩn:** Rebuild lại 3 container Dagster (dùng cache layer nên chỉ mất ~5–10 giây):
   ```bash
-  # Đồng bộ mã nguồn mới nhất vào cả 3 container Dagster
-  docker cp src/procurement procurement-lakehouse-dagster-code-location-1:/app/.venv/lib/python3.12/site-packages/
-  docker cp src/procurement procurement-lakehouse-dagster-daemon-1:/app/.venv/lib/python3.12/site-packages/
-  docker cp src/procurement procurement-lakehouse-dagster-webserver-1:/app/.venv/lib/python3.12/site-packages/
-
-  # Khởi động lại các container
-  docker restart procurement-lakehouse-dagster-code-location-1 procurement-lakehouse-dagster-daemon-1 procurement-lakehouse-dagster-webserver-1
+  docker compose up -d --build dagster-code-location dagster-webserver dagster-daemon
   ```
 
----
+### Sự cố 2: `java.net.BindException: Cannot assign requested address` khi chạy `--k3s`
+- **Nguyên nhân:** `SPARK_LOCAL_IP` trong `.env` không khớp IP thật của máy (ví dụ đổi mạng Wi-Fi hoặc điền nhầm IP mẫu).
+- **Cách xử lý:** Kiểm tra IP thật bằng `tailscale ip -4` (Flow Tailscale) hoặc `ip -4 addr` (Flow LAN), cập nhật `SPARK_LOCAL_IP` và `SPARK_K3S_MASTER` trong `.env`.
 
-### Sự cố 2: Lỗi `ValidationError: Target namespace must match semantic versioning`
-- **Nguyên nhân:** Namespace mục tiêu không tuân thủ quy tắc đặt tên Semantic Versioning (`gold_v<N>[_<suffix>]`).
-- **Cách xử lý:** Đảm bảo namespace tuân theo định dạng: `gold_v2`, `gold_v3`, `gold_v4`, hoặc `gold_v2_accepted`, `gold_v3_test`.
+### Sự cố 3: `Connect to http://127.0.0.1:8181 failed` khi chạy K3s qua Tailscale
+- **Nguyên nhân:** SeaweedFS đã bind vào IP Tailscale (`ICEBERG_CATALOG_BIND_ADDRESS=100.x.y.z`), nhưng `ICEBERG_CATALOG_URI` hoặc `OBJECT_STORAGE_ENDPOINT` vẫn để `127.0.0.1`.
+- **Cách xử lý:** Đổi cả 2 biến trên trong `.env` sang `http://<MASTER_TS_IP>:8181` và `http://<MASTER_TS_IP>:8333`.
 
----
-
-### Sự cố 3: Lỗi `Table with name dim_date does not exist!`
-- **Nguyên nhân:** Chạy pipeline với một namespace Iceberg mới hoàn toàn nhưng chưa khởi tạo cấu trúc bảng.
-- **Cách xử lý:** Chạy lệnh tạo bảng trước khi nạp dữ liệu:
+### Sự cố 4: `Initial job has not accepted any resources` trên K3s
+- **Nguyên nhân:** Pod `spark-worker` chưa ở trạng thái `Running` (có thể vừa OOMKill khi chạy full rebuild 5 năm trên worker giới hạn 4 GB RAM).
+- **Cách xử lý:**
   ```bash
-  gold ensure-tables --namespace gold_v2
-  gold seed-geography --namespace gold_v2
+  kubectl get pods -n procurement -o wide
+  kubectl rollout restart daemonset/spark-worker -n procurement
   ```
+  Với job full rebuild 5 năm, ưu tiên chạy `--master local[4] --driver-memory 4g` thay vì K3s worker 4 GB.
 
----
-
-### Sự cố 4: Xuất hiện Node "Ma" (Ghost Asset) trên giao diện Dagster
-- **Hiện tượng:** Sau khi đổi tên hoặc xóa một asset trong code (ví dụ `gold_dim_bidding_type`), giao diện Dagster vẫn hiển thị node này với màu xám do còn lưu vết lịch sử trong Database.
-- **Cách xử lý:** Xóa sạch bản ghi cũ trong database Dagster Postgres:
+### Sự cố 5: Đã xóa bảng Iceberg nhưng ổ cứng chưa giảm dung lượng
+- **Nguyên nhân:** SeaweedFS đánh dấu block đã xóa là garbage trong file `.dat` và chỉ co file lại sau khi chạy `volume.vacuum`; ngoài ra Docker có thể giữ nhiều image build cũ.
+- **Cách xử lý:**
   ```bash
-  docker exec procurement-lakehouse-dagster-postgres-1 psql -U dagster -d dagster -c "
-  DELETE FROM event_logs WHERE asset_key = '[\"gold_dim_bidding_type\"]';
-  DELETE FROM asset_keys WHERE asset_key = '[\"gold_dim_bidding_type\"]';
-  "
-  docker restart procurement-lakehouse-dagster-webserver-1
+  # 1. Co file volume SeaweedFS (thu hồi DeletedBytes)
+  docker compose exec -T object-storage sh -c "echo 'volume.vacuum -garbageThreshold=0.05' | weed shell -master=localhost:9333"
+
+  # 2. Dọn Docker images cũ không dùng tới
+  docker image prune -a
   ```
-
----
-
-### Sự cố 5: Xung đột Khóa DuckDB (`Database file is locked by another process`)
-- **Nguyên nhân:** Hai Job cùng chạy đồng thời và cố gắng mở file `state.duckdb` của cùng một thư mục làm việc.
-- **Cách xử lý:** Hệ thống đã được cấu hình trong `infra/dagster/dagster.yaml` với `max_concurrent_runs: 1`. Đảm bảo không mở file `state.duckdb` bằng CLI bên ngoài trong lúc Dagster đang xử lý partition đó.
