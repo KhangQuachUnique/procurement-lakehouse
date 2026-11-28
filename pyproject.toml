@@ -28,6 +28,7 @@ ingest = "procurement.cli.ingest:main"
 silver = "procurement.cli.silver:main"
 silver-spark = "procurement_spark.silver.cli:main"
 gold = "procurement.gold.adapters.driving.cli:main"
+gold-spark = "procurement_spark.gold.cli:main"
 
 [project.optional-dependencies]
 metadata = [
@@ -66,6 +67,7 @@ where = ["src"]
 "procurement.gold.domain" = ["*.json"]
 "procurement.gold.application.compute" = ["*.json"]
 "procurement.gold.application.compute.sql" = ["*.sql"]
+"procurement_spark.gold" = ["*.json"]
 "procurement.quality" = ["*.toml"]
 "procurement.api.ops" = ["static/*.css", "static/*.js", "templates/*.html"]
 "procurement.api" = ["benchmark_assets/*.html", "benchmark_assets/*.js"]
