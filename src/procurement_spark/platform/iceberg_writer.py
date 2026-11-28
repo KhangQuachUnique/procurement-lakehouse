@@ -111,3 +111,30 @@ def abort_wap_branch(
     for table_name in table_names:
         full_name = f"{catalog}.{namespace}.{table_name}"
         spark.sql(f"ALTER TABLE {full_name} DROP BRANCH IF EXISTS `{branch_name}`")
+
+
+def merge_into_table(
+    spark: SparkSession,
+    *,
+    full_name: str,
+    source_df: DataFrame,
+    merge_keys: tuple[str, ...],
+) -> None:
+    """Upsert ``source_df`` into an Iceberg table using ``MERGE INTO`` on ``merge_keys``.
+
+    Works transparently inside an active ``spark.wap.branch`` session.
+    """
+    if not merge_keys:
+        raise ValueError(f"merge_keys must be non-empty for {full_name}")
+    src_view = f"_gtmp_merge_src_{full_name.replace('.', '_')}"
+    source_df.createOrReplaceTempView(src_view)
+    on_clause = " AND ".join(f"t.{k} <=> s.{k}" for k in merge_keys)
+    spark.sql(
+        f"""
+        MERGE INTO {full_name} AS t
+        USING {src_view} AS s
+        ON {on_clause}
+        WHEN MATCHED THEN UPDATE SET *
+        WHEN NOT MATCHED THEN INSERT *
+        """
+    )

@@ -14,7 +14,7 @@ import sys
 from datetime import date
 from typing import Any
 
-from procurement_spark.gold.runner import run_spark_gold_rebuild
+from procurement_spark.gold.runner import run_spark_gold_incremental, run_spark_gold_rebuild
 from procurement_spark.platform.cli_common import add_spark_runtime_args, settings_from_cli_args
 from procurement_spark.platform.maintenance import main as maintenance_main
 
@@ -87,6 +87,7 @@ def _build_top_parser() -> argparse.ArgumentParser:
         description="Apache Spark 4.0 + Iceberg Two-Tier Gold CLI.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("run", help="Incremental Two-Tier Gold sync (start-snapshot-id + MERGE INTO).", add_help=False)
     sub.add_parser("rebuild", help="Full Two-Tier Gold rebuild via Iceberg WAP.", add_help=False)
     sub.add_parser("maintain", help="Run Iceberg maintenance on Gold namespace.", add_help=False)
     return parser
@@ -99,6 +100,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     cmd, rest = raw[0], raw[1:]
+    if cmd == "run":
+        args = _build_rebuild_parser().parse_args(rest)
+        cfg = settings_from_cli_args(args, namespace=args.silver_namespace)
+        summary = run_spark_gold_incremental(
+            event_start=date.fromisoformat(args.start_date),
+            event_end=date.fromisoformat(args.end_date),
+            observation_day=date.fromisoformat(args.observation_day) if args.observation_day else None,
+            silver_namespace=args.silver_namespace,
+            gold_namespace=args.namespace,
+            core_namespace=args.core_namespace,
+            settings=cfg,
+        )
+        if args.as_json:
+            print(json.dumps(summary, indent=2))
+        else:
+            _render_gold_summary(summary, master=cfg.spark_master)
+        return 0 if summary["status"] in {"PUBLISHED", "NO_OP"} else 1
+
     if cmd == "rebuild":
         args = _build_rebuild_parser().parse_args(rest)
         cfg = settings_from_cli_args(args, namespace=args.silver_namespace)

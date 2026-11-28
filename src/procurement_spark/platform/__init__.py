@@ -4,6 +4,7 @@ from procurement_spark.platform.config import SparkSilverSettings, detect_lan_ip
 from procurement_spark.platform.iceberg_writer import (
     abort_wap_branch,
     ensure_namespace_and_tables,
+    merge_into_table,
     publish_wap_branch,
     stage_to_wap_branch,
 )
