@@ -24,6 +24,10 @@ from procurement.orchestration.gold_v2 import gold_v2_run_job
 from procurement.orchestration.reconcile import reconcile_lakehouse_job
 from procurement.orchestration.resources import object_storage
 from procurement.orchestration.silver import SILVER_GROUPS, silver_assets, silver_sync_iceberg_job
+from procurement.orchestration.spark_lakehouse import (
+    SPARK_LAKEHOUSE_JOBS,
+    SPARK_LAKEHOUSE_SCHEDULES,
+)
 from procurement.orchestration.watcher import (
     bid_opening_due_sensor,
     bid_opening_seed_job,
@@ -183,8 +187,14 @@ defs = Definitions(
         benchmark_job,
         bid_opening_seed_job,
         bid_opening_watch_job,
+        *SPARK_LAKEHOUSE_JOBS,
     ],
-    schedules=[bronze_daily_schedule, silver_daily_schedule, bid_opening_seed_schedule],
+    schedules=[
+        bronze_daily_schedule,
+        silver_daily_schedule,
+        bid_opening_seed_schedule,
+        *SPARK_LAKEHOUSE_SCHEDULES,
+    ],
     sensors=[bid_opening_due_sensor, bid_opening_seed_sensor],
     resources={"object_storage": object_storage},
 )
