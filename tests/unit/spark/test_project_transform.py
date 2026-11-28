@@ -9,13 +9,13 @@ from decimal import Decimal
 import pytest
 from pyspark.sql import types as T
 
-from procurement_spark.config import SparkSilverSettings
-from procurement_spark.control.manifest import BronzeDayManifest, BronzeFileSpec
-from procurement_spark.control.planner import plan_batches
-from procurement_spark.control.receipts import SilverReceipt
-from procurement_spark.resources.project import PROJECT_QUALITY_RULES, transform_project
-from procurement_spark.quality.rules import evaluate_inline_rules
-from procurement_spark.spark_session import build_spark_session
+from procurement_spark.platform.config import SparkSilverSettings
+from procurement_spark.silver.control.manifest import BronzeDayManifest, BronzeFileSpec
+from procurement_spark.silver.control.planner import plan_batches
+from procurement_spark.silver.control.receipts import SilverReceipt
+from procurement_spark.silver.resources.project import PROJECT_QUALITY_RULES, transform_project
+from procurement_spark.silver.quality.rules import evaluate_inline_rules
+from procurement_spark.platform.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")

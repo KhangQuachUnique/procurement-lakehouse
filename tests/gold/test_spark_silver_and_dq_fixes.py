@@ -11,7 +11,7 @@ from procurement.gold.application.compute.projection import project
 from procurement.gold.application.processor import process_gold_range
 from procurement.gold.application.silver_adapter import adapt_projection
 from procurement.gold.domain.schema import FACTS, TABLES
-from procurement_spark.resources.registry import SPARK_RESOURCES
+from procurement_spark.silver.resources.registry import SPARK_RESOURCES
 from tests.gold.test_business import populated
 
 

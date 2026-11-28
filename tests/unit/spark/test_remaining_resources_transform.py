@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 from pyspark.sql import types as T
 
-from procurement_spark.config import SparkSilverSettings
-from procurement_spark.resources.bid_opening import transform_bid_opening
-from procurement_spark.resources.contract_performance import transform_contract_performance
-from procurement_spark.resources.contractor_result import transform_contractor_result
-from procurement_spark.resources.notice import transform_notice
-from procurement_spark.resources.registry import SPARK_RESOURCES
-from procurement_spark.spark_session import build_spark_session
+from procurement_spark.platform.config import SparkSilverSettings
+from procurement_spark.silver.resources.bid_opening import transform_bid_opening
+from procurement_spark.silver.resources.contract_performance import transform_contract_performance
+from procurement_spark.silver.resources.contractor_result import transform_contractor_result
+from procurement_spark.silver.resources.notice import transform_notice
+from procurement_spark.silver.resources.registry import SPARK_RESOURCES
+from procurement_spark.platform.spark_session import build_spark_session
 
 
 @pytest.fixture(scope="module")
